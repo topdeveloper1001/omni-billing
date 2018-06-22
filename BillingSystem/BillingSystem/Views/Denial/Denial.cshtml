@@ -1,0 +1,104 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using BillingSystem.Models
+
+@model BillingSystem.Models.DenialView
+@{
+    ViewBag.Title = "Denial";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Denial Codes
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @*
+                        Owner: Amit Joshi
+                        On: 09102014
+                        Purpose: Render the grid view in partial view to display the filtered data.
+                        *@
+                        @{Html.RenderPartial("~/Views/Denial/UserControls/_DenialAddEdit.cshtml", Model.CurrentDenial);}
+                        @*onclick="ExportDenial();" *@
+                        <div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row search-diagnose">
+        <div class="col-xs-12 col-sm-5 col-md-6 col-lg-6">
+            @{Html.RenderPartial("~/Views/CommonUserControls/_SearchCode.cshtml", new SearchView
+          {
+              SearchResultListId = "#DenialListDiv",
+              PlaceholderText = "Search for Denial Codes or Description..",
+              SearchType = Convert.ToInt32(SearchType.Denial)
+          });
+            }
+        </div>
+        <div class="col-xs-12 col-sm-7 col-md-6 col-lg-6">
+            <div class="yellowBox2">
+
+                @using (Html.BeginForm("ImportDenialExcelData", "Denial", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    @* @Html.TextBoxFor(m => m.ImportExcelfile, new { @onchange = "checkexcelfileformat(this)", @type = "file", @id = "ImportExcelfile" })*@
+                    <input type="file" id="ImportExcelfile" accept="xsl/xslx" />
+                    <a href="javascript:;" onclick="return false;" class="importExcel" title="Import Excel Data"><input type="submit" value="" /></a>
+                    <span id="spImportExcelfile" style="color: red;"></span>
+                }
+                @*@using (Html.BeginForm("ExportDenialToExcel", "Denial", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <a href="javascript:;" title="Export to Excel" class="exportExcel"><input type="submit" value="" /></a>
+                }*@
+                
+                @*<a title="Export to Excel" class="exportExcel"><input type="submit" value=""  onclick="ExportToExcel();"/></a>*@
+                   @Html.ActionLink(" ", "ExportDenialToExcel",
+                new
+                {
+                   type="1"
+                },
+                new
+                {
+                    @class = "excelexportIcon",
+                    @title = "Export as Excel",
+                    @id = "btnExportExcel",
+                    @onclick = "ExportToExcel(1)"
+                })
+              
+            </div>
+
+        </div>
+
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="../images/list.png" /></span>&nbsp;Denial Codes List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseTwo" class="panel-collapse tableImg in tableImg">
+            <div class="panel-body">
+                <div class="form" id="DenialListDiv">
+                    @{Html.RenderPartial("~/Views/Denial/UserControls/_DenialList.cshtml", Model.DenialList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/Denial/Denial.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

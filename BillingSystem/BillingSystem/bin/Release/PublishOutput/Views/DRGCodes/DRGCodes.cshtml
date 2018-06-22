@@ -1,0 +1,223 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using BillingSystem.Models
+@model DRGCodesView
+@{
+    ViewBag.Title = "DRGCodes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="white-bg">
+  <input type="hidden" id="hfCodeTableNumber" value='@Helpers.DefaultDrugTableNumber' />
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add DRG Codes
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOne" class="panel-collapse tableImg collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @{ Html.RenderPartial("~/Views/DRGCodes/UserControls/_DRGCodesAddEdit.cshtml", Model.CurrentDRGCodes); }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" name="hidUserID" id="hidUserID" value="@Model.UserId" />
+    @if (Model.UserId == 1)
+    {
+        @*<div class="panel panel-default collapsecss ourcollapse">
+                <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseCopyFacilityData">
+                    <h4 class="panel-title collapseTitle">
+                        <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Copy Data to Facility
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseCopyFacilityData" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <div class="base-color">
+                            <div class="form" id="divCopyDataSection">
+                                <div class="col-sm-3 col-md-2">
+                                    <div class="rowTable">
+                                        <label>Corporate:</label>
+                                        <select id="ddlCorporate" class="validate[required]"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3 col-md-2">
+                                    <div class="rowTable">
+                                        <label>Facility:</label>
+                                        <select id="ddlFacility" class="validate[required]" onchange="ShowHideViewRecords();"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-8">
+                                    <div class="rowTable">
+                                        <label class="col-lg-12">&nbsp;</label>
+                                        <button id="btnSave" class="btn btn-primary edit-btn" onclick=" CopyBillingCodes('9',false); return false; ">Copy Data</button>
+
+
+                                        <button id="btnSaveALL" class="btn btn-primary edit-btn" onclick=" CopyBillingCodes('9',true); return false; ">Copy All</button>
+
+
+                                        <button id="btnViewALL" class="btn btn-primary edit-btn" onclick="ViewRecords('9'); return false;">View Records</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>*@
+
+        <div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseCopyFacilityData">
+                <h4 class="panel-title collapseTitle">
+                    <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Create New Table Sets
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseCopyFacilityData" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <div class="base-color">
+                        <div class="form" id="divCopyDataSection">
+                            <div class="col-sm-4 col-md-2">
+                                <div class="rowTable">
+                                    <label>Select Table Number:</label>
+                                    <select id="ddlTableSet" class="validate[required]"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 col-md-2">
+                                <div class="rowTable">
+                                    <label class="checkbox_margintop">
+                                        <input type="checkbox" id="rdNewTableNumber" onchange="ShowTableSetPanel(this,1);" value="" />
+                                        Create New Table Set
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 col-md-2">
+                                <div class="rowTable">
+                                    <label class="checkbox_margintop">
+                                        <input type="checkbox" id="rdCopyExisting" onchange="ShowTableSetPanel(this,2);" value="" />
+                                        Copy Existing
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4" id="tableSetPanel" style="display: none;">
+                            <div class="rowTable" style="display: none;" id="divNewTableNumber">
+                                <label>Enter New TableNumber:</label>
+                                <input type="text" id="tableNumber" onblur="CheckDuplicateTableSet('9');" class="validate[optional[integer]]" />
+                            </div>
+                            <div class="rowTable">
+                                <label class="col-lg-12">&nbsp;</label>
+                                <button id="btnSave" class="btn btn-primary edit-btn" onclick="SaveTableSet('9',false); return false;">Copy Data</button>
+                                <label class="col-lg-12">&nbsp;</label>
+                                <button id="btnSaveALL" class="btn btn-primary edit-btn" onclick="SaveTableSet('9', true); return false;">Copy All</button>
+                            </div>
+                        </div>
+                        <div class="col-sm-3 col-md-2">
+                            <div class="rowTable">
+                                <label class="col-lg-12">&nbsp;</label>
+                                <button id="btnViewALL" class="btn btn-primary edit-btn" onclick="ViewRecords('9'); return false;">View Records</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseSearchData">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Search Data
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseSearchData" class="panel-collapse collapse in">
+            <div class="row search-diagnose">
+                <div class="col-xs-12 col-sm-5 col-md-4">
+                    @{ Html.RenderPartial("~/Views/CommonUserControls/_SearchCode.cshtml", new SearchView
+                       {
+                           SearchResultListId = "#DRGCodesListDiv",
+                           PlaceholderText = "Search for DRG Codes or Description..",
+                           SearchType = Convert.ToInt32(SearchType.DRG)
+                       }); }
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-2">
+                    <div class="rowTable">
+                        <label class="col-lg-12">&nbsp;</label>
+                        <input id="btnMarkAsInActive" class="btn edit-btn btn-primary" value="Mark As Inactive" type="button" />
+
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-7 col-md-6 col-lg-6">
+                    <div class="row">
+                        <div class="col-sm-10 col-md-9">
+                            <div class="browse-area">
+                                <h3>IMPORT</h3>
+                                <div class="right_blocks">
+                                    <a href="#" id="aImport" onclick="ImportBillingCodes('DRG');">
+                                        <img src="~/images/ImportExcel64x64.png" title="Excel Import" width="20" height="20" />
+                                    </a>
+                                </div>
+                                <input id="ImportFile" name="ImportFile" type="file" />
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-2 col-md-3">
+                            <div class="right_blocks">
+                                @Html.ActionLink(" ", "ExportCodesToExcel", "Home",
+                            new
+                            {
+                                type = "3"
+                            },
+                            new
+                            {
+                                @class = "excelexportIcon1",
+                                @title = "Export as Excel",
+                                @id = "btnDRGToExcel",
+                                @onclick = "BeforeExportToExcel('btnDRGToExcel','DRG');"
+                                //@onclick = "ExportToExcel(3);"
+                            })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" />
+                </span>&nbsp;DRG Codes List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseTwo" class="panel-collapse collapse in tableImg">
+            <div class="form" id="DRGCodesListDiv">
+                @{ Html.RenderPartial("~/Views/DRGCodes/UserControls/_DRGCodesList.cshtml", Model); }
+            </div>
+        </div>
+        <span class="inactive">
+            View In active records
+            <input id="chkShowInActive" type="checkbox" onchange="ShowInActiveDRGCodes('#chkShowInActive');" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/DRGCodes/DRGCodes.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

@@ -1,0 +1,144 @@
+﻿
+@model BillingSystem.Model.OrderActivity
+
+@{
+    ViewBag.Title = "OrderActivity";
+}
+<style>
+    select {
+    margin-bottom: 10px;}
+</style>
+<div class="form" id="OrderActivityFormDiv">
+@*// BBCOLUMNSHERE*@
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>OrderActivityID:</label>
+        @Html.TextBoxFor(m => m.OrderActivityID, new { @maxlength = "10", @id = "txtOrderActivityID" })
+      </div>
+      <div class="rowTable">
+        <label>OrderType:</label>
+        @Html.TextBoxFor(m => m.OrderType, new { @maxlength = "10", @id = "txtOrderType" })
+      </div>
+      <div class="rowTable">
+        <label>OrderCode:</label>
+        @Html.TextBoxFor(m => m.OrderCode, new { @maxlength = "50", @id = "txtOrderCode" })
+      </div>
+      <div class="rowTable">
+        <label>OrderCategoryID:</label>
+        @Html.TextBoxFor(m => m.OrderCategoryID, new { @maxlength = "10", @id = "txtOrderCategoryID" })
+      </div>
+      <div class="rowTable">
+        <label>OrderSubCategoryID:</label>
+        @Html.TextBoxFor(m => m.OrderSubCategoryID, new { @maxlength = "10", @id = "txtOrderSubCategoryID" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>OrderActivityStatus:</label>
+        @Html.TextBoxFor(m => m.OrderActivityStatus, new { @maxlength = "10", @id = "txtOrderActivityStatus" })
+      </div>
+      <div class="rowTable">
+        <label>CorporateID:</label>
+        @Html.TextBoxFor(m => m.CorporateID, new { @maxlength = "10", @id = "txtCorporateID" })
+      </div>
+      <div class="rowTable">
+        <label>FacilityID:</label>
+        @Html.TextBoxFor(m => m.FacilityID, new { @maxlength = "10", @id = "txtFacilityID" })
+      </div>
+      <div class="rowTable">
+        <label>PatientID:</label>
+        @Html.TextBoxFor(m => m.PatientID, new { @maxlength = "10", @id = "txtPatientID" })
+      </div>
+      <div class="rowTable">
+        <label>EncounterID:</label>
+        @Html.TextBoxFor(m => m.EncounterID, new { @maxlength = "10", @id = "txtEncounterID" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>MedicalRecordNumber:</label>
+        @Html.TextBoxFor(m => m.MedicalRecordNumber, new { @maxlength = "20", @id = "txtMedicalRecordNumber" })
+      </div>
+      <div class="rowTable">
+        <label>OrderID:</label>
+        @Html.TextBoxFor(m => m.OrderID, new { @maxlength = "10", @id = "txtOrderID" })
+      </div>
+      <div class="rowTable">
+        <label>OrderBy:</label>
+        @Html.TextBoxFor(m => m.OrderBy, new { @maxlength = "10", @id = "txtOrderBy" })
+      </div>
+      <div class="rowTable">
+        <label>OrderActivityQuantity:</label>
+        @Html.TextBoxFor(m => m.OrderActivityQuantity, new { @maxlength = "10", @id = "txtOrderActivityQuantity" })
+      </div>
+      <div class="rowTable">
+        <label>OrderScheduleDate:</label>
+        @Html.TextBoxFor(m => m.OrderScheduleDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtOrderScheduleDate" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>PlannedBy:</label>
+        @Html.TextBoxFor(m => m.PlannedBy, new { @maxlength = "10", @id = "txtPlannedBy" })
+      </div>
+      <div class="rowTable">
+        <label>PlannedDate:</label>
+        @Html.TextBoxFor(m => m.PlannedDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtPlannedDate" })
+      </div>
+      <div class="rowTable">
+        <label>PlannedFor:</label>
+        @Html.TextBoxFor(m => m.PlannedFor, new { @maxlength = "10", @id = "txtPlannedFor" })
+      </div>
+      <div class="rowTable">
+        <label>ExecutedBy:</label>
+        @Html.TextBoxFor(m => m.ExecutedBy, new { @maxlength = "10", @id = "txtExecutedBy" })
+      </div>
+      <div class="rowTable">
+        <label>ExecutedDate:</label>
+        @Html.TextBoxFor(m => m.ExecutedDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtExecutedDate" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>ExecutedQuantity:</label>
+        @Html.TextBoxFor(m => m.ExecutedQuantity, new { @maxlength = "10", @id = "txtExecutedQuantity" })
+      </div>
+      <div class="rowTable">
+        <label>ResultValueMin:</label>
+        @Html.TextBoxFor(m => m.ResultValueMin, new { @maxlength = "10", @id = "txtResultValueMin" })
+      </div>
+      <div class="rowTable">
+        <label>ResultValueMax:</label>
+        @Html.TextBoxFor(m => m.ResultValueMax, new { @maxlength = "10", @id = "txtResultValueMax" })
+      </div>
+      <div class="rowTable">
+        <label>ResultUOM:</label>
+        @Html.TextBoxFor(m => m.ResultUOM, new { @maxlength = "10", @id = "txtResultUOM" })
+      </div>
+      <div class="rowTable">
+        <label>Comments:</label>
+        @Html.TextBoxFor(m => m.Comments, new { @maxlength = "250", @id = "txtComments" })
+      </div>
+   </div>
+    
+    <div class="clear"></div>
+
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.OrderActivityID != null && Model.OrderActivityID != 0)
+            {  <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SaveOrderActivity('@Model.OrderActivityID');" />
+                <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveOrderActivity('@Model.OrderActivityID');" class="btn btn-primary edit-btn marginBtn" value="Save" />
+                <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>
+            }
+            <br />
+            <span id="lblMessage" style="display: none; font-weight: bold; margin-top: 5px;">Fields marked with <span style="color: red;">* </span>are mendatory.</span>
+        </div>
+    </div>
+
+
+
+</div>

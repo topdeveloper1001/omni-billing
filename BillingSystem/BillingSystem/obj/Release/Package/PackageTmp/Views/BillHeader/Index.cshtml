@@ -1,0 +1,101 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Models.BillDetailsView
+
+
+@{
+    ViewBag.Title = "Billing Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var ticks = Helpers.CurrentAssemblyTicks;
+}
+
+<style type="text/css">
+    .btn-group { margin: 20px 0 5px 0px; }
+
+    .scrollable-panel { overflow: visible; }
+
+    .colBillHeaderAction { width: 12%; }
+</style>
+<script src="~/Scripts/BillHeader/BillHeaderScript.js?@ticks"></script>
+<script src="~/Scripts/BillHeader/ManualPayment.js?@ticks"></script>
+<div class="white-bg">
+    @*@Html.HiddenFor(m => m.EncounterId, new { id = "hdEncounterId" })*@
+    @Html.HiddenFor(m => m.PatientId, new {@id = "bhPatientId"})
+    @Html.HiddenFor(m => m.QueryStringId, new { @id = "hdId" })
+    @Html.HiddenFor(m => m.QueryStringTypeId, new { @id = "hdTypeId" })
+    @if (ViewBag.ShowPatientHeader == null)
+    {
+        <div>
+            @{ Html.RenderPartial("~/Views/CommonUserControls/_PatientInfoHeader.cshtml", Model.PatientInfo); }
+        </div>
+    }
+    <div class="panel-group">
+        @*<div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseBillHeaderAddEdit">
+                <h4 class="panel-title collapseTitle" id="BillHeaderAddEditHeading">Edit Bill Header
+                                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                            <span class="glyphicon glyphicon-chevron-down"></span>
+                                        </a>
+                </h4>
+            </div>
+            <div id="CollapseBillHeaderAddEdit" class="panel-collapse collapse">
+                <div id="BillHeaderAddEditForm">
+                    <div class="table-responsive scrollable-panel">
+                    </div>
+                </div>
+            </div>
+        </div>*@
+        <input type="hidden" name="hidBillHeaderId" value="0" id="hidBillHeaderId"/>
+        <div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseBillHeaderList">
+                <h4 class="panel-title collapseTitle" id="BillHeaderListHeading">Bill Headers 
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div class="col-sm-12">
+                <div class="pull-left">
+                    <div class="btn-group">
+                        @*<a class="blue-btn btn btn-primary edit-btn marginBtn" onclick=" SetBillHeaderStatusForPreBill(); " id="BtnGeneratePreBill">Generate Pre-Bill</a>*@
+                        @*<a class="blue-btn btn btn-primary edit-btn marginBtn" id="BtnGenerateFinalBill">Generate Final Bill</a>*@
+                        @*@if (Model != null && Model.BillHeaderList.Count > 0)
+                        { 
+                            <a class="blue-btn btn btn-primary edit-btn marginBtn" id="BtnSendClaim" onclick="SendClaims('@Url.Action("UpdateBillHeaderStatus", "BillHeader")');">Send E-Claim</a>
+                        }*@
+                        @*<a class="blue-btn btn btn-primary edit-btn marginBtn" id="BtnRefresh" onclick="ApplyBillCharges();">Refresh</a>*@
+                    </div>
+                </div>
+                <div class="pull-right">
+                    <div class="rowTable1">
+                        <h4 class="colorCodeTitle1">Color Codes</h4>
+                        <span><label class="colorCodes rowColorAuthrizationPending"></label>Encounter Active/Authorization Pending</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="CollapseBillHeaderList" class="panel-collapse collapse in">
+                <div class="table-responsive">
+                    <div id="BillHeaderListDiv">
+                        @{ Html.RenderPartial("~/Views/BillHeader/UserControls/_BillHeaderList.cshtml", Model.BillHeaderList); }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseBillActivitiesList">
+                <h4 class="panel-title collapseTitle" id="BillActivityListHeading">Bill Activities <span id="billnumberSpn"></span>
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="CollapseBillActivitiesList" class="panel-collapse collapse">
+                <div class="table-responsive">
+                    <div id="BillActivityListDiv">
+                        @{ Html.RenderPartial("~/Views/BillHeader/UserControls/_BillActivityList.cshtml", Model.BillActivityList); }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

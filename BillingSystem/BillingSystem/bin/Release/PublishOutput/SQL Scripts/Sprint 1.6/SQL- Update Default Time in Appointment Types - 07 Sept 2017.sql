@@ -1,0 +1,1 @@
+Update AppointmentTypes Set DefaultTime = (Select G.GlobalCodeName From GlobalCodes G Where G.GlobalCodeValue=AppointmentTypes.DefaultTime And G.GlobalCodeCategoryValue='4904')

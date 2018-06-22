@@ -1,0 +1,493 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{DF38E31D-B8D4-437C-9F9B-BDA62427DEFD}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BillingSystem.Model</RootNamespace>
+    <AssemblyName>BillingSystem.Model</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime, Version=3.4.1.9004, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Antlr.3.4.1.9004\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Elmah, Version=1.2.14706.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\elmah.corelibrary.1.2.2\lib\Elmah.dll</HintPath>
+    </Reference>
+    <Reference Include="Elmah.Mvc, Version=2.1.2.1389, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Elmah.Mvc.2.1.2\lib\net40\Elmah.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework">
+      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer">
+      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WebGrease">
+      <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CustomModel\AlergyView.cs" />
+    <Compile Include="CustomModel\BillingModifierCustomModel.cs" />
+    <Compile Include="CustomModel\ClinicianAppTypesCustomModel.cs" />
+    <Compile Include="CustomModel\ClinicianRosterCustomModel.cs" />
+    <Compile Include="CustomModel\PlaceOfServiceCustomModel.cs" />
+    <Compile Include="CustomModel\SchedulingParametersCustomModel.cs" />
+    <Compile Include="CustomModel\DenialCodeCustomModel.cs" />
+    <Compile Include="CustomModel\DiagnosisTabData.cs" />
+    <Compile Include="CustomModel\MedicalNecessityCustomModel.cs" />
+    <Compile Include="CustomModel\FutureOpenOrderCustomModel.cs" />
+    <Compile Include="CustomModel\FutureOrderActivityCustomModel.cs" />
+    <Compile Include="CustomModel\GenerateBarCode.cs" />
+    <Compile Include="CustomModel\OrderCustomModel.cs" />
+    <Compile Include="CustomModel\PatientEvaluationSetCustomModel.cs" />
+    <Compile Include="CustomModel\PaymentTypeDetailCustomModel.cs" />
+    <Compile Include="CustomModel\AccountStatementCustomModel.cs" />
+    <Compile Include="CustomModel\AgingReportCustomModel.cs" />
+    <Compile Include="CustomModel\AlergyCustomModel.cs" />
+    <Compile Include="CustomModel\AppointmentTypesCustomModel.cs" />
+    <Compile Include="CustomModel\ATCCodesCustomModel.cs" />
+    <Compile Include="CustomModel\AuthorizationCustomModel.cs" />
+    <Compile Include="CustomModel\BaseModel.cs" />
+    <Compile Include="CustomModel\BedChargesCustomModel.cs" />
+    <Compile Include="CustomModel\BedMasterCustomModel.cs" />
+    <Compile Include="CustomModel\BedOccupancyCustomModel .cs" />
+    <Compile Include="CustomModel\BedRateCardCustomModel.cs" />
+    <Compile Include="CustomModel\BillEditorUsersCustomModel.cs" />
+    <Compile Include="CustomModel\BillFormatCustomModel.cs" />
+    <Compile Include="CustomModel\BillTransmissionReportCustomModel.cs" />
+    <Compile Include="CustomModel\CareplanCustomModel.cs" />
+    <Compile Include="CustomModel\FacultyRoosterLogCustomModel.cs" />
+    <Compile Include="CustomModel\PatientCarePlanCustomModel.cs" />
+    <Compile Include="CustomModel\CarePlanTaskCustomModel.cs" />
+    <Compile Include="CustomModel\CityCustomModel.cs" />
+    <Compile Include="CustomModel\CodesCustomModel.cs" />
+    <Compile Include="CustomModel\CommonModel.cs" />
+    <Compile Include="CustomModel\BedTransactionCustomModel.cs" />
+    <Compile Include="CustomModel\BillHeaderCustomModel.cs" />
+    <Compile Include="CustomModel\BillActivityCustomModel.cs" />
+    <Compile Include="CustomModel\AuditLogCustomModel.cs" />
+    <Compile Include="CustomModel\BillingSystemParametersCustomModel.cs" />
+    <Compile Include="CustomModel\FacultyRoosterCustomModel.cs" />
+    <Compile Include="CustomModel\PatientPreSchedulingCustomModel.cs" />
+    <Compile Include="CustomModel\PDFTemplatesCustomModel.cs" />
+    <Compile Include="CustomModel\PhysicianDepartmentUtilizationCustomModel.cs" />
+    <Compile Include="CustomModel\PreSchedulingLinkCustomModel.cs" />
+    <Compile Include="CustomModel\RoleTabsCustomModel.cs" />
+    <Compile Include="CustomModel\SchedulerFacultyTimeslotsCustomModel.cs" />
+    <Compile Include="CustomModel\SchedulingCustomModel.cs" />
+    <Compile Include="CustomModel\DeptTimmingCustomModel.cs" />
+    <Compile Include="CustomModel\FacultyTimeslotsCustomModel.cs" />
+    <Compile Include="CustomModel\HolidayPlannerCustomModel.cs" />
+    <Compile Include="CustomModel\HolidayPlannerDetailsCustomModel.cs" />
+    <Compile Include="CustomModel\PatientEvaluationCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardDisplayOrderCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardParametersCustomModel.cs" />
+    <Compile Include="CustomModel\IndicatorDataCheckListCustomModel.cs" />
+    <Compile Include="CustomModel\MedicalHistoryCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardIndicatorDataCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardIndicatorsCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardRemarkCustomModel.cs" />
+    <Compile Include="CustomModel\DrugAllergyLogCustomModel.cs" />
+    <Compile Include="CustomModel\DrugInstructionAndDosingCustomModel.cs" />
+    <Compile Include="CustomModel\DrugInteractionsCustomModel.cs" />
+    <Compile Include="CustomModel\FacilityDepartmentCustomModel.cs" />
+    <Compile Include="CustomModel\ManualDashboardCustomModel.cs" />
+    <Compile Include="CustomModel\MissingDataCustomModel.cs" />
+    <Compile Include="CustomModel\PatientInfoChangesQueueCustomModel.cs" />
+    <Compile Include="CustomModel\PatientLoginDetailCustomModel.cs" />
+    <Compile Include="CustomModel\JournalEntrySupportCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardBudgetCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardTargetsCustomModel.cs" />
+    <Compile Include="CustomModel\DashboardTransactionCounterCustomModel.cs" />
+    <Compile Include="CustomModel\DenialReportCustomModel.cs" />
+    <Compile Include="CustomModel\DischargeSummaryDetailCustomModel.cs" />
+    <Compile Include="CustomModel\LabTestOrderSetCustomModel.cs" />
+    <Compile Include="CustomModel\LabTestResultCustomModel.cs" />
+    <Compile Include="CustomModel\LoginActivityReportCustomModel.cs" />
+    <Compile Include="CustomModel\ManualChargesTrackingCustomModel.cs" />
+    <Compile Include="CustomModel\McContractCustomModel.cs" />
+    <Compile Include="CustomModel\MCOrderCodeRatesCustomModel.cs" />
+    <Compile Include="CustomModel\MCRulesTableCustomModel.cs" />
+    <Compile Include="CustomModel\PatientDischargeSummaryCustomModel.cs" />
+    <Compile Include="CustomModel\PaymentCustomModel.cs" />
+    <Compile Include="CustomModel\PaymentDetailsCustomModel.cs" />
+    <Compile Include="CustomModel\ProjectDashboardCustomModel.cs" />
+    <Compile Include="CustomModel\ProjectsCustomModel.cs" />
+    <Compile Include="CustomModel\ProjectTargetsCustomModel.cs" />
+    <Compile Include="CustomModel\ProjectTasksCustomModel.cs" />
+    <Compile Include="CustomModel\ProjectTaskTargetsCustomModel.cs" />
+    <Compile Include="CustomModel\RiskFactorCustomModel.cs" />
+    <Compile Include="CustomModel\ScrubEditTrackCustomModel.cs" />
+    <Compile Include="CustomModel\PhysicianActivityCustomModel.cs" />
+    <Compile Include="CustomModel\ServiceCodeCustomModel.cs" />
+    <Compile Include="CustomModel\OperatingRoomCustomModel.cs" />
+    <Compile Include="CustomModel\TPFileXMLCustomModel.cs" />
+    <Compile Include="CustomModel\TPXMLParsedDataCustomModel.cs" />
+    <Compile Include="CustomModel\TPFileHeaderCustomModel.cs" />
+    <Compile Include="CustomModel\LoginTrackingCustomModel.cs" />
+    <Compile Include="CustomModel\CPTCodesCustomModel.cs" />
+    <Compile Include="CustomModel\GeneralCodesCustomModel.cs" />
+    <Compile Include="CustomModel\ReconcilationReportCustomModel.cs" />
+    <Compile Include="CustomModel\ScrubHeaderCustomModel.cs" />
+    <Compile Include="CustomModel\RuleStepCustomModel.cs" />
+    <Compile Include="CustomModel\ScrubReportCustomModel.cs" />
+    <Compile Include="CustomModel\ErrorMasterCustomModel.cs" />
+    <Compile Include="CustomModel\RuleMasterCustomModel.cs" />
+    <Compile Include="CustomModel\InsurancePolicyCustomModel.cs" />
+    <Compile Include="CustomModel\ManagedCareCustomModel.cs" />
+    <Compile Include="CustomModel\DocumentsTemplatesCustomModel.cs" />
+    <Compile Include="CustomModel\OpenOrderActivityScheduleCustomModel.cs" />
+    <Compile Include="CustomModel\FavoritesCustomModel.cs" />
+    <Compile Include="CustomModel\DiagnosisCustomModel.cs" />
+    <Compile Include="CustomModel\CorporateCustomModel.cs" />
+    <Compile Include="CustomModel\FacilityCustomModel.cs" />
+    <Compile Include="CustomModel\GlobalCodeCustomModel.cs" />
+    <Compile Include="CustomModel\MedicalNotesCustomModel.cs" />
+    <Compile Include="CustomModel\MedicalVitalCustomModel.cs" />
+    <Compile Include="CustomModel\OpenOrderExtension.cs" />
+    <Compile Include="CustomModel\OrderActivityCustomModel.cs" />
+    <Compile Include="CustomModel\ParametersCustomModel.cs" />
+    <Compile Include="CustomModel\UsersCustomModel.cs" />
+    <Compile Include="CustomModel\FacilityRoleCustomModel.cs" />
+    <Compile Include="CustomModel\RoleSelectionCustomModel.cs" />
+    <Compile Include="CustomModel\TabsCustomModel.cs" />
+    <Compile Include="CustomModel\FacilityStructureCustomModel.cs" />
+    <Compile Include="CustomModel\OpenOrderCustomModel.cs" />
+    <Compile Include="CustomModel\EncounterCustomModel.cs" />
+    <Compile Include="CustomModel\CountryCustomModel.cs" />
+    <Compile Include="CustomModel\EquipmentCustomModel.cs" />
+    <Compile Include="CustomModel\GlobalCodeCategoryCustomModel.cs" />
+    <Compile Include="CustomModel\InsurancePlanCustomModel.cs" />
+    <Compile Include="CustomModel\PatientAddressRelationCustomModel.cs" />
+    <Compile Include="CustomModel\PatientInfoCustomModel.cs" />
+    <Compile Include="CustomModel\PatientInsuranceCoverageCustomModel.cs" />
+    <Compile Include="CustomModel\PatientPhoneCustomModel.cs" />
+    <Compile Include="CustomModel\PhysicianCustomModel.cs" />
+    <Compile Include="CustomModel\StateCustomModel.cs" />
+    <Compile Include="CustomModel\XActivityCustomModel.cs" />
+    <Compile Include="CustomModel\XAdviceXMLParsedDataCustomModel.cs" />
+    <Compile Include="CustomModel\XClaimCustomModel.cs" />
+    <Compile Include="CustomModel\XFileHeaderCustomModel.cs" />
+    <Compile Include="CustomModel\XMLReportingCustomModel.cs" />
+    <Compile Include="CustomModel\XPaymentFileXMLCustomModel.cs" />
+    <Compile Include="CustomModel\XPaymentReturnCustomModel.cs" />
+    <Compile Include="EntityDto\AddressDto.cs" />
+    <Compile Include="EntityDto\AppointmentDetailsDto.cs" />
+    <Compile Include="EntityDto\AppointmentDto.cs" />
+    <Compile Include="EntityDto\AppointmentTypeDto.cs" />
+    <Compile Include="EntityDto\BookedAppointmentDto.cs" />
+    <Compile Include="EntityDto\ClinicianDetailDto.cs" />
+    <Compile Include="EntityDto\ClinicianDto.cs" />
+    <Compile Include="EntityDto\CommonDto.cs" />
+    <Compile Include="EntityDto\DefaultDataDto.cs" />
+    <Compile Include="EntityDto\FavoriteClinicianDto.cs" />
+    <Compile Include="EntityDto\LocationDto.cs" />
+    <Compile Include="EntityDto\PatientDto.cs" />
+    <Compile Include="EntityDto\Result.cs" />
+    <Compile Include="EntityDto\SpecialityDto.cs" />
+    <Compile Include="EntityDto\TimeSlotsDto.cs" />
+    <Compile Include="EntityDto\UserDto.cs" />
+    <Compile Include="EntityDto\VacationDto.cs" />
+    <Compile Include="EntityDto\WeeklyScheduleDto.cs" />
+    <Compile Include="Interfaces\ICommonEntity.cs" />
+    <Compile Include="Interfaces\IEntity.cs" />
+    <Compile Include="Interfaces\IEntityCreatable.cs" />
+    <Compile Include="Interfaces\IEntityUpdatable.cs" />
+    <Compile Include="Interfaces\IHardDelete.cs" />
+    <Compile Include="Interfaces\ISoftDelete.cs" />
+    <Compile Include="Migrations\201802130704004_AdditionsInInsuranceTable.cs" />
+    <Compile Include="Migrations\201802130704004_AdditionsInInsuranceTable.Designer.cs">
+      <DependentUpon>201802130704004_AdditionsInInsuranceTable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201802141503504_AddedEntityRefInInsurance.cs" />
+    <Compile Include="Migrations\201802141503504_AddedEntityRefInInsurance.Designer.cs">
+      <DependentUpon>201802141503504_AddedEntityRefInInsurance.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201802210832011_InsurancePlanDB.cs" />
+    <Compile Include="Migrations\201802210832011_InsurancePlanDB.Designer.cs">
+      <DependentUpon>201802210832011_InsurancePlanDB.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201802211201268_MCContractDB.cs" />
+    <Compile Include="Migrations\201802211201268_MCContractDB.Designer.cs">
+      <DependentUpon>201802211201268_MCContractDB.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201802230553599_MCContractDB1.cs" />
+    <Compile Include="Migrations\201802230553599_MCContractDB1.Designer.cs">
+      <DependentUpon>201802230553599_MCContractDB1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201802230804291_InsurancePolicyDB.cs" />
+    <Compile Include="Migrations\201802230804291_InsurancePolicyDB.Designer.cs">
+      <DependentUpon>201802230804291_InsurancePolicyDB.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201806040723091_PlaceOfServiceAndBillingModifier.cs" />
+    <Compile Include="Migrations\201806040723091_PlaceOfServiceAndBillingModifier.Designer.cs">
+      <DependentUpon>201806040723091_PlaceOfServiceAndBillingModifier.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Model\Appointment.cs" />
+    <Compile Include="Model\AppointmentTypes.cs" />
+    <Compile Include="Model\ATCCodes.cs" />
+    <Compile Include="Model\BaseEntity.cs" />
+    <Compile Include="Model\BillingModifier.cs" />
+    <Compile Include="Model\ClinicianAppointmentType.cs" />
+    <Compile Include="Model\ClinicianRoster.cs" />
+    <Compile Include="Model\FavoriteClinician.cs" />
+    <Compile Include="Model\FutureOpenOrder.cs" />
+    <Compile Include="Model\FutureOrderActivity.cs" />
+    <Compile Include="Model\MedicalNecessity.cs" />
+    <Compile Include="Model\PatientEvaluationSet.cs" />
+    <Compile Include="Model\ELMAH_Error.cs" />
+    <Compile Include="Model\PatientCareActivities.cs" />
+    <Compile Include="Model\PatientCarePlan.cs" />
+    <Compile Include="Model\AuditLog.cs" />
+    <Compile Include="Model\AuditLogArchived.cs" />
+    <Compile Include="Model\Authorization.cs" />
+    <Compile Include="Model\BaseModelGenProp.cs" />
+    <Compile Include="Model\BedCharges.cs" />
+    <Compile Include="Model\BedRateCard.cs" />
+    <Compile Include="Model\BedTransaction.cs" />
+    <Compile Include="Model\BillActivity.cs" />
+    <Compile Include="Model\BillHeader.cs" />
+    <Compile Include="Model\BillingCodeTableSet.cs" />
+    <Compile Include="Model\BillingSystemParameters.cs" />
+    <Compile Include="Model\Careplan.cs" />
+    <Compile Include="Model\CarePlanTask.cs" />
+    <Compile Include="Model\City.cs" />
+    <Compile Include="Model\DeptTimming.cs" />
+    <Compile Include="Model\EquipmentLog.cs" />
+    <Compile Include="Model\FacultyRooster.cs" />
+    <Compile Include="Model\FacultyTimeslots.cs" />
+    <Compile Include="Model\HolidayPlanner.cs" />
+    <Compile Include="Model\HolidayPlannerDetails.cs" />
+    <Compile Include="Model\PatientPreScheduling.cs" />
+    <Compile Include="Model\PaymentTypeDetail.cs" />
+    <Compile Include="Model\PlaceOfService.cs" />
+    <Compile Include="Model\PreSchedulingLink.cs" />
+    <Compile Include="Model\PDFTemplates.cs" />
+    <Compile Include="Model\Scheduling.cs" />
+    <Compile Include="Model\Corporate.cs" />
+    <Compile Include="Model\Country.cs" />
+    <Compile Include="Model\CountryCode.cs" />
+    <Compile Include="Model\CountryHoliday.cs" />
+    <Compile Include="Model\CPTCodes.cs" />
+    <Compile Include="Model\CPTCodeTypes.cs" />
+    <Compile Include="Model\DashboardBudget.cs" />
+    <Compile Include="Model\DashboardDisplayOrder.cs" />
+    <Compile Include="Model\DashboardIndicatorData.cs" />
+    <Compile Include="Model\DashboardIndicatorData_BKUP.cs" />
+    <Compile Include="Model\DashboardIndicatorData_Template.cs" />
+    <Compile Include="Model\DashBoardIndicatorEffects.cs" />
+    <Compile Include="Model\DashboardIndicators.cs" />
+    <Compile Include="Model\DashboardParameters.cs" />
+    <Compile Include="Model\DashboardRemark.cs" />
+    <Compile Include="Model\DashboardTargets.cs" />
+    <Compile Include="Model\DashboardTransactionCounter.cs" />
+    <Compile Include="Model\Denial.cs" />
+    <Compile Include="Model\Diagnosis.cs" />
+    <Compile Include="Model\DiagnosisCode.cs" />
+    <Compile Include="Model\DischargeSummaryDetail.cs" />
+    <Compile Include="Model\DocumentsTemplates.cs" />
+    <Compile Include="Model\DRGCodes.cs" />
+    <Compile Include="Model\Drug.cs" />
+    <Compile Include="Model\DrugAllergyLog.cs" />
+    <Compile Include="Model\DrugInstructionAndDosing.cs" />
+    <Compile Include="Model\DrugInteractions.cs" />
+    <Compile Include="Model\EmailTempelate.cs" />
+    <Compile Include="Model\Encounter.cs" />
+    <Compile Include="Model\EquipmentMaster.cs" />
+    <Compile Include="Model\ErrorMaster.cs" />
+    <Compile Include="Model\Facility.cs" />
+    <Compile Include="Model\FacilityDepartment.cs" />
+    <Compile Include="Model\FacilityRole.cs" />
+    <Compile Include="Model\FacilityStructure.cs" />
+    <Compile Include="Model\GlobalCodeCategory.cs" />
+    <Compile Include="Model\GlobalCodes.cs" />
+    <Compile Include="Model\HCPCSCodes.cs" />
+    <Compile Include="Model\IndicatorDataCheckList.cs" />
+    <Compile Include="Model\InsuranceCompany.cs" />
+    <Compile Include="Model\InsurancePlans.cs" />
+    <Compile Include="Model\InsurancePolices.cs" />
+    <Compile Include="Model\LabTestOrderSet.cs" />
+    <Compile Include="Model\LabTestResult.cs" />
+    <Compile Include="Model\LoginTracking.cs" />
+    <Compile Include="Model\ManagedCare.cs" />
+    <Compile Include="Model\ManualChargesTracking.cs" />
+    <Compile Include="Model\ManualDashboard.cs" />
+    <Compile Include="Model\MappingPatientBed.cs" />
+    <Compile Include="Model\MappingRole.cs" />
+    <Compile Include="Model\MaxValues.cs" />
+    <Compile Include="Model\MCContract.cs" />
+    <Compile Include="Model\MCContractTracking.cs" />
+    <Compile Include="Model\MCOrderCodeRates.cs" />
+    <Compile Include="Model\MCRulesTable.cs" />
+    <Compile Include="Model\MedicalHistory.cs" />
+    <Compile Include="Model\MedicalNotes.cs" />
+    <Compile Include="Model\MedicalRecord.cs" />
+    <Compile Include="Model\MedicalVital.cs" />
+    <Compile Include="Model\BillingEntities.cs" />
+    <Compile Include="Model\ModuleAccess.cs" />
+    <Compile Include="Model\ModuleStepTracking.cs" />
+    <Compile Include="Model\OpenOrder.cs" />
+    <Compile Include="Model\OpenOrderActivitySchedule.cs" />
+    <Compile Include="Model\OpenOrderActivityTime.cs" />
+    <Compile Include="Model\OperatingRoom.cs" />
+    <Compile Include="Model\OrderActivity.cs" />
+    <Compile Include="Model\Parameters.cs" />
+    <Compile Include="Model\PatientAddressRelation.cs" />
+    <Compile Include="Model\PatientDischargeSummary.cs" />
+    <Compile Include="Model\PatientEvaluation.cs" />
+    <Compile Include="Model\PatientInfo.cs" />
+    <Compile Include="Model\PatientInfoChangesQueue.cs" />
+    <Compile Include="Model\PatientInsurance.cs" />
+    <Compile Include="Model\PatientLoginDetail.cs" />
+    <Compile Include="Model\PatientPhone.cs" />
+    <Compile Include="Model\Payment.cs" />
+    <Compile Include="Model\Physician.cs" />
+    <Compile Include="Model\ProjectDashboard.cs" />
+    <Compile Include="Model\Projects.cs" />
+    <Compile Include="Model\ProjectTargets.cs" />
+    <Compile Include="Model\ProjectTasks.cs" />
+    <Compile Include="Model\ProjectTaskTargets.cs" />
+    <Compile Include="Model\ReferencedIndicators.cs" />
+    <Compile Include="Model\Role.cs" />
+    <Compile Include="Model\RolePermission.cs" />
+    <Compile Include="Model\RoleTabs.cs" />
+    <Compile Include="Model\RoomOccupancy.cs" />
+    <Compile Include="Model\RuleMaster.cs" />
+    <Compile Include="Model\RuleStep.cs" />
+    <Compile Include="Model\SchedulingParameters.cs" />
+    <Compile Include="Model\Screen.cs" />
+    <Compile Include="Model\ScreenControl.cs" />
+    <Compile Include="Model\ScrubEditTrack.cs" />
+    <Compile Include="Model\ScrubHeader.cs" />
+    <Compile Include="Model\ScrubReport.cs" />
+    <Compile Include="Model\ServiceCode.cs" />
+    <Compile Include="Model\SessionClass.cs" />
+    <Compile Include="Model\State.cs" />
+    <Compile Include="Model\sysdiagrams.cs" />
+    <Compile Include="Model\SystemConfiguration.cs" />
+    <Compile Include="Model\Tabs.cs" />
+    <Compile Include="Model\TESTLOG.cs" />
+    <Compile Include="Model\TPClaim.cs" />
+    <Compile Include="Model\TPFileHeader.cs" />
+    <Compile Include="Model\TPFileXML.cs" />
+    <Compile Include="Model\TPXMLParsedData.cs" />
+    <Compile Include="Model\UBedMaster.cs" />
+    <Compile Include="Model\UserDefinedDescriptions.cs" />
+    <Compile Include="Model\UserRole.cs" />
+    <Compile Include="Model\Users.cs" />
+    <Compile Include="Model\XActivity.cs" />
+    <Compile Include="Model\XAdviceXMLParsedData.cs" />
+    <Compile Include="Model\XClaim.cs" />
+    <Compile Include="Model\XEncounter.cs" />
+    <Compile Include="Model\XFileHeader.cs" />
+    <Compile Include="Model\XFileXML.cs" />
+    <Compile Include="Model\XObservation.cs" />
+    <Compile Include="Model\XPaymentFileXML.cs" />
+    <Compile Include="Model\XPaymentReturn.cs" />
+    <Compile Include="Model\ZEDBManualXML.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BillingSystem.Common\BillingSystem.Common.csproj">
+      <Project>{B0899DF4-CF27-4055-87F6-53072CD72794}</Project>
+      <Name>BillingSystem.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201802130704004_AdditionsInInsuranceTable.resx">
+      <DependentUpon>201802130704004_AdditionsInInsuranceTable.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201802141503504_AddedEntityRefInInsurance.resx">
+      <DependentUpon>201802141503504_AddedEntityRefInInsurance.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201802210832011_InsurancePlanDB.resx">
+      <DependentUpon>201802210832011_InsurancePlanDB.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201802211201268_MCContractDB.resx">
+      <DependentUpon>201802211201268_MCContractDB.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201802230553599_MCContractDB1.resx">
+      <DependentUpon>201802230553599_MCContractDB1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201802230804291_InsurancePolicyDB.resx">
+      <DependentUpon>201802230804291_InsurancePolicyDB.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806040723091_PlaceOfServiceAndBillingModifier.resx">
+      <DependentUpon>201806040723091_PlaceOfServiceAndBillingModifier.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

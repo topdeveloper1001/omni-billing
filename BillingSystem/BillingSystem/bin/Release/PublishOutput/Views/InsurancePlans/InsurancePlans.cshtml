@@ -1,0 +1,79 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Models.InsurancePlansView
+@{
+    ViewBag.Title = "InsurancePlans";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<div class="white-bg" id="DivInsurancePlan">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Add Insurance Plan
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @*
+            Owner: Amit Joshi
+            On: 26092014
+            Purpose: Render the grid view in partial view to display the filtered data.*@
+
+                        @{Html.RenderPartial("~/Views/InsurancePlans/UserControls/_insurancePlansAddEdit.cshtml", Model.CurrentInsurancePlans);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" /></span>&nbsp;Insurance Plans List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseTwo" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div style="text-align: right; float: right; padding: 5px;">
+                    <label>
+                        @Html.ActionLink(" ", "ExportToExcel", null, new
+                        {
+                            @class = "excelexportIcon",
+                            @title = "Export as Excel",
+                            @id = "btnExportExcel"
+                           
+                        })
+                    </label>
+                    <label>
+                        @Html.ActionLink(" ", "ExportToPDF", null,
+                            new
+                            {
+                                @class = "pdfexportIcon",
+                                @title = "Export as PDF"
+                            })
+                    </label>
+                </div>
+                <div class="base-color" id="InsurancePlansListDiv">
+                    @{Html.RenderPartial("~/Views/InsurancePlans/UserControls/_PlansList.cshtml", Model.InsurancePlansList);}
+                </div>
+            </div>
+        </div>
+        <span class="inactive">
+            View In active records
+            <input id="chkShowInActive" type="checkbox" onchange="ShowInActiveRecordsOfInsurancePlan('#chkShowInActive');" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/InsurancePlans/InsurancePlans.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

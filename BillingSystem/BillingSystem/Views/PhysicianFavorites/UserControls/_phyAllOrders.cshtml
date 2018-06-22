@@ -1,0 +1,37 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<OpenOrderCustomModel>
+
+    @if (Model != null)
+    {
+        var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentAllOrder", canPage: false);
+        <div id="gridContentAllOrder">
+            @grid.GetHtml(htmlAttributes: new {id = "phyAllOrdersGrid"}, tableStyle: "table table_scroll_phyAllOrders", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                columns:
+                    grid.Columns(
+                        grid.Column("ActivityCode", header: "Activity Code", canSort: true, style: "col4"),
+                         grid.Column("OrderCode", header: "Order Code", canSort: true, style: "col5"),
+                         grid.Column("OrderDescription", header: "Order Description", canSort: true, style: "col6"),
+                        grid.Column(header: "Action", style: "col9", format:
+                            @<text>
+                                 <a href="javascript:void(0);" title="Add as fav." class="FavAdd" onclick="AddAsFav('@item.OpenOrderID') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px; display: none;">
+                                     <img src="~/images/edit_small.png" />
+                                 </a>
+                                 <a href="javascript:void(0);" title="Add to Order." class="OrderAdd" onclick="AddToOrder('@item.OpenOrderID') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px;">
+                                     <img src="~/images/edit_small.png" />
+                                 </a>
+                             </text>)))
+        </div>
+    }
+    else
+    {
+        <h2>No Record found</h2>
+    }
+<script>
+    $(function () {
+        
+        if ($('#phyAllOrdersGrid tr').length > 0) {
+            $('#phyAllOrdersGrid').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(PhysicianAllSearch, "#gridContentAllOrder");
+    });
+</script>

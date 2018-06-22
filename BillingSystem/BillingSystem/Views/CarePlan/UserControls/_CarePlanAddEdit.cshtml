@@ -1,0 +1,123 @@
+﻿@using BillingSystem.Model
+@model Careplan
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="CarePlanFormDiv">
+    <div class="row">
+        <div class="col-sm-2">
+            <div class="form-group">
+                <label><span class="mandatoryStar"></span>Plan Name:</label>
+                @Html.TextBoxFor(m => m.Name, new { @maxlength = "50", @id = "txtPlanName", @class = "form-control validate[required]" })
+            </div>
+            </div>
+            <div class="col-sm-2">
+                <input type="hidden" name="CarePlanId" id="hidCarePlanId" value="@Model.Id" />
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Plan Number:</label>
+                    @Html.TextBoxFor(m => m.PlanNumber, new { @maxlength = "10", @id = "txtPlanNumber", @class = "form-control validate[required]" })
+                </div>
+            </div>
+
+        <div class="col-sm-2">
+            <div class="form-group">
+                <label><span class="mandatoryStar"></span>Encounter Patient Type:</label>
+                @*@Html.TextBoxFor(m => m.EncounterPatientType, new { @maxlength = "10", @id = "txtEncounterPatientType" })*@
+                <select class="form-control validate[required]" id="ddlEncounterType" onchange="BindPlanLengthType();"></select>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="form-group">
+                <label><span class="mandatoryStar"></span>Plan Length Type:</label>
+                <select class="form-control validate[required]" id="ddlLenghtType" onchange="BindPlanLength();" style="width:99%;">
+                    <option>--Select--</option>
+                </select>
+                @*@Html.TextBoxFor(m => m.PlanLengthType, new { @maxlength = "10", @id = "txtPlanLengthType", @class = "form-control" })*@
+            </div>
+        </div>
+            <div class="col-sm-2">
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Plan Length:</label>
+                    @*@Html.TextBoxFor(m => m.PlanLength, new { @maxlength = "10", @id = "txtPlanLength", @class = "form-control" })*@
+                    <select class="form-control validate[required]" id="ddlPlanLength">
+                        <option>--Select--</option>
+                    </select>
+                </div>
+            </div>
+           
+           
+        <div class="col-sm-2">
+            <div class="form-group">
+                <label>Is Active:</label>
+                <input type="checkbox" id="chkIsActive" />
+            </div>
+        </div>
+        <div class="clear"></div>
+        <div class="col-sm-2">
+                <div class="form-group custom_dropdown">
+                    <label>Diagnosis Associated:</label>
+                    @Html.TextBoxFor(m => m.DiagnosisAssociated, new { @maxlength = "10", @id = "txtDiagnosisAssociated", @onkeyup = "SearchDiagnosis();", @class = "form-control" ,@placeholder="Search Diagnosis....."})
+
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <label>Description:</label>
+                    @Html.TextAreaFor(m => m.PlanDescription, new { @maxlength = "250", @id = "txtPlanDescription", @class = "form-control" })
+                </div>
+            </div>
+        
+        <div class="clear"></div>
+        
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="dropdown_list" id="associatedDiagnosis">
+                    <h2>Select Diagnosis Associated</h2>
+                    <ul id="searchDiv"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="dropdown_list" id="selectedDiagnosis">
+                    <h2>Selected Diagnosis</h2>
+                    <ul id="selectedDiagnosisDiv"></ul>
+                </div>
+            </div>
+        </div>
+     
+            <div class="col-sm-12">
+                @*<div class="rowTable">
+                     @if (Model.Id != null && Model.Id != 0)
+                        {
+                            <input type="submit" class="btn btn-primary edit-btn" value="Update" onclick="return SaveCarePlan();" />
+                        }
+                        else
+                        {
+                            <input type="submit" onclick="return SaveCarePlan();" class="btn btn-primary edit-btn" value="Save" />
+                        }
+                        <button name="ClientCancel" class="btn btn-primary edit-btn" type="button" onclick="return ClearAll();">Cancel</button>
+                </div>*@
+
+
+                @{
+                    var saveText = Model != null && Model.Id > 0 ? "Update" : "Save";
+                }
+                <input type="submit" id="btnSaveCarePlan" class="btn btn-primary" value="@saveText" onclick="return SaveCarePlan();" />
+                <button name="ClientCancel" class="btn btn-default" type="button" onclick="return ClearFormInCarePlan();">Cancel</button>
+              
+            </div>
+        </div>
+</div>

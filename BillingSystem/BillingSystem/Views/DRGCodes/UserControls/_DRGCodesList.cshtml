@@ -1,0 +1,99 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using BillingSystem.Model
+@model BillingSystem.Models.DRGCodesView
+@{
+    var tableNumber = "";
+    if (Session[SessionNames.SessionClass.ToString()] != null)
+    {
+        var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+        tableNumber = objSession.ServiceCodeTableNumber;
+    }
+}
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.DRGCodesList != null && Model.DRGCodesList.Count > 0)
+        {
+            var grid = new WebGrid(Model.DRGCodesList, ajaxUpdateContainerId: "gridContentDiagnosisCode", canPage: false);
+            var gridColumns = new List<WebGridColumn>();
+            //if (Model.UserId == 1)
+            //{
+
+
+            gridColumns.Add(grid.Column(header: " ", format: @<text><input class="check-box" id="assignChkBx" name="assignChkBx" type="checkbox" value="@item.DRGCodesId" /></text>));
+            //}
+            gridColumns.Add(grid.Column("CodeTableNumber", "DRG Table Number", canSort: true, style: "col1"));
+            gridColumns.Add(grid.Column("CodeNumbering", "Code", canSort: true, style: "col3"));
+            gridColumns.Add(grid.Column("CodeDescription", "Code Description", canSort: true, style: "col4"));
+            gridColumns.Add(grid.Column("Alos", "Expected Length of Stay", canSort: true, style: "col4"));
+            gridColumns.Add(grid.Column("CodePrice", "Price (AED)", canSort: true, style: "col5"));
+            gridColumns.Add(grid.Column("CodeDRGWeight", "DRG Weight", canSort: true, style: "col6"));
+            gridColumns.Add(grid.Column("CodeEffectiveDate", "Effective Date", canSort: true, style: "col8", format: @<text>@if (item.CodeEffectiveDate != null)
+            {
+                @item.CodeEffectiveDate.ToString("dd/MM/yyyy")
+            }</text>));
+            gridColumns.Add(grid.Column("CodeExpiryDate", "Expiry Date", canSort: true, style: "col9", format: @<text>@if (item.CodeExpiryDate != null)
+            {
+                @item.CodeExpiryDate.ToString("dd/MM/yyyy")
+            }</text>));
+            gridColumns.Add(grid.Column(header: "Action", format: @<text>
+                <a href="javascript:;" onclick="EditDRGCodes('@item.DRGCodesId') " style="float: left; margin-right: 3px; width: 15px;">
+                    <img src="@Url.Content("~/images/edit.png")" />
+                </a>
+                                                                       &nbsp;  
+                                                                       @*<a href="javascript:;" title="Delete CPTCodes" onclick="return DeleteDRGCodes('@item.DRGCodesId'); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>*@
+        
+        <a href="javascript:;" title="Delete CPTCodes" onclick="return OpenConfirmPopup('@item.DRGCodesId','Delete CPTCodes','',DeleteDRGCodes,null); " style="float: left; width: 15px;">
+            <img src="@Url.Content("~/images/delete.png")" />
+        </a>
+                                                                   </text>));
+
+            @grid.GetHtml(htmlAttributes: new { id = "innovationgrid" },
+                         tableStyle: "table table_scroll",
+                    headerStyle: "gridHead",
+                    footerStyle: "gridFooter",
+                    rowStyle: "gridRow",
+                    alternatingRowStyle: "gridRow", columns: grid.Columns(gridColumns.ToArray()))
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+    <div id="loadingDiv" style="text-align: center; display: none; margin-bottom: 20px;">
+        <img alt="Loading" src="@Url.Content("~/images/ajax-loader.gif")" />
+    </div>
+</div>
+
+<script>
+    $(function () {
+        if ($('#innovationgrid tr').length > 0) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(SortDrgCodeGrid, "#DRGCodesListDiv");
+        $("div .fht-tbody").scroll(function (e) {
+            if ($(this).scrollTop() + $(this).innerHeight() >= this.scrollHeight && !noMoreData && !inProgress) {
+                e.preventDefault();
+                inProgress = true;
+                $("#loadingDiv").show();
+                ajaxStartActive = false;
+                setTimeout(function () {
+                    $.post("/DRGCodes/RebindBindDRGCodesList", { "blockNumber": blockNumber, "tableNumber": $("#ddlTableSet").length > 0 && $("#ddlTableSet").val() ? $("#ddlTableSet").val() : @tableNumber },
+                        function (data) {
+                            blockNumber = blockNumber + 1;
+                            noMoreData = data.NoMoreData;
+                            var list = AppendDataToDRGCodeGrid(data.list, data.UserId);
+                            $("#innovationgrid tbody").append(list);
+                            $("#loadingDiv").hide();
+                            inProgress = false;
+                            ajaxStartActive = true;
+
+                            CheckBoxIsSelectedEvent();
+                        });
+                }, 1000);
+            }
+        });
+    });
+</script>

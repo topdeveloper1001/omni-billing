@@ -1,0 +1,107 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using BillingSystem.Model
+@model BillingSystem.Models.ServiceCodeViewModel
+
+@{
+    var tableNumber = "";
+    if (Session[SessionNames.SessionClass.ToString()] != null)
+    {
+        var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+        tableNumber = objSession.ServiceCodeTableNumber;
+    }
+}
+
+@*@if (Model.UserId == 1)
+    {*@
+<div class="form" id="ServiceCodeListDiv">
+    <div class="table-responsive">
+        @if (Model.ServiceCodeList != null)
+        {
+            if (Model.ServiceCodeList.Count > 0)
+            {
+                var grid = new WebGrid(Model.ServiceCodeList, ajaxUpdateContainerId: "gridContent", canPage: false);
+                <div id="gridContent">
+                    @grid.GetHtml(htmlAttributes: new { id = "ServiceCodegrid" },
+                        tableStyle: "table table_scroll",
+                        headerStyle: "gridHead",
+                        footerStyle: "gridFooter",
+                        rowStyle: "gridRow",
+                        alternatingRowStyle: "gridRow",
+                        columns: grid.Columns(
+                        grid.Column(header: " ", format: @<text><input class="check-box" id="assignChkBx" name="assignChkBx" type="checkbox" value="@item.ServiceCodeId" /></text>),
+                            grid.Column("ServiceCodeTableNumber", "Table Number"),
+                                     //grid.Column("ServiceCodeTableDescription", "Description"),
+                            grid.Column("ServiceCodeValue", "Value"),
+                            grid.Column("ServiceCodeDescription", "Description"),
+                            grid.Column("ServiceCodePrice", "Price"),
+                            grid.Column("ServiceCodeEffectiveDate", "Effective Date", @<text>@if (item.ServiceCodeEffectiveDate != null)
+                            {
+                                @item.ServiceCodeEffectiveDate.ToString("dd/MM/yyyy")
+                            }</text>),
+                            grid.Column("ServiceExpiryDate", "Expiry Date", @<text>@if (item.ServiceExpiryDate != null)
+                            {
+                                @item.ServiceExpiryDate.ToString("dd/MM/yyyy")
+                            }</text>),
+                            grid.Column("ServiceCodeBasicApplicationRule", "Application Rule"),
+                            //grid.Column("ServiceCodeServiceCodeMain", "Service Code Main"),
+                            grid.Column("ServiceCodeServiceCodeMainText", "Service Code Main"),
+                            grid.Column("ServiceServiceCodeSub", "Service Code Sub"),
+                            //grid.Column("ServiceServiceCodeSubText", "Service Code Sub"),
+                            grid.Column(header: "Action", format: @<text><a href="javascript:;" onclick="EditServiceCode('@item.ServiceCodeId')" style="float: left; margin-right: 7px; width: 15px;">
+                                    <img src="@Url.Content("~/images/edit.png")" />
+                                </a>
+                                                                       @*<a href="javascript:;" title="Delete ServiceCode" onclick="return DeleteServiceCode('@item.ServiceCodeId');" style=" float: left; width: 15px;">
+                                    <img src="@Url.Content("~/images/delete.png")" />
+                                </a>*@
+                    <a href="javascript:;" title="Delete ServiceCode" onclick="return OpenConfirmPopup('@item.ServiceCodeId','Delete ServiceCode','',DeleteServiceCode,null); " style=" float: left; width: 15px;">
+                        <img src="@Url.Content("~/images/delete.png")" />
+                    </a>
+                            </text>)
+))<h6>* Click on any column heading to sort</h6>
+                </div>
+            }
+            else
+            {
+                <h2>No Record found</h2>
+            }
+        }
+    </div>
+    <div id="loadingDiv" style="text-align: center; display: none; margin-bottom: 20px;">
+        <img alt="Loading" src="@Url.Content("~/images/ajax-loader.gif")" />
+    </div>
+</div>
+@*}*@
+
+
+<script>
+    $(function () {
+        if ($('#ServiceCodegrid tr').length > 0) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(SortServiceCodeGrid, "#gridContent");
+
+        $("div .fht-tbody").scroll(function (e) {
+            if ($(this).scrollTop() + $(this).innerHeight() >= this.scrollHeight && !noMoreData && !inProgress) {
+                e.preventDefault();
+                inProgress = true;
+                $("#loadingDiv").show();
+                ajaxStartActive = false;
+                setTimeout(function () {
+                    $.post("/ServiceCode/RebindBindServiceCodeList", { "blockNumber": blockNumber, "tableNumber": $("#ddlTableSet").length > 0 && $("#ddlTableSet").val() ? $("#ddlTableSet").val() : @tableNumber },
+                        function (data) {
+                            blockNumber = blockNumber + 1;
+                            noMoreData = data.NoMoreData;
+                            var list = AppendDataToServiceCodeGrid(data.list, data.UserId);
+                            $("#ServiceCodegrid tbody").append(list);
+                            $("#loadingDiv").hide();
+                            inProgress = false;
+                            ajaxStartActive = true;
+
+                            CheckBoxIsSelectedEvent();
+                        });
+                }, 1000);
+            }
+        });
+    });
+</script>

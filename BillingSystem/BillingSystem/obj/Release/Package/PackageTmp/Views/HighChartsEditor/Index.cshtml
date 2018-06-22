@@ -1,0 +1,51 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = null;
+    //Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,700|Source Sans:400,300,100' rel='stylesheet' type='text/css' />
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+@*<script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
+<script src="~/Scripts/jquery-1.7.2.min.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/highstock.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/standalone-framework.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/highcharts-more.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/highcharts-3d.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/data.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/exporting.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/funnel.js"></script>
+<script src="~/Scripts/HighCharts-Editor/dependencies/solid-gauge.js"></script>
+
+
+<link href="~/Scripts/HighCharts-Editor/highcharts-editor.min.css" rel="stylesheet" />
+<script src="~/Scripts/HighCharts-Editor/highcharts-editor.min.js"></script>
+
+<script src="~/Scripts/HighCharts-Editor/plugins/data-csv.js"></script>
+<script src="~/Scripts/HighCharts-Editor/plugins/data-difi.js"></script>
+<script src="~/Scripts/HighCharts-Editor/plugins/data-gspreadsheets.js"></script>
+<script src="~/Scripts/HighCharts-Editor/plugins/data-socrata.js"></script>
+
+
+<div id="main"></div>
+
+<script>
+    $.getJSON('/HighChartsEditor/GetMDashboardList/', function (csv) {
+        
+        highed.ready(function () {
+            var editor = highed.Editor('main', {
+                features: "export templates customize",
+                importer: {
+                    plugins: ['CSV']
+                }
+            });
+            editor.importer.loadCSV(csv);
+            //editor.on("Change", function (chart) {
+            //    
+            //    console.log(chart.export.html());
+            //});
+        });
+    });
+</script>
+

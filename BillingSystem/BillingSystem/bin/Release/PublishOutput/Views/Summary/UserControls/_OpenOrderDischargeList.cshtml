@@ -1,0 +1,43 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model List<OpenOrderCustomModel>
+
+@if (Model != null && Model.Count > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentOpenOrderDischarge1", canPage: false, canSort: true);
+    <div id="gridContentOpenOrderDischarge1">
+        @*@grid.GetHtml(htmlAttributes: new { id = "OpenOrderDischarge" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",*@
+@grid.GetHtml(htmlAttributes: new { id = "OpenOrderDischarge" }, tableStyle: "table TableOrderActivityGrid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridRow",
+            columns:
+                grid.Columns(
+                    grid.Column("OrderCode", "Order Code", canSort: true, style: "col3"),
+                    grid.Column("OrderDescription", "Order Description", canSort: true, style: "col4"),
+                    grid.Column("CategoryName", "Order Category", canSort: true, style: "col6"),
+                     grid.Column("SubCategoryName", "Order Sub-Category", canSort: true, style: "col7"),
+                     grid.Column("Status", "Status", canSort: true, style: "col7"),
+                     grid.Column("Quantity", "Quantity", canSort: true, style: "col2"),
+                     grid.Column("FrequencyText", "Frequency", canSort: true, style: "col5"),
+                     grid.Column("PeriodDays", "Duration", canSort: true, style: "col8"),
+                     grid.Column("OrderNotes", "Comments", canSort: true, style: "col9")
+                                              )
+                                      )<h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function () {
+        $('#OpenOrderDischarge').fixedHeaderTable('destroy');
+        //if ($('#colProceduresList').hasClass('in')) {
+        //   $('#OpenOrderDischarge').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        //} else {
+        //    $('#colProceduresList').addClass('in');
+        //    $('#OpenOrderDischarge').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        //    $('#colProceduresList').removeClass('in');
+        //}
+        //SetGridSorting(BindDischargeOrdersBySort, "#gridContentOpenOrderDischarge1");
+    });
+</script>

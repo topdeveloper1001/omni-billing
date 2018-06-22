@@ -1,0 +1,39 @@
+﻿@using BillingSystem.Model.CustomModel
+@using System.Linq
+
+@model IEnumerable<XmlReportingInitialClaimErrorReport>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridClaimsErrorBatchReport", canPage: false, canSort: true);
+    <div id="gridBatchReport">
+        @grid.GetHtml(htmlAttributes: new { id = "gridClaimsErrorBatchReport" }, tableStyle: "table table-grid table_scroll12", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                grid.Column("DateReceived", header: "Date Claim Received", canSort: false, style: "col1", format: @<text>@if (item.DateReceived != null) 
+                        { @item.DateReceived.ToString("dd/MM/yyyy HH:mm:ss" ) 
+                        }</text> ),
+                grid.Column("BatchNumber", header: "Batch Number Assigned", canSort: false, style: "col2"),
+                grid.Column("SenderID", header: "Sender ID", canSort: false, style: "col5"),
+                grid.Column("ClinicianID", header: "Clinician ID", canSort: false, style: "col5"),
+                grid.Column("FacilityName", header: "Facility Name", canSort: false, style: "col2"),
+                grid.Column("Claims", header: "Total Number of Claims", canSort: false, style: "col3"),
+                grid.Column("Gross", header: "Total Gross Charges Billed", canSort: false, style: "col4"),
+                grid.Column("ClaimsWithError", header: "Total Number of Claims with Errors", canSort: false, style: "col3"),
+                grid.Column("GrossChargesWithError", header: "Total Gross Charges Billed with Errors", canSort: false, style: "col3"),
+                grid.Column("InitErrorPercentage", header: "% of Initial Claims with Errors", canSort: false, style: "col4"),
+                grid.Column("ErrorRevenuePercentage", header: "% of Revenue with Errors", canSort: false, style: "col4")
+                ))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        if ($('#gridClaimsErrorBatchReport tr').length > 5) {
+            $('.table_scroll12').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+    });
+</script>
+

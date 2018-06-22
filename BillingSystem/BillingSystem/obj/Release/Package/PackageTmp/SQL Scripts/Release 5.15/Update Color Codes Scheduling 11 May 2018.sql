@@ -1,0 +1,2 @@
+Update GlobalCodes Set ExternalValue2='patient_initial_booking' Where GlobalCodeCategoryValue='4903' AND GlobalCodeValue=1
+Update GlobalCodes Set ExternalValue2='patient_expired_notbooking' Where GlobalCodeCategoryValue='4903' AND GlobalCodeValue=1

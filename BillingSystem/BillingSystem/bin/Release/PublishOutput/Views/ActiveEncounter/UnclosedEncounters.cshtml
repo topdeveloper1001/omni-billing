@@ -1,0 +1,181 @@
+﻿@using BillingSystem.Common
+
+@{
+    ViewBag.Title = "UnclosedEncounters";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using System.Web.Optimization
+@model BillingSystem.Models.ActiveEncounter
+<script src="~/Scripts/ActiveEncounter/UnclosedEncounters.js"></script>
+<script src="~/Scripts/ActiveEncounter/ActiveEncounter.js"></script>
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseUnClosedEncounters">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Auto Closed Encounters:
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseUnClosedEncounters" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="table-responsive" id="UnclosedEncountersList">
+                            @* Unclosed OP Encounters *@
+                            @Html.Hidden("hfMissAuthEncounterId")
+                            @if (Model.UnClosedEncounters != null && Model.UnClosedEncounters.Any())
+                            {
+                                var grid = new WebGrid(Model.UnClosedEncounters, ajaxUpdateContainerId: "gridContent", canPage: false);
+                                <div id="gridContent">
+                                    @grid.GetHtml(htmlAttributes: new { id = "UnclosedEncountersGrid" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter",
+                                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                                        columns: grid.Columns(
+                                            grid.Column(header: "Is VIP", canSort: false, style: "col1", format: @<text>
+                                            @if (!string.IsNullOrEmpty(item.PatientIsVIP))
+                                            {
+                                                <span style="float: left;">
+                                                    <img style="height: 20px; width: 20px" src="~/images/vip2.png" />
+                                                </span>
+                                            } </text>),
+                                            grid.Column("FirstName", "First Name", canSort: false, style: "col2"),
+                                            grid.Column("LastName", "Last Name", canSort: false, style: "col3"),
+                                            grid.Column("BirthDate", "Birth Date", canSort: false, style: "col4", format: @<text>
+                                                @if (item.BirthDate != null)
+                                                {
+                                                    @item.BirthDate.ToString("dd/MM/yyyy")
+                                                }</text>),
+                                            grid.Column("EncounterNumber", "Encounter Number", canSort: false, style: "col5"),
+                                            grid.Column("PersonEmiratesIDNumber", ResourceKeyValues.GetKeyValue("socialsecuritynumber"), canSort: false, style: "col6"),
+                                            grid.Column("EncounterStartTime", "Encounter Start", canSort: false, style: "col7", format: @<text>@item.EncounterStartTime.ToString("dd/MM/yyyy HH:mm:ss")</text>),
+                                            grid.Column("EncounterEndTime", "Encounter End", canSort: false, style: "col7", format: @<text>
+                                        @if (item.EncounterEndTime != null)
+                                        {
+                                            @item.EncounterEndTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                        }</text>),
+                                            grid.Column("EncounterPatientTypeName", "Patient Type", canSort: false, style: "col8"),
+                                            grid.Column("ErrorStatus", "Status", canSort: false, style: "colErrorStatus", format: @<text>
+                                                                                                                                       @if (@item.ErrorStatus == "E")
+                                                                                                                                       {
+                                                                                                                                          <p>Encounter Auto Closed</p>
+                                                                                                                                       } 
+                                    @if (@item.ErrorStatus == "A")
+                                                                                                                                       {
+                                                                                                                                          <p>Authorization Missing</p>
+                                                                                                                                       } 
+                                     @if (@item.ErrorStatus == "O")
+                                                                                                                                       {
+                                                                                                                                          <p>Orders Pending</p>
+                                                                                                                                       } 
+                                                                                                                                   </text>),
+                                            grid.Column(header: "Action", style: "col9", format: @<text>
+                                                <div class="iconsAction">
+                                                    @if (@item.ErrorStatus == "E")
+                                                    {
+                                                        @*<a href="javascript:void(0)" onclick="CloseOPEncounter('@item.EncounterID', '@item.PatientID', 4) " title="Close Outpatient Encounter">
+                                                                <img src="~/images/discharge.png" />
+                                                            </a>*@
+                                                    }
+                                                    else if (@item.ErrorStatus == "A")
+                                                    {
+                                                        <a href="javascript:void(0);" title="Edit Authorization" onclick="return ViewAuthInUnClosedEncounters('@item.EncounterID'); " style="float: left; margin-right: 7px; width: 15px;">
+                                                            <img src="@Url.Content("~/images/Authorization_red.png")" />
+                                                        </a>
+                                                    }
+                                                    else if (@item.ErrorStatus == "O")
+                                                    {
+                                                        <a href="javascript:void(0)" class="" onclick="EditOrders('@item.EncounterID', '@item.PatientID') " title="Close Open Orders">
+                                                            <img src="~/images/edit.png" />
+                                                        </a>
+                                                        
+                                                         @*<a href="#" title="ReScrub this" onclick="return CheckEncounterEndStatus('@item.EncounterID'); ">
+                                                            <img src="@Url.Content("~/images/ReScrub.png")" />
+                                                        </a>*@
+                                                    }
+                                                </div>
+                                            </text>)
+                                                                     ))
+                                </div>
+                            }
+                            else
+                            {
+                                <h2>No Record found</h2>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* User role selection pop up *@
+
+<div id="divhidepopup" style="display: none;">
+    <div class="popup-coverbg"></div>
+    <div class="popup-frame">
+        <div class="popup-main">
+            <div class="popup-content">
+                <div class="popup-close" onclick="ClosePopup();">X</div>
+                <div class="minHeight">
+                    <div id="EditOpenOrdersDiv"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* Authorization Div Pop up *@
+
+<div id="divhidepopup1" class="hidePopUp" style="display: none;">
+    <div class="popup-coverbg"></div>
+    <div class="popup-frame">
+        <div class="popup-main" style="margin: 50px auto">
+            <div class="popup-content" style="min-height: 500px;">
+                <div class="popup-close" onclick="$('.hidePopUp').hide(); $.validationEngine.closePrompt('.formError', true);">X</div>
+                <div class="minHeight" style="min-height: 500px">
+                    <div id="authorizationdiv"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="divUCCancelOrder" class="warning_popup" style="display: none; cursor: default">
+    <input type="hidden" id="hidCancelOrderId" />
+    <input type="hidden" id="hidTrId" />
+    <div class="modal-header">
+        <h5 class="modal-title"> Cancel Order</h5>
+    </div>
+    <div class="modal-body">
+        <h5>Do you want to cancel the selected order? </h5>
+    </div>
+    <div class="modal-footer">
+        @*<input type="button" id="btnCancelUCOrder" class="btn btn-sm btn-primary" value="Yes" />*@
+        <a href="#" id="btnCancelUCOrder" class="btn btn-sm btn-primary"  >Yes</a>
+        <input type="button" id="btnCancel" class="btn btn-sm btn-default" value="No" />
+    </div>
+</div>
+
+<div id="divNoOrderPending" class="warning_popup" style="display: none; cursor: default">
+    <div class="modal-header">
+        <h5 class="modal-title">No Orders pending</h5>
+    </div>
+    <div class="modal-body">
+        <h5>All Order for the Encounter have been closed.</h5>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="btnClose" class="btn btn-sm btn-primary" value="Ok" onclick="CloseOpenorderPopup();" />
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $('#UnclosedEncountersGrid')
+            .fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+    });
+</script>
+<script src="~/Scripts/Summary/OrdersAdministered.js"></script>

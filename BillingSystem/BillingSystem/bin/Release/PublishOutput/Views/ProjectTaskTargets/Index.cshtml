@@ -1,0 +1,50 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@model ProjectTaskTargetsView
+
+@{
+    ViewBag.Title = "ProjectTaskTargets View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseProjectTaskTargetsAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span> Add ProjectTaskTargets
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseProjectTaskTargetsAddEdit" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">                        
+                        @{Html.RenderPartial("~/Views/ProjectTaskTargets/UserControls/_ProjectTaskTargetsAddEdit.cshtml", Model.CurrentProjectTaskTargets);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseProjectTaskTargetsList">
+            <h4 class="panel-title collapseTitle">
+                <span><img src="../images/list.png" /></span> ProjectTaskTargets List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseProjectTaskTargetsList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="ProjectTaskTargetsListDiv">
+                    @{Html.RenderPartial("~/Views/ProjectTaskTargets/UserControls/_ProjectTaskTargetsList.cshtml", Model.ProjectTaskTargetsList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/ProjectTaskTargets/ProjectTaskTargets.js?@Helpers.CurrentAssemblyTicks"></script>
+@*<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>*@

@@ -1,0 +1,114 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model
+@model AppointmentTypes
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="AppointmentTypesFormDiv">
+    @Html.HiddenFor(m => m.Id)
+    @*// BBCOLUMNSHERE*@
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Corporate:</label>
+            <select id="ddlCorporate" onchange="BindFacilityDropdownFilterInAppointmentTypes($('#ddlCorporate').val())" class="validate[required]"></select>
+            <input type="hidden" id="hfCorporateId" value="@Helpers.GetSysAdminCorporateID()" />
+            @*<input type="hidden" id="ddlCorporate" value="@Helpers.GetSysAdminCorporateID()" />*@
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Facility:</label>
+            <select id="ddlFacilityFilter" class="validate[required]"></select>
+            <input type="hidden" id="hfFacilityId" value="@Helpers.GetDefaultFacilityId()" />
+
+        </div>
+    </div>
+
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label> CPT Range From:</label>
+            @Html.TextBoxFor(m => m.CptRangeFrom, new { @maxlength = "10", @id = "txtCptRangeFrom", @class = "validate[optional[number]]" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label> CPT Range To:</label>
+            @Html.TextBoxFor(m => m.CptRangeTo, new { @maxlength = "10", @id = "txtCptRangeTo", @class = "validate[optional[number]]" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Appointment Type:</label>
+            @Html.TextBoxFor(m => m.Name, new { @id = "txtName", @class = "validate[required]" })
+        </div>
+    </div>
+
+
+    @*<div class="col-sm-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Default Time (In Minutes):</label>
+                <select id="ddlDefaultTime" class="validate[required]"></select>
+            </div>
+        </div>*@
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Description:</label>
+            @Html.TextAreaFor(m => m.Description, new { @maxlength = "500", @id = "txtDescription" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Category Number:</label>
+            @Html.TextBoxFor(m => m.CategoryNumber, new { @maxlength = "50", @id = "txtCategoryNumber", @class = "validate[required,custom[integer]]" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Default Time (In Minutes):</label>
+            @Html.TextBoxFor(m => m.DefaultTime, new { @class = "validate[required,custom[integer]]", @maxlength = "4" })
+            @*<select id="ddlDefaultTime" class="validate[required]"></select>*@
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <label class="control-label">
+            Is Active: @Html.CheckBoxFor(m => m.IsActive, new { @id = "chkIsActive" })
+        </label>
+    </div>
+    <div class="col-sm-3">
+        <label class="control-label">
+            @{
+                var chkChecked = !string.IsNullOrEmpty(Model.ExtValue1) && Convert.ToInt32(Model.ExtValue1) == 1;
+            }
+            Equipment Required: @Html.CheckBoxFor(m => chkChecked, new { @id = "chkExtValue1" })
+        </label>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label class="control-label"><span class="mandatoryStar"></span>User Role:</label>
+            <select id="ddlUserType" class="validate[required]"></select>
+        </div>
+    </div>
+    <div class="clear"></div>
+
+    <div class="btn-group">
+
+        @{
+            var saveText = Model != null && Model.Id > 0 ? "Update" : "Save";
+        }
+        <input type="submit" id="btnSaveAppointment" class="btn btn-primary edit-btn marginBtn" value="@saveText" onclick="return SaveAppointmentTypes();" />
+        <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAppointmentTypeForm();">Cancel</button>
+    </div>
+</div>
+

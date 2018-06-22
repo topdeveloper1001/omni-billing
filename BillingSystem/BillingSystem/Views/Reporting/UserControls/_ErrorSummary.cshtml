@@ -1,0 +1,51 @@
+﻿@model List<BillingSystem.Model.CustomModel.ScrubHeaderCustomModel>
+
+<div class="panel-body">
+    <div class="greyBox"></div>
+    <div class="base-color">
+        <div class="form">
+            <div class="table-responsive" id="InPatientActiveEncounterList">
+                @if (Model != null && Model.Count > 0)
+                {
+                    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentIPChargesDetailReport", canPage: false, canSort: true);
+                    <div id="gridContentIPChargesReport">
+                        @grid.GetHtml(htmlAttributes: new { id = "ErrorSummaryReport" }, tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+                            rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                              grid.Column("RuleDescription", "Short Description", style: "col3"),
+                            grid.Column("ScrubDate", "Date", style: "col1", format: @<text>@if (item.ScrubDate != null)
+                            {
+                                @item.ScrubDate.ToString("dd/MM/yyyy")
+                            }</text>),
+                                            grid.Column("RuleCode", "Rule Code", style: "col5"),
+
+
+                                            grid.Column("Performed", "Performed", style: "col7"),
+                                            grid.Column("Passed", "Passed", style: "col8"),
+                                            grid.Column("Failed", "Failed", style: "col9"),
+                                            grid.Column("NotApplicable", "Not Applicable", style: "col6")
+                                             ))
+                    </div>
+                }
+                else
+                {
+                    <h2>No Record found</h2>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        if ($('#ErrorSummaryReport tr').length > 0) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+            SetGridSorting(SortErrorDetailReport, "#gridContentIPChargesReport");
+            $("#ErrorDetailReport tbody tr").each(function (i, row) {
+                var $actualRow = $(row);
+                   $actualRow.find('.col3').html().indexOf('TOTAL');
+                
+            
+           }
+      )};
+    });
+</script>

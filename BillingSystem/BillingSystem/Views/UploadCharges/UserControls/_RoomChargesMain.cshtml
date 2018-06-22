@@ -1,0 +1,50 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+
+@model RoomChargesView
+@*Room Charges Add/update Section starts*@
+<div class="panel panel-default collapsecss ourcollapse RoomChargesview" >
+    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRoomChargesAddEdit">
+        <h4 class="panel-title collapseTitle">
+            <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Room Charges 
+            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </a>
+        </h4>
+    </div>
+    <div id="collapseRoomChargesAddEdit" class="panel-collapse collapse in">
+        <div class="panel-body">
+            <div class="base-color">
+                <div class="form">
+                    @{ Html.RenderPartial("~/Views/UploadCharges/UserControls/_RoomChargesManual.cshtml", Model.CurrentRoomCharge); }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@*Room Charges Add/update Section Ends*@
+
+@*Room Charges list Section starts*@
+<div class="panel panel-default collapsecss ourcollapse bordertable RoomChargesview" >
+    <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseRoomChargesList">
+        <h4 class="panel-title collapseTitle">
+            <span>
+                <img src="@Url.Content("~/images/list.png")">
+            </span>Current Room Charges
+            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </a>
+        </h4>
+    </div>
+    <div id="collapseRoomChargesList" class="panel-collapse tableImg collapse in">
+        <div class="panel-body">
+            <div class="base-color" >
+                <div class="table-responsive" id="CurrentRoomChargesGrid">
+                    @{Html.RenderPartial("~/Views/UploadCharges/UserControls/_RoomChargesList.cshtml", Model.RoomChargesList);}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@*Room Charges List Section Ends*@
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

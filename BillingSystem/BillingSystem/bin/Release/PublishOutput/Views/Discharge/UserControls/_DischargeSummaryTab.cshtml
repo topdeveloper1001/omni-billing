@@ -1,0 +1,265 @@
+﻿@using BillingSystem.Models
+@model PatientDischargeSummaryView
+
+<style>
+    .btn-group {
+        margin-left: 0;
+    }
+</style>
+
+<div class="white-bg">
+    <input type="hidden" id="hdAssociatedId" />
+    <input type="hidden" id="hdAssociatedTypeId" />
+    @Html.HiddenFor(m => m.CurrentPatientDischargeSummary.Id, new { @id = "hdDischargeSummaryId" })
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colDiagnosisListInDiagnosis">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Diagnosis
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colDiagnosisListInDiagnosis" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="rowTable">
+                            <div class="col-sm-12">
+                                <label>@Html.CheckBoxFor(m => Model.CurrentPatientDischargeSummary.SameDiagnosisHistory, new { @id = "chkSameDiagnosisHistory" }) Same Discharge History in Previous Encounters</label>
+                                <input type="button" value="Update" class="blue-btn btn btn-primary edit-btn" onclick="UpdateDischargeDetails(1);" />
+                            </div>
+                        </div>
+                        <div class="base-color" id="DiagnosisListInDischarge">
+                            @{Html.RenderPartial("~/Views/Summary/UserControls/_EHRDiagnosisList.cshtml", Model.DiagnosisList);}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colMedicationsReceiveInHouse">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Medication Receive InHouse
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colMedicationsReceiveInHouse" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="DivMedicationsReceiveInHouse">
+                    @{Html.RenderPartial("~/Views/Summary/UserControls/_DischargeOpenOrderList.cshtml", Model.MedicationsInHouseList);}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colProceduresList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Procedures Performed
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colProceduresList" class="panel-collapse collapse in tableImg">
+            <div id="DivProceduresList" class="base-color">
+                @{Html.RenderPartial("~/Views/Summary/UserControls/_OpenOrderDischargeList.cshtml", Model.ProceduresList);}
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colMedicalNotesList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Complications in Hospital
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colMedicalNotesList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="DivMedicalNotesList">
+                    @{Html.RenderPartial("~/Views/MedicalNotes/UserControls/_MedicalNotesList.cshtml", Model.ComplicationsList);}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colTestResults">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Test Results
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colTestResults" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="DivTestResults">
+                    @{Html.RenderPartial("~/Views/Summary/UserControls/_LabTestList.cshtml", Model.LabTestsList);}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colDischargeMedications">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Discharge Medications
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colDischargeMedications" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="DivDischargeMedications">
+                    @{Html.RenderPartial("~/Views/Summary/UserControls/_DischargeMedicationList.cshtml", Model.DischargeMedicationsList);}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colActiveMedicalProblemsDischarge">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Active Medical Problems:
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colActiveMedicalProblemsDischarge" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                        <div class="rowTable">
+                            <label><span class="mandatoryStar"></span>&nbsp; Active Medical Problems:</label>
+                            <select id="ddlMedicalProblems" class="validate[required]"></select>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+
+                        <div class="rowTable marginTop34">
+                            <input type="button" id="btnAddActiveMedicalProblems" value="Add" class="blue-btn btn btn-primary edit-btn marginBtn" onclick="AddDischargeDetails('#ddlMedicalProblems', 960);" />
+                        </div>
+                    </div>
+                    <div class="col-xs-12" id="divActiveMedicalProblemsDischarge">
+                        @{Html.RenderPartial("~/Views/Discharge/UserControls/_ActiveMedical.cshtml", Model.ActiveMedicalProblemsList);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colFollowupTypeInDischarge">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Followup Types:
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colFollowupTypeInDischarge" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color">
+
+                    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+                        <div class="rowTable">
+                            <label>Followup Date:</label>
+                            @Html.TextBoxFor(m => Model.CurrentPatientDischargeSummary.FollowupDate, "{0:MM/dd/yyyy}", new { @maxlength = "120", @resize = "vertical", @Id = "txtFollowupDate", @class = "dtGeneral" })
+                        </div>
+
+
+
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+                        <div class="rowTable">
+                            <label><span class="mandatoryStar"></span>&nbsp; Type of Followup:</label>
+                            <select id="ddlFollowupTypes" class="validate[required]"></select>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-2">
+                        <div class="rowTable">
+                            <label>Followup Required:</label>
+                            @Html.CheckBoxFor(m => Model.CurrentPatientDischargeSummary.FollowupRequired, new { @id = "chkFollowupRequired" })
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+
+                        <div class="rowTable marginTop34">
+                            <input type="button" id="BtnAddFollowupType" value="Add" class="blue-btn btn btn-primary edit-btn marginBtn" onclick="AddDischargeDetails('#ddlFollowupTypes', 962);" />
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-sm-12" id="DivFollowupTypesInDischarge">
+                    @{Html.RenderPartial("~/Views/Discharge/UserControls/_FollowsType.cshtml", Model.TypeOfFollowupsList);}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colPatientInstrutionsInDischarge">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" />
+                </span>&nbsp; Patient Instructions:
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colPatientInstrutionsInDischarge" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                        <div class="rowTable">
+                            <label><span class="mandatoryStar"></span>Patient Instructions:</label>
+                            <select id="ddlPatientInstructions" class="validate[required]"></select>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                        <div class="rowTable marginTop34">
+                            <input type="button" id="BtnAddPatientInstructions" value="Add" class="blue-btn btn btn-primary edit-btn marginBtn" onclick="AddDischargeDetails('#ddlPatientInstructions', 961);" />
+                        </div>
+                    </div>
+                    <div class="col-sm-12" id="DivPatientInstrutionsInDischarge">
+                        @{Html.RenderPartial("~/Views/Discharge/UserControls/_PatientInstructions.cshtml", Model.PatientInstructions);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="clear"></div>
+    @*<div class="btn-group">
+            <input type="button" value="Update" class="blue-btn btn btn-primary edit-btn marginBtn" onclick="UpdateDischargeDetails(1);" />
+        </div>*@
+
+</div>
+

@@ -1,0 +1,31 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<OperatingRoomCustomModel>
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentOperatingRoom", canPage: false,canSort:true);
+    <div id="gridContentOperatingRoom">
+        @grid.GetHtml(htmlAttributes: new { id = "OperatingRoomGrid" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter",
+                                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                                        grid.Column("EncounterNumber", "Encounter Number", canSort: true, style: "col2"),
+                                        grid.Column("CodeValue", "Code Value", canSort: true, style: "col3"),
+                                        grid.Column("CodeDescription", "Code Description", canSort: true, style: "col4"),
+                                        grid.Column("OperatingTypeText", "Operating Type", canSort: true, style: "col5"),
+                                        grid.Column("StartDay", "StartDay", canSort: true, style: "col5", format: item => string.Format("{0:MM/dd/yyyy}", item.StartDay)),
+                                        grid.Column("StartTime", "Start Time", canSort: true, style: "col6"),
+                                        grid.Column("EndDay", "End Day", canSort: true, style: "col7", format: item => string.Format("{0:MM/dd/yyyy}", item.EndDay)),
+                                        grid.Column("EndTime", "End Time", canSort: true, style: "col8"),
+                                        grid.Column("CalculatedHours", "Hours Used", canSort: true, style: "col9"),
+                                        grid.Column("StatusDescription", "Status", canSort: true, style: "col10")
+))@*<h6>* Click on any column heading to sort</h6>*@
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function() {
+        SetGridSorting(SortOperatingRoomData, "#gridContentOperatingRoom");
+    });
+</script>

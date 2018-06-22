@@ -1,0 +1,71 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Models.BedRateCardView
+
+
+@{
+    ViewBag.Title = "BedRateCard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .btn-group {
+        margin: 15px 0 10px 5px;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+</style>
+
+<div id="divPhysician" class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Bed Rate Card
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @*
+                            Owner: Shashank Awasthy
+                            On: 10092014
+                            Purpose: Render the grid view in partial view to display the filtered data.
+                        *@
+                        @{Html.RenderPartial("~/Views/BedRateCard/UserControls/_bedAddEdit.cshtml", Model.CurrentBedRateCard);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp; Bed Rate Card List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseTwo" class="panel-collapse collapse in">
+            <div class="panel-body">
+                @*scroller*@
+            <div class="base-color" id="physicianGrid">
+                @*
+                    Owner: Amit Jain
+                    On: 06102014
+                    Purpose: Call Partial View containing the list of BedRateCard List
+                *@
+                @{Html.RenderPartial("~/Views/BedRateCard/UserControls/_BedRateCardList.cshtml", Model.BedRateCardsList);}
+            </div>
+        </div>
+        <div class="clear"></div>
+    </div>
+</div>
+</div>
+<script src="~/Scripts/Bed/BedRateCard.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

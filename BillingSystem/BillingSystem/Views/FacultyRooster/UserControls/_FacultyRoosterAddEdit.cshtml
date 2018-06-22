@@ -1,0 +1,122 @@
+﻿@using BillingSystem.Model
+@model FacultyRooster
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="FacultyRoosterFormDiv">
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Id:</label>
+            @Html.TextBoxFor(m => m.Id, new { @maxlength = "10", @id = "txtId" })
+        </div>
+        <div class="rowTable">
+            <label>FacultyId:</label>
+            @Html.TextBoxFor(m => m.FacultyId, new { @maxlength = "10", @id = "txtFacultyId" })
+        </div>
+        <div class="rowTable">
+            <label>FacultyType:</label>
+            @Html.TextBoxFor(m => m.FacultyType, new { @maxlength = "10", @id = "txtFacultyType" })
+        </div>
+        <div class="rowTable">
+            <label>DeptId:</label>
+            @Html.TextBoxFor(m => m.DeptId, new { @maxlength = "10", @id = "txtDeptId" })
+        </div>
+        <div class="rowTable">
+            <label>AvailabilityType:</label>
+            @Html.TextBoxFor(m => m.AvailabilityType, new { @maxlength = "50", @id = "txtAvailabilityType" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Pattern:</label>
+            @Html.TextBoxFor(m => m.Pattern, new { @maxlength = "50", @id = "txtPattern" })
+        </div>
+        <div class="rowTable">
+            <label>WorkingDay:</label>
+            @Html.TextBoxFor(m => m.WorkingDay, new { @maxlength = "10", @id = "txtWorkingDay" })
+        </div>
+        <div class="rowTable">
+            <label>WeekNumber:</label>
+            @Html.TextBoxFor(m => m.WeekNumber, new { @maxlength = "10", @id = "txtWeekNumber" })
+        </div>
+        <div class="rowTable">
+            <label>FromDate:</label>
+            @Html.TextBoxFor(m => m.FromDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtFromDate" })
+        </div>
+        <div class="rowTable">
+            <label>ToDate:</label>
+            @Html.TextBoxFor(m => m.ToDate, new { @maxlength = "50", @id = "txtToDate" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>FacilityId:</label>
+            @Html.TextBoxFor(m => m.FacilityId, new { @maxlength = "10", @id = "txtFacilityId" })
+        </div>
+        <div class="rowTable">
+            <label>CorporateId:</label>
+            @Html.TextBoxFor(m => m.CorporateId, new { @maxlength = "10", @id = "txtCorporateId" })
+        </div>
+        <div class="rowTable">
+            <label>IsActive:</label>
+            @Html.TextBoxFor(m => m.IsActive, new { @maxlength = "10", @id = "txtIsActive" })
+        </div>
+        <div class="rowTable">
+            <label>CreatedBy:</label>
+            @Html.TextBoxFor(m => m.CreatedBy, new { @maxlength = "10", @id = "txtCreatedBy" })
+        </div>
+        <div class="rowTable">
+            <label>CreatedDate:</label>
+            @Html.TextBoxFor(m => m.CreatedDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtCreatedDate" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>RecurreanceDateTo:</label>
+            @Html.TextBoxFor(m => m.RecurreanceDateTo,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtRecurreanceDateTo" })
+        </div>
+        <div class="rowTable">
+            <label>RecurreanceDateFrom:</label>
+            @Html.TextBoxFor(m => m.RecurreanceDateFrom, new { @maxlength = "10", @id = "txtRecurreanceDateFrom" })
+        </div>
+        <div class="rowTable">
+            <label>ExtValue1:</label>
+            @Html.TextBoxFor(m => m.ExtValue1, new { @maxlength = "50", @id = "txtExtValue1" })
+        </div>
+        <div class="rowTable">
+            <label>ExtValue2:</label>
+            @Html.TextBoxFor(m => m.ExtValue2, new { @maxlength = "50", @id = "txtExtValue2" })
+        </div>
+        <div class="rowTable">
+            <label>ExtValue3:</label>
+            @Html.TextBoxFor(m => m.ExtValue3, new { @maxlength = "50", @id = "txtExtValue3" })
+        </div>
+    </div>
+    <div class="clear"></div>
+
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.Id != null && Model.Id != 0)
+            {
+                <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SaveFacultyRooster();" />
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveFacultyRooster();" class="btn btn-primary edit-btn marginBtn" value="Save" />
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>
+        </div>
+    </div>
+</div>

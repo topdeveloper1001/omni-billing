@@ -1,0 +1,342 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9B238813-3F79-47E2-8975-CEF73834812C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BillingSystem.Bal</RootNamespace>
+    <AssemblyName>BillingSystem.Bal</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime, Version=3.4.1.9004, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr.3.4.1.9004\lib\Antlr3.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AutoMapper, Version=6.2.2.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoMapper.6.2.2\lib\net45\AutoMapper.dll</HintPath>
+    </Reference>
+    <Reference Include="Elmah, Version=1.2.14706.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\elmah.corelibrary.1.2.2\lib\Elmah.dll</HintPath>
+    </Reference>
+    <Reference Include="Elmah.Mvc, Version=2.1.2.1389, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Elmah.Mvc.2.1.2\lib\net40\Elmah.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework">
+      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer">
+      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Omu.ValueInjecter, Version=2.3.3.0, Culture=neutral, PublicKeyToken=c7694541b0ac80e4, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Lib\Omu.ValueInjecter.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WebGrease, Version=1.6.5135.21930, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BusinessAccess\BillingModifierBal.cs" />
+    <Compile Include="BusinessAccess\ClinicianAppointmentTypesBal.cs" />
+    <Compile Include="BusinessAccess\ClinicianRosterBal.cs" />
+    <Compile Include="BusinessAccess\PlaceOfServiceBal.cs" />
+    <Compile Include="BusinessAccess\SchedulingParametersBal.cs" />
+    <Compile Include="BusinessAccess\AppointmentTypesBal.cs" />
+    <Compile Include="BusinessAccess\ATCCodesBal.cs" />
+    <Compile Include="BusinessAccess\AuditLogBal.cs" />
+    <Compile Include="BusinessAccess\AuthorizationBal.cs" />
+    <Compile Include="BusinessAccess\BaseBal.cs" />
+    <Compile Include="BusinessAccess\BedChargesBal.cs" />
+    <Compile Include="BusinessAccess\BedMasterBal.cs" />
+    <Compile Include="BusinessAccess\BedRateCardBal.cs" />
+    <Compile Include="BusinessAccess\BillHeaderBal.cs" />
+    <Compile Include="BusinessAccess\BillingSystemParametersBal.cs" />
+    <Compile Include="BusinessAccess\CarePlanBal.cs" />
+    <Compile Include="BusinessAccess\CarePlanTaskBal.cs" />
+    <Compile Include="BusinessAccess\CityBal.cs" />
+    <Compile Include="BusinessAccess\BillActivityBal.cs" />
+    <Compile Include="BusinessAccess\FutureOpenOrderBal.cs" />
+    <Compile Include="BusinessAccess\FutureOrderActivityBal.cs" />
+    <Compile Include="BusinessAccess\MedicalNecessityBal.cs" />
+    <Compile Include="BusinessAccess\PatientCareActivitiesBal.cs" />
+    <Compile Include="BusinessAccess\PatientCarePlanBal.cs" />
+    <Compile Include="BusinessAccess\FacultyRoosterBal.cs" />
+    <Compile Include="BusinessAccess\PatientPreSchedulingBal.cs" />
+    <Compile Include="BusinessAccess\PaymentTypeDetailBal.cs" />
+    <Compile Include="BusinessAccess\PreSchedulingLinkBal.cs" />
+    <Compile Include="BusinessAccess\PDFTemplatesBal.cs" />
+    <Compile Include="BusinessAccess\SchedulingBal.cs" />
+    <Compile Include="BusinessAccess\DeptTimmingBal.cs" />
+    <Compile Include="BusinessAccess\FacultyTimeslotsBal.cs" />
+    <Compile Include="BusinessAccess\HolidayPlannerBal.cs" />
+    <Compile Include="BusinessAccess\HolidayPlannerDetailsBal.cs" />
+    <Compile Include="BusinessAccess\PatientEvaluationBal.cs" />
+    <Compile Include="BusinessAccess\DashboardDisplayOrderBal.cs" />
+    <Compile Include="BusinessAccess\DashboardIndicatorDataBal.cs" />
+    <Compile Include="BusinessAccess\DashboardIndicatorsBal.cs" />
+    <Compile Include="BusinessAccess\DashboardParametersBal.cs" />
+    <Compile Include="BusinessAccess\DashboardRemarkBal.cs" />
+    <Compile Include="BusinessAccess\DrugAllergyLogBal.cs" />
+    <Compile Include="BusinessAccess\DrugInstructionAndDosingBal.cs" />
+    <Compile Include="BusinessAccess\DrugInteractionsBal.cs" />
+    <Compile Include="BusinessAccess\FacilityDepartmentBal.cs" />
+    <Compile Include="BusinessAccess\IndicatorDataCheckListBal.cs" />
+    <Compile Include="BusinessAccess\ManualDashboardBal.cs" />
+    <Compile Include="BusinessAccess\MissingDataBal.cs" />
+    <Compile Include="BusinessAccess\PatientInfoChangesQueueBal.cs" />
+    <Compile Include="BusinessAccess\PatientLoginDetailBal.cs" />
+    <Compile Include="BusinessAccess\OperatingRoomBal.cs" />
+    <Compile Include="BusinessAccess\DashboardBudgetBal.cs" />
+    <Compile Include="BusinessAccess\DashboardTargetsBal.cs" />
+    <Compile Include="BusinessAccess\DashboardTransactionCounterBal.cs" />
+    <Compile Include="BusinessAccess\DischargeSummaryDetailBal.cs" />
+    <Compile Include="BusinessAccess\LabTestOrderSetBal.cs" />
+    <Compile Include="BusinessAccess\LabTestResultBal.cs" />
+    <Compile Include="BusinessAccess\ManualChargesTrackingBal.cs" />
+    <Compile Include="BusinessAccess\McContractBal.cs" />
+    <Compile Include="BusinessAccess\MCOrderCodeRatesBal.cs" />
+    <Compile Include="BusinessAccess\MCRulesTableBal.cs" />
+    <Compile Include="BusinessAccess\PatientDischargeSummaryBal.cs" />
+    <Compile Include="BusinessAccess\PaymentBal.cs" />
+    <Compile Include="BusinessAccess\ProjectDashboardBal.cs" />
+    <Compile Include="BusinessAccess\ProjectsBal.cs" />
+    <Compile Include="BusinessAccess\ProjectTargetsBal.cs" />
+    <Compile Include="BusinessAccess\ProjectTasksBal.cs" />
+    <Compile Include="BusinessAccess\ProjectTaskTargetsBal.cs" />
+    <Compile Include="BusinessAccess\ScrubEditTrackBal.cs" />
+    <Compile Include="BusinessAccess\UploadChargesBal.cs" />
+    <Compile Include="BusinessAccess\XactivityBal.cs" />
+    <Compile Include="BusinessAccess\XAdviceXMLParsedDataBal.cs" />
+    <Compile Include="BusinessAccess\TPXMLParsedDataBal.cs" />
+    <Compile Include="BusinessAccess\TPFileHeaderBal.cs" />
+    <Compile Include="BusinessAccess\ReportingBal.cs" />
+    <Compile Include="BusinessAccess\DrugBal.cs" />
+    <Compile Include="BusinessAccess\ErrorMasterBal.cs" />
+    <Compile Include="BusinessAccess\FavoritesBal.cs" />
+    <Compile Include="BusinessAccess\DiagnosisCodeBal.cs" />
+    <Compile Include="BusinessAccess\FacilityRoleBal.cs" />
+    <Compile Include="BusinessAccess\CorporateBal.cs" />
+    <Compile Include="BusinessAccess\FacilityStructureBal.cs" />
+    <Compile Include="BusinessAccess\GlobalCodeCategoryMasterBal.cs" />
+    <Compile Include="BusinessAccess\ManagedCareBal.cs" />
+    <Compile Include="BusinessAccess\MedicalHistoryBal.cs" />
+    <Compile Include="BusinessAccess\MedicalNotesBal.cs" />
+    <Compile Include="BusinessAccess\MedicalRecordBal.cs" />
+    <Compile Include="BusinessAccess\MedicalVitalBal.cs" />
+    <Compile Include="BusinessAccess\ModuleAccessBal.cs" />
+    <Compile Include="BusinessAccess\OrderActivityBal.cs" />
+    <Compile Include="BusinessAccess\ParametersBal.cs" />
+    <Compile Include="BusinessAccess\PreliminaryBillBal.cs" />
+    <Compile Include="BusinessAccess\EquipmentBal.cs" />
+    <Compile Include="BusinessAccess\CountryBal.cs" />
+    <Compile Include="BusinessAccess\CPTCodesBal.cs" />
+    <Compile Include="BusinessAccess\DenialBal.cs" />
+    <Compile Include="BusinessAccess\DiagnosisBal.cs" />
+    <Compile Include="BusinessAccess\DocumentsTemplatesBal.cs" />
+    <Compile Include="BusinessAccess\DRGCodesBal.cs" />
+    <Compile Include="BusinessAccess\EncounterBal.cs" />
+    <Compile Include="BusinessAccess\FacilityBal.cs" />
+    <Compile Include="BusinessAccess\GlobalCodeBal.cs" />
+    <Compile Include="BusinessAccess\GlobalCodeCategoryBal.cs" />
+    <Compile Include="BusinessAccess\HCPCSCodesBal.cs" />
+    <Compile Include="BusinessAccess\InsuranceCompanyBal.cs" />
+    <Compile Include="BusinessAccess\InsurancePlansBal.cs" />
+    <Compile Include="BusinessAccess\InsurancePolicesBal.cs" />
+    <Compile Include="BusinessAccess\LoginTrackingBal.cs" />
+    <Compile Include="BusinessAccess\OpenOrderActivityScheduleBal.cs" />
+    <Compile Include="BusinessAccess\OpenOrderBal.cs" />
+    <Compile Include="BusinessAccess\PatientAddressRelationBal.cs" />
+    <Compile Include="BusinessAccess\PatientInfoBal.cs" />
+    <Compile Include="BusinessAccess\PatientInsuranceBal.cs" />
+    <Compile Include="BusinessAccess\PatientPhoneBal.cs" />
+    <Compile Include="BusinessAccess\PhysicianBal.cs" />
+    <Compile Include="BusinessAccess\RoleBal.cs" />
+    <Compile Include="BusinessAccess\RolePermissionBal.cs" />
+    <Compile Include="BusinessAccess\RoleTabsBal.cs" />
+    <Compile Include="BusinessAccess\RuleMasterBal.cs" />
+    <Compile Include="BusinessAccess\RuleStepBal.cs" />
+    <Compile Include="BusinessAccess\ScreenBal.cs" />
+    <Compile Include="BusinessAccess\ScrubReportBal.cs" />
+    <Compile Include="BusinessAccess\ServiceCodeBal.cs" />
+    <Compile Include="BusinessAccess\StateBal.cs" />
+    <Compile Include="BusinessAccess\SystemConfigurationBal.cs" />
+    <Compile Include="BusinessAccess\TabsBal.cs" />
+    <Compile Include="BusinessAccess\UserRoleBal.cs" />
+    <Compile Include="BusinessAccess\UsersBal.cs" />
+    <Compile Include="BusinessAccess\XclaimBal.cs" />
+    <Compile Include="BusinessAccess\XFileHeaderBal.cs" />
+    <Compile Include="BusinessAccess\XMLBillingBal.cs" />
+    <Compile Include="BusinessAccess\MappingPatientBedBal.cs" />
+    <Compile Include="BusinessAccess\DashboardBal.cs" />
+    <Compile Include="BusinessAccess\XmlReportingBal.cs" />
+    <Compile Include="BusinessAccess\XPaymentFileXMLBal.cs" />
+    <Compile Include="BusinessAccess\XPaymentReturnBal.cs" />
+    <Compile Include="Interfaces\IAddressService.cs" />
+    <Compile Include="Interfaces\IAppointmentService.cs" />
+    <Compile Include="Interfaces\IClinicianService.cs" />
+    <Compile Include="Interfaces\ICommonService.cs" />
+    <Compile Include="Interfaces\IPatientService.cs" />
+    <Compile Include="Interfaces\IService.cs" />
+    <Compile Include="Interfaces\IUserService.cs" />
+    <Compile Include="Mapper\BillingModifierMapper.cs" />
+    <Compile Include="Mapper\PlaceOfServiceMapper.cs" />
+    <Compile Include="Mapper\CommonMapperProfile.cs" />
+    <Compile Include="Mapper\ClinicianRosterMapper.cs" />
+    <Compile Include="Mapper\SchedulingParametersMapper.cs" />
+    <Compile Include="Mapper\DenialMapper.cs" />
+    <Compile Include="Mapper\EncounterMapper.cs" />
+    <Compile Include="Mapper\MedicalNecessityMapper.cs" />
+    <Compile Include="Mapper\BedRateCardMapper.cs" />
+    <Compile Include="Mapper\XMLBillingMapper.cs" />
+    <Compile Include="Mapper\ServiceCodeMapper.cs" />
+    <Compile Include="Mapper\FutureOpenOrderMapper.cs" />
+    <Compile Include="Mapper\FutureOrderActivityMapper.cs" />
+    <Compile Include="Mapper\PaymentMapper.cs" />
+    <Compile Include="Mapper\FacultyRoosterDuplicateLogMapper.cs" />
+    <Compile Include="Mapper\OrderActivityMapper.cs" />
+    <Compile Include="Mapper\PatientPreSchedulingMapper.cs" />
+    <Compile Include="Mapper\PatientCarePlanMapper.cs" />
+    <Compile Include="Mapper\EquipmentMapper.cs" />
+    <Compile Include="Mapper\CarePlanMapper.cs" />
+    <Compile Include="Mapper\CarePlanTaskMapper.cs" />
+    <Compile Include="Mapper\FacultyRoosterMapper.cs" />
+    <Compile Include="Mapper\PatientInfoMapper.cs" />
+    <Compile Include="Mapper\AppointmentTypesMapper.cs" />
+    <Compile Include="Mapper\AuthorizationMapper.cs" />
+    <Compile Include="Mapper\Common.cs" />
+    <Compile Include="Mapper\PreSchedulingLinkMapper.cs" />
+    <Compile Include="Mapper\SchedulingMapper.cs" />
+    <Compile Include="Mapper\DashboardDisplayOrderMapper.cs" />
+    <Compile Include="Mapper\DashboardIndicatorDataMapper.cs" />
+    <Compile Include="Mapper\DashboardIndicatorsMapper.cs" />
+    <Compile Include="Mapper\DashboardParametersMapper.cs" />
+    <Compile Include="Mapper\DashboardRemarkMapper.cs" />
+    <Compile Include="Mapper\DeptTimmingMapper.cs" />
+    <Compile Include="Mapper\DiagnosisMapper.cs" />
+    <Compile Include="Mapper\DrugAllergyLogMapper.cs" />
+    <Compile Include="Mapper\DrugInstructionAndDosingMapper.cs" />
+    <Compile Include="Mapper\DrugIntractionsMapper.cs" />
+    <Compile Include="Mapper\FacilityDepartmentMapper.cs" />
+    <Compile Include="Mapper\FacilityMapper.cs" />
+    <Compile Include="Mapper\FacilityRoleMapper.cs" />
+    <Compile Include="Mapper\FacilityStructureMapper.cs" />
+    <Compile Include="Mapper\FacultyTimeslotsMapper.cs" />
+    <Compile Include="Mapper\HolidayPlannerDetailsMapper.cs" />
+    <Compile Include="Mapper\HolidayPlannerMapper.cs" />
+    <Compile Include="Mapper\IndicatorDataCheckListMapper.cs" />
+    <Compile Include="Mapper\ManualDashboardMapper.cs" />
+    <Compile Include="Mapper\Mapper.cs" />
+    <Compile Include="Mapper\MedicalHistoryMapper.cs" />
+    <Compile Include="Mapper\OpenOrderMapper.cs" />
+    <Compile Include="Mapper\OperatingRoomMapper.cs" />
+    <Compile Include="Mapper\PatientEvaluationMapper.cs" />
+    <Compile Include="Mapper\PatientLoginDetailMapper.cs" />
+    <Compile Include="Mapper\PhysicianMapper.cs" />
+    <Compile Include="Mapper\ProjectsMapper.cs" />
+    <Compile Include="Mapper\ProjectTargetsMapper.cs" />
+    <Compile Include="Mapper\ProjectTasksMapper.cs" />
+    <Compile Include="Mapper\ProjectTaskTargetsMapper.cs" />
+    <Compile Include="Mapper\RuleMasterMapper.cs" />
+    <Compile Include="Mapper\ScrubHeaderMapper.cs" />
+    <Compile Include="Mapper\ScrubReportMapper.cs" />
+    <Compile Include="Mapper\TPFileHeaderMapper.cs" />
+    <Compile Include="Mapper\TPXMLParsedDataMapper.cs" />
+    <Compile Include="Mapper\UsersMapper.cs" />
+    <Compile Include="Mapper\XMLRemmitanceAdviceMapper.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Service\AddressService.cs" />
+    <Compile Include="Service\AppointmentService.cs" />
+    <Compile Include="Service\ClinicianService.cs" />
+    <Compile Include="Service\CommonService.cs" />
+    <Compile Include="Service\PatientService.cs" />
+    <Compile Include="Service\UserService.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BillingSystem.Common\BillingSystem.Common.csproj">
+      <Project>{b0899df4-cf27-4055-87f6-53072cd72794}</Project>
+      <Name>BillingSystem.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BillingSystem.Model\BillingSystem.Model.csproj">
+      <Project>{df38e31d-b8d4-437c-9f9b-bda62427defd}</Project>
+      <Name>BillingSystem.Model</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BillingSystem.Repository\BillingSystem.Repository.csproj">
+      <Project>{2537dbca-a818-40d5-8b4e-d13d5e0d6f36}</Project>
+      <Name>BillingSystem.Repository</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Lib\Omu.ValueInjecter.dll" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

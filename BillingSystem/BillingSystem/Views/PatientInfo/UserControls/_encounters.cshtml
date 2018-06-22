@@ -1,0 +1,89 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<EncounterCustomModel>
+
+
+<style type="text/css">
+    .emtptyRow {
+        background-color: yellow;
+    }
+</style>
+@if (Model.Any())
+{
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseThree">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Encounter List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseThree" class="panel-collapse collapse in">
+            <div class="panel-body scroller">
+                <div class="base-color" id="facilityGrid">
+                    <div class="table-responsive">
+                        @if (Model != null && Model.Any())
+                        {
+                            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent", canPage: false);
+                            var firstItem = Model.First();
+                            var ehrView = true;
+                            //var transactionsViewAccessible = true;
+                            if (firstItem != null)
+                            {
+                                ehrView = firstItem.EhrViewAccessible;
+                                //transactionsViewAccessible = firstItem.;
+                            }
+                            @grid.GetHtml(htmlAttributes: new { id = "PatientEncountersGrid" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter",
+                                rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                                    grid.Column("EncounterStartTime", "Encounter Start Time", canSort: true, style: "col1", format: @<text>@if (item.EncounterStartTime != null)
+                                    {
+                                        @item.EncounterStartTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                    }</text>),
+
+                                    grid.Column("EncounterEndTime", "Encounter End Time", item => ((item.EncounterEndTime == null ? Html.Raw("<span class='emtptyRow'>Encounter not end yet</span") :
+                                        Html.Raw(item.EncounterEndTime.ToString("dd/MM/yyyy HH:mm:ss"))))),
+
+
+                                    grid.Column("EncounterNumber", "Encounter Number", canSort: true, style: "col3"),
+                                    grid.Column("EncounterTypeName", "Encounter Type", canSort: true, style: "col4"),
+                                    grid.Column("EncounterPatientTypeName", "Encounter Patient Type", canSort: true, style: "col5"),
+                                    grid.Column("Charges", "Charges", canSort: true, style: "col6"),
+                                    grid.Column("Payment", "Payment", canSort: true, style: "col7"),
+                                    grid.Column(header: "Action", style: "col11", format: @<text>
+                                        @*<a href="javascript:void(0);" onclick=" EditPatientEncounter('@item.EncounterID') " style="float: left; margin-right: 7px; width: 15px;" title="View Encounter Details.">
+                                                <img src="@Url.Content("~/images/details-icon.png")" />
+                                            </a>*@
+
+                                        @if (ehrView)
+                                        {
+                                            <a href="javascript:void(0)" title=" View EHR" onclick="RedirectEHR('@item.PatientID'); " style="float: left; margin-right: 7px; width: 15px;">
+                                                <img src="@Url.Content("~/images/view_EHR.png")" />
+                                            </a>
+                                        }
+                                        <a href="javascript:void(0)" title="View Transactions" style="margin-right: 7px; width: 15px; float: left;" onclick="ViewTransactions('@item.EncounterID', '@item.PatientID') ">
+                                            <img src="@Url.Content("~/images/transaction-icon2.png")" />
+                                        </a>
+
+                                        <a class="Bills clsEdit" href="javascript:void(0)" style="margin-right: 7px; width: 15px; float: left;" onclick="BillPrintPreview('@item.BillHeaderId') " title="Bill Preview">
+                                            <img src="@Url.Content("~/images/BillPreview64x64.png")" />
+                                        </a>
+                                    </text>)
+))
+
+                        }
+                        else
+                        {
+                            <h2>No Record found</h2>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<script src="~/Scripts/PatientInfo/PatientEncounter.js"></script>
+<script>
+    $(function () {
+        SetGridSorting(BindEncounterBySort, "#PatientEncountersGrid");
+    });
+</script>

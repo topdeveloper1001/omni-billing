@@ -1,0 +1,191 @@
+﻿@model BillingSystem.Models.OrderActivityView
+
+<div class="panel-group">
+    @*Current Encounter Open Orders Section Starts*@
+    <div class="panel panel-default ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#Marform">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-align-justify"></span>&nbsp;MAR Form
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="Marform" class="panel-collapse collapse in">
+
+            <div class="panel-body">
+                <div class="filters">
+                    <div class="row">
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>Month</label>
+                                <select class="form-control" id="ddMarMonth">
+                                    @*<option>--Select--</option>*@
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>Year</label>
+                                <select class="form-control" id="ddMarYear">
+                                    @*<option>--Select--</option>*@
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-1">
+                            <div class="form-group">
+                                <label class="col-sm-12">&nbsp;</label>
+                                <input id="btnFilter" class="btn btn-primary btn-xs" value="View" type="button" onclick="LoadMarFormList();" />
+                            </div>
+                        </div>
+                        <div class="col-sm-7">
+                            <div class="rowTable1 pull-right color_codes">
+                                <h4 class="colorCodeTitle">Color Codes</h4>
+                                <span>
+                                    <label class="colorCodes open"></label>
+                                    Open</span> 
+                                <span>
+                                        <label class="colorCodes administered"></label>
+                                        Administered</span>
+                                <span>
+                                        <label class="colorCodes partial"></label>
+                                        Partial</span>
+                                <span>
+                                        <label class="colorCodes waiting_approval"></label>
+                                        Waiting Approval</span>
+                                <span>
+                                    <label class="colorCodes cancel"></label>
+                                    Cancel</span>
+                                <span>
+                                        <label class="colorCodes delayed"></label>
+                                        Delayed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="MarFormListDiv"></div>
+            </div>
+        </div>
+    </div>
+    @*Add orders Section Starts*@
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOpenOrderAddEdit" onclick=" $.validationEngine.closePrompt('.formError', true);">
+            <h4 class=" panel-title collapsetitle">
+            <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Orders
+            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </a>
+            </h4>
+        </div>
+        <div id="collapseOpenOrderAddEdit" class="panel-collapse collapse">
+            <div class="panel-body" id="OpenOrderDiv">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_OpenOrderAddEdit.cshtml", Model.EncounterOrder); }
+            </div>
+        </div>
+    </div>
+    @*Add orders Section Ends*@
+    @*Current Encounter Open Orders Section Starts*@
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOpenOrderlist">
+            <h4 class="panel-title collapseTitle" id="NurseAdminListHeading">
+                <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Open Orders
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOpenOrderlist" class="panel-collapse collapse in openOrderActivity">
+            <div id="NurseAdminOpenOrdersListDiv" class="table-responsive">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_OpenOrderList.cshtml", Model.OpenOrdersList); }
+            </div>
+        </div>
+    </div>
+    @*Current Encounter Open Orders Section Ends*@
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseNurseAdminAddEdit">
+            <h4 class="panel-title collapseTitle" id="NurseAdminHeading">Administer Open Orders
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="CollapseNurseAdminAddEdit" class="panel-collapse collapse openOrderActivity">
+            <div id="NurseAdminAddEditFormDiv">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_AdministerOrdersByNurse.cshtml", Model.CurrentOrderActivity); }
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colActivityList">
+            <h4 class="panel-title collapseTitle" id="colActivityListHeading">Current Order Activities
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colActivityList" class="panel-collapse collapse in openOrderActivity">
+            <div class="col-sm-12">
+                <div class="rowTable1 pull-right">
+                    <h4 class="colorCodeTitle">Color Codes</h4>
+                    <span>
+                        <label class="colorCodes rowColor3"></label>
+                        Open --> Ready to Administer</span> <span>
+                            <label class="colorCodes rowColor6"></label>
+                            Open</span>
+                </div>
+            </div>
+            <div id="colActivityListDiv" class="table-responsive clear">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_OrderActivitiesList.cshtml", Model.OrderActivityList); }
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colClosedActivities">
+            <h4 class="panel-title collapseTitle" id="colClosedActivitiesHeading">Current Closed Activities
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colClosedActivities" class="panel-collapse collapse openOrderActivity">
+            <div class="col-sm-12">
+                <div class="rowTable1 pull-right">
+                    <h4 class="colorCodeTitle">Color Codes</h4>
+                    <span>
+                        <label class="colorCodes rowColor8"></label>
+                        Closed/Cancel/Missed Administration/Patient Unavailable</span> <span>
+                            <label class="colorCodes rowColor2"></label>
+                            On Bill/Administed</span>
+                </div>
+            </div>
+            <div id="ClosedActivitiesDiv" class="table-responsive clear">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_OrderClosedActivitiesList.cshtml", Model.ClosedOrderActivityList); }
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colClosedOrders">
+            <h4 class="panel-title collapseTitle" id="colClosedOrdersHeading">Current Closed Orders
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colClosedOrders" class="panel-collapse collapse openOrderActivity">
+            <div class="col-sm-12">
+                <div class="rowTable1 pull-right">
+                    <h4 class="colorCodeTitle">Color Codes</h4>
+                    <span>
+                        <label class="colorCodes rowColor3"></label>
+                        Closed/Cancel</span> <span>
+                            <label class="colorCodes rowColor2"></label>
+                            On Bill/Administed</span>
+                </div>
+            </div>
+            <div id="ClosedOrdersDiv" class="table-responsive clear">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_ClosedOrderList.cshtml", Model.ClosedOrdersList); }
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/Scripts/MarForm/Index.js"></script>

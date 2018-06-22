@@ -1,0 +1,172 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Models.PatientSearchView 
+@{
+    ViewBag.Title = "PatientSearch";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    .btn-group {
+        margin: 0 0 10px 15px;
+    }
+</style>
+<div class="white-bg">
+    <div>
+        @if (ViewBag.Message != null)
+        {
+            <h3 class="errorMsg mandatoryInfo"><span class="glyphicon glyphicon-warning-sign"></span>@ViewBag.Message</h3>
+            <input type="hidden" id="hdMessageId" value="@ViewBag.MessageId" />
+        }
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;@ResourceKeyValues.GetKeyValue("patientinformation")
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h1>
+        </div>
+        <div id="collapseTwo" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    @*<p class="mandatoryText">By entering more than one piece of information, you will receive a more accurate search result.:</p>*@
+                    <p class="mandatoryText">@ResourceKeyValues.GetKeyValue("patientsearchmandatorytext")</p>
+                    <div class="form" id="ValidatePatientSearch">
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                @Html.Hidden("Role", (string)ViewBag.Role, new { id = "hidRole" })
+                                @Html.Hidden("FirstTimeLogin", (bool)ViewBag.FirstTimeLogin, new { id = "hidFirstTimeLogin" })
+                                <label>@ResourceKeyValues.GetKeyValue("personlastname")</label>
+                                @Html.TextBoxFor(m => m.PersonLastName, new { @maxlength = "20", @class = "large pull-left Atleast", @ID = "txtLastName" })
+                            </div>
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("passportnumber")</label>
+                                @Html.TextBoxFor(m => m.PersonPassportNumber, new { @maxlength = "20", @class = "large pull-left Atleast", @ID = "txtPassportnumber" })
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("contactmobilephone")</label>
+                                @* @Html.DropDownListFor(m => m.CountryList, new SelectList(Model.CountryList, "CodeValue", "CountryWithCode"), "Select One", new { id = "MobileCode", @style = "float: left;", @onchange = "$('#txtMobileNumber').focus();" })*@
+                                <div class="telephoneCol1">
+                                    <select id="ddlCountries" name="ddlCountries" class="marginBottomNone" onchange="OnCountryDropdownChange('#lblCountryCode','#ddlCountries'); $('#txtMobileNumber').focus();"></select>
+                                </div>
+                                <span id="lblCountryCode" class="marginTopPhoneNo" style="margin-left: 2px;"></span>
+                                @Html.HiddenFor(m => m.PersonCountry, new { @id = "hdCountry" })
+                                @Html.TextBoxFor(m => m.PersonContactNumber, new { ID = "txtMobileNumber", @maxlength = "11", @class = "telephoneCol2 large PhoneMask" })
+                            </div>
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("personbirthdate")</label>
+                                @Html.TextBoxFor(m => m.PersonBirthDate, new { @maxlength = "10", @class = "dtLessThanCurrent large pull-left", @ID = "txtBirthDate", @onchange = "CheckValidDateOfBirth(this,'txtBirthDate');" })
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("socialsecuritynumber")</label>
+                                @Html.TextBoxFor(m => m.PersonEmiratesIDNumber, new { @maxlength = "20", @class = "large pull-left EmiratesMask Atleast", @ID = "txtEmiratesNationalId" })
+                            </div>
+                        </div>
+                        <div class="clear"></div>
+                        <div class="btn-group">
+                            <input type="submit" onclick="return SearchPatient();" value="@ResourceKeyValues.GetKeyValue("search")" class="blue-btn btn btn-primary" id="btnSearch" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* User role selection pop up *@
+    <div id="divhidepopup" style="display: none;">
+        <div class="popup-coverbg"></div>
+        <div class="popup-frame">
+            <div class="popup-main">
+                <div class="popup-content">
+                    <div class="minHeight">
+                        <div id="UserRoleDiv"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Authorization Div Pop up *@
+
+    <div id="divhidepopup1" class="hidePopUp" style="display: none;">
+        <div class="popup-coverbg"></div>
+        <div class="popup-frame">
+            <div class="popup-main" style="margin: 50px auto">
+                <div class="popup-content" style="min-height: 500px;">
+                    <div class="popup-close" onclick="$('.hidePopUp').hide(); $.validationEngine.closePrompt('.formError', true);">X</div>
+                    <div class="minHeight" style="min-height: 500px">
+                        <div id="authorizationdiv"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @* User role selection pop up *@
+
+    <div id="divChangepassword" style="display: none;">
+        <div class="popup-coverbg"></div>
+        <div class="popup-frame">
+            <div class="popup-main2">
+                <div class="popup-content2">
+                    <div class="">
+                        <div id="UserChangePasswordDiv"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @*<div id="UserRoleDiv" style="display: none;position: absolute; top:10px;left: 50px;">
+    </div>*@
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Facility Patients
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h1>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form scroller">
+                        @*
+                                                Owner: Shashank Awasthy
+                                                On: 10092014
+                                                Purpose: Render the grid view in partial view to display the filtered data.
+                                            *@
+                        @{Html.RenderPartial("~/Views/PatientSearch/UserControls/_SearchResult.cshtml", Model.PatientSearchList);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOthers">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Other Corporate Facility Patients
+                                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                        <span class="glyphicon glyphicon-chevron-down"></span>
+                                    </a>
+            </h1>
+        </div>
+        <div id="collapseOthers" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form scroller" id="divOtherFacility">
+                        @{Html.RenderPartial("~/Views/PatientSearch/UserControls/_SearchResult.cshtml", Model.PatientSearchList);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/PatientSearch/PatientSearch1.js"></script>

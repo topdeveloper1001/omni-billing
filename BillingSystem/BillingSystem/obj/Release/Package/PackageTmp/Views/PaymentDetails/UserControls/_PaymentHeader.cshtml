@@ -1,0 +1,29 @@
+﻿@model BillingSystem.Model.CustomModel.PaymentDetailsCustomModel
+
+@{
+    ViewBag.Title = "Payment Header View";
+}
+
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Expected Insurance Payments</th>
+            <th>Total Paid</th>
+            <th>Applied</th>
+            <th>Un Applied</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="text-success">@Model.InsPayment</td>
+            <td class="text-success">@Model.InsTotalPaid</td>
+            <td class="text-success">
+                @Model.InsApplied
+            </td>
+            <td class="text-success">
+                @Model.InsUnapplied
+            </td>
+        </tr>
+    </tbody>
+</table>

@@ -1,0 +1,23 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<OtherDrugAlergy>
+
+<div class="table-responsive scrollable-panel">
+    @if (Model != null && Model.Any())
+    {
+        var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentAllergy", canSort: false, rowsPerPage: 50);
+        <div id="gridContentAllergy">
+            @grid.GetHtml("table table-striped table-hover", "gridHead", "gridFooter", "gridRow", "gridAltRow", columns: grid.Columns(
+                                grid.Column("DrugCode", "Drug Code"),
+                                grid.Column("DrugName", "Drug Generic Name"),
+            grid.Column(header: "Delete", format: @<text>
+            <a href="#" title="Delete" onclick="return UpdateAndBindOtherDrugAllergy('@item.MedicalRecordID',0);" style="float: left; width: 15px;">
+                <img src="@Url.Content("~/images/delete.png")" /></a>
+            </text>)
+            ))
+        </div>
+    }
+    else
+    {
+        <h2>No Record found</h2>
+    }
+</div>

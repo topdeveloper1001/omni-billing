@@ -1,0 +1,2266 @@
+﻿@using BillingSystem.Models
+@model EvaluationViews
+
+@{
+    ViewBag.Title = "Evaluation";
+}
+@* Patient Summary Tab View *@
+
+
+
+<style>
+    input[type="checkbox"] {
+        margin: 0;
+    }
+
+    .table-grid {
+        width: 100% !important;
+    }
+</style>
+
+<script>
+    $(function () {
+        BindGlobalCodesWithValue("#ddlConsult", 4549, '');
+        var currentdate = new Date();
+        var datewithFormat = currentdate.format('mm/dd/yyyy');
+        if ($('#txtDateEM').val() == '') {
+            $('#txtDateEM').val(datewithFormat);
+        }
+    });
+</script>
+
+<div class="white-bg overflowHidden">
+    <div class="title">
+        <div class="row">
+            <div class="col-sm-5">
+                <h1>Evaluation and Management Form</h1>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="highlight_block">
+                    <div class="evaluation_date">
+                        <label>Date</label>
+                        <input type="text" id="txtDateEM" class="DateTime" /><span></span>
+                    </div>
+                    <div class="evaluation_time">
+                        <label>Time: @DateTime.Now.ToShortTimeString()</label><span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroller2">
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#16Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Basic Information
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="16Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-lg-12">
+                                    <div class="checkbox_block">
+                                        <h2>Types of Patients</h2>
+                                        <div class="row">
+                                            <div class="col-sm-3">
+                                                @*<input id="chkNewPatient" type="checkbox" />*@
+                                                @(Model.BasicInfoItems.Count > 0 ? Html.CheckBox("chkNewPatient", Model.BasicInfoItems[0].Value == "1") : Html.CheckBox("chkNewPatient", false))
+
+                                                New Patient
+                                            </div>
+                                            <div class="col-sm-3">
+                                                @*<input id="chkEstPatient" type="checkbox" />*@
+                                                @(Model.BasicInfoItems.Count > 0 ? Html.CheckBox("chkEstPatient", Model.BasicInfoItems[1].Value == "1") : Html.CheckBox("chkEstPatient", false))
+                                                Established Patient
+                                            </div>
+                                            <div class="col-sm-3">
+                                                @*<input id="chkPatientNonVerbal" type="checkbox" />*@
+                                                @(Model.BasicInfoItems.Count > 0 ? Html.CheckBox("chkPatientNonVerbal", Model.BasicInfoItems[2].Value == "1") : Html.CheckBox("chkPatientNonVerbal", false))
+                                                Patient nonverbal
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="checkbox_block">
+                                        <h2>History obtained from </h2>
+                                        <div class="row">
+                                            <div class="col-sm-3">
+
+                                                @*<input id="chkFamily" type="checkbox" />*@
+                                                @(Model.BasicInfoItems.Count > 0 ? Html.CheckBox("chkFamily", Model.BasicInfoItems[3].Value == "1") : Html.CheckBox("chkFamily", false))
+                                                Family
+                                            </div>
+                                            <div class="col-sm-3">
+                                                @*<input id="chkMedPersonnel" type="checkbox" />*@
+                                                @(Model.BasicInfoItems.Count > 0 ? Html.CheckBox("chkMedPersonnel", Model.BasicInfoItems[4].Value == "1") : Html.CheckBox("chkMedPersonnel", false))
+                                                Medical Personnel
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#1Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Chief Complaint/Reason for Consult:
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="1Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-6 col-md-4 col-lg-4">
+                                    <div class="rowTable">
+                                        <label>Consult</label>
+                                        <div>
+                                            <select id="ddlConsult" class="form-control"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-4 col-lg-4">
+                                    <div class="rowTable">
+                                        <label>Others</label>
+                                        <div>
+                                            @*<textarea cols="50" rows="5" id="txtConsultOthers"></textarea>*@
+                                            @if (Model.ChiefComplaintItems.Count > 0)
+                                            {
+                                                <input type="hidden" id="hfRowExists" value="1" />
+                                                <input id="hfConsult" type="hidden" value='@Model.ChiefComplaintItems[0].Value' />
+                                                @Html.TextAreaFor(m => m.ChiefComplaintItems[1].Value, new { cols = "50", rows = "5", @ID = "txtConsultOthers", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <input type="hidden" id="hfRowExists" value="0" />
+                                                <input id="hfConsult" type="hidden" value="0" />
+                                                <textarea cols="50" rows="5" id="txtConsultOthers" class="form-control"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#2Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h1 class="panel-title collapseTitle">
+                        <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Current Medications
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h1>
+                </div>
+                <div class="panel-collapse collapse in" id="2Collapse">
+                    <div class="panel-body">
+                        <div class="base-color">
+                            <div class="form scroller">
+                                <div id="divSearchResult">
+                                    <div class="table-responsive">
+                                        @*@{ Html.RenderPartial("~/Views/MedicalHistory/UserControls/_MedicalHistoryList.cshtml", Model.MedicalHistoryList); }*@
+                                        @if (Model != null && Model.MedicalHistoryList != null && Model.MedicalHistoryList.Any())
+                                        {
+                                            var grid = new WebGrid(Model.MedicalHistoryList, ajaxUpdateContainerId: "gCHistoryInEForm", canPage: false);
+                                            <div id="gCHistoryInEForm">
+                                                @grid.GetHtml(htmlAttributes: new { id = "MHGridOne" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                                                                 columns:
+                                                                     grid.Columns(grid.Column("PatientId", "PatientId"),
+                                                                         grid.Column("EncounterId", "EncounterId"),
+                                                                         grid.Column("DrugName", "Drug Name"),
+                                                                         grid.Column("DrugDuration", "Taking Since"),
+                                                                         grid.Column("DrugVolume", "Current Volume"),
+                                                                         grid.Column("DrugDosage", "Current Dosage"),
+                                                                         grid.Column("DrugFrequency", "Frequency")
+                                                                         ))
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <h2>No Record found</h2>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#3Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Current Vitals:
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="3Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="table-responsive scrollable-panel">
+                                    @*@{Html.RenderPartial("~/Views/MedicalVital/UserControls/_MedicalVitalList.cshtml", Model.MedicalVitalList);}*@
+
+                                    <div>
+                                        @if (Model != null && Model.MedicalVitalList != null && Model.MedicalVitalList.Count > 0)
+                                        {
+                                            var grid = new WebGrid(Model.MedicalVitalList, ajaxUpdateContainerId: "gridContentVitalsInEForm", canSort: true, canPage: false);
+                                            <div id="gridContentVitalsInEForm">
+                                                @grid.GetHtml(htmlAttributes: new { id = "VitalsGridOne" }, tableStyle: "table Scroll_MedicalVital", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(grid.Column("MedicalVitalName", "Vital", canSort: true),
+grid.Column("PressureCustom", "Value", canSort: true),
+grid.Column("UnitOfMeasureName", "UOM", canSort: true),
+grid.Column("VitalAddedBy", "Added By", canSort: true),
+grid.Column("VitalAddedOn", "Added Date", canSort: true, format: @<text>@if (item.VitalAddedOn != null)
+{
+                                        @item.VitalAddedOn.ToString("dd/MM/yyyy HH:mm:ss")
+}
+                                    /**/</text>)
+@*,
+       grid.Column(header: "Action", format: @<text>
+                                            <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.MedicalVital.MedicalVitalID', 'Delete Medical Vital', '', DeleteMedicalVital, null); " style="float: left; width: 15px;">
+                                                <img src="@Url.Content("~/images/delete.png")" />
+                                            </a>
+    </text>)*@
+))<h6>* Click on any column heading to sort</h6>
+                                            </div>
+
+                                        }
+                                        else
+                                        {
+
+                                            <h2>No Record found</h2>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#4Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        History of Present Illness :
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="4Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-12">
+                                    <div class="checkbox_block">
+                                        <h2>Problem Type </h2>
+                                        <div class="row">
+                                            <div class="col-sm-3">
+                                                @*<input id="chkPTNewProblem" type="checkbox" />*@
+                                                @(Model.HistoryPresentIllnessList.Count > 0 ? Html.CheckBox("chkPTNewProblem", Model.HistoryPresentIllnessList[0].Value == "1") : Html.CheckBox("chkPTNewProblem", false))
+
+                                                New Problem
+                                            </div>
+                                            <div class="col-sm-3">
+                                                @*<input id="chkPTExitingProblem" type="checkbox" />*@
+                                                @(Model.HistoryPresentIllnessList.Count > 0 ? Html.CheckBox("chkPTExitingProblem", Model.HistoryPresentIllnessList[1].Value == "1") : Html.CheckBox("chkPTExitingProblem", false))
+
+                                                Existing Problem
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-sm-12 row">
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Location</label>
+                                            @*<textarea class="form-control" id="txtLocation"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[2].Value, new { cols = "50", rows = "5", @ID = "txtLocation", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtLocation"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Quality</label>
+                                            @*<textarea class="form-control" id="txtQuality"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[3].Value, new { cols = "50", rows = "5", @ID = "txtQuality", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtQuality"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Severity</label>
+                                            @*<textarea class="form-control" id="txtSeverity"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[4].Value, new { cols = "50", rows = "5", @ID = "txtSeverity", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtSeverity"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Duration</label>
+                                            @*<textarea class="form-control" id="txtDuration"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[5].Value, new { cols = "50", rows = "5", @ID = "txtDuration", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtDuration"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Timing</label>
+                                            @*<textarea class="form-control" id="txtTiming"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[6].Value, new { cols = "50", rows = "5", @ID = "txtTiming", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtTiming"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Context</label>
+                                            @*<textarea class="form-control" id="txtContext"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[7].Value, new { cols = "50", rows = "5", @ID = "txtContext", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtContext"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Modifying Factors</label>
+                                            @*<textarea class="form-control" id="txtModifyingFactors"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[8].Value, new { cols = "50", rows = "5", @ID = "txtModifyingFactors", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtModifyingFactors"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rowTable">
+                                            <label>Other Signs & Symptoms</label>
+                                            @*<textarea class="form-control" id="txtOtherSignSymptoms"></textarea>*@
+                                            @if (Model.HistoryPresentIllnessList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.HistoryPresentIllnessList[9].Value, new { cols = "50", rows = "5", @ID = "txtOtherSignSymptoms", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" id="txtOtherSignSymptoms"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#5Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Family History :
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="5Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="table-responsive scrollable-panel">
+                                    @*@{Html.RenderPartial("~/Views/MedicalRecord/UserControls/_AlergiesList.cshtml", Model.AlergyList);}*@
+                                    <div class="table-responsive">
+                                        @if (Model != null && Model.AlergyList != null && Model.AlergyList.Count > 0)
+                                        {
+                                            var grid = new WebGrid(Model.AlergyList, ajaxUpdateContainerId: "gAllergiesInEForm", canSort: true, rowsPerPage: 50);
+                                            <div id="gAllergiesInEForm">
+                                                @grid.GetHtml(htmlAttributes: new { id = "AllergyGridInEView" }, tableStyle: "table table_scroll_Allergy", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+
+                                          grid.Column("AlergyType", "Type"),
+                                          grid.Column("AlergyName", "Allergy"),
+                                          grid.Column("CurrentAlergy.DetailAnswer", "Description"),
+                                           grid.Column("AddedBy", "Added By"),
+                                      grid.Column("CurrentAlergy.CreatedDate", "Added On", @<text>@if (item.CurrentAlergy.CreatedDate != null)
+             {@item.CurrentAlergy.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")
+}
+        /**/</text>)))
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <h2>No Record found</h2>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#6Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Review of Systems :
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="6Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <ul class="form_list">
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Constitutional</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkConsNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkConsNegative", Model.ReviewSystemsList[0].Value == "1") : Html.CheckBox("chkConsNegative", false))
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkConsWtLoss" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkConsWtLoss", Model.ReviewSystemsList[1].Value == "1") : Html.CheckBox("chkConsWtLoss", false))
+                                                        Wt Loss
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkConsFever" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkConsFever", Model.ReviewSystemsList[2].Value == "1") : Html.CheckBox("chkConsFever", false))
+                                                        Fever
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkConsFatigue" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkConsFatigue", Model.ReviewSystemsList[3].Value == "1") : Html.CheckBox("chkConsFatigue", false))
+
+                                                        Fatigue
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkConsOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkConsOther", Model.ReviewSystemsList[4].Value == "1") : Html.CheckBox("chkConsOther", false))
+
+                                                        Other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Eyes</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEyesNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEyesNegative", Model.ReviewSystemsList[5].Value == "1") : Html.CheckBox("chkEyesNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEyesVisionChange" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEyesVisionChange", Model.ReviewSystemsList[6].Value == "1") : Html.CheckBox("chkEyesVisionChange", false))
+
+                                                        Vision Change
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEyesGlassesContacts" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEyesGlassesContacts", Model.ReviewSystemsList[7].Value == "1") : Html.CheckBox("chkEyesGlassesContacts", false))
+
+                                                        Glasses/contacts
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEyesVisibleIrritation" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEyesVisibleIrritation", Model.ReviewSystemsList[8].Value == "1") : Html.CheckBox("chkEyesVisibleIrritation", false))
+
+                                                        Visible irritation
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEyesOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEyesOther", Model.ReviewSystemsList[9].Value == "1") : Html.CheckBox("chkEyesOther", false))
+
+                                                        Other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">ENT/Mouth</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkENTNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkENTNegative", Model.ReviewSystemsList[10].Value == "1") : Html.CheckBox("chkENTNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkENTUlcers" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkENTUlcers", Model.ReviewSystemsList[11].Value == "1") : Html.CheckBox("chkENTUlcers", false))
+
+                                                        Ulcers
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkENTSinusitis" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkENTSinusitis", Model.ReviewSystemsList[12].Value == "1") : Html.CheckBox("chkENTSinusitis", false))
+
+                                                        sinusitis
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkENTTinnitus" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkENTTinnitus", Model.ReviewSystemsList[13].Value == "1") : Html.CheckBox("chkENTTinnitus", false))
+
+                                                        tinnitus
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkENTHeadache" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkENTHeadache", Model.ReviewSystemsList[14].Value == "1") : Html.CheckBox("chkENTHeadache", false))
+
+                                                        headache
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkENTOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkENTOther", Model.ReviewSystemsList[15].Value == "1") : Html.CheckBox("chkENTOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Cardiovascular</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkCardioNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkCardioNegative", Model.ReviewSystemsList[16].Value == "1") : Html.CheckBox("chkCardioNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkCardioOrthopneae" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkCardioOrthopneae", Model.ReviewSystemsList[17].Value == "1") : Html.CheckBox("chkCardioOrthopneae", false))
+
+                                                        orthopnea
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkCardioChestPain" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkCardioChestPain", Model.ReviewSystemsList[18].Value == "1") : Html.CheckBox("chkCardioChestPain", false))
+
+                                                        chest pain
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkCardioDoe" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkCardioDoe", Model.ReviewSystemsList[19].Value == "1") : Html.CheckBox("chkCardioDoe", false))
+
+                                                        DOE
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkCardioEdema" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkCardioEdema", Model.ReviewSystemsList[20].Value == "1") : Html.CheckBox("chkCardioEdema", false))
+
+                                                        edema
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkCardioPalpitation" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkCardioPalpitation", Model.ReviewSystemsList[21].Value == "1") : Html.CheckBox("chkCardioPalpitation", false))
+
+                                                        palpitation
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkCardioOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkCardioOther", Model.ReviewSystemsList[22].Value == "1") : Html.CheckBox("chkCardioOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Respiratory</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkRespNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkRespNegative", Model.ReviewSystemsList[23].Value == "1") : Html.CheckBox("chkRespNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkRespWheezing" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkRespWheezing", Model.ReviewSystemsList[24].Value == "1") : Html.CheckBox("chkRespWheezing", false))
+
+                                                        wheezing
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkRespHemoptysis" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkRespHemoptysis", Model.ReviewSystemsList[25].Value == "1") : Html.CheckBox("chkRespHemoptysis", false))
+
+                                                        hemoptysis
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkRespSOB" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkRespSOB", Model.ReviewSystemsList[26].Value == "1") : Html.CheckBox("chkRespSOB", false))
+
+                                                        SOB
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkRespCough" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkRespCough", Model.ReviewSystemsList[27].Value == "1") : Html.CheckBox("chkRespCough", false))
+
+                                                        cough
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkRespOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkRespOther", Model.ReviewSystemsList[28].Value == "1") : Html.CheckBox("chkRespOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Gastrointestinal</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasNegative", Model.ReviewSystemsList[29].Value == "1") : Html.CheckBox("chkGasNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasDiarrhea" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasDiarrhea", Model.ReviewSystemsList[30].Value == "1") : Html.CheckBox("chkGasDiarrhea", false))
+
+                                                        Diarrhea
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasBldyStool" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasBldyStool", Model.ReviewSystemsList[31].Value == "1") : Html.CheckBox("chkGasBldyStool", false))
+
+                                                        Bldy stool
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasNV" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasNV", Model.ReviewSystemsList[32].Value == "1") : Html.CheckBox("chkGasNV", false))
+
+                                                        N/V
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasConstipation" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasConstipation", Model.ReviewSystemsList[33].Value == "1") : Html.CheckBox("chkGasConstipation", false))
+
+                                                        Constipation
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasFlatulence" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasFlatulence", Model.ReviewSystemsList[34].Value == "1") : Html.CheckBox("chkGasFlatulence", false))
+
+                                                        Flatulence
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasPain" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasPain", Model.ReviewSystemsList[35].Value == "1") : Html.CheckBox("chkGasPain", false))
+
+                                                        Pain
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGasOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGasOther", Model.ReviewSystemsList[36].Value == "1") : Html.CheckBox("chkGasOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Genitourinary</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenNegative", Model.ReviewSystemsList[37].Value == "1") : Html.CheckBox("chkGenNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenHematuria" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenHematuria", Model.ReviewSystemsList[38].Value == "1") : Html.CheckBox("chkGenHematuria", false))
+
+                                                        Hematuria
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenDysuria" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenDysuria", Model.ReviewSystemsList[39].Value == "1") : Html.CheckBox("chkGenDysuria", false))
+
+                                                        Dysuria
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenUrgncy" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenUrgncy", Model.ReviewSystemsList[40].Value == "1") : Html.CheckBox("chkGenUrgncy", false))
+
+                                                        Urgncy
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenFrqncy" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenFrqncy", Model.ReviewSystemsList[41].Value == "1") : Html.CheckBox("chkGenFrqncy", false))
+
+                                                        Frqncy
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenEmptying" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenEmptying", Model.ReviewSystemsList[42].Value == "1") : Html.CheckBox("chkGenEmptying", false))
+
+                                                        Incomp. Emptying
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenIncontinent" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenIncontinent", Model.ReviewSystemsList[43].Value == "1") : Html.CheckBox("chkGenIncontinent", false))
+
+                                                        Incontinent
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenAbnormalBleeding" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenAbnormalBleeding", Model.ReviewSystemsList[44].Value == "1") : Html.CheckBox("chkGenAbnormalBleeding", false))
+
+                                                        Abnormal Bleeding
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenDyspareunia" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenDyspareunia", Model.ReviewSystemsList[45].Value == "1") : Html.CheckBox("chkGenDyspareunia", false))
+
+                                                        Dyspareunia
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkGenOthera" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkGenOthera", Model.ReviewSystemsList[46].Value == "1") : Html.CheckBox("chkGenOthera", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Musculoskeletal</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkMusculNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkMusculNegative", Model.ReviewSystemsList[47].Value == "1") : Html.CheckBox("chkMusculNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkMusculWeakness" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkMusculWeakness", Model.ReviewSystemsList[48].Value == "1") : Html.CheckBox("chkMusculWeakness", false))
+
+                                                        Muscle weakness
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkMusculPain" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkMusculPain", Model.ReviewSystemsList[49].Value == "1") : Html.CheckBox("chkMusculPain", false))
+
+                                                        Muscle pain
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkMusculVisibleKnot" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkMusculVisibleKnot", Model.ReviewSystemsList[50].Value == "1") : Html.CheckBox("chkMusculVisibleKnot", false))
+
+                                                        Visible knot
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkMusculOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkMusculOther", Model.ReviewSystemsList[51].Value == "1") : Html.CheckBox("chkMusculOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Skin/breast</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkSkinkNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkSkinNegative", Model.ReviewSystemsList[52].Value == "1") : Html.CheckBox("chkSkinNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkSkinMastalgia" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkSkinMastalgia", Model.ReviewSystemsList[53].Value == "1") : Html.CheckBox("chkSkinMastalgia", false))
+
+                                                        Mastalgia
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkSkinDicharge" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkSkinDicharge", Model.ReviewSystemsList[54].Value == "1") : Html.CheckBox("chkSkinDicharge", false))
+
+                                                        Dicharge
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkSkinMasses" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkSkinMasses", Model.ReviewSystemsList[55].Value == "1") : Html.CheckBox("chkSkinMasses", false))
+
+                                                        Masses
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkSkinRash" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkSkinRash", Model.ReviewSystemsList[56].Value == "1") : Html.CheckBox("chkSkinRash", false))
+
+                                                        Rash
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkSkinUlcer" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkSkinUlcer", Model.ReviewSystemsList[57].Value == "1") : Html.CheckBox("chkSkinUlcer", false))
+
+                                                        Ulcer
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkSkinOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkSkinOther", Model.ReviewSystemsList[58].Value == "1") : Html.CheckBox("chkSkinOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Neurological</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkNeuroNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkNeuroNegative", Model.ReviewSystemsList[59].Value == "1") : Html.CheckBox("chkNeuroNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkNeuroSyncope" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkNeuroSyncope", Model.ReviewSystemsList[60].Value == "1") : Html.CheckBox("chkNeuroSyncope", false))
+
+                                                        Syncope
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkNeuroSeizures" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkNeuroSeizures", Model.ReviewSystemsList[61].Value == "1") : Html.CheckBox("chkNeuroSeizures", false))
+
+                                                        Seizures
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkNeuroNumbness" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkNeuroNumbness", Model.ReviewSystemsList[62].Value == "1") : Html.CheckBox("chkNeuroNumbness", false))
+
+                                                        Numbness
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkNeuroWalking" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkNeuroWalking", Model.ReviewSystemsList[63].Value == "1") : Html.CheckBox("chkNeuroWalking", false))
+
+                                                        Trouble Walking
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkNeuroOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkNeuroOther", Model.ReviewSystemsList[64].Value == "1") : Html.CheckBox("chkNeuroOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Psychiatric</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkPsyNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkPsyNegative", Model.ReviewSystemsList[65].Value == "1") : Html.CheckBox("chkPsyNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkPsyDepression" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkPsyDepression", Model.ReviewSystemsList[66].Value == "1") : Html.CheckBox("chkPsyDepression", false))
+
+                                                        Depression
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkPsyCrying" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkPsyCrying", Model.ReviewSystemsList[67].Value == "1") : Html.CheckBox("chkPsyCrying", false))
+
+                                                        Crying
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkPsyOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkPsyOther", Model.ReviewSystemsList[68].Value == "1") : Html.CheckBox("chkPsyOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Endocrine</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEndoNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEndoNegative", Model.ReviewSystemsList[69].Value == "1") : Html.CheckBox("chkEndoNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEndoDiabetes" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEndoDiabetes", Model.ReviewSystemsList[70].Value == "1") : Html.CheckBox("chkEndoDiabetes", false))
+
+                                                        Diabetes
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEndoHypothyroid" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEndoHypothyroid", Model.ReviewSystemsList[71].Value == "1") : Html.CheckBox("chkEndoHypothyroid", false))
+
+                                                        Hypothyroid
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEndoHperthyroid" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEndoHperthyroid", Model.ReviewSystemsList[72].Value == "1") : Html.CheckBox("chkEndoHperthyroid", false))
+
+                                                        Hperthyroid
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEndoHotflashes" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEndoHotflashes", Model.ReviewSystemsList[73].Value == "1") : Html.CheckBox("chkEndoHotflashes", false))
+
+                                                        Hot flashes
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkEndoOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkEndoOther", Model.ReviewSystemsList[74].Value == "1") : Html.CheckBox("chkEndoOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Hemat/Lymph</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkHematNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkHematNegative", Model.ReviewSystemsList[75].Value == "1") : Html.CheckBox("chkHematNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkHematBruises" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkHematBruises", Model.ReviewSystemsList[76].Value == "1") : Html.CheckBox("chkHematBruises", false))
+
+                                                        Bruises
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkHematBleeding" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkHematBleeding", Model.ReviewSystemsList[77].Value == "1") : Html.CheckBox("chkHematBleeding", false))
+
+                                                        Bleeding
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkHematAdenopathy" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkHematAdenopathy", Model.ReviewSystemsList[78].Value == "1") : Html.CheckBox("chkHematAdenopathy", false))
+
+                                                        Adenopathy
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkHematOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkHematOther", Model.ReviewSystemsList[79].Value == "1") : Html.CheckBox("chkHematOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="row">
+                                            <p class="col-sm-2">Allergic/Immuno</p>
+                                            <div class="col-sm-10">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkAllergicNegative" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkAllergicNegative", Model.ReviewSystemsList[80].Value == "1") : Html.CheckBox("chkAllergicNegative", false))
+
+                                                        Negative
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @*<input id="chkAllergicOther" type="checkbox" />*@
+                                                        @(Model.ReviewSystemsList.Count > 0 ? Html.CheckBox("chkAllergicOther", Model.ReviewSystemsList[81].Value == "1") : Html.CheckBox("chkAllergicOther", false))
+
+                                                        other
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#7Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Organ Systems :
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="7Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-12">
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Eyes:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganEyes"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[0].Value, new { cols = "50", rows = "5", @ID = "txtOrganEyes", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganEyes"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Ears, Nose, Mouth, Throat:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganEars"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[1].Value, new { cols = "50", rows = "5", @ID = "txtOrganEars", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganEars"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Cardiovascular:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganCardio"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[2].Value, new { cols = "50", rows = "5", @ID = "txtOrganCardio", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganCardio"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Respiratory:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganResp"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[3].Value, new { cols = "50", rows = "5", @ID = "txtOrganResp", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganResp"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Gastrointestinal:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganGas"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[4].Value, new { cols = "50", rows = "5", @ID = "txtOrganGas", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganGas"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Skin:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganSkin"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[5].Value, new { cols = "50", rows = "5", @ID = "txtOrganSkin", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganSkin"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Musculoskeletal:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganMuscul"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[6].Value, new { cols = "50", rows = "5", @ID = "txtOrganMuscul", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganMuscul"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Neurological:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganNeurological"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[7].Value, new { cols = "50", rows = "5", @ID = "txtOrganNeurological", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganNeurological"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Hematological/Lymphatic:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganLymphatic"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[8].Value, new { cols = "50", rows = "5", @ID = "txtOrganLymphatic", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganLymphatic"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Psychiatric:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtOrganPsychiatric"></textarea>*@
+                                            @if (Model.OrganSystemsList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.OrganSystemsList[9].Value, new { cols = "50", rows = "5", @ID = "txtOrganPsychiatric", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtOrganPsychiatric"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#8Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        BODY AREAS :
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="8Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-12">
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Head/Face:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtHeadFace"></textarea>*@
+                                            @if (Model.BodyAreasList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.BodyAreasList[0].Value, new { cols = "50", rows = "5", @ID = "txtHeadFace", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtHeadFace"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Neck:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtNeck"></textarea>*@
+                                            @if (Model.BodyAreasList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.BodyAreasList[1].Value, new { cols = "50", rows = "5", @ID = "txtNeck", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtNeck"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Chest/Breasts/Axillae:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtChest"></textarea>*@
+                                            @if (Model.BodyAreasList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.BodyAreasList[2].Value, new { cols = "50", rows = "5", @ID = "txtChest", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtChest"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Abdomen:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtAbdomen"></textarea>*@
+                                            @if (Model.BodyAreasList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.BodyAreasList[3].Value, new { cols = "50", rows = "5", @ID = "txtAbdomen", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtAbdomen"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Genitalia/Groin/Buttocks:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtGenitalia"></textarea>*@
+                                            @if (Model.BodyAreasList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.BodyAreasList[4].Value, new { cols = "50", rows = "5", @ID = "txtGenitalia", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtGenitalia"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                Back/Spine:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtBackSpine"></textarea>*@
+                                            @if (Model.BodyAreasList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.BodyAreasList[5].Value, new { cols = "50", rows = "5", @ID = "txtBackSpine", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtBackSpine"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            @*@{
+                    Html.RenderPartial("~/Views/Summary/UserControls/_OrdersViewForEvaluation.cshtml", new OrderActivityView
+                    {
+                        //CurrentOrderActivity = new OrderActivity { OrderActivityStatus = 1 },
+                        OpenOrdersList = Model.OpenOrdersList,
+                        OrderActivityList = Model.OrderActivityList,
+                        ClosedOrdersList = Model.ClosedOrdersList,
+                        ClosedOrderActivityList = Model.ClosedOrderActivityList,
+                        //ClosedLabOrderActivityList = new List<OrderActivityCustomModel>(),
+                        //labOrderActivityList = new List<OrderActivityCustomModel>(),
+                        //IsLabTest = Model.IsLabTest,
+                        EncounterOrder = Model.EncounterOrder,
+                        //CurrentMedicalVital = new MedicalVitalCustomModel(),
+                        MedicalVitalList = Model.MedicalVitalList
+                    });
+                }*@
+
+            <div class="panel-group">
+                <div class="panel panel-default collapsecss ourcollapse bordertable">
+                    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOpenOrderlist">
+                        <h4 class="panel-title collapseTitle" id="NurseAdminListHeading">
+                            <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Open Orders
+                            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                <span class="glyphicon glyphicon-chevron-down"></span>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseOpenOrderlistInEvaluation" class="panel-collapse collapse in">
+                        <div id="NurseAdminOpenOrdersListDivInEvaluation" class="table-responsive scrollable-panel">
+                            @*@{ Html.RenderPartial("~/Views/Summary/UserControls/_OpenOrderList.cshtml", Model.OpenOrdersList); }*@
+                            @if (Model != null && Model.OpenOrdersList != null && Model.OpenOrdersList.Count > 0)
+                            {
+                                var grid = new WebGrid(Model.OpenOrdersList, ajaxUpdateContainerId: "tbContentOpenOrdersInEPView", canPage: false);
+                                <div id="tbContentOpenOrdersInEPView">
+                                    @grid.GetHtml(htmlAttributes: new { id = "gOrdersInEForm" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+columns:
+                     grid.Columns(
+                         grid.Column("OrderCode", "Order Code", canSort: true, style: "col3"),
+                         grid.Column("OrderDescription", "Order Description", canSort: true, style: "col4"),
+                         grid.Column("CategoryName", "Order Category", canSort: true, style: "col6"),
+                          grid.Column("SubCategoryName", "Order Sub-Category", canSort: true, style: "col7"),
+                          grid.Column("Status", "Status", canSort: true, style: "col7"),
+                          grid.Column("Quantity", "Quantity", canSort: true, style: "col2"),
+                          grid.Column("FrequencyText", "Frequency", canSort: true, style: "col5"),
+                          grid.Column("PeriodDays", "Duration", canSort: true, style: "col8"),
+                          grid.Column("OrderNotes", "Comments", canSort: true, style: "col9"))
+)<h6>* Click on any column heading to sort</h6>
+                                </div>
+                            }
+                            else
+                            {
+                                <h2>No Record found</h2>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+
+
+                @*
+                    Current Open Order Activities Section Starts
+                    First check That the tab is lab test tab if not then display the Order activity list
+                    else display the Lab test order activity grid.
+                *@
+                <div class="panel panel-default collapsecss ourcollapse bordertable">
+                    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colActivityList">
+                        <h4 class="panel-title collapseTitle" id="colActivityListHeading">
+                            <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Order Activities
+                            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                <span class="glyphicon glyphicon-chevron-down"></span>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="colActivityListInEvaluation" class="panel-collapse collapse in">
+                        <div class="col-sm-12">
+                            <div class="rowTable1 pull-right">
+                                <h4 class="colorCodeTitle">Color Codes</h4>
+                                <span><label class="colorCodes rowColor3"></label>Open --> Ready to Administer</span> <span><label class="colorCodes rowColor6"></label>Open</span>
+                            </div>
+                        </div>
+                        <div id="colActivityListDivInEvaluation" class="table-responsive clear">
+                            @*@{ Html.RenderPartial("~/Views/Summary/UserControls/_OrderActivitiesList.cshtml", Model.OrderActivityList); }*@
+                            @if (Model != null && Model.OrderActivityList != null && Model.OrderActivityList.Any())
+                            {
+                                var grid = new WebGrid(Model.OrderActivityList, ajaxUpdateContainerId: "gridContentOpenOrderActivity", canPage: false);
+                                <div id="gridContentOpenOrderActivity">
+                                    @grid.GetHtml(htmlAttributes: new { id = "gActivitiesInEForm" }, tableStyle: "table TableOrderActivityGrid2", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridRow",
+columns:
+                     grid.Columns(
+                         grid.Column("OrderTypeName", "Order Type", canSort: true, style: "col5"),
+                          grid.Column("OrderCode", "Order Code", canSort: true, style: "col2"),
+                          grid.Column("OrderDescription", "Order Description", canSort: true, style: "col4"),
+                          grid.Column("CategoryName", "Order Category", canSort: true, style: "col6"),
+                          grid.Column("SubCategoryName", "Order Sub-Category", canSort: true, style: "col7"),
+                          grid.Column("OrderScheduleDate", "Scheduled On", canSort: true, style: "col3", format: @<text>
+                            @if (item.OrderScheduleDate != null)
+             {
+                                <label id="scheduledDate">@item.OrderScheduleDate.ToString("dd/MM/yyyy HH:mm:ss")</label>
+                 if (item.Status != "Closed" && item.Status != "On Bill" && item.Status != "Administered" && item.Status != "Cancel/Revoked")
+                 {
+                     if (item.ShowEditAction)
+                     {
+                                        <input type="hidden" id="hdShowEditAction" value="@item.ShowEditAction" />
+                     }
+                 }
+             }
+                        </text>),
+grid.Column("OrderActivityQuantity", "Quantity Ordered", canSort: true, style: "col1"),
+grid.Column("Status", "Status", canSort: true, style: "col10"),
+grid.Column("Comments", "Comments", canSort: false, style: "col7")))
+                                </div>
+                            }
+                            else
+                            {
+                                <p>No Record found</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @*Current Order Activities Section Ends*@
+                @*
+                    Current Closed Order Activities Section Starts
+                    First check That the tab is lab test tab if not then display the Order activity list
+                    else display the Lab test order activity grid.
+                *@
+                <div class="panel panel-default collapsecss ourcollapse bordertable">
+                    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colClosedActivities">
+                        <h4 class="panel-title collapseTitle" id="colClosedActivitiesHeading">
+                            <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Closed Activities
+                            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                <span class="glyphicon glyphicon-chevron-down"></span>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="colClosedActivities" class="panel-collapse collapse">
+                        <div class="col-sm-12">
+                            <div class="rowTable1 pull-right">
+                                <h4 class="colorCodeTitle">Color Codes</h4>
+                                <span><label class="colorCodes rowColor8"></label>Closed/Cancel/Missed Administration/Patient Unavailable</span> <span><label class="colorCodes rowColor2"></label>On Bill/Administered</span>
+                            </div>
+                        </div>
+                        <div id="ClosedActivitiesDiv" class="table-responsive scrollable-panel clear">
+                            @*@{ Html.RenderPartial("~/Views/Summary/UserControls/_OrderClosedActivitiesList.cshtml", Model.ClosedOrderActivityList); }*@
+                            @if (Model != null && Model.ClosedOrderActivityList != null && Model.ClosedOrderActivityList.Any())
+                            {
+                                var grid = new WebGrid(Model.ClosedOrderActivityList, ajaxUpdateContainerId: "gCActInEForm", canPage: false);
+                                <div id="gCActInEForm">
+                                    @grid.GetHtml(htmlAttributes: new { id = "gCActivitiesInEForm" }, tableStyle: "table closedActvitityGrid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridRow",
+columns:
+                     grid.Columns(
+                         grid.Column("OrderTypeName", "Order Type", canSort: true, style: "col5"),
+                          grid.Column("OrderCode", "Order Code", canSort: true, style: "col2"),
+                          grid.Column("OrderDescription", "Order Description", canSort: true, style: "col4"),
+                          grid.Column("CategoryName", "Order Category", canSort: true, style: "col6"),
+                          grid.Column("SubCategoryName", "Order Sub-Category", canSort: true, style: "col7"),
+                          grid.Column("OrderScheduleDate", "Scheduled On", canSort: true, style: "col3", format: @<text>
+                            @if (item.OrderScheduleDate != null)
+             {
+                                <label id="scheduledDate">@item.OrderScheduleDate.ToString("dd/MM/yyyy HH:mm:ss")</label>
+                 if (item.Status != "Closed" && item.Status != "On Bill" && item.Status != "Administered" && item.Status != "Cancel/Revoked")
+                 {
+                     if (item.ShowEditAction)
+                     {
+                                        <input type="hidden" id="hdShowEditAction" value="@item.ShowEditAction" />
+                     }
+                 }
+             }
+                        </text>),
+    grid.Column("ExecutedDate", "Administered On", canSort: true, style: "colExeDate", format: @<text>@if (item.ExecutedDate != null)
+{
+            @item.ExecutedDate.ToString("dd/MM/yyyy HH:mm:ss")
+}
+        /**/</text>),
+grid.Column("Status", "Status", canSort: true, style: "col10"),
+grid.Column("OrderActivityQuantity", "Quantity Ordered", canSort: true, style: "col1"),
+grid.Column("ExecutedQuantity", "Quantity Executed", canSort: false, style: "col1"),
+grid.Column("Comments", "Comments", canSort: false, style: "col7")
+))
+                                </div>
+                            }
+                            else
+                            {
+                                <h2>No Record found</h2>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+
+                @*Current Closed Order Activities Section Ends*@
+                @*
+                    Current Closed Order Section Starts
+                *@
+                <div class="panel panel-default collapsecss ourcollapse bordertable">
+                    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colClosedOrders">
+                        <h4 class="panel-title collapseTitle" id="colClosedOrdersHeading">
+                            <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Closed Orders
+                            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                <span class="glyphicon glyphicon-chevron-down"></span>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="colClosedOrders" class="panel-collapse collapse openOrderActivity">
+                        <div class="col-sm-12">
+                            <div class="rowTable1 pull-right">
+                                <h4 class="colorCodeTitle">Color Codes</h4>
+                                <span><label class="colorCodes rowColor8"></label>Closed/Cancel</span> <span><label class="colorCodes rowColor2"></label>On Bill/Administered</span>
+                            </div>
+                        </div>
+                        <div id="ClosedOrdersDiv" class="table-responsive scrollable-panel clear">
+                            @*@{ Html.RenderPartial("~/Views/Summary/UserControls/_ClosedOrderList.cshtml", Model.ClosedOrdersList); }*@
+
+                            @if (Model != null && Model.ClosedOrdersList != null && Model.ClosedOrdersList.Count > 0)
+                            {
+                                var grid = new WebGrid(Model.ClosedOrdersList, ajaxUpdateContainerId: "gCOrdersInEForm", canPage: false);
+                                <div id="gCOrdersInEForm">
+                                    @grid.GetHtml(htmlAttributes: new { id = "gNurseClosedOrdersIEForm" }, tableStyle: "table scroll_NurseClosedOrdersGrid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow",
+                                           columns:
+                                               grid.Columns(
+                                                   grid.Column("Quantity", "Quantity", canSort: true, style: "col2"),
+                                                    grid.Column("OrderCode", "Order Code", canSort: true, style: "col3"),
+                                                    grid.Column("OrderDescription", "Order Description", canSort: true, style: "col4"),
+                                                    grid.Column("FrequencyText", "Frequency", canSort: true, style: "col5"),
+                                                    grid.Column("CategoryName", "Order Category", canSort: true, style: "col6"),
+                                                    grid.Column("SubCategoryName", "Order Sub-Category", canSort: true, style: "col7"),
+                                                    grid.Column("PeriodDays", "Duration", canSort: true, style: "col8"),
+                                                    grid.Column("OrderNotes", "Notes", canSort: true, style: "col9"),
+                                                    grid.Column("Status", "Status", canSort: true, style: "col10")
+                                                   )
+                                           )
+                                </div>
+                            }
+                            else
+                            {
+                                <h2>No Record found</h2>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-default collapsecss ourcollapse bordertable vitals" style="display:none;">
+                    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseVitalList">
+                        <h4 class="panel-title collapseTitle">
+                            Vitals History
+                            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                <span class="glyphicon glyphicon-chevron-down"></span>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseVitalList" class="panel-collapse collapse in">
+                        <div id="MedicalVitalListDiv">
+                            @*@{Html.RenderPartial("~/Views/MedicalVital/UserControls/_MedicalVitalList.cshtml", Model.MedicalVitalList);}*@
+                            <div>
+                                @if (Model != null && Model.MedicalVitalList != null && Model.MedicalVitalList.Count > 0)
+                                {
+                                    var grid = new WebGrid(Model.MedicalVitalList, ajaxUpdateContainerId: "gridContentVitalsInEForm", canSort: true, canPage: false);
+                                    <div id="gridContentVitalsInEForm">
+                                        @grid.GetHtml(htmlAttributes: new { id = "gVitalsInFormO" }, tableStyle: "table Scroll_MedicalVital", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(grid.Column("MedicalVitalName", "Vital", canSort: true),
+                         grid.Column("PressureCustom", "Value"),
+                         grid.Column("UnitOfMeasureName", "UOM"),
+                         grid.Column("VitalAddedBy", "Added By"),
+                         grid.Column("VitalAddedOn", "Added Date", canSort: true, format: @<text>@if (item.VitalAddedOn != null)
+         {
+                                @item.VitalAddedOn.ToString("dd/MM/yyyy HH:mm:ss")
+         }
+                            /**/</text>)
+))<h6>* Click on any column heading to sort</h6>
+                                    </div>
+                                }
+                                else
+                                {
+
+                                    <h2>No Record found</h2>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#9Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Physician Orders :
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="9Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#10Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Previous Test Results  :
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="10Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                Content here
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#11Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        AMOUNT AND COMPLEXITY OF DATA REVIEWED:
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="11Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-12 checkFloat">
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                @*<input id="" type="checkbox" />*@
+                                                Laboratory:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtAmtComplexLaboratory"></textarea>*@
+                                            @if (Model.AmtComplexityReviewedList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.AmtComplexityReviewedList[0].Value, new { cols = "50", rows = "5", @ID = "txtAmtComplexLaboratory", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtAmtComplexLaboratory"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                @*<input id="" type="checkbox" />*@
+                                                Radiology/Ultrasound:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtAmtComplexRadiology"></textarea>*@
+                                            @if (Model.AmtComplexityReviewedList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.AmtComplexityReviewedList[1].Value, new { cols = "50", rows = "5", @ID = "txtAmtComplexRadiology", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtAmtComplexRadiology"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="rowTable1">
+                                        <label>Review of Records:</label>
+                                    </div>
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                @*<input id="" type="checkbox" />*@
+                                                Previous Test Results:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtAmtComplexPreviousTest"></textarea>*@
+                                            @if (Model.AmtComplexityReviewedList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.AmtComplexityReviewedList[2].Value, new { cols = "50", rows = "5", @ID = "txtAmtComplexPreviousTest", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtAmtComplexPreviousTest"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                @*<input id="" type="checkbox" />*@
+                                                Discussion of test results with other physician:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtAmtComplexDiscussionTest"></textarea>*@
+                                            @if (Model.AmtComplexityReviewedList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.AmtComplexityReviewedList[3].Value, new { cols = "50", rows = "5", @ID = "txtAmtComplexDiscussionTest", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtAmtComplexDiscussionTest"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                @*<input id="" type="checkbox" />*@
+                                                Old records reviewed:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtAmtComplexOldrecords"></textarea>*@
+                                            @if (Model.AmtComplexityReviewedList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.AmtComplexityReviewedList[4].Value, new { cols = "50", rows = "5", @ID = "txtAmtComplexOldrecords", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtAmtComplexOldrecords"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                @*<input id="" type="checkbox" />*@
+                                                History obtained from other source:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea class="form-control" rows="3" cols="" id="txtAmtComplexHistoryObtained"></textarea>*@
+                                            @if (Model.AmtComplexityReviewedList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.AmtComplexityReviewedList[5].Value, new { cols = "50", rows = "5", @ID = "txtAmtComplexHistoryObtained", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea class="form-control" rows="3" cols="" id="txtAmtComplexHistoryObtained"></textarea>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#12Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        DIAGNOSIS/MANAGEMENT OPTIONS:
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="12Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <ul class="style_UL1">
+                                    <li>
+                                        <div class="col-md-3">
+                                            @*<input type="checkbox" id="chkDIAGNOSISEstProb">*@
+                                            @(Model.DiagnisosManagementList.Count > 0 ? Html.CheckBox("chkDIAGNOSISEstProb", Model.DiagnisosManagementList[0].Value == "1") : Html.CheckBox("chkDIAGNOSISEstProb", false))
+                                            Established Problem
+                                        </div>
+                                        <div class="col-md-3">
+                                            @*<input type="checkbox" id="chkDIAGNOSISNewProb">*@
+                                            @(Model.DiagnisosManagementList.Count > 0 ? Html.CheckBox("chkDIAGNOSISNewProb", Model.DiagnisosManagementList[1].Value == "1") : Html.CheckBox("chkDIAGNOSISNewProb", false))
+
+                                            New Problem
+                                        </div>
+                                        <div class="col-md-3">
+                                            @*<input type="checkbox" id="chkDIAGNOSISMinProb">*@
+                                            @(Model.DiagnisosManagementList.Count > 0 ? Html.CheckBox("chkDIAGNOSISMinProb", Model.DiagnisosManagementList[2].Value == "1") : Html.CheckBox("chkDIAGNOSISMinProb", false))
+
+                                            Minimal=Minor Problem
+                                        </div>
+                                        <div class="col-md-6">
+                                            @*<input type="checkbox" id="chkDIAGNOSISLimitedProb">*@
+                                            @(Model.DiagnisosManagementList.Count > 0 ? Html.CheckBox("chkDIAGNOSISLimitedProb", Model.DiagnisosManagementList[3].Value == "1") : Html.CheckBox("chkDIAGNOSISLimitedProb", false))
+
+                                            Limited=Established problem/stable/improved
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            @*<input type="checkbox" id="chkDIAGNOSISExtNewProb">*@
+                                            @(Model.DiagnisosManagementList.Count > 0 ? Html.CheckBox("chkDIAGNOSISExtNewProb", Model.DiagnisosManagementList[4].Value == "1") : Html.CheckBox("chkDIAGNOSISExtNewProb", false))
+
+                                            Extensive=New problem uncertain status
+                                        </div>
+                                        <div class="col-md-7">
+                                            @*<input type="checkbox" id="chkDIAGNOSISMultipleProb">*@
+                                            @(Model.DiagnisosManagementList.Count > 0 ? Html.CheckBox("chkDIAGNOSISMultipleProb", Model.DiagnisosManagementList[5].Value == "1") : Html.CheckBox("chkDIAGNOSISMultipleProb", false))
+
+                                            Multiple=Established problem, uncertain status, New problem, stable
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="rowTable">
+                                            <div class="col-sm-2">
+                                                <label>
+                                                    Assessment and Plan:
+                                                </label>
+                                            </div>
+                                            <div class="col-sm-10">
+                                                @*<textarea class="form-control" rows="3" cols="" id="txtAssessmentPlan"></textarea>*@
+                                                @if (Model.DiagnisosManagementList.Count > 0)
+                                                {
+                                                    @Html.TextAreaFor(m => m.DiagnisosManagementList[6].Value, new { cols = "50", rows = "5", @ID = "txtAssessmentPlan", @Class = "form-control" })
+                                                }
+                                                else
+                                                {
+                                                    <textarea class="form-control" rows="3" cols="" id="txtAssessmentPlan"></textarea>
+                                                }
+                                            </div>
+                                        </div>
+
+                                    </li>
+                                </ul>
+
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#13Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        RISK OF COMPLICATIONS :
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="13Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-12">
+                                    <div class="rowTable">
+
+                                        <label>
+                                            @*<input id="chkComplicationMin" type="checkbox" />*@
+                                            @(Model.RiskComplicationsList.Count > 0 ? Html.CheckBox("chkComplicationMin", Model.RiskComplicationsList[0].Value == "1") : Html.CheckBox("chkComplicationMin", false))
+                                            Minimal:   (eg, Cold, Aches & pains, insect bite)
+                                        </label>
+
+                                    </div>
+
+
+                                    <div class="rowTable">
+
+                                        <label>
+                                            @*<input id="chkComplicationLow" type="checkbox" />*@
+                                            @(Model.RiskComplicationsList.Count > 0 ? Html.CheckBox("chkComplicationLow", Model.RiskComplicationsList[1].Value == "1") : Html.CheckBox("chkComplicationLow", false))
+
+                                            Low: (eg, Cystitis, vaginitis, minor surgery w/no risk factors, OTC meds)
+                                        </label>
+
+                                    </div>
+
+                                    <div class="rowTable">
+
+                                        <label>
+                                            @*<input id="chkComplicationModerate" type="checkbox" />*@
+                                            @(Model.RiskComplicationsList.Count > 0 ? Html.CheckBox("chkComplicationModerate", Model.RiskComplicationsList[2].Value == "1") : Html.CheckBox("chkComplicationModerate", false))
+
+                                            Moderate: (eg, Breast mass, irregular bleeding, headaches, biopsy, minor surgery w/risk factors, Rx drug mgmt)
+                                        </label>
+
+                                    </div>
+
+                                    <div class="rowTable">
+
+                                        <label>
+                                            @*<input id="chkComplicationHigh" type="checkbox" />*@
+                                            @(Model.RiskComplicationsList.Count > 0 ? Html.CheckBox("chkComplicationHigh", Model.RiskComplicationsList[3].Value == "1") : Html.CheckBox("chkComplicationHigh", false))
+
+                                            High: (eg, Pelvic pain, rectal bleeding, Multiple complaints, Major surgery planned, Chemotherapy)
+                                        </label>
+
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#14Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        PATIENT COUNSELED RE :
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="14Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-12">
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>
+                                                PATIENT COUNSELED RE:
+                                            </label>
+                                        </div>
+                                        <div class="col-sm-10">
+                                            @*<textarea cols="" rows="3" class="form-control" id="txtPatientCounseledRe"></textarea>*@
+                                            @if (Model.PatientCounseledList.Count > 0)
+                                            {
+                                                @Html.TextAreaFor(m => m.PatientCounseledList[0].Value, new { cols = "50", rows = "5", @ID = "txtPatientCounseledRe", @Class = "form-control" })
+                                            }
+                                            else
+                                            {
+                                                <textarea cols="" rows="3" class="form-control" id="txtPatientCounseledRe"></textarea>
+                                            }
+                                            <div class="rowTable">
+                                                <div class="col-sm-6">Minutes Counseled: <span></span></div>
+                                                <div class="col-sm-6">Total Encounter Time: <span></span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default collapsecss ourcollapse bordertable">
+                <div href="#15Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+                    <h4 class="panel-title collapseTitle">
+                        <span>
+                            <img src="/images/list.png">
+                        </span>
+                        Electronic Signature:
+
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h4>
+                </div>
+                <div class="panel-collapse collapse in" id="15Collapse">
+                    <div class="panel-body scroller">
+                        <div class="base-color">
+                            <div class="form">
+                                <div class="col-sm-12">
+                                    <div class="rowTable">
+                                        <div class="col-sm-2">
+                                            <label>Electronic Signature:</label>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            @*<input type="text" id="txtElectronicSignature" />*@
+                                            @*   @if (Model.ElecSignatureList.Count > 0)
+                                                {
+                                                    @Html.TextBoxFor(model => model.ElecSignatureList[0].Value, new {id = "txtElectronicSignature"})
+                                                }
+                                                else
+                                                {
+                                                    <input type="text" id="txtElectronicSignature" />
+                                                }*@
+
+                                            <img src="" id="imagesource" alt="" width="100">
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn_group">
+            <input type="button" value="Cancel" class="btn btn-sm btn-primary edit-btn pull-right" onclick=" $('#divEvaluation').hide(); $.validationEngine.closePrompt('.formError', true); " />
+            @*<input type="button" value="Complete" class="btn btn-sm btn-primary edit-btn pull-right" onclick="SaveEMForm('2','@Model.SetId');" />*@
+            <input type="button" value="Save" class="btn btn-sm btn-primary edit-btn pull-right" onclick="SaveEMForm('1','@Model.SetId');" />
+        </div>
+    </div>
+</div>
+<script src="~/Scripts/Evaluation/EvaluationScript.js"></script>
+
+
+<script>
+    $(function () {
+        SetGridSorting(SortMedicalHistoryList, "#gCHistoryInEForm");
+        SetGridSorting(SortEHRAllergiesList, "#gAllergiesInEForm");
+        SetGridSorting(BindOrdersBySort, "#tbContentOpenOrdersInEPView");
+        SetGridSorting(SortOpenOrderActivitesByType, "#gridContentOpenOrderActivity");
+
+
+        $("#gCActivitiesInEForm tbody tr").each(function (i, row) {
+            var $actualRow = $(row);
+            if ($actualRow.find('.col10').html().indexOf('Open') != -1) {
+                $actualRow.removeClass('rowColor8');
+                $actualRow.removeClass('rowColor2');
+            } else if ($actualRow.find('.col10').html().indexOf("Administered") != -1) {
+                $actualRow.addClass('rowColor2');
+            } else if ($actualRow.find('.col10').html().indexOf('Cancel/Revoked') != -1) {
+                $actualRow.addClass('rowColor8');
+            } else if ($actualRow.find('.col10').html().indexOf('Missed Administration') != -1) {
+                $actualRow.addClass('rowColor8');
+            } else if ($actualRow.find('.col10').html().indexOf('Patient Unavailable') != -1) {
+                $actualRow.addClass('rowColor8');
+            } else if ($actualRow.find('.col10').html().indexOf('Closed') != -1) {
+                $actualRow.addClass('rowColor8');
+            } else if ($actualRow.find('.col10').html().indexOf('On Bill') != -1) {
+                $actualRow.addClass('rowColor2');
+            }
+        });
+        SetGridSorting(SortCurrentOrderCloseActivites, "#gCActInEForm");
+
+
+
+        $("#gNurseClosedOrdersIEForm tbody tr").each(function (i, row) {
+            var $actualRow = $(row);
+            if ($actualRow.find('.col10').html().indexOf('Open') != -1) {
+                $actualRow.removeClass('rowColor8');
+                $actualRow.removeClass('rowColor1');
+                $actualRow.removeClass('rowColor2');
+            } else if ($actualRow.find('.col10').html().indexOf("Administered") != -1) {
+                $actualRow.addClass('rowColor2');
+            } else if ($actualRow.find('.col10').html().indexOf('Closed') != -1) {
+                $actualRow.addClass('rowColor8');
+            } else if ($actualRow.find('.col10').html().indexOf('On Bill') != -1) {
+                $actualRow.addClass('rowColor2');
+            } else if ($actualRow.find('.col10').html().indexOf('Closed') != -1) {
+                $actualRow.addClass('rowColor8');
+            } else if ($actualRow.find('.col10').html().indexOf('Cancel') != -1) {
+                $actualRow.addClass('rowColor8');
+            }
+        });
+        SetGridSorting(SortClosedOpenOrderByType, "#gCOrdersInEForm");
+    });
+</script>

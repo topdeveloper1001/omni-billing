@@ -1,0 +1,232 @@
+﻿@model BillingSystem.Models.FindClaimsModel
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Scripts/jquery.qtip.js"></script>
+<div class="white-bg">
+    <div class="panel panel-default custom_panel ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFindClaim">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Find Claims
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFindClaim" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="flow_diagram">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label>Search</label>
+                                        @*<input type="text" class="form-control" id="txtSearchString" placeholder="Search Claims" maxlength="500" onkeyup="FilterRecords()" />*@
+                                        <input type="text" class="form-control" id="txtSearchString" placeholder="Search Claims" title="Search Can be perform on Bill Number,Bill Status,Patient Name,Encounter number,Payer or Status" maxlength="500" />
+                                    </div>
+                                </div>
+                                <input type="hidden" name="hidClaimStatus" id="hidClaimStatus" />
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label>Bill Date from</label>
+                                        @Html.TextBoxFor(m => m.MonthStartDate, "{0:MM/dd/yyyy}", new { @maxlength = "20", @ID = "txtDateFrom", @class = "form-control dtGeneral" })
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label>Bill Date to</label>
+                                        @Html.TextBoxFor(m => m.MonthEndDate, "{0:MM/dd/yyyy}", new { @maxlength = "20", @ID = "txtDateTill", @class = "form-control dtGeneral" })
+                                    </div>
+                                </div>
+                                <div class="col-sm-8">
+                                    <div class="highlight_block" style="width: 100%;">
+                                        <div class="row">
+                                            <div class="col-sm-4">
+                                                <label class="radio_field">
+                                                    <input type="radio" name="rbtnShowAll" checked="checked" value="0" />
+                                                    Show All</label>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <label class="radio_field">
+                                                    <input type="radio" name="rbtnShowAll" value="1" />
+                                                    Show All Auto Closed</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="row">
+                                        <div class="col-sm-4"><input type="submit" value="Search" class="btn btn-sm btn-primary" id="btnSearch"/></div>
+                                        <div class="col-sm-4"><input type="submit" value="Reset" class="btn btn-sm btn-danger" id="btnReset" /></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="flow_diagram pull-right">
+                            <div class="node" id="div_NotScrubbed" onclick="BindClaimsGrid(this.id)">
+                                <div class="node_content">
+                                    <div class="icon_block">
+                                        @*<img src="~/images/bill_notscrubbed.png" />*@
+                                        <i class="fa fa-file-archive-o"></i>
+                                    </div>
+                                    <h4>Not Scrubbed</h4>
+                                </div>
+                            </div>
+                            <div class="node_arrow"></div>
+                            <div class="node" id="div_Scrubbed" onclick="BindClaimsGrid(this.id)">
+                                <div class="node_content">
+                                    <div class="icon_block">
+                                        @*<img src="~/images/bill_scrubbed.png" />*@
+                                        <i class="fa fa-thumbs-up"></i>
+                                    </div>
+                                    <h4>Scrubbed</h4>
+                                </div>
+                            </div>
+                            <div class="node_arrow"></div>
+                            <div class="node" id="div_Sent" onclick="BindClaimsGrid(this.id)">
+                                <div class="node_content">
+                                    <div class="icon_block">
+                                        @*<img src="~/images/sent_bill.png" />*@
+                                        <i class="fa fa-paper-plane"></i>
+                                    </div>
+                                    <h4>Sent</h4>
+                                </div>
+                            </div>
+                            <div class="node_arrow"></div>
+                            <div class="node" id="div_Paid" onclick="BindClaimsGrid(this.id)">
+                                <div class="node_content">
+                                    <div class="icon_block">
+                                        @*<img src="~/images/bill_notscrubbed.png" />*@
+                                        <i class="fa fa-check-circle"></i>
+                                    </div>
+                                    <h4>Paid</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default custom_panel ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFindClaimGrid">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Claims Grid
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFindClaimGrid" class="panel-collapse collapse in">
+            <div class="panel-body padding_remove" id="divClaimsList">
+                @{ Html.RenderPartial("~/Views/FindClaim/UserControls/_FindClaimList.cshtml", Model.ClaimsList); }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('input[name=rbtnShowAll]').on('change', function () {
+            BindClaimsWithFliter();
+        });
+
+        $('#btnSearch').on('click', function() {
+            BindClaimsWithFliter();
+        });
+
+        $('#btnReset').on('click', function() {
+            ClearFields();
+        });
+
+        $('#txtSearchString').qtip({show: 'focus',hide: 'blur',text : $('#txtSearchString').attr("title") });
+    });
+
+    var ClearFields = function() {
+        $('.node').removeClass('active_notscrub');
+        $('.node').removeClass('active_scrub');
+        $('.node').removeClass('active_sent');
+        $('.node').removeClass('active_paid');
+        $('#txtSearchString').val('');
+        $('#hidClaimStatus').val('');
+        $('#txtDateFrom').val(GetFirstDayOfCurrentMonthFormated());
+        $('#txtDateTill').val(GetLastDateOfCurrentMonthFormated());
+        $("input[name=rbtnShowAll][value=" + 0 + "]").prop('checked', 'checked');
+        BindClaimsWithFliter();
+    };
+
+    var BindClaimsGrid = function (id) {
+        $('.node').removeClass('active_notscrub');
+        $('.node').removeClass('active_scrub');
+        $('.node').removeClass('active_sent');
+        $('.node').removeClass('active_paid');
+        switch (id) {
+            case 'div_NotScrubbed':
+                $('#hidClaimStatus').val('Not Scrubbed');
+                $('#' + id).addClass('active_notscrub');
+                break;
+            case 'div_Scrubbed':
+                $('#hidClaimStatus').val('Scrubbed');
+                $('#' + id).addClass('active_scrub');
+                break;
+            case 'div_Sent':
+                $('#hidClaimStatus').val('Send');
+                $('#' + id).addClass('active_sent');
+                break;
+            case 'div_Paid':
+                $('#hidClaimStatus').val('Paid');
+                $('#' + id).addClass('active_paid');
+                break;
+            default:
+                $('#hidClaimStatus').val('');
+                break;
+        }
+        BindClaimsWithFliter();
+    }
+
+    var BindClaimsWithFliter = function () {
+        var serachstring = $('#txtSearchString').val();
+        var txtDateFrom = $('#txtDateFrom').val();
+        var txtDateTill = $('#txtDateTill').val();
+        var rbtnShowAutoClosed = $('input[name=rbtnShowAll]:checked').val();
+        var claimstatus = $('#hidClaimStatus').val();
+        var jsonData = JSON.stringify({
+            serachstring: serachstring,
+            txtDateFrom: txtDateFrom,
+            txtDateTill: txtDateTill,
+            rbtnShowAutoClosed: rbtnShowAutoClosed,
+            claimstatus: claimstatus
+        });
+        $.ajax({
+            cache: false,
+            type: "POST",
+            url: "/FindClaim/GetClaimsWithFilter",
+            async: false,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            data: jsonData,
+            success: function (data) {
+                $('#divClaimsList').empty().html(data);
+            },
+            error: function (msg) {
+            }
+        });
+    }
+
+    var FilterRecords = function () {
+        //if ($('#txtSearchString').val().length >= 3) {
+        BindClaimsWithFliter();
+        //}
+    }
+</script>

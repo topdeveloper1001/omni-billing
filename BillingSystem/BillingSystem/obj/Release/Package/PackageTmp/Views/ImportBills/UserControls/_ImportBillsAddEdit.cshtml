@@ -1,0 +1,32 @@
+﻿@{
+    ViewBag.Title = "Import XML Bills";
+}
+
+<div class="col-sm-6">
+    <div id="fdocupload">
+        <div class="control-label rowTable">
+            @*@using (Html.BeginForm("UploadXMLs", "ImportBills", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="validateUploadExcel importBillUpload">
+                    @Html.ValidationSummary();
+                    <input type="file" id="xmlFile" class="validate[required]" name="xmlFile" accept="XML" />
+                    <span class="field-validation-error" id="spanfile"></span>
+                    <input type="submit" class="btn btn-primary edit-btn marginrightBtn" onclick="return ValidateFile();" value="Import Excel Data" />
+                    @if (!string.IsNullOrEmpty(ViewBag.check))
+                    {
+                        <span id="spImportExcelfile" style="color: red;">@ViewBag.check</span>
+                    }
+                </div>
+            }*@
+            @using (Html.BeginForm("Index", "ImportBills", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="validateUploadExcel importBillUpload">
+                    @Html.ValidationSummary()
+                    <input type="file" id="file" class="validate[required]" name="file" accept="XML" />
+                    <span class="field-validation-error" id="spanfile"></span>
+                    <input type="submit" class="btn btn-primary edit-btn marginrightBtn" value="Import XMLs" />
+                </div>
+            }
+        </div>
+    </div>
+</div>

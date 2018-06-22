@@ -1,0 +1,448 @@
+﻿@* Patient Summary Tab View *@
+
+@using BillingSystem.Common
+@using BillingSystem.Models
+
+@model PatientSummaryView
+
+<style>
+    table tr th, table tr td {
+        border: none !important;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseEncountersListMain">
+                <h4 class="panel-title collapseTitle">
+                    Encounters List
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseEncountersListMain" class="panel-collapse collapse in">
+                @*<div class="table-responsive">
+                        <div id="divEncounterListSummary">
+                            @{Html.RenderPartial("~/Views/Summary/UserControls/_PatientEncountersList.cshtml", Model.EncountersList);}
+                        </div>
+                    </div>*@
+                <div class="table table-striped">
+                    <table id="dtEncountersInSummary" class="display table table_scroll" cellspacing="0">
+                        <thead class="gridHead">
+                            <tr class="gridRow">
+                                <th scope="col">Start Time</th>
+                                <th scope="col">End Time</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Patient Type</th>
+                                <th scope="col">Gross</th>
+                                <th scope="col">Payment</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentDiagnosisMain">
+                <h4 class="panel-title collapseTitle">
+                    Current Diagnosis
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="colCurrentDiagnosisMain" class="panel-collapse collapse in">
+                @*<div class="table-responsive" id="divDiagnosisMainlist">
+                        @{Html.RenderPartial("~/Views/Summary/UserControls/_PaitentDiagnosisList.cshtml", Model.DiagnosisList);}
+                    </div>*@
+                <div class="table table-striped">
+                    <table id="dtDiagnosisListInSummary" class="display table table_scroll" cellspacing="0">
+                        <thead class="gridHead">
+                            <tr class="gridRow">
+                                <th scope="col">Type</th>
+                                <th scope="col">Code</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Notes</th>
+                                <th scope="col">Initially Added On</th>
+                                <th scope="col">Added By</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentOrdersMain">
+                <h4 class="panel-title collapseTitle">
+                    Current Orders
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="colCurrentOrdersMain" class="panel-collapse collapse in">
+                @*<div class="table-responsive">
+                        <div id="divPatientOpenOrderList_1">
+                            @{Html.RenderPartial("~/Views/Summary/UserControls/_PatientOpenOrderList.cshtml", Model.OpenOrdersList);}
+                        </div>
+                    </div>*@
+                <div class="table table-striped">
+                    <table id="dtCurrentOrdersInSummary" class="display table table_scroll" cellspacing="0">
+                        <thead class="gridHead">
+                            <tr class="gridRow">
+                                <th scope="col">Order Code</th>
+                                <th scope="col">Code Description</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Sub-Category</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Frequency</th>
+                                <th scope="col">Duration</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentVitalsMain">
+                <h4 class="panel-title collapseTitle">
+                    Current Vitals
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="colCurrentVitalsMain" class="panel-collapse collapse in">
+                @*<div id="divPatientMedicalVitals">
+                        @{Html.RenderPartial("~/Views/Summary/UserControls/_PatientMedicalVitalList.cshtml", Model.MedicalVitalList);}
+                    </div>*@
+                <div class="table table-striped">
+                    <table id="dtVitalsInSummary" class="display table table_scroll" cellspacing="0">
+                        <thead class="gridHead">
+                            <tr class="gridRow">
+                                <th scope="col">Vital</th>
+                                <th scope="col">Value</th>
+                                <th scope="col">UOM</th>
+                                <th scope="col">Added By</th>
+                                <th scope="col">Added Date</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentAllergiesMain">
+                <h4 class="panel-title collapseTitle">
+                    Allergies List
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="colCurrentAllergiesMain" class="panel-collapse collapse in">
+                @*<div id="divPatientMedicalAllergies">
+                        @{Html.RenderPartial("~/Views/MedicalRecord/UserControls/_AlergiesList.cshtml", Model.AlergyList);}
+                    </div>*@
+                <div class="table table-striped">
+                    <table id="dtAllergiesInSummary" class="display table table_scroll" cellspacing="0">
+                        <thead class="gridHead">
+                            <tr class="gridRow">
+                                <th scope="col">Type</th>
+                                <th scope="col">Allergy</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Added By</th>
+                                <th scope="col">Added On</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentSummaryNotesMain">
+                <h4 class="panel-title collapseTitle">
+                    Current Notes by Physician / Nurse
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="colCurrentSummaryNotesMain" class="panel-collapse collapse in">
+                @*<div id="divPatientSummaryNotes">
+                        @{Html.RenderPartial("~/Views/MedicalNotes/UserControls/_MedicalNotesListPatientSummary.cshtml", Model.PatientSummaryNotes);}
+                    </div>*@
+                <table id="dtNotesInSummary" class="display table table_scroll" cellspacing="0">
+                    <thead class="gridHead">
+                        <tr class="gridRow">
+                            <th scope="col">Notes</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Added By</th>
+                            <th scope="col">Added On</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentSummaryNotesMain">
+                <h4 class="panel-title collapseTitle">
+                    @ResourceKeyValues.GetKeyValue("lblcurrentmedications")
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="colCurrentSummaryNotesMain" class="panel-collapse collapse in">
+                @*<div id="divPatientSummaryNotes">
+                        @{Html.RenderPartial("~/Views/MedicalNotes/UserControls/_MedicalNotesListPatientSummary.cshtml", Model.PatientSummaryNotes);}
+                    </div>*@
+                <div class="table table-striped">
+                    <table id="dtMedicationsInSummary" class="display table table_scroll" cellspacing="0">
+                        <thead class="gridHead">
+                            <tr class="gridRow">
+                                @*<th scope="col">Encounter ID</th>*@
+                                <th scope="col">Drug Name</th>
+                                <th scope="col">Drug Code</th>
+                                <th scope="col">Taking Since</th>
+                                <th scope="col">Volume</th>
+                                <th scope="col">Dosage</th>
+                                <th scope="col">Frequency</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="row">
+            <div class="col-lg-12 profile-pic-main">
+                <div class="profile-pic">
+                    @if (Model.PatientInfo != null)
+                    {
+                        <img src="@Model.PatientInfo.ProfilePicImagePath" alt="Patient Picture" />
+                    }
+                    else
+                    {
+                        <img src="/images/profile-pic.jpg" alt="Patient Picture" />
+                    }
+                    @*<img src="images/profile-pic.jpg" alt="Patient Picture" />*@
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="base-color base-color-right risk-factor">
+                    <h5 class="highlight">Risk Factors</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Last</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    @if (Model.Riskfactors != null)
+                                    {
+                                        <td>Weight</td>
+                                        <td>@Model.Riskfactors.Weight.ToString("####")</td>
+                                        <td><span class="glyphicon glyphicon-arrow-down green-arrow"></span></td>
+                                    }
+                                    else
+                                    {
+                                        <td>Weight</td>
+                                        <td>NA</td>
+                                        <td><span class="glyphicon glyphicon-arrow-down green-arrow"></span></td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>BMI</td>
+                                    <td>NA</td>
+                                    <td><span class="glyphicon glyphicon-arrow-right yellow-arrow"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Blood Pressure(Systolic)</td>
+                                    @if (Model.Riskfactors != null)
+                                    {
+                                        <td>@Model.Riskfactors.BloodPressureSys.ToString("####")</td>
+                                        <td><span class="glyphicon glyphicon-arrow-up red-arrow"></span></td>
+                                    }
+                                    else
+                                    {
+                                        <td>NA</td>
+                                        <td><span class="glyphicon glyphicon-arrow-down green-arrow"></span></td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Blood Pressure(Diastolic)</td>
+                                    @if (Model.Riskfactors != null)
+                                    {
+                                        <td>@Model.Riskfactors.BloodPressureDis.ToString("####")</td>
+                                        <td><span class="glyphicon glyphicon-arrow-up red-arrow"></span></td>
+                                    }
+                                    else
+                                    {
+                                        <td>NA</td>
+                                        <td><span class="glyphicon glyphicon-arrow-down green-arrow"></span></td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Diabetes</td>
+                                    @if (Model.Riskfactors != null)
+                                    {
+                                        <td>@Model.Riskfactors.Diabities</td>
+                                    }
+                                    else
+                                    {
+                                        <td>No</td>
+                                    }
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Family History</td>
+                                    <td>Heart Disease</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Cholesterol</td>
+                                    <td>230</td>
+                                    <td><span class="glyphicon glyphicon-arrow-down green-arrow"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>HDL</td>
+                                    <td>35</td>
+                                    <td><span class="glyphicon glyphicon-arrow-down green-arrow"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>LDL</td>
+                                    <td>120</td>
+                                    <td><span class="glyphicon glyphicon-arrow-down green-arrow"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Allergies</td>
+                                    @if (Model.AlergyList.Count > 0)
+                                    {
+                                        <td>
+                                            <label onclick="ShowAllergies();">Yes</label>
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td>No </td>
+
+                                    }
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Smoker</td>
+                                    <td>No</td>
+                                    <td><span class="glyphicon glyphicon-arrow-right yellow-arrow"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Alcohol</td>
+                                    <td>Social</td>
+                                    <td><span class="glyphicon glyphicon-arrow-right yellow-arrow"></span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+
+        var pId = $("#hdPatientId").val() == null || $("#hdPatientId").val() == "" ? 0 : $("#hdPatientId").val();
+        var eId = $("#hdCurrentEncounterId").val();
+        eId = eId > 0 || eId == "" ? ("&eId=" + eId) : "";
+        $.ajax({
+            type: "POST",
+            url: "/Summary/BindSummaryTabData?pId=" + pId + eId,
+            async: false,
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: null,
+            success: function (data) {
+                //Bind Encounters
+                var columns = [{ "data": "EncounterStartTime" }, { "data": "EncounterEndTime" }, { "data": "EncounterNumber" }
+                    , { "data": "EncounterTypeName" }, { "data": "EncounterPatientTypeName" }
+                    , { "data": "Charges" }, { "data": "Payment" }];
+                BindJQDatatableWithData('dtEncountersInSummary', columns, data.encounters, isPaging = false);
+
+                //Bind Diagnosis
+                columns = [{ "data": "DiagnosisTypeName" }, { "data": "DiagnosisCode" }, { "data": "DiagnosisCodeDescription" }
+                    , { "data": "Notes" }, { "data": "CreatedDate" }, { "data": "EnteredBy" }];
+                BindJQDatatableWithData('dtDiagnosisListInSummary', columns, data.diagList, isPaging = false);
+
+
+                //Bind Current Orders
+                var columns = [{ "data": "OrderCode" }, { "data": "OrderDescription" }, { "data": "CategoryName" }
+                    , { "data": "SubCategoryName" }, { "data": "Status" }, { "data": "Quantity" }, { "data": "FrequencyText" }
+                    , { "data": "PeriodDays" }];
+                BindJQDatatableWithData('dtCurrentOrdersInSummary', columns, data.currentOrders, isPaging = false);
+
+
+                //Bind Vitals
+                var columns = [{ "data": "MedicalVitalName" }, { "data": "PressureCustom" }, { "data": "UnitOfMeasureName" }
+                    , { "data": "VitalAddedBy" }, { "data": "VitalAddedOn" }];
+                BindJQDatatableWithData('dtVitalsInSummary', columns, data.vitals, isPaging = false);
+
+                //Bind Allergies
+                columns = [{ "data": "AlergyType" }, { "data": "AlergyName" }, { "data": "DetailAnswer" }, { "data": "AddedBy" }
+                    , { "data": "CreatedDate" }];
+                BindJQDatatableWithData('dtAllergiesInSummary', columns, data.allergies, isPaging = false);
+
+                //Bind Medical Notes
+                var columns = [{ "data": "Notes" }, { "data": "NotesTypeName" }, { "data": "NotesAddedBy" }, { "data": "NotesDate" }];
+                BindJQDatatableWithData('dtNotesInSummary', columns, data.notes, isPaging = false);
+
+                //Bind Medications
+                //columns = [{ "width": "200px" }, { "data": "DrugDuration" }, { "data": "DrugVolume", width: "10%" }, { "data": "DrugDosage" }
+                //    , { "data": "DrugFrequency" }];
+                columns = [{ "width": "200px", "targets": 0 },
+                { "width": "50px", "targets": 1 },
+                { "width": "50px", "targets": 2 },
+                { "width": "20px", "targets": 3 },
+                { "width": "20px", "targets": 4 },
+                { "width": "50px", "targets": 5 }];
+                BindJQDatatableWithData('dtMedicationsInSummary', columns, data.medications, isPaging = false);
+
+                //$('#dtMedicationsInSummary').dataTable({
+                //    aaData: data.medications,
+                //    scrollY: "200px",
+                //    scrollCollapse: true,
+                //    bProcessing: true,
+                //    paging: false,
+                //    aoColumnDefs: [{ "width": "200px", "targets": 0 },
+                //    { "width": "50px", "targets": 1 },
+                //    { "width": "50px", "targets": 2 },
+                //    { "width": "20px", "targets": 3 },
+                //    { "width": "20px", "targets": 4 },
+                //    { "width": "50px", "targets": 5 }]
+                //});
+                if ($("#hdCurrentEncounterId").length > 0 && data.currentEncounterId > 0) {
+                    $("#hdCurrentEncounterId").val(data.currentEncounterId);
+                }
+            },
+            error: function (msg) {
+
+                console.log(msg.responseText);
+            }
+        });
+    });
+    //$(function () {
+    //    BindPatientSummaryTabData();
+    //});
+</script>
+@*<script src="~/Scripts/Summary/_patientSummaryTab.js?@Helpers.CurrentAssemblyTicks"></script>*@

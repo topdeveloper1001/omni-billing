@@ -1,0 +1,117 @@
+﻿@using BillingSystem.Model
+@model LabTestResult
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+    select {
+    margin-bottom: 10px;}
+</style>
+<div class="form" id="LabTestResultFormDiv">
+    @*// BBCOLUMNSHERE*@
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Table Number:</label>
+        @Html.TextBoxFor(m => m.LabTestResultTableNumber, new { @maxlength = "10", @id = "txtLabTestResultTableNumber",@class="validate[required] emptytxt" })
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Table Name:</label>
+        @Html.TextBoxFor(m => m.LabTestResultTableName, new { @maxlength = "50", @id = "txtLabTestResultTableName",@class="validate[required] emptytxt" })
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>CPT Code:</label>
+        @Html.TextBoxFor(m => m.LabTestResultCPTCode, new { @maxlength = "10", @id = "txtLabTestResultCPTCode",@class="validate[required] emptytxt" })
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Test Name:</label>
+        @Html.TextBoxFor(m => m.LabTestResultTestName, new { @maxlength = "100", @id = "txtLabTestResultTestName",@class="validate[required] emptytxt" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Type of Lab Specimen:</label>
+          <select id="ddlLabTestResultSpecimen" class="validate[required] emptyddl"></select>
+          @Html.HiddenFor(m => m.LabTestResultSpecimen, new {  @id = "hdLabTestResultSpecimen" })
+      </div>
+      <div class="rowTable">
+          <label><span class="mandatoryStar"></span>Gender:</label>
+          <select id="ddlLabTestResultGender" class="validate[required] emptyddl"></select>
+          @Html.HiddenFor(m => m.LabTestResultGender, new {  @id = "hdLabTestResultGender" })
+        @*@Html.TextBoxFor(m => m.LabTestResultGender, new { @maxlength = "10", @id = "txtLabTestResultGender" })*@
+      </div>
+      <div class="rowTable">
+          <label><span class="mandatoryStar"></span>Age From:</label>
+          <select id="ddlLabTestResultAgeFrom" class="validate[required] emptyddl"></select>
+          @Html.HiddenFor(m => m.LabTestResultAgeFrom, new {  @id = "hdLabTestResultAgeFrom" })
+        @*@Html.TextBoxFor(m => m.LabTestResultAgeFrom, new { @maxlength = "50", @id = "txtLabTestResultAgeFrom" })*@
+      </div>
+      <div class="rowTable">
+          <label><span class="mandatoryStar"></span>Age To:</label>
+          <select id="ddlLabTestResultAgeTo" class="validate[required] emptyddl"></select>
+          @Html.HiddenFor(m => m.LabTestResultAgeTo, new {  @id = "hdLabTestResultAgeTo" })
+        @*@Html.TextBoxFor(m => m.LabTestResultAgeTo, new { @maxlength = "50", @id = "txtLabTestResultAgeTo" })*@
+      </div>
+      <div class="rowTable">
+          <label><span class="mandatoryStar"></span>Measurement Value:</label>
+           <select id="ddlLabTestResultMeasurementValue" class="validate[required] emptyddl"></select>
+          @Html.HiddenFor(m => m.LabTestResultMeasurementValue, new {  @id = "hdLabTestResultMeasurementValue" })
+        @*@Html.TextBoxFor(m => m.LabTestResultMeasurementValue, new { @maxlength = "50", @id = "txtLabTestResultMeasurementValue" ,@class="validate[required]" })*@
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Low Range Result:</label>
+        @Html.TextBoxFor(m => m.LabTestResultLowRangeResult, new { @maxlength = "10", @id = "txtLabTestResultLowRangeResult" ,@class="validate[required, custom[number]] emptytxt"})
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>High Range Result:</label>
+        @Html.TextBoxFor(m => m.LabTestResultHighRangeResult, new { @maxlength = "10", @id = "txtLabTestResultHighRangeResult",@class="validate[required, custom[number]] emptytxt" })
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Good From:</label>
+        @Html.TextBoxFor(m => m.LabTestResultGoodFrom, new { @maxlength = "10", @id = "txtLabTestResultGoodFrom",@class="validate[required, custom[number]] emptytxt" })
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Good To:</label>
+        @Html.TextBoxFor(m => m.LabTestResultGoodTo, new { @maxlength = "10", @id = "txtLabTestResultGoodTo" ,@class="validate[required, custom[number]] emptytxt"})
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Caution From:</label>
+        @Html.TextBoxFor(m => m.LabTestResultCautionFrom, new { @maxlength = "10", @id = "txtLabTestResultCautionFrom",@class="validate[required, custom[number]] emptytxt" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Caution To:</label>
+        @Html.TextBoxFor(m => m.LabTestResultCautionTo, new { @maxlength = "10", @id = "txtLabTestResultCautionTo",@class="validate[required, custom[number]] emptytxt" })
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Bad From:</label>
+        @Html.TextBoxFor(m => m.LabTestResultBadFrom, new { @maxlength = "10", @id = "txtLabTestResultBadFrom",@class="validate[required, custom[number]] emptytxt" })
+      </div>
+      <div class="rowTable">
+        <label><span class="mandatoryStar"></span>Bad To:</label>
+        @Html.TextBoxFor(m => m.LabTestResultBadTo, new { @maxlength = "10", @id = "txtLabTestResultBadTo",@class="validate[required, custom[number]] emptytxt" })
+      </div>
+   </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.LabTestResultID != 0)
+            {  
+                <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SaveLabTestResult('@Model.LabTestResultID');" />                
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveLabTestResult('0');" class="btn btn-primary edit-btn marginBtn" value="Save" />                
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearLabTestResultAll();">Cancel</button>            
+        </div>
+    </div>
+</div>

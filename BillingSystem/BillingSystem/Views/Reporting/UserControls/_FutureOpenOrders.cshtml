@@ -1,0 +1,45 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model List<FutureOpenOrderCustomModel>
+
+@if (Model != null && Model.Count > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentFutureOpenOrderChange", canPage: false, canSort: true);
+    <div id="gridContentFutureOpenOrderChange">
+        @grid.GetHtml(htmlAttributes: new { id = "gridContentFutureOpenOrder" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+            columns:
+                grid.Columns(
+                 grid.Column("PatientName", "Patient Name", canSort: true, style: "col3"),
+                    grid.Column("OrderCode", "Order Code", canSort: true, style: "col3"),
+                    grid.Column("OrderDescription", "Order Description", canSort: true, style: "col4"),
+                    grid.Column("OrderCategoryVal", "Order Category", canSort: true, style: "col6"),
+                    grid.Column("OrderSubCategoryVal", "Order Sub-Category", canSort: true, style: "col7"),
+                    grid.Column("OrderStatusVal", "Status", canSort: true, style: "col7"),
+                    grid.Column("Quantity", "Quantity", canSort: true, style: "col2"),
+                    
+                    grid.Column("OrderStartDate", "Start Date", canSort: true, style: "col7", format: @<text>@if (item.StartDate != null)
+                                                                                                                                {
+                                                @item.StartDate.ToString("dd/MM/yyyy HH:mm")
+                                                                                                                                }</text>),
+                    grid.Column("CreatedDate", "Created Date", canSort: true, style: "col7", format: @<text>@if (item.CreatedDate != null)
+                                                                                                                                {
+                                                @item.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                                                                                                                                }</text>),
+                    
+                    grid.Column("Frequency", "Frequency", canSort: true, style: "col5"),
+                    grid.Column("Duration", "Duration", canSort: true, style: "col8"),
+                    grid.Column("Comments", "Comments", canSort: true, style: "col9")
+                     )
+             )<h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function () {
+        SetGridSorting(BindOrdersBySort, "#gridContentFutureOpenOrder");
+    });
+</script>

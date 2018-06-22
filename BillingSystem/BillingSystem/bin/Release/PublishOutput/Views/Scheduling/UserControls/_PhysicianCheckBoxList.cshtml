@@ -1,0 +1,29 @@
+﻿@using BillingSystem.Model.CustomModel
+@using Kendo.Mvc.UI
+@using Kendo.Mvc.UI.Fluent
+@model IEnumerable<PhysicianCustomModel>
+
+<style type="text/css">
+    #TreeView .k-group li {
+        float: left;
+        width: 45%;
+    }
+    
+</style>
+@(Html.Kendo().TreeView().Name("treeviewPhysician").Checkboxes(checkboxes => checkboxes.Name("checkedFiles").CheckChildren(true)).Events(iten => iten.Check("onCheckFilters")).HtmlAttributes(new { }).HighlightPath(false).Items(menu =>
+      {
+          var list = Model;
+          foreach (var item in list)
+          {
+              if (item.UserTypeStr.Contains("Nur"))
+              {
+                  menu.Add().Text(item.Physician.PhysicianName + "(" + item.UserTypeStr + ")").HasChildren(false).Id(item.Physician.Id.ToString()).Checked(true).SpriteCssClasses("symbol_nurse").HtmlAttributes(new { @title = "Speciality:" + item.UserSpecialityStr }).Expanded(false);
+              }
+              else
+              {
+                 menu.Add().Text(item.Physician.PhysicianName + "(" + item.UserTypeStr + ")").HasChildren(false).Id(item.Physician.Id.ToString()).Checked(true).SpriteCssClasses("symbol_doctor").HtmlAttributes(new { @title = "Speciality:" + item.UserSpecialityStr }).Expanded(false);
+              }
+          }
+      })
+      )
+@Html.Kendo().DeferredScripts()

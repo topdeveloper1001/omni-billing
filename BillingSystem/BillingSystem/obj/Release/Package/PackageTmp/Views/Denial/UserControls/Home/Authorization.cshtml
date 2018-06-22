@@ -1,0 +1,252 @@
+﻿@model DTO.AuthorizationDTO  
+@{
+    ViewBag.Title = "Authorization";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script type="text/javascript">
+    function hideDiv() {
+
+        document.getElementById('dialog-message').style.display = "none";
+        document.getElementById('overlay').style.display = "none";
+
+    }
+    $(document).ready(function () {
+
+        
+
+        var PatientId = '@TempData["PatientID"]';
+
+        $('#btnInpatient').click(function () {
+            window.location.href = "/Admin/AdmitPatient?Id=" + PatientId + "&RequestFrom=Authorization";
+        });
+        $('#btnOutpatient').click(function () {
+            window.location.href = "/Admin/OutPatient?Id=" + PatientId + "&RequestFrom=Authorization";
+        });
+
+        var CheckData = '@TempData["NewAuthorization"]';
+
+        if (CheckData!='')
+        {
+            alert('Authorization Saved Successfully');
+            
+            document.getElementById('dialog-message').style.display = "block";
+            document.getElementById('overlay').style.display = "block";
+        }
+
+        var patientid = '@Model.PatientID';
+        if (patientid != '') {
+            $(window).scrollTop(900);
+        }
+    $("#AuthorizationDateOrdered").datepicker({
+
+        yearRange: "-0:+20",
+        changeMonth: true,
+        changeYear: true
+    });
+    $("#AuthorizationStart").datepicker({
+
+        yearRange: "-0:+20",
+        changeMonth: true,
+        changeYear: true
+    });
+    $("#AuthorizationEnd").datepicker({
+
+        yearRange: "-0:+20",
+        changeMonth: true,
+        changeYear: true
+    });
+    });
+    function CheckDates(date1, date2, spanid) {
+        
+        var Date1 = new Date($("#" + date1).val());
+
+        var Date2 = new Date($("#" + date2).val());
+
+        if (Date1 > Date2) {
+
+            $("#" + spanid).text("End date should greater than start date.");
+            return false;
+
+        }
+        else {
+            $("#" + spanid).text("");
+            return true;
+        }
+    }
+
+    function GetNewAuthorization(id)
+    {
+        if (confirm("Do you need to get authorization?")) {
+            window.location.href = "/Home/Authorization?Id=" + id;
+        }        
+    }
+
+</script> 
+ @using (Html.BeginForm("Authorization", "Home", FormMethod.Post))
+ { 
+        <div class="white-bg">
+
+     @if (Model.PatientID != null)
+                        { 
+     <div style="margin-top:20px;">
+    <fieldset class="login" >
+        <legend><b>Obtain Insurance Authorization</b></legend> 
+
+
+ <table class="table">
+                <tr>
+                    <td style="width: 17%;"></td>
+                    <td style="width: 15%;"></td>
+                    <td style="width: 15%;"></td>
+                    <td style="width: 17%;"></td>
+                    <td style="width: 15%;"></td>
+                    <td style="width: 15%;"></td>
+                </tr>
+     <tr>
+         <td colspan="6" >
+          
+         </td>
+     </tr>
+                <tr>
+                    <td> Patient ID :</td>
+                    <td>@if (Model.PatientID != null)
+                        {
+                         @Html.TextBoxFor(m => m.EncounterPatientID, new { @maxlength = "20", @readonly = "true" })
+                        }
+                        else
+                        {
+                             @Html.TextBoxFor(m => m.EncounterPatientID, new { @maxlength = "18" })
+                        }
+                        </td>
+                        <td><span id="spEncounterPatientID" style="color:red;"></span>
+                         @Html.ValidationMessageFor(m => m.EncounterPatientID)</td>
+
+                    <td> Authorization Date Ordered :</td>
+                    <td>
+                            @Html.TextBoxFor(m => m.AuthorizationDateOrdered, "{0:MM/dd/yyyy}", new { @maxlength = "20" }) 
+                        
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationDateOrdered)
+                        @Html.HiddenFor(m => m.PkId)
+                         @Html.HiddenFor(m => m.PatientID)
+                        @Html.HiddenFor(m=>m.RequestComeFrom)  
+
+                    </td>
+
+                </tr>
+
+                 <tr>
+                    <td>Authorization Start:</td>
+                    <td>@Html.TextBoxFor(m => m.AuthorizationStart, "{0:MM/dd/yyyy}", new { @maxlength = "10" })</td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationStart)</td>
+
+                    <td>Authorization End :</td>
+                    <td>@Html.TextBoxFor(m => m.AuthorizationEnd, "{0:MM/dd/yyyy}", new { @maxlength = "10", @onchange="CheckDates('AuthorizationStart','AuthorizationEnd','spAuthorizationEnd')", @resize = "vertical" })</td>
+                    <td><span id="spAuthorizationEnd" style="color:red;"></span>@Html.ValidationMessageFor(m => m.AuthorizationEnd)</td>
+                </tr>
+       <tr>
+                    <td>Authorization Type :</td>
+                    <td>@Html.TextBoxFor(m => m.AuthorizationType, new { @maxlength = "20" })</td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationType)</td>
+
+                    <td>Authorization Comments :</td>
+                    <td>@Html.TextAreaFor(m => m.AuthorizationComments, new { @maxlength = "50", @resize = "vertical" })</td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationComments)</td>
+                </tr>
+
+      <tr>
+                    <td>Authorization DenialCode:</td>
+                    <td>@Html.DropDownListFor(m => m.AuthorizationDenialCode, new SelectList(Model.LstDenials, "DenialId", "DenialCode"), "--Select One--", new { id = "AuthorizationDenialCode", @style = "width: 219px" })</td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationDenialCode)</td>
+
+                    <td>Authorization ID Payer :</td>
+                    <td>@Html.TextBoxFor(m => m.AuthorizationIDPayer, new { @maxlength = "20", @resize = "vertical" })</td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationIDPayer)</td>
+                </tr>
+
+      <tr>
+                    <td>AuthorizationLimit :</td>
+                    <td>@Html.TextBoxFor(m => m.AuthorizationLimit, new { @maxlength = "15" })</td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationLimit)</td>
+
+                    <td>Authorization Member ID :</td>
+                    <td>@Html.TextBoxFor(m => m.AuthorizationMemberID, new { @maxlength = "12", @resize = "vertical" })</td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationMemberID)</td>
+                </tr>
+
+                <tr>
+                    <td>Authorization Result :</td>
+                    <td>       @Html.DropDownListFor(m => m.AuthorizationResult, new SelectList(Model.LstAuthorizationResult, "Id", "Value"), "--Select One--", new { id = "AuthorizationResult", @style = "width: 219px" }) </td>
+                    <td>@Html.ValidationMessageFor(m => m.AuthorizationResult)</td>
+
+                    <td></td>
+                    <td></td>
+                    <td></td>
+
+                </tr>       
+
+                <tr>
+                    <td colspan="6">
+                        <div class="btn-group">
+
+                            @if (Model.PkId != 0)
+                            {  <input type="submit" class="blue-btn" onclick="return CheckDates('AuthorizationStart', 'AuthorizationEnd', 'spAuthorizationEnd');" value="Update" />
+                             <button name="ClientCancel" class="blue-btn" type="button" onclick=" document.location.href = $('#Url').attr('href');">Cancel</button>
+                                
+                            }
+                            else
+                            {
+                                <input type="submit" onclick="return CheckDates('AuthorizationStart', 'AuthorizationEnd', 'spAuthorizationEnd');" class="blue-btn" value="Save" />
+                               <button name="ClientCancel" class="blue-btn" type="button" >Cancel</button>                                
+                            }                          
+                            
+                            <a id="Url" href="@Html.AttributeEncode(Url.Action("Authorization", "Home", new { Id = Model.PatientID }))" style="display:none;"></a>
+                            <br />
+                            <span id="lblMessage" style="display: none; font-weight: bold; margin-top: 5px;">Fields marked with <span style="color: red;">* </span>are mendatory.</span>
+                            @if (TempData["Message"] != null)
+                            {
+                                <div style="margin: 5px 5px 5px 12px; color: green; font-size: 12px;">@TempData["Message"]</div>       
+                            }
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+
+            </table>
+    </fieldset> 
+
+  </div>
+                        }
+             else
+         {
+        <div style="margin:10px;">Please search the patient to whom you want give authorization.</div>
+        }      
+</div>                  
+ }
+
+    <div id="dialog-message" title="Message" class="recapDialog">
+        <div class="titlebar">Create Encounters</div>
+        <p id="CloseImg" class="dialogclose">
+            <input type="image" src="~/images/close.jpg" onclick="return hideDiv()" class="Inser_Inno_close"  /></p>
+        <p class="dialogtext">   
+           
+            <span id="Messagecontent" style="padding:5px;">There are two options to create encounters by using "Admin Patient/ Inpatient" Or "OutPatient/ER" forms.<br /> So create encounters by click on the corresponding button.  </span>
+        </p>
+        <div  class="btnStyles" style="float:left;"  >
+            <div style="float:left;width:50%;">
+                <input type="button" value="Admit Patient / Inpatient" id="btnInpatient" class="blue-btn btnokay"  style="display:block;width:120px;"   />
+                 
+                 </div> 
+              <div style="float:left;width:50%;"> 
+              
+                 <input type="button" value="OutPatient/ ER" id="btnOutpatient" class="blue-btn btnokay"  style="display:block;width:120px;"   />
+                 </div>   
+           
+        </div>
+    </div>
+    <div id="overlay" class="overlayRecap"></div>
+
+

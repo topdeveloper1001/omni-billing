@@ -1,0 +1,149 @@
+﻿@model BillingSystem.Model.MCRulesTable
+
+<style>
+    .btn-group {
+        margin-bottom: 20px;
+        margin-left: 10px;
+    }
+
+    .clear { clear: both; }
+
+    select { margin-bottom: 10px; }
+</style>
+
+@{
+    string btnSaveText = "Save";
+    if (Model.ManagedCareRuleId != 0)
+    {
+        btnSaveText = "Update";
+    }
+}
+<div class="form" id="MCRulesTableFormDiv">
+    <div class="container-fluid" style="border-radius: 5px; margin: 10px;">
+        @*<div class="col-xs-12 col-sm-6 col-md-4 col-lg-4">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Rule Number:</label>
+                @Html.TextBoxFor(m => m.RuleNumber, new {@maxlength = "10", @id = "txtRuleNumber"})
+                @Html.HiddenFor(m => m.RuleSetNumber, new {@maxlength = "10", @id = "hdRuleSetNumber"})
+            </div>
+        </div>*@
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4 row">
+            <div class="">
+                <label><span class="mandatoryStar"></span>Patient Type:</label>
+                <select id="ddlAppliestoPatientType" class="validate[required]"></select>
+                @Html.HiddenFor(m => m.AppliestoPatientType, new {id = "hdAppliestoPatientType"})
+                @Html.HiddenFor(m => m.RuleSetNumber, new {@maxlength = "10", @id = "hdRuleSetNumber"})
+                @Html.HiddenFor(m => m.RuleNumber, new {@maxlength = "10", @id = "hdRuleNumber"})
+                @*@Html.TextBoxFor(m => m.AppliestoPatientType, new {@maxlength = "10", @id = "txtAppliestoPatientType"})*@
+            </div>
+        </div>
+        @*<div class="col-xs-12 col-sm-6 col-md-4 col-lg-4">
+            <div class="rowTable">
+                <label>IsActive:</label>
+                @{
+                    bool isActive = false;
+                    if (Model != null && Model.IsActive != null)
+                    {
+                        isActive = (bool) Model.IsActive;
+                    }
+                }
+                @Html.CheckBoxFor(m => isActive, new {@id = "chkIsActive"})
+            </div>
+        </div>*@
+    </div>
+    <div class="container-fluid">
+        <div class="col-xs-12 col-sm-6 col-md-1 col-lg-1 yellowBox2 margin15 font11px">
+            <div class="rowTable">
+                <label class="colorCodeTitle">Condition Start:</label>
+                @Html.HiddenFor(m => m.ConStart, new {@id = "hdConStart"})
+                <select id="ddlConStart" onchange="ShowhideCalculationDiv();"></select>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3 yellowBox2 margin15 font11px">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Table Name:</label>
+                @Html.HiddenFor(m => m.LHSTableName, new {@id = "hdLHSTableName"})
+                <select id="ddlLHSTableName" class="validate[required]" onchange=" OnChangeTableDropdown('#ddlLHSTableName', 1); "></select>
+                @*@Html.TextBoxFor(m => m.TableName, new {@maxlength = "50", @id = "txtTableName"})*@
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Table Column:</label>
+                @Html.HiddenFor(m => m.LHSTableColumn, new {@id = "hdLHSTableColumn"})
+                <select id="ddlLHSTableColumn" class="validate[required]"></select>
+                @*@Html.TextBoxFor(m => m.TableColumn, new {@maxlength = "50", @id = "txtTableColumn"})*@
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Table Key Column:</label>
+                @Html.HiddenFor(m => m.LHSTableKeyColumn, new {@id = "hdLHSTableKeyColumn"})
+                <select id="ddlLHSTableKeyColumn" disabled="disabled" ></select>
+                @*@Html.TextBoxFor(m => m.TableKeyColumn, new {@maxlength = "50", @id = "txtTableKeyColumn"})*@
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-2 col-lg-2 yellowBox2 margin15 font11px">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Calculation Type:</label>
+                <select class="validate[required]" id="ddlCalculationType"></select>
+                @Html.HiddenFor(m => m.Calculation, new {@id = "hdCalculation"})
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3 yellowBox2 margin15 font11px">
+            <div class="rowTable spanRowFW" id="DivRHSFrom">
+                <label class="colorCodeTitle">
+                    Comparer Section:
+                </label>
+                <label>
+                    RHS (Right Hand Side) From:
+                </label>
+                <span>
+                    Table
+                    <input type="radio" id="rdRhsFromTable" class="rdRhsFrom" onchange="ToggleRadioButtons('#rdRhsFromTable','.rdRhsFrom'); ShowHideRHSDivs('#rhsFromTable');" checked="checked" />
+                </span>
+                <span>
+                    Direct Value
+                    <input type="radio" id="rdRhsFromDirectValue" class="rdRhsFrom" onchange="ToggleRadioButtons('#rdRhsFromDirectValue','.rdRhsFrom'); ShowHideRHSDivs('#rhsFromDirectValue');" />
+                </span>
+                @* <span>
+                    QueryString
+                    <input type="radio" id="rdRhsFromQueryString" class="rdRhsFrom" onchange="ToggleRadioButtons('#rdRhsFromQueryString','.rdRhsFrom'); ShowHideRHSDivs('#rhsFromQueryString');" />
+                </span>*@
+            </div>
+            <div class="rhsFromDiv" id="rhsFromTable">
+                <div class="rowTable">
+                    <label>RHST (Right Hand Side Table):</label>
+                    @Html.HiddenFor(m => m.RHSTableName, new { @id = "hdRHSTableName" })
+                    <select id="ddlRHSTableName" onchange="OnChangeTableDropdown('#ddlRHSTableName',2)"></select>
+                </div>
+                <div class="rowTable">
+                    <label>RHSC (Column to compare):</label>
+                    @Html.HiddenFor(m => m.RHSTableColumn, new { @id = "hdRHSTableColumn" })
+                    <select id="ddlRHSTableColumn"></select>
+                </div>
+                <div class="rowTable">
+                    <label>RHSK (Key Column):</label>
+                    @Html.HiddenFor(m => m.RHSTableKeyColumn, new { @id = "hdRHSTableKeyColumn" })
+                    <select id="ddlRHSTableKeyColumn" disabled="disabled"></select>
+                </div>
+            </div>
+            <div id="rhsFromDirectValue" style="display: none;" class="rhsFromDiv">
+                <div class="rowTable">
+                    <label>Direct Value:</label>
+                    @Html.TextAreaFor(m => m.DirectValue, new { @id = "txtDirectValue", @maxlength = "250", @placeholder = "Enter Direct Value...", @style= "height: 88px;" })
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-1 col-lg-1 yellowBox2 margin15 font11px">
+            <div class="rowTable">
+                <label class="colorCodeTitle">Next Line Condition:</label>
+                @Html.HiddenFor(m => m.ConNextLine, new {@id = "hdConNextLine"})
+                <select id="ddlConNextLine"></select>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <div style="float: left;">
+            <input type="submit" id="btnSave1" class="btn btn-primary edit-btn marginBtn" value="@btnSaveText" onclick=" return SaveMCRulesTable('@Model.ManagedCareRuleId'); " />
+            <button name="ClientCancel" id="btnCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick=" return ClearMCRulesTableForm(); ">Cancel</button>
+        </div>
+    </div>
+</div>

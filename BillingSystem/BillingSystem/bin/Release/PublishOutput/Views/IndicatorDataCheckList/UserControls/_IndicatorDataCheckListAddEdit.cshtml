@@ -1,0 +1,160 @@
+﻿@using BillingSystem.Model.CustomModel
+@model BillingSystem.Models.IndicatorDataCheckListView
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+
+@{
+    var btnSaveText = "Save";
+                            //if (Model.Id != null && Model.Id != 0)
+                            //{
+                            //    btnSaveText = "Update";
+                            //}
+}
+<div>
+    @*// BBCOLUMNSHERE*@
+    <form id="form1">
+        <div class="clear"></div>
+        <div class="col-lg-12">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Facility</th>
+                            <th style="display: none;">Default Year</th>
+                            <th style="display: none;"><input type="checkbox" id="__CusMonth" onclick="SelectAllMonth(this);" />Default Month</th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM1" onclick="SelectAllMonth(this);" />&nbsp;<strong>Jan</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM2" onclick="SelectAllMonth(this);" />&nbsp;<strong>Feb</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM3" onclick="SelectAllMonth(this);" />&nbsp;<strong>Mar</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM4" onclick="SelectAllMonth(this);" />&nbsp;<strong>Apr</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM5" onclick="SelectAllMonth(this);" />&nbsp;<strong>May</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM6" onclick="SelectAllMonth(this);" />&nbsp;<strong>Jun</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM7" onclick="SelectAllMonth(this);" />&nbsp;<strong>Jul</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM8" onclick="SelectAllMonth(this);" />&nbsp;<strong>Aug</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM9" onclick="SelectAllMonth(this);" />&nbsp;<strong>Sep</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM10" onclick="SelectAllMonth(this);" />&nbsp;<strong>Oct</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM11" onclick="SelectAllMonth(this);" />&nbsp;<strong>Nov</strong></label></th>
+                            <th>
+                                <label>
+                                    <input type="checkbox" id="__CusM12" onclick="SelectAllMonth(this);" />&nbsp;<strong>Dec</strong></label></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        @if (Model.IndicatorDataCheckListList.Count > 0)
+                        {
+                            for (var i = 0; i < Model.IndicatorDataCheckListList.Count; i++)
+                            {
+                            <tr>
+                                <td>@*@Html.LabelFor(m => m.IndicatorDataCheckListList[i].FacilityName)*@
+                                    <label>@Model.IndicatorDataCheckListList[i].FacilityName</label>
+                                    @Html.HiddenFor(m => m.IndicatorDataCheckListList[i].FacilityId)
+                                    @Html.HiddenFor(m => m.IndicatorDataCheckListList[0].BudgetType)
+                                    @Html.HiddenFor(m => m.IndicatorDataCheckListList[0].Year)
+                                    <input name="IndicatorDataCheckListList[0].Month" id="IndicatorDataCheckListList_0__Month" type="hidden" value="@Model.IndicatorDataCheckListList[0].ExternalValue2">
+                                </td>
+                                <td style="display: none;">@*<select id="ddlYear" name="ddlYear"></select>*@
+                                    @Html.DropDownListFor(m => m.IndicatorDataCheckListList[i].ExternalValue1, new SelectList(Model.DdYearList, "GlobalCodeValue", "GlobalCodeName", Model.IndicatorDataCheckListList[i].ExternalValue1), "Select")</td>
+                                <td style="display: none;">@*<select id="ddlMonth" name="ddlMonth"></select>*@
+                                    @*@Html.DropDownListFor(m => m.IndicatorDataCheckListList[i].ExternalValue2, new SelectList(Model.DdMonthList, "GlobalCodeValue", "GlobalCodeName", Model.IndicatorDataCheckListList[i].ExternalValue2), "Select")*@
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusMonth, new { @class = "CusMonth", @onclick = "BindMonthCheckBox()" })
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM1, new { @class = "CusM1", @onclick = "BindAllCheckBox()" })
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM2, new { @class = "CusM2", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM3, new { @class = "CusM3", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM4, new { @class = "CusM4", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM5, new { @class = "CusM5", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM6, new { @class = "CusM6", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM7, new { @class = "CusM7", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM8, new { @class = "CusM8", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM9, new { @class = "CusM9", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM10, new { @class = "CusM10", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM11, new { @class = "CusM11", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+                                <td>
+                                    @Html.CheckBoxFor(m => m.IndicatorDataCheckListList[i].CusM12, new { @class = "CusM12", @onclick = "BindAllCheckBox()" })
+
+                                </td>
+
+
+                            </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+                <input type="hidden" id="hfTotalCount" value="@Model.IndicatorDataCheckListList.Count"/>
+            </div>
+
+        </div>
+        <div class="btn-group pull-right">
+                <input type="button" id="btnSave" class="btn btn-primary edit-btn marginBtn" value="@btnSaveText" onclick="return SaveIndicatorDataCheckList();" />
+                @*<button name="ClientCancel" id="btnCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearIndicatorDataCheckListForm();">Cancel</button>*@
+           
+        </div>
+    </form>
+</div>

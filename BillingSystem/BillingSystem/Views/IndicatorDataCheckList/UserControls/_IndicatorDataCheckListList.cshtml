@@ -1,0 +1,55 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<IndicatorDataCheckListCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            WebGrid grid = new WebGrid(Model, ajaxUpdateContainerId: "gridIndicatorDataCheckListContent");
+            <div id="gridIndicatorDataCheckListContent">
+                 @grid.GetHtml(htmlAttributes: new {id = "IndicatorDataCheckListTable"}, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                                grid.Column("Id", header: "Id" , canSort: true),
+                                grid.Column("CorporateId", header: "CorporateId" , canSort: true),
+                                grid.Column("FacilityId", header: "FacilityId" , canSort: true),
+                                grid.Column("M1", header: "M1" , canSort: true),
+                                grid.Column("M2", header: "M2" , canSort: true),
+                                grid.Column("M3", header: "M3" , canSort: true),
+                                grid.Column("M4", header: "M4" , canSort: true),
+                                grid.Column("M5", header: "M5" , canSort: true),
+                                grid.Column("M6", header: "M6" , canSort: true),
+                                grid.Column("M7", header: "M7" , canSort: true),
+                                grid.Column("M8", header: "M8" , canSort: true),
+                                grid.Column("M9", header: "M9" , canSort: true),
+                                grid.Column("M10", header: "M10" , canSort: true),
+                                grid.Column("M11", header: "M11" , canSort: true),
+                                grid.Column("M12", header: "M12" , canSort: true),
+                                grid.Column("CreatedBy", header: "CreatedBy" , canSort: true),
+                                grid.Column("CreatedDate", header: "CreatedDate" , canSort: true),
+                                grid.Column("ModifiedBy", header: "ModifiedBy" , canSort: true),
+                                grid.Column("ModifiedDate", header: "ModifiedDate" , canSort: true),
+                                grid.Column("IsActive", header: "IsActive" , canSort: true),
+                                grid.Column("ExternalValue1", header: "ExternalValue1" , canSort: true),
+                                grid.Column("ExternalValue2", header: "ExternalValue2" , canSort: true),
+                                grid.Column("ExternalValue3", header: "ExternalValue3" , canSort: true),
+                                grid.Column("ExternalValue4", header: "ExternalValue4" , canSort: true),
+                                grid.Column("ExternalValue5", header: "ExternalValue5" , canSort: true),
+                grid.Column(header: "Action", format: @<text>
+                <a href="javascript:void(0);" onclick="EditIndicatorDataCheckList('@item.Id')" style="float: left; margin-right: 7px; width: 15px;">
+                    <img src="@Url.Content("~/images/edit.png")" /></a>
+                @*<a href="javascript:void(0);" title="Delete" onclick="return DeleteIndicatorDataCheckList('@item.Id');" style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" /></a>*@
+                <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.Id','Delete Indicator Data CheckList','',DeleteIndicatorDataCheckList,null); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>                                       
+                </text>)
+                                ));
+            </div>            
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>

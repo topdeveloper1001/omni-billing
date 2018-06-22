@@ -1,0 +1,42 @@
+﻿@using BillingSystem.Model.CustomModel
+@using System.Linq
+@using BillingSystem.Model
+
+@model dynamic
+
+@if (Model != null && Model.Count > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "revenueForecastReportByPatient", canPage: false, canSort: true);
+    <div id="revenueForecastReportByPatient" class="scrollable-panel">
+        @grid.GetHtml(htmlAttributes: new { id = "revenueForecastReportByPatientGrid" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                grid.Column("PersonFirstName", header: "First Name", canSort: false, style: "col1"),
+                grid.Column("PersonLastName", header: "Last Name", canSort: false, style: "col2"),
+                grid.Column("EncounterNumber", header: "Encounter Number", canSort: false, style: "col3"),
+                grid.Column("EXPECTED", header: "Expected", canSort: false, style: "col4"),
+                 grid.Column("Planned", header: "Planned", canSort: false, style: "col5"),
+                 grid.Column("Closed", header: "Closed", canSort: false, style: "col6"),
+                 grid.Column("Cancelled", header: "Cancelled", canSort: false, style: "col7"),
+                  grid.Column("OnBill", header: "OnBill", canSort: false, style: "col8"),
+                  grid.Column("BillConsolidation", header: "Bill Consolidation", canSort: false, style: "col9"),
+                 grid.Column("BillPrelimnary", header: "Bill Prelimnary", canSort: false, style: "col10"),
+                 grid.Column("BillApproved", header: "Bill Approved", canSort: false, style: "col11"),
+                 grid.Column("BillSentforClaim", header: "Bills Sent for Claim", canSort: false, style: "col12"),
+                 grid.Column("PaymentReceived", header: "Payment Received", canSort: false, style: "col13"),
+                 grid.Column("TRDate", header: "Transaction Date", canSort: false, style: "col14")
+                ))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function() {
+        if ($('#revenueForecastReportByPatientGrid tr').length > 0) {
+            $('#revenueForecastReportByPatientGrid').Scrollable();
+        }
+    });
+</script>

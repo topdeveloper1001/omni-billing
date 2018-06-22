@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BillingSystem.Repository</RootNamespace>
+    <AssemblyName>BillingSystem.Repository</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime">
+      <HintPath>..\packages\Antlr.3.4.1.9004\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="AutoMapper, Version=6.2.2.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoMapper.6.2.2\lib\net45\AutoMapper.dll</HintPath>
+    </Reference>
+    <Reference Include="Elmah, Version=1.2.14706.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\elmah.corelibrary.1.2.2\lib\Elmah.dll</HintPath>
+    </Reference>
+    <Reference Include="Elmah.Mvc, Version=2.1.2.1389, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Elmah.Mvc.2.1.2\lib\net40\Elmah.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework">
+      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer">
+      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity.Design" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WebGrease">
+      <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Common\DataAccessBase.cs" />
+    <Compile Include="Common\DbContextFactory.cs" />
+    <Compile Include="Common\ExtensionMethods.cs" />
+    <Compile Include="Common\GenericHelper.cs" />
+    <Compile Include="GenericRepository\BillingModifierRepository.cs" />
+    <Compile Include="GenericRepository\FavoriteClinicianRepository.cs" />
+    <Compile Include="GenericRepository\ClinicianRosterRepository.cs" />
+    <Compile Include="GenericRepository\ClinicianAppointmentTypesRepository.cs" />
+    <Compile Include="GenericRepository\PlaceOfServiceRepository.cs" />
+    <Compile Include="GenericRepository\SchedulingParametersRepository.cs" />
+    <Compile Include="GenericRepository\FutureOpenOrderRepository.cs" />
+    <Compile Include="GenericRepository\FutureOrderActivityRepository.cs" />
+    <Compile Include="GenericRepository\MedicalNecessityRepository.cs" />
+    <Compile Include="GenericRepository\PatientEvaluationSet.cs" />
+    <Compile Include="GenericRepository\PatientCareActivitiesRepository.cs" />
+    <Compile Include="GenericRepository\EquipmentLogRespository.cs" />
+    <Compile Include="GenericRepository\AppointmentTypesRepository.cs" />
+    <Compile Include="GenericRepository\ATCCodesRepository.cs" />
+    <Compile Include="GenericRepository\BillingCodeTableSetRepository.cs" />
+    <Compile Include="GenericRepository\AuthorizationRepository.cs" />
+    <Compile Include="GenericRepository\BedChargesRepository.cs" />
+    <Compile Include="GenericRepository\BedMasterRepository.cs" />
+    <Compile Include="GenericRepository\BedRateCardRepository.cs" />
+    <Compile Include="GenericRepository\BedTransactionRepository.cs" />
+    <Compile Include="GenericRepository\BillHeaderRepository.cs" />
+    <Compile Include="GenericRepository\BillingSystemParametersRepository.cs" />
+    <Compile Include="GenericRepository\CarePlanRepository.cs" />
+    <Compile Include="GenericRepository\CarePlanTaskRepository.cs" />
+    <Compile Include="GenericRepository\CityRepository.cs" />
+    <Compile Include="GenericRepository\BillActivityRepository.cs" />
+    <Compile Include="GenericRepository\AuditLogRepository.cs" />
+    <Compile Include="GenericRepository\PatientCarePlanRepository.cs" />
+    <Compile Include="GenericRepository\FacultyRoosterRepository.cs" />
+    <Compile Include="GenericRepository\PatientPreSchedulingRepository.cs" />
+    <Compile Include="GenericRepository\PaymentTypeDetailRepository.cs" />
+    <Compile Include="GenericRepository\PDFTemplatesRepository.cs" />
+    <Compile Include="GenericRepository\PreSchedulingLinkRepository.cs" />
+    <Compile Include="GenericRepository\SchedulingRepository.cs" />
+    <Compile Include="GenericRepository\DeptTimmingRepository.cs" />
+    <Compile Include="GenericRepository\FacultyTimeslotsRepository.cs" />
+    <Compile Include="GenericRepository\HolidayPlannerDetailsRepository.cs" />
+    <Compile Include="GenericRepository\HolidayPlannerRepository.cs" />
+    <Compile Include="GenericRepository\PatientEvaluationRepository.cs" />
+    <Compile Include="GenericRepository\TPFileXMLRepository.cs" />
+    <Compile Include="GenericRepository\DashboardDisplayOrderRepository.cs" />
+    <Compile Include="GenericRepository\DashboardIndicatorDataRepository.cs" />
+    <Compile Include="GenericRepository\DashboardIndicatorsRepository.cs" />
+    <Compile Include="GenericRepository\DashboardParametersRepository.cs" />
+    <Compile Include="GenericRepository\DashboardRemarkRepository.cs" />
+    <Compile Include="GenericRepository\DrugAllergyLogRepository.cs" />
+    <Compile Include="GenericRepository\DrugInstructionAndDosingRepository.cs" />
+    <Compile Include="GenericRepository\DrugInteractionsRepository.cs" />
+    <Compile Include="GenericRepository\FacilityDepartmentRepository.cs" />
+    <Compile Include="GenericRepository\IndicatorDataCheckListRepository.cs" />
+    <Compile Include="GenericRepository\ManualDashboardRepository.cs" />
+    <Compile Include="GenericRepository\PatientInfoChangesQueueRepository.cs" />
+    <Compile Include="GenericRepository\PatientLoginDetailRepository.cs" />
+    <Compile Include="GenericRepository\ProjectDashboardRepository.cs" />
+    <Compile Include="GenericRepository\ProjectsRepository.cs" />
+    <Compile Include="GenericRepository\ProjectTargetsRepository.cs" />
+    <Compile Include="GenericRepository\ProjectTasksRepository.cs" />
+    <Compile Include="GenericRepository\ProjectTaskTargetsRepository.cs" />
+    <Compile Include="GenericRepository\SurgeryOperatingRoomRepository.cs" />
+    <Compile Include="GenericRepository\JournalEntrySupportRepository.cs" />
+    <Compile Include="GenericRepository\DashboardBudgetRepository.cs" />
+    <Compile Include="GenericRepository\DashboardTargetsRepository.cs" />
+    <Compile Include="GenericRepository\DashboardTransactionCounterRepository.cs" />
+    <Compile Include="GenericRepository\DischargeSummaryDetailRepository.cs" />
+    <Compile Include="GenericRepository\LabTestOrderSetRepository.cs" />
+    <Compile Include="GenericRepository\LabTestResultRepository.cs" />
+    <Compile Include="GenericRepository\ManualChargesTrackingRepository.cs" />
+    <Compile Include="GenericRepository\MCContractRepository.cs" />
+    <Compile Include="GenericRepository\MCOrderCodeRatesRepository.cs" />
+    <Compile Include="GenericRepository\MCRulesTableRepository.cs" />
+    <Compile Include="GenericRepository\PatientDischargeSummaryRepository.cs" />
+    <Compile Include="GenericRepository\PaymentRepository.cs" />
+    <Compile Include="GenericRepository\ScrubEditTrackRepository.cs" />
+    <Compile Include="GenericRepository\XactivityRepository.cs" />
+    <Compile Include="GenericRepository\XAdviceXMLParsedDataRepository.cs" />
+    <Compile Include="GenericRepository\XclaimRepository.cs" />
+    <Compile Include="GenericRepository\XFileXMLRepository.cs" />
+    <Compile Include="GenericRepository\TPXMLParsedDataRepository.cs" />
+    <Compile Include="GenericRepository\TPFileHeaderRepository.cs" />
+    <Compile Include="GenericRepository\ScrubHeaderRepository.cs" />
+    <Compile Include="GenericRepository\DrugRepository.cs" />
+    <Compile Include="GenericRepository\ErrorMasterRepository.cs" />
+    <Compile Include="GenericRepository\FavoritesRepository.cs" />
+    <Compile Include="GenericRepository\DiagnosisCodeRepository.cs" />
+    <Compile Include="GenericRepository\DiagnosisRespository.cs" />
+    <Compile Include="GenericRepository\MaxValuesRepository.cs" />
+    <Compile Include="GenericRepository\FacilityRoleRepository.cs" />
+    <Compile Include="GenericRepository\MedicalHistoryRepository.cs" />
+    <Compile Include="GenericRepository\MedicalNotesRepository.cs" />
+    <Compile Include="GenericRepository\MedicalRecordRepository.cs" />
+    <Compile Include="GenericRepository\MedicalVitalRepository.cs" />
+    <Compile Include="GenericRepository\ModuleAccessRepository.cs" />
+    <Compile Include="GenericRepository\OrderActivityRepository.cs" />
+    <Compile Include="GenericRepository\ParametersRepository.cs" />
+    <Compile Include="GenericRepository\RoleTabsRepository.cs" />
+    <Compile Include="GenericRepository\CorporateRepository.cs" />
+    <Compile Include="GenericRepository\FacilityStructureRepository.cs" />
+    <Compile Include="GenericRepository\EquipmentRepository.cs" />
+    <Compile Include="GenericRepository\CountryRepository.cs" />
+    <Compile Include="GenericRepository\CPTCodesRepository.cs" />
+    <Compile Include="GenericRepository\DenialRepository.cs" />
+    <Compile Include="GenericRepository\DocumentsTemplatesRepository.cs" />
+    <Compile Include="GenericRepository\DRGCodesRepository.cs" />
+    <Compile Include="GenericRepository\EncounterRepository.cs" />
+    <Compile Include="GenericRepository\FacilityRepository.cs" />
+    <Compile Include="GenericRepository\GenericRepository.cs" />
+    <Compile Include="GenericRepository\GlobalCodeCategoryRepository.cs" />
+    <Compile Include="GenericRepository\GlobalCodeRepository.cs" />
+    <Compile Include="GenericRepository\HCPCSCodesRepository.cs" />
+    <Compile Include="GenericRepository\InsuranceCompanyRepository.cs" />
+    <Compile Include="GenericRepository\InsurancePlansRepository.cs" />
+    <Compile Include="GenericRepository\InsurancePolicesRepository.cs" />
+    <Compile Include="GenericRepository\LoginTrackingRepository.cs" />
+    <Compile Include="GenericRepository\MappingPatientBedRepository.cs" />
+    <Compile Include="GenericRepository\OpenOrderActivityScheduleRepository.cs" />
+    <Compile Include="GenericRepository\OpenOrderRepository.cs" />
+    <Compile Include="GenericRepository\PatientAddressRelationRepository.cs" />
+    <Compile Include="GenericRepository\ManagedCareRepository.cs" />
+    <Compile Include="GenericRepository\PatientInfoRepository.cs" />
+    <Compile Include="GenericRepository\PatientInsuranceRepository.cs" />
+    <Compile Include="GenericRepository\PatientPhoneRepository.cs" />
+    <Compile Include="GenericRepository\PhysicianRepository.cs" />
+    <Compile Include="GenericRepository\RolePermissionRepository.cs" />
+    <Compile Include="GenericRepository\RoleRepository.cs" />
+    <Compile Include="GenericRepository\RuleMasterRepository.cs" />
+    <Compile Include="GenericRepository\RuleStepRepository.cs" />
+    <Compile Include="GenericRepository\ScreenRepository.cs" />
+    <Compile Include="GenericRepository\ScrubReportRepository.cs" />
+    <Compile Include="GenericRepository\ServiceCodeRepository.cs" />
+    <Compile Include="GenericRepository\StateRepository.cs" />
+    <Compile Include="GenericRepository\SystemConfigurationRepository.cs" />
+    <Compile Include="GenericRepository\TabsRepository.cs" />
+    <Compile Include="GenericRepository\UserRoleRepository.cs" />
+    <Compile Include="GenericRepository\UsersRepository.cs" />
+    <Compile Include="GenericRepository\XFileHeaderRepository.cs" />
+    <Compile Include="GenericRepository\XPaymentFileXMLRepository.cs" />
+    <Compile Include="GenericRepository\XPaymentReturnRepository.cs" />
+    <Compile Include="Interfaces\IRepository.cs" />
+    <Compile Include="Interfaces\IUnitOfWork.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repository.cs" />
+    <Compile Include="UOW\UnitOfWork.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BillingSystem.Common\BillingSystem.Common.csproj">
+      <Project>{b0899df4-cf27-4055-87f6-53072cd72794}</Project>
+      <Name>BillingSystem.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BillingSystem.Model\BillingSystem.Model.csproj">
+      <Project>{df38e31d-b8d4-437c-9f9b-bda62427defd}</Project>
+      <Name>BillingSystem.Model</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

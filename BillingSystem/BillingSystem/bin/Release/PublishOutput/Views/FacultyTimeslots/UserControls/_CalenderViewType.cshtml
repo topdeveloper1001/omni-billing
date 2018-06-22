@@ -1,0 +1,24 @@
+﻿@*@using System.Web.Optimization
+
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")*@
+@*@(Html.Kendo().TreeView().Name("treeviewCalenderType").Events(events => events.Select("onCheckView")).HtmlAttributes(new { }).HighlightPath(true).Items(menu =>
+      {
+          menu.Add().Text("Day").Id("1").Checked(true).Selected(true);
+          menu.Add().Text("Week").Id("2");
+          menu.Add().Text("Month").Id("3");
+      })
+      )
+@Html.Kendo().DeferredScripts()*@
+<ul id="treeviewCalenderType" class="tree_viewlist">
+    <li id="liviewCalenderType_1" onclick="BindCalenderView(1,'Day')" class="active">
+        <a id="Viewtype_1" class="selectenode">Day</a>
+    </li>
+    <li id="liviewCalenderType_2" onclick="BindCalenderView(2, 'Week')">
+        <a id="Viewtype_2">Week</a>
+    </li>
+    <li id="liviewCalenderType_3" onclick="BindCalenderView(3, 'Month')">
+        <a id="Viewtype_3">Month</a>
+    </li>
+</ul>

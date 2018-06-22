@@ -1,0 +1,35 @@
+﻿@using BillingSystem.Model
+@model XFileHeader
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+    select {
+    margin-bottom: 10px;}
+</style>
+<div class="form" id="XFileHeaderFormDiv">
+    <div class="clear"></div>
+
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.XFileHeaderID != null && Model.XFileHeaderID != 0)
+            {  
+              <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SaveXFileHeader();" />                
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveXFileHeader();" class="btn btn-primary edit-btn marginBtn" value="Save" />                
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>            
+        </div>
+    </div>
+
+
+
+</div>

@@ -1,0 +1,49 @@
+﻿@using BillingSystem.Models
+
+@model PatientInfoChangesQueueView
+
+@{
+    ViewBag.Title = "PatientInfoChangesQueue View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapsePatientInfoChangesQueueAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Add PatientInfoChangesQueue
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapsePatientInfoChangesQueueAddEdit" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">                        
+                        @{Html.RenderPartial("~/Views/PatientInfoChangesQueue/UserControls/_PatientInfoChangesQueueAddEdit.cshtml", Model.CurrentPatientInfoChangesQueue);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapsePatientInfoChangesQueueList">
+            <h4 class="panel-title collapseTitle">
+                <span><img src="../images/list.png" /></span>PatientInfoChangesQueue List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapsePatientInfoChangesQueueList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="PatientInfoChangesQueueListDiv">
+                    @{Html.RenderPartial("~/Views/PatientInfoChangesQueue/UserControls/_PatientInfoChangesQueueList.cshtml", Model.PatientInfoChangesQueueList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/PatientInfoChangesQueue/PatientInfoChangesQueueScript.js"></script>

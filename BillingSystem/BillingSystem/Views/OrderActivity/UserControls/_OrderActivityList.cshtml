@@ -1,0 +1,103 @@
+﻿   @* @using Kendo.Mvc.UI*@
+@model List<BillingSystem.Model.OrderActivity>
+
+<div class="form">
+    <div class="table-responsive">
+        
+
+        @if (Model != null)
+        {
+            if (Model.Count > 0)
+            {
+                @*
+                @(Html.Kendo().Grid(Model)
+                    .Name("OrderActivityGrid")
+                    .HtmlAttributes(new { style = "height: 460px" })
+                    .Columns(columns =>
+                    {
+                        columns.Bound(p => p.OrderActivityId).Title("Company");
+                        columns.Bound(p => p.OrderActivityStreetAddress).Title("Address");
+                        columns.Bound(p => p.OrderActivityCity).Title("City");
+                        
+                        
+                        //columns.Bound(p => p.PolicyBeginDate).Format("{0:MM/dd/yyyy}").Title("License Number Expire").Filterable(f => f.UI("DateTimeFilter")); ;
+                        //columns.Bound(p => p.PolicyEndDate).Format("{0:MM/dd/yyyy}").Title("License Number Expire").Filterable(f => f.UI("DateTimeFilter")); ;
+                       columns.Command(command =>
+                              {
+                                  command.Custom("Edit").Click("editDetails");
+                                  command.Custom("Delete").Click("deleteDetails");
+                              }).Title("Actions");
+                    })
+                    .Groupable()
+                    .Scrollable()
+                    .Sortable()
+                    .Filterable(filterable => filterable
+                        .Extra(false)
+                        .Operators(operators => operators
+                            .ForString(str => str.Clear()
+                                .StartsWith("Starts with")
+                                .IsEqualTo("Is equal to")
+                                .IsNotEqualTo("Is not equal to")
+                            ))
+                        )   
+                   .Pageable(pageable => pageable
+                            .Refresh(true)
+                            .PageSizes(true)
+                            .ButtonCount(5))
+                    .DataSource(dataSource => dataSource
+                        .Ajax()
+                        .PageSize(10)
+                        .ServerOperation(false)
+                     )
+                 .Resizable(resize => resize.Columns(true))
+                       )
+                *@
+                
+                                WebGrid grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent");
+                                @grid.GetHtml(tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                                grid.Column("OrderActivityID", header: "OrderActivityID" , canSort: true),
+                                grid.Column("OrderType", header: "OrderType" , canSort: true),
+                                grid.Column("OrderCode", header: "OrderCode" , canSort: true),
+                                grid.Column("OrderCategoryID", header: "OrderCategoryID" , canSort: true),
+                                grid.Column("OrderSubCategoryID", header: "OrderSubCategoryID" , canSort: true),
+                                grid.Column("OrderActivityStatus", header: "OrderActivityStatus" , canSort: true),
+                                grid.Column("CorporateID", header: "CorporateID" , canSort: true),
+                                grid.Column("FacilityID", header: "FacilityID" , canSort: true),
+                                grid.Column("PatientID", header: "PatientID" , canSort: true),
+                                grid.Column("EncounterID", header: "EncounterID" , canSort: true),
+                                grid.Column("MedicalRecordNumber", header: "MedicalRecordNumber" , canSort: true),
+                                grid.Column("OrderID", header: "OrderID" , canSort: true),
+                                grid.Column("OrderBy", header: "OrderBy" , canSort: true),
+                                grid.Column("OrderActivityQuantity", header: "OrderActivityQuantity" , canSort: true),
+                                grid.Column("OrderScheduleDate", header: "OrderScheduleDate" , canSort: true),
+                                grid.Column("PlannedBy", header: "PlannedBy" , canSort: true),
+                                grid.Column("PlannedDate", header: "PlannedDate" , canSort: true),
+                                grid.Column("PlannedFor", header: "PlannedFor" , canSort: true),
+                                grid.Column("ExecutedBy", header: "ExecutedBy" , canSort: true),
+                                grid.Column("ExecutedDate", header: "ExecutedDate" , canSort: true),
+                                grid.Column("ExecutedQuantity", header: "ExecutedQuantity" , canSort: true),
+                                grid.Column("ResultValueMin", header: "ResultValueMin" , canSort: true),
+                                grid.Column("ResultValueMax", header: "ResultValueMax" , canSort: true),
+                                grid.Column("ResultUOM", header: "ResultUOM" , canSort: true),
+                                grid.Column("Comments", header: "Comments" , canSort: true),
+                                grid.Column("IsActive", header: "IsActive" , canSort: true),
+                                grid.Column("ModifiedBy", header: "ModifiedBy" , canSort: true),
+                                grid.Column("ModifiedDate", header: "ModifiedDate" , canSort: true),
+                                grid.Column("CreatedBy", header: "CreatedBy" , canSort: true),
+                                grid.Column("CreatedDate", header: "CreatedDate" , canSort: true),
+                                
+                    
+                                grid.Column(header: "Action", format: @<text>
+                                    <a href="#" onclick="EditOrderActivity('@item.OrderActivityId')" style="float: left; margin-right: 7px; width: 15px;"><img src="../images/edit.png" /></a>
+                                    &nbsp;<a href="#" title="Delete" onclick="return DeleteOrderActivity('@item.OrderActivityId');" style="float: left; width: 15px;"><img src="../images/delete.png" /></a>
+                                </text>)
+                                ));
+            }
+            else
+            {
+
+                <h2>No Record found</h2>
+            }
+        }
+    </div>
+</div>

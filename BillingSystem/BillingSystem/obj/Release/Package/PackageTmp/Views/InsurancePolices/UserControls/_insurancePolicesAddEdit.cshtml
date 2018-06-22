@@ -1,0 +1,76 @@
+﻿@model BillingSystem.Model.InsurancePolices
+
+@{
+    ViewBag.Title = "InsurancePolices";
+}
+<style>
+    .btn-group {
+        margin-left: 15px;
+    }
+</style>
+<form id="form1" name="form1">
+    <div class="form" id="InsurancePolicesFormDiv">
+        @Html.HiddenFor(m => m.InsurancePolicyId)
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Insurance Company :</label>
+                <select id="ddlInsuranceCompany" class="validate[required]"></select>
+                @Html.HiddenFor(m => m.InsuranceCompanyId)
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Company Plan :</label>
+                <select id="ddlInsuranceCompanyPlan" class="validate[required]"></select>
+                @Html.HiddenFor(m => m.InsurancePlanId)
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Managed Care Code:</label>
+                <select id="ddlMcContracts" class="validate[required]"></select>
+                @Html.HiddenFor(m => m.McContractCode)
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Policy Name :</label>
+                @Html.TextBoxFor(m => m.PolicyName, new { @maxlength = "50", @class = "validate[required]" })
+            </div>
+
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Policy Number :</label>
+                @Html.TextBoxFor(m => m.PolicyNumber, new { @maxlength = "12", @class = "validate[required,custom[nameFormat]]" })
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                <label>Policy-Holder Name:</label>
+                @Html.TextBoxFor(m => m.PolicyHolderName, new { @maxlength = "20" })
+            </div>
+            <div class="rowTable">
+                <label>Policy Description :</label>
+                @Html.TextBoxFor(m => m.PolicyDescription, new { @maxlength = "200"})
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                <label>Policy Begin Date :</label>
+                @Html.TextBoxFor(m => m.PolicyBeginDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @onchange = "CheckTwoDates($('#PolicyBeginDate'),$('#PolicyEndDate'),'PolicyBeginDate')", @class = "dtGeneral" })
+            </div>
+            <div class="rowTable">
+                <label>Policy End Date</label>
+                @Html.TextBoxFor(m => m.PolicyEndDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @onchange = "CheckTwoDates($('#PolicyBeginDate'),$('#PolicyEndDate'),'PolicyBeginDate')", @class = "dtGeneral" })
+            </div>
+        </div>
+        <div class="clear"></div>
+        <div class="btn-group">
+            @{
+                var btnSave = "Save";
+                if (Model.InsurancePolicyId != 0)
+                {
+                    btnSave = "Update";
+                }
+            }
+            <button id="btnSave" class="btn btn-primary edit-btn marginBtn" value="@btnSave" onclick="return ValidatePolicyNamePolicyNumber();">Save</button>
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" onclick="return ClearInsurancePolicyForm();" type="button">Cancel</button>
+        </div>
+    </div>
+</form>

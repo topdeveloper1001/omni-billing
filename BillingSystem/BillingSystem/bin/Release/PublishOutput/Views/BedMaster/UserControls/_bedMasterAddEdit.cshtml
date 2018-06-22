@@ -1,0 +1,75 @@
+﻿@*
+    Owner: Shashank Awasthy
+    On: 17092014
+    Purpose: To Add Edit facility details
+*@
+@*@model BillingSystem.Model.CustomModel.BedMasterCustomModel*@
+@model BillingSystem.Model.UBedMaster
+@{
+    ViewBag.Title = "Facility";
+}
+<style>
+    .btn-group {
+        margin-left: 15px;
+    }
+</style>
+<script src="~/Scripts/Bed/BedMaster.js"></script>
+<div class="form" id="BedMasterDiv">
+    @if (@ViewBag.ViewOnly == null || !@ViewBag.ViewOnly)
+    {
+        <div class="form">
+            <div class="col-sm-4">
+                <div class="col50 rowTable">
+                    <label>Facility:</label>
+                    <select id="ddlFacilityId" name="ddlFacilityId" class="validate[required]" onchange="BindBeds()"></select>
+                    @Html.HiddenFor(m => m.FacilityId, new { @id = "hdFacility" })
+                </div>
+                <div class="col50 rowTable">
+                    <label>Bed Name:</label>
+                    <select id="ddlBedName" name="ddlBedName" class="validate[required]"></select>
+                    @Html.HiddenFor(m => m.FacilityStructureId, new { @id = "hdFacilityStructureId" })
+                </div>
+               
+                @*<div class="col50 rowTable">
+                    <label>Rate:</label>
+                    @Html.TextBoxFor(m => m.Rate, new { @maxlength = "10", @class = "large pull-left", @ID = "txtRate" })
+                </div>*@
+                @*<div class="rowTable">
+                    <label>Assign Services</label>
+                    <select multiple id="ddlServices" name="ddlServices" class="validate[required]"></select>
+                </div>*@
+            </div>
+            <div class="col-sm-4">
+                <div class="col50 rowTable">
+                    <label>Bed Type:</label>
+                    <select id="ddlBedType" name="ddlBedType" class="validate[required]"></select>
+                    @Html.HiddenFor(m => m.BedType, new { @id = "hdBedType" })
+                </div>
+                <div class="col50 rowTable">
+                    <label>Active Start Date:</label>
+                    @Html.TextBoxFor(m => m.StartDate, "{0:MM/dd/yyyy}", new { @Id = "txtStartDate", @maxlength = "10", @class = "DateTimeC" })
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="rowTable">
+                    <div class="form-group">
+                        <label class="control-label">Status: @Html.CheckBox("chkIsActive", Model.IsActive)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div class="clear"></div>
+        <div class="btn-group">
+            @if (Model.BedId != 0)
+            {
+                <input type="submit" class="blue-btn btn btn-primary edit-btn marginBtn" value="Update" onclick="IsBedMasterValid('@Model.BedId');" />
+            }
+            else
+            {
+                <input type="submit" class="blue-btn btn btn-primary edit-btn marginBtn" value="Save" onclick="IsBedMasterValid('0');" />
+            }
+            <button name="ClientCancel" class="blue-btn btn btn-primary edit-btn marginBtn" onclick="ClearAll();" type="button">Cancel</button>
+        </div>
+    }
+</div>

@@ -1,0 +1,81 @@
+﻿@using BillingSystem.Model
+@model PatientCarePlan
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="PatientCarePlanFormDiv">
+    @*// BBCOLUMNSHERE*@
+    @Html.HiddenFor(m => m.Id, new { @id = "hdPatientCareId" })
+    @*<input type="hidden" value="" name="" id="hdPatientCarePlanId"/>*@
+    <div class="row">
+        @*<div class="col-sm-3">
+                <div class="form-group">
+                    <label>Patient:</label>
+                    @Html.TextBoxFor(m => m.PatientId, new { @maxlength = "50", @id = "txtPatientId", @class = "form-control" })
+                </div>
+            </div>*@
+        <div class="col-sm-3">
+            <div class="form-group">
+                <label><span class="mandatoryStar"></span>Care Plan:</label>
+                <select class="form-control validate[required]" id="ddlCarePlan" onchange="BindCarePlanTask();"></select>
+            </div>
+        </div>
+        @*<div class="col-sm-3">
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Care Task:</label>
+                    <select class="form-control validate[required]" id="ddlCareTask"></select>
+                </div>
+            </div>*@
+        <div class="col-sm-3">
+            <div class="form-group">
+                <label><span class="mandatoryStar"></span>From Date:</label>
+                @Html.TextBoxFor(m => m.FromDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtFromDate", @class = "dtGreaterThanCurrent validate[required] form-control", @onchange = "CheckTwoDates($('#dtFromDate'),$('#dtTillDate'),'dtFromDate');CheckValidDateNotLessThanTodayDate(this,'dtFromDate')" })
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="form-group">
+                <label><span class="mandatoryStar"></span>Till Date:</label>
+                @Html.TextBoxFor(m => m.TillDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtTillDate", @class = "dtGreaterThanCurrent validate[required] form-control", @onchange = "CheckTwoDates($('#dtFromDate'),$('#dtTillDate'),'dtTillDate')" })
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="dropdown_list" id="careTask">
+                    <h2>Select Task</h2>
+                    <ul id="careTaskDiv"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="dropdown_list" id="selectedCareTask">
+                    <h2>Selected Task</h2>
+                    <ul id="selectedCareTaskDiv"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12">
+
+            @{
+                var saveText = Model != null && Model.Id > 0 ? "Update" : "Save";
+            }
+            <input type="submit" id="btnSavePatientCarePlan" class="btn btn-primary" value="@saveText" onclick="return SavePatientCarePlan();" />
+            <button name="ClientCancel" class="btn btn-default" type="button" onclick="return ClearPatientCarePlanForm();">Cancel</button>
+            <button name="AddNewTask" id="btnNewTask" class="btn btn-default" type="button" onclick="ShowHideNewPlanTask();">Add New Task</button>
+        </div>
+    </div>
+</div>

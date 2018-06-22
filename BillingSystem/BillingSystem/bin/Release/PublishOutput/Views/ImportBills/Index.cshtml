@@ -1,0 +1,74 @@
+﻿@using BillingSystem.Common.Common
+@using BillingSystem.Models
+
+@model ImportBillsView
+
+@{
+    ViewBag.Title = "Import XML Billing";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Scripts/ImportBills/ImportBills.js"></script>
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFileUploaderAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Import Bills<a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFileUploaderAddEdit" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form" id="divDocumentUpload">
+                        @{Html.RenderPartial("~/Views/ImportBills/UserControls/_ImportBillsAddEdit.cshtml");}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseFileUploaderList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png">
+                </span>XML Billing List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFileUploaderList" class="panel-collapse tableImg collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="table-responsive scrollable-panel" id="divDocumentsGrid">
+                        @{Html.RenderPartial("~/Views/ImportBills/UserControls/_TpFileHeaderListView.cshtml", Model.TpFileHeaderList);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseXmlParsedData">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png">
+                </span>XML Parsed Data
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseXmlParsedData" class="panel-collapse tableImg collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="table-responsive scrollable-panel">
+                        <div id="divXmlParsedData">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

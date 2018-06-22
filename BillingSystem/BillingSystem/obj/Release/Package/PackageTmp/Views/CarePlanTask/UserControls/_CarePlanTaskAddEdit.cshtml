@@ -1,0 +1,194 @@
+﻿@using BillingSystem.Model
+@model CarePlanTask
+
+<div class="form" id="CarePlanTaskFormDiv">
+    @*// BBCOLUMNSHERE*@
+    <div class="col-sm-4">
+        <div class="row">
+
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Care Plan</label>
+                    <select class="form-control validate[required]" id="ddlCarePlanId"></select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Task Name:</label>
+                    @Html.TextBoxFor(m => m.TaskName, new { @maxlength = "50", @id = "txtTaskName", @class = "form-control validate[required]" })
+                </div>
+            </div>
+            <div class="clear"></div>
+
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label>Task Description:</label>
+                    @Html.TextAreaFor(m => m.TaskDescription, new { @maxlength = "1000", @id = "txtTaskDescription", @class = "form-control" })
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <input type="hidden" name="CarePlantaskId" id="hidCarePlantaskId" value="@Model.Id" />
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Task Number:</label>
+                    @Html.TextBoxFor(m => m.TaskNumber, new { @maxlength = "10", @id = "txtTaskNumber", @class = "form-control validate[required]" })
+                </div>
+            </div>
+        </div>
+    </div>
+    @Html.HiddenFor(m => m.CarePlanId, new { @id = "hdCarePlanId" })
+
+    @*<div class="col-sm-3">
+        <div class="rowTable">
+            <label>Activity Type:</label>
+          <select id="ddlActivityType"></select>
+        </div>
+    </div>*@
+    <div class="col-sm-4">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Activity Type:</label>
+                    <select class="form-control validate[required]" id="ddlActivityType"></select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label><span class="mandatoryStar"></span>Responsible User Type:</label>
+                    @*@Html.TextBoxFor(m => m.ResponsibleUserType, new { @maxlength = "10", @id = "txtResponsibleUserType" })*@
+
+                    <select class="form-control validate[required]" id="ddlRoles"></select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label><span class="mandatoryStar"></span>Start Time:</label>
+                            @Html.TextBoxFor(m => m.StartTime, new { @maxlength = "10", @id = "txtStartTime", @class = "form-control validate[required]" })
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label><span class="mandatoryStar"></span>End Time:</label>
+                            @Html.TextBoxFor(m => m.EndTime, new { @maxlength = "10", @id = "txtEndTime", @class = "form-control validate[required]" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label>IsActive:</label>
+                            @*@Html.TextBoxFor(m => m.IsActive, new { @maxlength = "10", @id = "txtIsActive" })*@
+                            <input type="checkbox" id="chkIsActive" />
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label>Is Recurring:</label>
+                            @*@Html.TextBoxFor(m => m.IsRecurring, new { @maxlength = "10", @id = "txtIsRecurring" })*@
+                            <input type="checkbox" id="chkRecurring" />
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="row">
+            <div class="col-sm-6">
+                @*<div class="form-group" id="showHideOccurrence">
+                    <label>Occurrence Type:</label>
+                    <select class="form-control" id="ddlOccuranceType"></select>
+                </div>*@
+                <div class="form-group">
+                    <label>Over Due In Minutes</label>
+                    <select class="form-control" id="ddlDuedays"></select>
+                </div>
+                <div class="form-group" id="hideFrequency">
+                    <label>Frequency Type:</label>
+                    <select class="form-control" id="ddlFrequencyType" ></select>
+                </div>
+            </div>
+            @*<div class="form-group" id="showHideOccurrence">
+            <label>Occurrence Type:</label>
+            <select class="form-control" id="ddlOccuranceType"></select>
+        </div>*@
+            <div class="col-sm-6">
+                <div class="form-group" id="showHideOccurrence">
+            <label>Occurrence Type:</label>
+            <select class="form-control" id="ddlOccuranceType" onchange="BindRecrrencetype();"></select>
+        </div>
+            </div>
+            <div id="recurrance_event" style="display:none;">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Recurrance Time Interval Type:</label>
+                        @*@Html.TextBoxFor(m => m.RecTImeIntervalType, new { @maxlength = "10", @id = "txtRecTImeIntervalType" })*@
+                        <select class="form-control" id="ddlTimeIntervalType" onchange="BindRecurranceTimeInterval();"></select>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Recurrance Time Interval:</label>
+                        @*@Html.TextBoxFor(m => m.RecTimeInterval, new { @maxlength = "10", @id = "txtRecTimeInterval" })*@
+                        <select class="form-control" id="ddlTimeInterval"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="col-sm-12">
+
+        @*<div class="rowTable">
+            @if (Model.Id != null && Model.Id != 0)
+            {  
+                <input type="submit" class="btn btn-primary edit-btn" value="Update" onclick="return SaveCarePlanTask();" />                
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveCarePlanTask();" class="btn btn-primary edit-btn" value="Save" />                
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn" type="button" onclick="return ClearAll();">Cancel</button>
+
+        </div>*@
+
+
+        @{
+            var saveText = Model != null && Model.Id > 0 ? "Update" : "Save";
+        }
+        <input type="submit" id="btnSaveCarePlantask" class="btn btn-primary" value="@saveText" onclick="return SaveCarePlanTask();" />
+        <button name="ClientCancel" class="btn btn-default" type="button" onclick="return ClearFormInCarePlanTask();">Cancel</button>
+
+    </div>
+</div>
+
+<script>
+    $(function () {
+        if ($("#chkRecurring").prop("checked")) {
+            $("#recurrance_event").show();
+            $("#showHideOccurrence").show();
+        }
+        else {
+            $("#recurrance_event").hide();
+            $("#showHideOccurrence").hide();
+        }
+        $('#chkRecurring').click(function () {
+            if ($(this).prop("checked")) {
+                $("#recurrance_event").show();
+                $("#showHideOccurrence").show();
+            }
+            else {
+                $("#recurrance_event").hide();
+                $("#showHideOccurrence").hide();
+            }
+        });
+    });
+</script>

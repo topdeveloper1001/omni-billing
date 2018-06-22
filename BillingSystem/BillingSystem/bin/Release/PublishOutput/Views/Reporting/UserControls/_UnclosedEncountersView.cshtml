@@ -1,0 +1,34 @@
+﻿@using BillingSystem.Model.CustomModel
+@using System.Linq
+
+@model IEnumerable<LoginTrackingCustomModel>
+
+@if (Model != null && Model.Count() > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentUnCloasedEncounters", canPage: false, canSort: true);
+    <div id="gridContentLoginTrackingReport">
+        @grid.GetHtml(htmlAttributes: new { id = "UnCloasedEncountersReportGrid" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                                        grid.Column("LoginTrackingID", header: "LoginTracking ID", canSort: true, style: "col1"),
+                                        grid.Column("UserName", header: "User", canSort: true, style: "col2"),
+                                        grid.Column("LoginTime", header: "Login Time", canSort: true, style: "col3"),
+                                        grid.Column("LogoutTime", header: "Logout Time", canSort: true, style: "col4"),
+                                        grid.Column("IPAddress", header: "IP Address", canSort: true, style: "col5"),
+                                        grid.Column("CreatedDate", header: "CreatedDate", canSort: true, style: "col6")
+        //grid.Column("FacilityLicenseNumberExpire", header: "Facility LicenseNumber Expire", canSort: true, style: "col7")
+))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function() {
+        if ($('#UnCloasedEncountersReportGrid tr').length > 0) {
+            $('#UnCloasedEncountersReportGrid').Scrollable();
+        }
+    });
+</script>

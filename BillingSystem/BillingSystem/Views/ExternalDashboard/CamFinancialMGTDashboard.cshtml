@@ -1,0 +1,83 @@
+﻿@using System.Reflection
+@using BillingSystem.Common
+@model BillingSystem.Models.CamFinancialMGTDashboardView
+@{
+    ViewBag.Title = "FinancialMGTDashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .highcharts-title, .highcharts-title tspan {
+        font-weight: bold !important;
+    }
+</style>
+<div class="white-bg">
+    @*--------------------------Parameter Sections------------------------------*@
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseReporting">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>&nbsp; Selection
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseReporting" class="panel-collapse tableImg collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form" style="min-height: 90px;">
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-2">
+                            <div class="rowTable">
+                                @Html.HiddenFor(m => m.DashboardType, new { @id = "hdDashboardType" })
+                                <label>Facility:</label>
+                                <select id="ddlFacility" onchange="Enableddls();"></select>
+                                @{
+                                    var fId = Helpers.GetDefaultFacilityId();
+                                }
+                                @Html.HiddenFor(m => fId, new { @id = "hdFacilityId" })
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-2">
+                            <div class="rowTable">
+                                <label>Month:</label>
+                                <select id="ddlMonth"></select>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-2">
+                            <div class="rowTable">
+                                <label>Facility Type:</label>
+                                <select id="ddlFacilityType" class="facDisabled" disabled="disabled"></select>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-2">
+                            <div class="rowTable">
+                                <label>Segment/Region:</label>
+                                <select id="ddlRegionType" class="facDisabled" disabled="disabled"></select>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-2">
+                            <div class="rowTable">
+                                <label>Department:</label>
+                                <select id="ddlDepartment" disabled="disabled"></select>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-2">
+                            <div class="rowTable">
+                                <label class="marginTop"></label>
+                                <button name="RebindGraphs" class="btn btn-primary edit-btn marginBtn" type="button" id="btnReBindGraphs">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="divExecutiveDashboard">
+        @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_CamFinancialMGTDashboardPview.cshtml", Model); }
+    </div>
+</div>
+<script src="~/Scripts/ExternalDashboard/CamFinancialMGTDashboard.js?@Helpers.CurrentAssemblyTicks"></script>
+

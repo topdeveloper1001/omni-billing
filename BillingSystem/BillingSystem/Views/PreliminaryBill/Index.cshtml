@@ -1,0 +1,49 @@
+﻿@model BillingSystem.Models.BedTransactionView
+@{
+    ViewBag.Title = "Preliminary Bill Generation";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    .btn-group {
+        margin: 5px 0 5px 0px;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+</style>
+<script src="~/Scripts/BedTransaction/BedTransactionScript.js"></script>
+<div class="white-bg">
+    @Html.HiddenFor(m => m.TotalCharges, new { id = "hdTotalCharges" })
+    @Html.HiddenFor(m => m.EncounterId)
+    @Html.HiddenFor(m => m.PatientId)
+    <div>
+        @{Html.RenderPartial("~/Views/CommonUserControls/_PatientInfoHeader.cshtml", Model.PatientInfo);}
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseEncountertransaction">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Encounter Transactions
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h1>
+        </div>
+        <div id="collapseEncountertransaction" class="panel-collapse collapse in">
+            <div class="panel-body">@*scroller*@
+                <div class="base-color table-responsive">
+                    @{Html.RenderPartial("~/Views/PreliminaryBill/UserControls/_BedTransactionList.cshtml", Model.EncounterTransactionLst);}
+                </div>
+            </div>
+        </div>
+        <div class="inactive">
+            @{
+                var billHeaderId = 0;
+                billHeaderId = Model != null && Model.EncounterTransactionLst.Count() > 0 ? Model.EncounterTransactionLst[0].BillHeaderID : 0;
+            }
+
+            <input type="button" value="Bill Preview" class="btn btn-primary btn-xs" onclick="BillPrintPreview(@billHeaderId);" />
+        </div>
+    </div>
+</div>

@@ -1,0 +1,65 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+
+@model PatientCarePlanView
+
+@{
+    ViewBag.Title = "PatientCarePlan View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    .home {
+        -webkit-box-shadow: 10px 10px 1px 0px;
+        margin: 4px 31px 62px 41px;
+        border: 6px solid #E6E6FA;
+        box-shadow: 10px 10px 1px 0px;
+        width: 150px;
+        height: 65px;
+        float: left;
+        text-align: center;
+        background-color: #5c7499;
+    }
+</style>
+
+
+<div class="white-bg">
+    <div class="panel panel-default ourcollapse custom_panel">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapsePatientCarePlanAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Add PatientCarePlan
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapscollapsePatientCarePlanAddEditeOne" class="panel-collapse collapse in">
+            <div class="panel-body">
+                @{Html.RenderPartial("~/Views/PatientCarePlan/UserControls/_PatientCarePlanAddEdit.cshtml", Model.CurrentPatientCarePlan);}
+
+            </div>
+</div>
+</div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapsePatientCarePlanList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="../images/list.png" /></span>PatientCarePlan List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapsePatientCarePlanList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="PatientCarePlanListDiv">
+                    @{Html.RenderPartial("~/Views/PatientCarePlan/UserControls/_PatientCarePlanList.cshtml", Model.PatientCarePlanList);}
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="clear"></div>
+</div>
+            
+
+<script src="~/Scripts/PatientCarePlan/PatientCarePlanScript.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

@@ -1,0 +1,31 @@
+﻿@using System.Web.Optimization
+@using BillingSystem.Common
+@using BillingSystem.Model
+@using Kendo.Mvc.UI
+@model IEnumerable<Facility>
+
+<style type="text/css">
+    #TreeView .k-group li {
+        float: left;
+        width: 45%;
+    }
+    
+</style>
+
+@(Html.Kendo().TreeView().Name("treeviewLocations").Events(events => events.Select("onCheckLocation")).HtmlAttributes(new { }).HighlightPath(true).Items(menu =>
+      {
+          var list = Model;
+          foreach (var item in list)
+          {
+              if (item.FacilityId == Helpers.GetDefaultFacilityId())
+              {
+                  menu.Add().Text(item.FacilityName).HasChildren(false).Id(item.FacilityId.ToString()).Selected(true).Expanded(false);
+              }
+              else
+              {
+                  menu.Add().Text(item.FacilityName).HasChildren(false).Id(item.FacilityId.ToString()).Expanded(false);
+              }
+          }
+      })
+      )
+@Html.Kendo().DeferredScripts()

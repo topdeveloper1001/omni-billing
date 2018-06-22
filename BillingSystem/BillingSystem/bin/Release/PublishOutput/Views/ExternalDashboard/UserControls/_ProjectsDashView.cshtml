@@ -1,0 +1,288 @@
+﻿@model BillingSystem.Models.ProjectsDashboardView
+
+@{
+    ViewBag.Title = "Executive Key Performance Dashboard";
+    const string style = "display:block;";
+    var section1Closec = @Model.Section1RemarksList.Any() ? "in" : "";
+    var section2Closec = @Model.Section2RemarksList.Any() ? "in" : "";
+    var section3Closec = @Model.Section3RemarksList.Any() ? "in" : "";
+    var section4Closec = @Model.Section4RemarksList.Any() ? "in" : "";
+}
+
+<style>
+    #ProjectDashboardTable {
+        width: 100%;
+    }
+
+    #subT1 .gridHead {
+        background: #489848;
+    }
+</style>
+
+@*------------------------------------------Section 1 Graphs Starts ------------------*@
+<div id="divSection1Graph">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseSection1">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 1 Strategic KPIs
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseSection1" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="base-color" id="divStrategicKPI">
+                        @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_KpiListInProjects.cshtml", Model.StrategicKpiList); }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 1 Graphs Ends ------------------*@
+
+@*------------------------------------------Section 1 Remarks starts------------------*@
+<div id="divSection1Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection1Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 1 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection1Remarks" class="panel-collapse collapse @section1Closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection1">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section1RemarksList); }
+                </div>
+            </div>
+        </div>
+        @*<span class="inactive">View All Months 
+            <input id="chkShowAllSection1" type="checkbox" checked="checked" onchange=" BindRemarksList(1); " />
+        </span>*@
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 1 Remarks Ends------------------*@
+
+
+@*------------------------------------------Section 2 Graphs Starts ------------------*@
+<div id="divSection2Graphs">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection2Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 2 Operational KPIs
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection2Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="base-color" id="divFinancialKPI">
+                        @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_OperationalKpiList.cshtml", Model.OperationalKpiList); }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 2 Graphs Ends ------------------*@
+
+@*------------------------------------------Section 2 Remarks starts------------------*@
+<div id="divSection2Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection2Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 2 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection2Remarks" class="panel-collapse collapse @section2Closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection2">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section2RemarksList); }
+                </div>
+            </div>
+        </div>
+        @*<span class="inactive">View All Months
+                <input id="chkShowAllSection2" type="checkbox" checked="checked" onchange=" BindRemarksList(2); " />
+            </span>*@
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 2 Remarks Ends------------------*@
+
+
+
+
+
+
+
+@*------------------------------------------Section 3 Graphs Starts ------------------*@
+<div id="divSection3Graphs">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection3Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 3 Financial KPIs
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection3Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="base-color" id="divFinancialKPI">
+                        @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_FinancialKpiListInProjects.cshtml", Model.FinancialKpiList); }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 3 Graphs Ends ------------------*@
+
+@*------------------------------------------Section 3 Remarks starts------------------*@
+<div id="divSection3Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection3Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 3 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection3Remarks" class="panel-collapse collapse @section3Closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection3">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section3RemarksList); }
+                </div>
+            </div>
+        </div>
+        @*<span class="inactive">View All Months 
+            <input id="chkShowAllSection3" type="checkbox" checked="checked" onchange=" BindRemarksList(2); " />
+        </span>*@
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 3 Remarks Ends------------------*@
+
+
+@*------------------------------------------Section 4 Graphs Starts ------------------*@
+<div id="divSection4Graphs">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection4Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 4 Individual KPIs
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection4Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="base-color" id="divIndividualKPI">
+                        @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_IndividualKpiListInProjects.cshtml", Model.IndividualKpiList); }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 4 Graphs Ends ------------------*@
+
+@*------------------------------------------Section 4 Remarks starts------------------*@
+<div id="divSection4Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection4Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                Section 4 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection4Remarks" class="panel-collapse collapse @section4Closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection4">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section4RemarksList); }
+                </div>
+            </div>
+        </div>
+        @*<span class="inactive">View All Months 
+            <input id="chkShowAllSection4" type="checkbox" checked="checked" onchange=" BindRemarksList(3); " />
+        </span>*@
+    </div>
+    <div class="clear"></div>
+
+    <div id="divhidepopup" style="display: none;">
+        <div class="popup-coverbg"></div>
+        <div class="popup-frame">
+            <div class="popup-Comments">
+                <div class="popup-content">
+                    <div>
+                        <div class="popup-close" onclick="$('#divhidepopup').hide();">X</div>
+                        <h4>Comments</h4>
+                        <div id="taskComments">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@*------------------------------------------Section 4 Remarks Ends------------------*@
+
+
+<script>
+    function ShowPopupComments(projectTaskId) {
+        $.getJSON("/ExternalDashboard/GetProjectTaskComments", { taskId: projectTaskId }, function (comments) {
+            if (comments != '') {
+                $('#taskComments').html('');
+                $('#taskComments').html(comments);
+                $('#divhidepopup').show();
+            } else {
+                ShowMessage("No Comments in this Task", "No Comments", "warning", true);
+                $('#divhidepopup').hide();
+            }
+        });
+    }
+</script>

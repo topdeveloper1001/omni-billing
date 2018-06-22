@@ -1,0 +1,125 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<ProjectTasksCustomModel>
+
+
+@if (Model != null && Model.Count > 0)
+{
+    <div class="form">
+        <div class="table-responsive">
+            @{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridProjectTasksContent", canPage: false, canSort: false);
+            }
+            <div id="gridProjectTasksContent">
+                @grid.GetHtml(htmlAttributes: new { id = "ProjectTasksTable" }, tableStyle: "table table_scroll1", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                        grid.Column("FacilityName", "Facility"),
+                        grid.Column("ProjectNumber", "Project Number"),
+                        grid.Column("ProjectName", "Project Name"),
+                        grid.Column("TaskNumber", "Task Number"),
+                        grid.Column("TaskName", "Task Name"),
+                        grid.Column("TaskDescription", "Task Description"),
+                        grid.Column("StartDate", "Start Date", format: @<text>
+                            @if (item.StartDate != null)
+                            {
+                                @item.StartDate.ToString("MM/dd/yyyy")
+                            }
+                        </text>),
+                        grid.Column("EstCompletionDate", "Est Completion Date", format: @<text>
+                    @if (item.EstCompletionDate != null)
+                    {
+                        @item.EstCompletionDate.ToString("MM/dd/yyyy")
+                    }
+                        </text>),
+                        grid.Column("Responsible", "Responsible User"),
+                        grid.Column("IsActive", "Active"),
+                        grid.Column(header: "Action", format: @<text>
+                                                                   <div class="iconsAction">
+                                                                   <a href="javascript:void(0);" onclick="EditProjectTasks('@item.ProjectTaskId') " >
+                                                                       <img src="@Url.Content("~/images/edit.png")" />
+                                                                   </a>
+                                                                   @*<a href="javascript:void(0);" title="Delete" onclick="return DeleteProjectTasks('@item.ProjectTaskId'); " style="float: left; margin-right:7px;  width: 15px;">
+                                <img src="@Url.Content("~/images/delete.png")" /></a>*@
+                                                                   <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.ProjectTaskId','Delete Project Tasks','',DeleteProjectTasks,null); " >
+                                                                       <img src="@Url.Content("~/images/delete.png")" />
+                                                                   </a>
+                                                                   @*</text>),*@
+                                                                   @*grid.Column(header: "View Comments", format:*@ @*@<text>*@
+
+                                                                   @if (!string.IsNullOrEmpty(item.Comments))
+                                                                   {
+                                                                       <a onclick='ShowPopupComments("@item.ProjectTaskId")' href="#">
+                                                                           <img src="@Url.Content("~/images/Comments16x16.png")" title="View Comment" />
+                                                                       </a>
+                                                                   }
+                                                                       </div>
+                                                               </text>)
+
+                                                                                                                                                                                                ))
+            </div>
+        </div>
+    </div>
+
+    @*<div id="divhidepopup" style="display: none;">
+            <div class="popup-coverbg"></div>
+            <div class="popup-frame">
+                <div class="popup-Comments">
+                    <div class="popup-content">
+                        <div>
+                            <div class="popup-close" onclick="$('#divhidepopup').hide();">X</div>
+                            <h4>Comments</h4>
+                            <div id="taskComments">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>*@
+
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<!-- Modal -->
+    <div class="modal fade" id="divViewComments" role="dialog">
+        <div class="vertical-alignment-helper">
+            <div class="modal-dialog modal-sm warning_popup custom_pop vertical-align-center">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title" id="h5title">Comments</h4>
+                    </div>
+                    <div class="modal-body">
+                        <h5 id="h5Comments"></h5>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    var elem = "#divViewComments";
+    function ShowPopupComments(id) {
+        $.ajax({
+            type: "POST",
+            url: "/ExternalDashboard/GetProjectTaskComments",
+            async: false,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            data: JSON.stringify({taskId: id}),
+            success: function (data) {
+                if (data != null & data != '') {
+                    $("#divViewComments").modal();
+                    $('#h5Comments').html(data);
+                } else {
+                    ShowMessage("No Comments in this Task", "No Comments", "warning", true);
+                }
+            },
+            error: function (msg) {
+            }
+        });
+    }
+</script>

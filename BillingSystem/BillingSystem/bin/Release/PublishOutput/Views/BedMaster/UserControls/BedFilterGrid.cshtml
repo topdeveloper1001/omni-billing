@@ -1,0 +1,74 @@
+﻿@*
+    Owner: Shashank Awasthy
+    On: 28092014
+    Purpose: To show all the vacant beds list that are assigned to the concerned patient
+*@
+
+@model List<DTO.MappingPatientBedDTO>
+<div id="partial" style="float: left; margin-bottom: 10px;">
+    @if (Model.Count > 0)
+    {
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" id="tblId">
+            <thead>
+                <tr class="bordercls">
+                    <th align="left">Select</th>
+                    <th align="left">Floor</th>
+                    <th align="left">Room Number</th>
+                    <th align="left">Bed Number</th>
+                    <th align="left">Bed Type</th>
+                    <th align="left">Room Rate</th>
+                    <th align="left">Equipment</th>
+                    <th align="left">Unit Location</th>
+                    <th align="left">Service Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="bordercls">
+                        <td align="center">
+                            <input type="radio" name="AssignBed" class="assignedBed" id="@item.RoomId" onclick="AssignVal(this);" />
+                        </td>
+                        <td align="left" id="floor">@item.Floor</td>
+                        <td align="left" id="roomNumber">@item.RoomNumber</td>
+                        <td align="left" id="bedNumber">@item.BedNumber</td>
+                        <td align="left" id="bedType">@item.BedType</td>
+                        <td align="left" id="bedRate">
+                            @(((decimal)item.BedRate).ToString("N2"))
+                        </td>
+                        <td align="left" id="equipment">@item.Equipment</td>
+                        <td align="left" id="unitLocation">@item.UnitLocation</td>
+                        <td align="left" id="serviceCode">
+                            @Html.DropDownListFor(m => item.ServiceCodeId, new SelectList(item.LstServiceCodes, "ServiceCodeId", "ServiceCode", item.ServiceCodeId), "--Select--", new { id = "ServiceCode", style = "width: 100px" })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" id="tblId">
+            <thead>
+                <tr class="bordercls">
+                    <th align="left">Select</th>
+                    <th align="left">Floor</th>
+                    <th align="left">Room Number</th>
+                    <th align="left">Bed Number</th>
+                    <th align="left">Bed Type</th>
+                    <th align="left">Room Rate</th>
+                    <th align="left">Equipment</th>
+                    <th align="left">Unit Location</th>
+                    <th align="left">Service Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="9">
+                        <p>No records Found.</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    }
+</div>

@@ -1,0 +1,65 @@
+﻿
+@{
+    ViewBag.Title = "Index3";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Index3</h2>
+
+<div class="panel panel-default collapsecss ourcollapse">
+    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFacultySelection">
+        <h4 class="panel-title collapseTitle">
+            <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Select User
+            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </a>
+        </h4>
+    </div>
+    <div id="collapseFacultySelection" class="panel-collapse collapse in">
+        <div class="panel-body">
+            <div class="base-color">
+                <div class="form">
+                    <div class="form">
+                        <div class="col-sm-3">
+                            <div class="rowTable">
+                               <div id="divDatetimePicker"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        $("#txtCal1").datepicker({
+            numberOfMonths: [3, 1],
+            showButtonPanel: true,
+        });
+        //$('#txtCal1').datetimepicker({
+        //    format: 'm/d/Y',
+        //    inline: true,
+        //    timepicker: false,
+        //    onChangeDateTime: function (dp, $input) {
+        //        alert($input.val());
+        //    }
+        //});
+        //$('#txtCal2').datetimepicker({
+        //    format: 'm/d/Y',
+        //    inline: true,
+        //    timepicker: false,
+        //    onChangeDateTime: function (dp, $input) {
+        //        alert($input.val());
+        //    }
+        //});
+        //$('#txtCal3').datetimepicker({
+        //    format: 'm/d/Y',
+        //    inline: true,
+        //    timepicker: false,
+        //    onChangeDateTime: function (dp, $input) {
+        //        alert($input.val());
+        //    }
+        //});
+    });
+</script>

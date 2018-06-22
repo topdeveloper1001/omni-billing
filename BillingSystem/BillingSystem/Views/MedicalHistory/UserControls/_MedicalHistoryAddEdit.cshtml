@@ -1,0 +1,74 @@
+﻿@using BillingSystem.Model
+@using Kendo.Mvc.UI
+
+@model MedicalHistory
+
+<style>
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+
+@{
+    var currentMedicationSaveButtontext = "Save";
+    if (Model != null && Model.Id > 0)
+    {
+        currentMedicationSaveButtontext = "Update";
+    }
+}
+
+<div class="form" id="MedicalHistoryFormDiv">
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <input type="hidden" id="hfCurrentMedicationId" />
+            <label>Drug Name:</label>
+            @(Html.Kendo().AutoComplete()
+                  .Name("txtCurrentMedicationDrugCode")
+                  .DataTextField("Menu_Title")
+                  .Placeholder("Search by DRUG Code / Description")
+                  .Filter("contains")
+                  .MinLength(2)
+                  .Events(e => e.Select("SelectCurrentMedicationDrugCode"))
+                  .HtmlAttributes(new
+                  {
+                      id = "txtCurrentMedicationDrugCode",
+                      onfocus = "ajaxStartActive = false;",
+                      onblur = "ajaxStartActive = true;",
+                      style = "width:100%",
+                      maxlength = "240",
+                      @class = "validate[required]"
+                  })
+                  .DataSource(source => source.Read(read => read.Action("GetSearchedDrugCodes", "Drug")
+                      .Data("OnSelection"))
+                      .ServerFiltering(true))
+                  )
+            <input type="hidden" id="hfCurrentMedicationDrugCode" />
+        </div>
+        <div class="rowTable">
+            <label>How Long Have You Been Taking:</label>
+            <select id="ddlCurrentMedicationDuration"></select>
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Volume:</label>
+            <select id="ddlCurrentMedicationVolume"></select>
+        </div>
+        <div class="rowTable">
+            <label>Dosage:</label>
+            <select id="ddlCurrentMedicationDosage"></select>
+        </div>
+        <div class="rowTable">
+            <label>Frequency:</label>
+            <select id="ddlCurrentMedicationFrequency"></select>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <div style="float: left;">
+            <input type="submit" onclick="return SaveMedicalHistory();" id="btnCurrentMedicationsSave" class="btn btn-primary edit-btn marginBtn" value="@currentMedicationSaveButtontext" />
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAllMedicalHistory();">Cancel</button>
+        </div>
+    </div>
+</div>
+

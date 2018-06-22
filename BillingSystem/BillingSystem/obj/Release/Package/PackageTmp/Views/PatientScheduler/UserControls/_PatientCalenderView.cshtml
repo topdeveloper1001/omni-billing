@@ -1,0 +1,82 @@
+﻿<style type="text/css" media="screen">
+    table tr td {
+        padding: 0;
+        border-right: none;
+    }
+
+   /* .event_1 .dhx_body, .event_1 .dhx_footer {
+        background: #98fb98 !important;
+    }
+
+    .event_1 .dhx_header, .event_1 .dhx_title {
+        background: #71d471 !important;
+    }*/
+    .dhx_time_block {
+        /*background: red !important;*/
+    }
+    /*.dhx_time_block_reset{opacity:0.5 !important; background:#fadcd3 !important;}
+    .red_section {
+        background: #fffe80 !important;
+        opacity: 0.25;
+        filter: alpha(opacity = 25);
+        color: #222;
+        font-size: 14px;
+        text-align: center;
+    }
+    .yellow_section {
+        background-color: #ffa749;
+        opacity: 0.25;
+        filter: alpha(opacity = 25);
+    }*/
+</style>
+<script src="~/Scripts/Scheduler/codebase/sources/dhtmlxscheduler.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_outerdrag.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_recurring.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_readonly.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_active_links.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_editors.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_limit.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_pdf.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_tooltip.js"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_collision.js"></script>
+@*<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_quick_info.js"></script>*@
+
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_serialize.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/sources/ext/dhtmlxscheduler_timeline.js" type="text/javascript" charset="utf-8"></script>
+
+<link rel='stylesheet' type='text/css' href="~/Scripts/Scheduler/codebase/dhtmlxscheduler.css" />
+<script src="~/Scripts/Scheduler/common/dhtmlxTree/dhtmlxtree.js" type="text/javascript" charset="utf-8"></script>
+<link rel='stylesheet' type='text/css' href="~/Scripts/Scheduler/common/dhtmlxTree/dhtmlxtree.css" />
+<script type="text/javascript">
+</script>
+
+<div id="my_form">
+    <label for="description">Event text </label>
+    <input type="text" name="description" value="" id="description"><br>
+    <label for="custom1">Custom 1 </label>
+    <input type="text" name="custom1" value="" id="custom1"><br>
+    <label for="custom2">Custom 2 </label>
+    <input type="text" name="custom2" value="" id="custom2"><br>
+    <br>
+    <input type="button" name="save" value="Save" id="save" style='width: 100px;' onclick="save_form()">
+    <input type="button" name="close" value="Close" id="close" style='width: 100px;' onclick="close_form()">
+    <input type="button" name="delete" value="Delete" id="delete" style='width: 100px;' onclick="delete_event()">
+</div>
+
+<div id="scheduler_here" class="dhx_cal_container" style='width: 100%; height: 870px; border: solid 1px #ccc; border-radius: 4px;'>
+    <div class="dhx_cal_navline">
+        <div class="dhx_cal_prev_button">&nbsp;</div>
+        <div class="dhx_cal_next_button">&nbsp;</div>
+        <div class="dhx_cal_today_button"></div>
+        <div class="dhx_cal_date"></div>
+        <div class="dhx_cal_tab" name="day_tab" style="left: 100px;"></div>
+        <div class="dhx_cal_tab" name="week_tab" style="left: 200px;"></div>
+        <div class="dhx_cal_tab" name="workweek_tab" style="right: 300px;"></div>
+        <div class="dhx_cal_tab" name="month_tab" style="right: 500px;"></div>
+        @*<div class="dhx_cal_tab" name="decade_tab" style="right: 400px;"></div>*@
+    </div>
+    <div class="dhx_cal_header">
+    </div>
+    <div class="dhx_cal_data">
+    </div>
+</div>

@@ -1,0 +1,72 @@
+﻿@model BillingSystem.Model.CustomModel.BedRateCardCustomModel
+
+<div class="form" id="BedRateCardDiv">
+    @Html.HiddenFor(m => m.BedRateCard.BedRateCardID, new { @id = "hfBedRateCardId" })
+  <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label><span class="mandatoryStar"></span>Bed Types:</label>
+        <select id="ddlBedTypes" class="validate[required]"></select>
+        @*@Html.DropDownListFor(m => m.BedRateCard.BedTypes, new SelectList(Model.LstBedTypesList, "GlobalCodeID", "GlobalCodeName"), "--Select One--", new { id = "ddlBedTypes", @class = "validate[required]" })*@
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label><span class="mandatoryStar"></span>Frequency:</label>
+        <select id="ddlUnitTypes" class="validate[required]"></select>
+        @*@Html.DropDownListFor(m => m.BedRateCard.UnitType, new SelectList(Model.LstUnitTypeList, "GlobalCodeID", "GlobalCodeName"), "--Select One--", new { id = "ddlUnitTypes", @class = "validate[required]" })*@
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label><span class="mandatoryStar"></span>Frequency Start:</label>
+        @Html.TextBoxFor(m => m.BedRateCard.DayStart, new { @maxlength = "3", @ID = "txtDayStart", @class = "validate[required,custom[onlyNumberSp]]", @onchange = "CheckFrequencyStartDays()" })
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label><span class="mandatoryStar"></span>Frequency End:</label>
+        @Html.TextBoxFor(m => m.BedRateCard.DayEnd, new { @maxlength = "3", @ID = "txtDayEnd", @class = "validate[required,custom[onlyNumberSp]]", @onchange = "CheckFrequencyStartDays()" })
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label><span class="mandatoryStar"></span>Rate:</label>
+        @Html.TextBoxFor(m => m.BedRateCard.Rates, new { @maxlength = "20", @ID = "txtRates", @class = "validate[required]" })
+    </div>
+    <div class="clearfix"></div>
+    <div class="col-xs-12 col-sm-6 col-md-4 rowTable">
+        <label><span class="mandatoryStar"></span>Service Code:</label>
+        <select id="ddlServiceCodeValues" class="validate[required]"></select>
+        @*@Html.DropDownListFor(m => m.BedRateCard.ServiceCodeValue, new SelectList(Model.LstServiceCodeList, "ServiceCodeValue", "ServiceCodeDescription"),
+            "--Select One--", new { id = "ddlServiceCodeValues", @class = "validate[required]", @onchange = "OnChangeServiceCodeDropdown('#ddlServiceCodeValues');" })*@
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label>
+            Selected Service Code:
+            <br />
+            <strong id="lblSelectedServiceCode"></strong>
+        </label>
+
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label>
+            <span class="mandatoryStar"></span>
+            Service Code Effective From:
+            @*<br />
+                <strong id="lblServiceCodeEffectiveFrom"></strong>*@
+        </label>
+        @Html.TextBoxFor(m => m.BedRateCard.EffectiveFrom, "{0:MM/dd/yyyy}", new { @maxlength = "20", @id = "EffectiveStartDate", @class = "dtGeneral validate[required]", @onchange = "CheckTwoDatesInBedRateCard($('#EffectiveStartDate'),$('#EffectiveEndDate'),'EffectiveStartDate')" })
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-2 rowTable">
+        <label>
+            Service Code Effective Till:
+            @*<br />
+                <strong id="lblServiceCodeEffectiveTill"></strong>*@
+        </label>
+        @Html.TextBoxFor(m => m.BedRateCard.EffectiveTill, "{0:MM/dd/yyyy}", new { @maxlength = "20", @id = "EffectiveEndDate", @class = "dtGeneral", @onchange = "CheckTwoDatesInBedRateCard($('#EffectiveStartDate'),$('#EffectiveEndDate'),'EffectiveEndDate')" })
+    </div>
+    <div class="clear"></div>
+    <div class="col-sm-12">
+        @{
+            var btnSave = "Save";
+            if (Model.BedRateCard != null && Model.BedRateCard.BedRateCardID != 0)
+            {
+                btnSave = "Update";
+            }
+        }
+        <input type="submit" id="btnSubmit" class="blue-btn btn btn-primary edit-btn" value="@btnSave" onclick="SaveBedRateCard();" />
+        <button name="ClientCancel" id="btnCancel" class="blue-btn btn btn-primary edit-btn" onclick="ClearBedRateCardForm();" type="button">Cancel</button>
+    </div>
+</div>

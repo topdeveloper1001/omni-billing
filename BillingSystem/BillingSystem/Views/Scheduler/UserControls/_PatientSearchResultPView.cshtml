@@ -1,0 +1,50 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using BillingSystem.Model.CustomModel
+
+@model IEnumerable<PatientInfoCustomModel>
+
+
+<div class="table-responsive">
+    @if (Model != null)
+    {
+        if (Model.Any())
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent", canPage: false);
+            <div id="gridContent">
+                @grid.GetHtml(htmlAttributes: new { id = "PatientSearch" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                        grid.Column(header: "Is VIP", canSort: true, style: "col1", format: @<text>
+                                                                                                 @if (!string.IsNullOrEmpty(item.PatientInfo.PersonVIP))
+                                                                                                 {
+                                                                                                     <span style="float: left;">
+                                                                                                         <img style="height: 20px; width: 20px" src="@Url.Content("~/images/vip2.png")" />
+                                                                                                     </span>
+                                                                                                 } </text>),
+                        grid.Column("PatientInfo.PersonFirstName", "First Name", canSort: true, style: "col2"),
+                        grid.Column("PatientInfo.PersonLastName", "Last Name", canSort: true, style: "col3"),
+                        grid.Column("PatientInfo.PersonBirthDate", "Birth Date", canSort: true, style: "col4", format: @<text>
+                                                                                                                            @if (item.PatientInfo.PersonBirthDate != null)
+                                                                                                                            {
+                                                                                                                                @item.PatientInfo.PersonBirthDate.ToString("dd/MM/yyyy")
+                                                                                                                            }
+                                                                                                                        </text>),
+                        grid.Column("PatientInfo.PersonAge", "Age", canSort: true, style: "col5"),
+                        grid.Column("PatientInfo.PersonPassportNumber", "Passport Number", canSort: true, style: "col6"),
+                        grid.Column("PatientInfo.PersonContactNumber", "Contact Number", canSort: true, style: "col7"),
+                        grid.Column("PatientInfo.PersonEmiratesIDNumber", ResourceKeyValues.GetKeyValue("socialsecuritynumber"), canSort: true, style: "col8"),
+                        grid.Column(header: "Select Patient", style: "col7", format: @<text>
+                                                                                  <a href="javascript:void(0);" title="Select Patient" onclick="return ViewPatientScheduling('@item.PatientInfo.PatientID','@item.PatientInfo.PersonFirstName','@item.PatientInfo.PersonLastName'); " style="float: left; margin-right: 7px; width: 15px;">
+                                                                                      <img src="@Url.Content("~/images/search.png")" />
+                                                                                  </a>
+                                                                              </text>)
+                        ))
+            </div>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    }
+</div>
+

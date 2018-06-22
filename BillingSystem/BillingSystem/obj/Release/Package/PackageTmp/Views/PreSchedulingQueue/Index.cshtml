@@ -1,0 +1,61 @@
+﻿@model BillingSystem.Models.PreSchedulingQueueView
+@using System.Web.Optimization
+
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseLabTestOrderSetList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" /></span> Pre Scheduling List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseLabTestOrderSetList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color">
+                    @{Html.RenderPartial("~/Views/PreSchedulingQueue/UserControls/_preSchedulingList.cshtml", Model.PreSchedulingList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+
+<div id="divSchedularPopUp" class="hidePopUp custom_popup" style="display: none;">
+    <div class="popup-coverbg"></div>
+    <div class="popup-frame">
+        <div class="popup-main" style="margin: 10px auto">
+            <div class="popup-content">
+                <div id="divSchedularPopUpContent">
+                    @{Html.RenderPartial("~/Views/PreSchedulingQueue/UserControls/_SchedularPopupView.cshtml", null);}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="divOverViewPopup" class="hidePopUp custom_popup" style="display: none;">
+    <div class="popup-coverbg"></div>
+    <div class="popup-frame">
+        <div class="popup-main" style="margin: 10px auto">
+            <div class="popup-content">
+                @*<div class="popup-close" onclick=" $('.hidePopUp').hide(); $.validationEngine.closePrompt('.formError', true);">X</div>*@
+                <div id="divSchedularPopUpContent2">
+                    @{Html.RenderPartial("~/Views/PreSchedulingQueue/UserControls/_SchedularPopupOverView.cshtml", null);}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/PreSchedulingQueue/Main.js?@DateTime.Now.Ticks"></script>

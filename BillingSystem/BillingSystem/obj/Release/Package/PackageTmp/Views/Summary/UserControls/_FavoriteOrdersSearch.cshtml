@@ -1,0 +1,48 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<OpenOrderCustomModel>
+
+    @{
+        ViewBag.Title = "Physicians Orders List";
+    }
+<style>
+    .width {
+        width: 400px;
+    }
+</style>
+    @if (Model != null)
+    {
+        var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentFavOrderSearch", canPage: false);
+        <div id="gridContentFavOrderSearch">
+            @grid.GetHtml(htmlAttributes: new {id = "PhyFavOrdersGridSearch"}, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                columns:
+                    grid.Columns(
+                        grid.Column("OrderTypeName", header: "Activity Code", canSort: true, style: "col1"),
+                         grid.Column("OrderCode", header: "Order Code", canSort: true, style: "col3"),
+                         grid.Column("OrderDescription", header: "Order Description", canSort: true, style: "width"),
+                         grid.Column("UserDefinedDescription", header: "User Define Description", canSort: true, style: "col8"),
+                        grid.Column(header: "Action", style: "col9", format:
+                            @<text>
+                                 <a href="javascript:void(0);" title="Add Order" class="AddOrder1" onclick="AddFavOrderToOrder('@item.UserDefinedDescriptionId') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px;">
+                                     <img src="~/images/edit_small.png" />
+                                 </a>
+                                 &nbsp;
+                                 @*<a href="javascript:void(0);" title="Remove from Fav" class="FavRemove" onclick="DeleteFav('@item.UserDefinedDescriptionId') " style="float: left; display: none; margin-right: 7px; margin-left: 5px; width: 15px;">
+                                     <img src="~/images/delete_small.png" />
+                                 </a>*@
+            <a href="javascript:void(0);" title="Remove from Fav" class="FavRemove" onclick="return OpenConfirmPopup('@item.UserDefinedDescriptionId','Delete Fav','',DeleteFav,null); " style="float: left; display: none; margin-right: 7px; margin-left: 5px; width: 15px;">
+                <img src="~/images/delete_small.png" />
+            </a>
+                             </text>)))
+            <h6>* Click on any column heading to sort</h6>
+        </div>
+    }
+    else
+    {
+        <h2>No Record found</h2>
+    }
+<script>
+    $(function () {
+        $('#PhyFavOrdersGridSearch').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        SetGridSorting(PhysicianFavSearch, "#gridContentFavOrderSearch");
+    });
+</script>

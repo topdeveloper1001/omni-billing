@@ -1,0 +1,60 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model.CustomModel
+
+@model List<TPXMLParsedDataCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridTPXMLParsedDataContent", canPage: false, canSort: false);
+            <div id="gridTPXMLParsedDataContent">
+                @grid.GetHtml(htmlAttributes: new {id = "TPXMLParsedDataTable"}, tableStyle: "table table-grid table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                        grid.Column("SystemBatchNumber", header: "Batch Number", canSort: false),
+                        grid.Column("TPFileID", header: "File ID", canSort: false),
+                        grid.Column("CClaimID", header: "Claim ID", canSort: false),
+                        grid.Column("BillNumber", header: "Bill Number", canSort: false),
+                        grid.Column("CMemberID", header: "Member ID", canSort: false),
+                        grid.Column("CPayerID", header: "Payer ID", canSort: false),
+                        grid.Column("CProviderID", header: "Provider ID", canSort: false),
+                        grid.Column("CEmiratesIDNumber", header: ResourceKeyValues.GetKeyValue("socialsecuritynumber"), canSort: false),
+                        grid.Column("CGross", header: "Gross", canSort: false),
+                        grid.Column("CPatientShare", header: "Patient Share", canSort: false),
+                        grid.Column("CNet", header: "Net", canSort: false),
+                        grid.Column("EFacilityID", header: "Facility", canSort: false),
+                        grid.Column("EncounterType", header: "Encounter Type", canSort: false),
+                        grid.Column("PatientName", header: "Patient", canSort: false),
+                        grid.Column("EligibilityIDPayer", header: "Eligibility ID Payer", canSort: false),
+                        grid.Column("EStart", header: "Start", canSort: false),
+                        grid.Column("EEnd", header: "End", canSort: false),
+                        grid.Column("EncounterStartType", header: "Start Type", canSort: false),
+                        grid.Column("EncounterEndType", header: "End Type", canSort: false),
+                        grid.Column("DType", header: "Diagnosis Type", canSort: false),
+                        grid.Column("DCode", header: "Diagnosis Code", canSort: false),
+                        grid.Column("AStart", header: "Start", canSort: false),
+                        grid.Column("AType", header: "Activity Type", canSort: false),
+                        grid.Column("ACode", header: "Activity Code", canSort: false),
+                        grid.Column("AQuantity", header: "Quantity", canSort: false),
+                        grid.Column("ANet", header: "Activity Net", canSort: false),
+                        grid.Column("AOrderingClinician", header: "Ordering Clinician", canSort: false),
+                        grid.Column("AExecutingClinician", header: "Executing Clinician", canSort: false),
+                        grid.Column("APriorAuthorizationID", header: "Prior Authorization COde", canSort: false),
+                        grid.Column("CNPackageName", header: "Package Name", canSort: false),
+                        grid.Column("PStatus", header: "Status", canSort: false)                        
+                        ))
+            </div>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+<script>
+    $(function() {
+        if ($('.table_scroll tr').length > 5) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+    });
+</script>

@@ -1,0 +1,24 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+
+@model DischargeSummaryView
+
+<div class="panel panel-default collapsecss ourcollapse bordertable">
+    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+        <h4 class="panel-title collapseTitle">
+            <span>
+                <img src="~/images/list.png" /></span>&nbsp;Discharge Summary
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+        </h4>
+    </div>
+    <div id="collapseTwo" class="panel-collapse collapse in tableImg">
+        <div class="panel-body">
+            <div class="base-color" id="MedicalNotesListDiv">
+                @{Html.RenderPartial("~/Views/MedicalNotes/UserControls/_MedicalNotesListPatientSummary.cshtml", Model.SummaryNotes);}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="clear"></div>

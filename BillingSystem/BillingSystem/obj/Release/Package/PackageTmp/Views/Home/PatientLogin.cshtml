@@ -1,0 +1,241 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@model BillingSystem.Model.PatientLoginDetail
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <link rel="stylesheet" href="~/css/bootstrap.css">
+        <link rel="stylesheet" href="~/css/bootstrap-glyphicons.css">
+        <link rel="stylesheet" href="~/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="~/css/login.css">
+        <link href="@Url.Content("~/css/toastNotification/toastr.css")" rel="stylesheet" />
+        <title>@ResourceKeyValues.GetKeyValue("patientportallogin")</title>
+    </head>
+    <body id="patientPortal">
+        <div class="Pouter1">
+        </div>
+        <div class="container">
+            <div class="col-sm-12">
+                @using (Html.BeginForm("PatientLogin", "Home", FormMethod.Post))
+                {
+                    <div class="PatientloginContainer">
+                        <div class="patientBg">
+                            <div class="rowTable text-center loginLogo patientLogin">
+                                <img src="@Url.Content("~/images/logo.png")">
+                            </div>
+                            <h1 class="loginTitle1">
+                                @{
+                                    if (ViewBag.check != null && Convert.ToInt32(ViewBag.check) > 0)
+                                    {
+                                        var check = (LoginResponseTypes) Enum.Parse(typeof (LoginResponseTypes), Convert.ToString(ViewBag.check));
+                                        switch (check)
+                                        {
+                                            case LoginResponseTypes.Success:
+                                                break;
+                                            case LoginResponseTypes.Failed:
+                                                <span id="spErrorMsg">@ResourceKeyValues.GetKeyValue("invaldcredentialsmsg")</span>
+                                                break;
+                                            case LoginResponseTypes.IsDeleted:
+                                                <span id="spErrorMsg2">@ResourceKeyValues.GetKeyValue("patientloginaccountdeleted")</span>
+                                                break;
+                                            case LoginResponseTypes.CaptchaFailed:
+                                                break;
+                                            case LoginResponseTypes.FailedAttemptsOver:
+                                                <span id="spErrorMsg2">@ResourceKeyValues.GetKeyValue("patienlogintempblockedmsg")</span>
+                                                break;
+                                            case LoginResponseTypes.Blocked:
+                                                <span id="spErrorMsg2">@ResourceKeyValues.GetKeyValue("loginblockedmsg")</span>
+                                                break;
+                                            case LoginResponseTypes.UnknownError:
+                                                <span id="spErrorMsg2">@ResourceKeyValues.GetKeyValue("unknownerror")</span>
+                                                break;
+                                            case LoginResponseTypes.AccountNotActivated:
+                                                <span id="spErrorMsg2">@ResourceKeyValues.GetKeyValue("accountnotactivated")</span>
+                                                break;
+                                        }
+                                    }
+                                }
+
+                            </h1>
+                            <div class="col-sm-6 Plogin1">
+                                <div class="rowTable">
+                                    <label>@ResourceKeyValues.GetKeyValue("email")</label>
+                                    @Html.TextBoxFor(m => m.Email, new {@class = "form-control"})
+                                </div>
+                                <div class="rowTable">
+                                    <label>@ResourceKeyValues.GetKeyValue("password")</label>
+                                    @Html.PasswordFor(m => m.Password, new {@class = "form-control"})
+                                </div>
+                                <div class="rowTable">
+                                    <a href="javascript:;" onclick=" ShowPorForPop() ">@ResourceKeyValues.GetKeyValue("forgotpwd")</a>
+                                </div>
+                                <div class="rowTable">
+                                    <button type="submit" id="BtnLogin" class="btn btn-primary">@ResourceKeyValues.GetKeyValue("login")</button>
+                                </div>
+                            </div>
+                            <div class="col-sm-5">
+                                <h3>Join Us</h3>
+                                <ol class="adv">
+                                    <li>Access your personal information</li>
+                                    <li>Review your Reports</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    
+        <div aria-hidden="false" class="modal fade in" tabindex="-1" id="PatPorForLoginpopup" style="display: none;">
+            <div class="modal-dialog modal-md modal-width modal-myposition">
+                <div class="modal-content modal-radius">
+                    <div class="modal-header modal-border">
+                        <button aria-hidden="true" data-dismiss="modal" class="close top-btn" type="button" onclick=" hidePopup('PatPorForLoginpopup') ">
+                        </button>
+                        <h4 class="modal-title header-size ">
+                            Forgot Password
+                        </h4>
+                    </div>
+                    <div class="modal-body popup-body-padding overflowHidden">
+                        <div class="col-sm-12">
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("email")</label>
+                                <input type="text" class="form-control validate[required,custom[email]]" id="txtEmailId"/>
+                            </div>
+                            <button class="btn btn-primary" type="button" id="btnSendForgotPasswordEmail">Send</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="overlay" style="display: none"></div>
+        @*<script src="~/Scripts/PatientInfo/PatientLogin.js"></script>*@
+        
+    </body>
+</html>
+<script src="~/js/jquery-1.10.2.js"></script>
+<script src="~/Scripts/bootstrap.js"></script>
+<script src="~/Scripts/jquery.blockUI.js"></script>
+<script src="@Url.Content("~/Scripts/ToastNotification/toastr.js")"></script>
+
+<script>
+    function hidePopup(divId) {
+        divId = '#' + divId;
+        $(divId).hide();
+        hideOverlay();
+
+    }
+
+    function showOverlay() {
+        $('.overlay').show();
+    }
+
+    function hideOverlay() {
+        $('.overlay').hide();
+    }
+
+    function ShowPorForPop() {
+        if ($("#PatPorForLoginpopup").is(":hidden")) {
+            $("#PatPorForLoginpopup").show();
+            showOverlay();
+            $('#txtEmailId').addClass("form-control validate[required,custom[email]]");
+        } else {
+            $("#PatPorForLoginpopup").hide();
+            hideOverlay();
+            $('#txtEmailId').removeClass("form-control validate[required,custom[email]]");
+        }
+    }
+
+    function ShowMessage(msg, title, shortCutFunction, showCloseButton) {
+        /// <summary>
+        /// Shows the message.
+        /// </summary>
+        /// <param name="msg">The MSG.</param>
+        /// <param name="title">The title.</param>
+        /// <param name="shortCutFunction">The short cut function.</param>
+        /// <param name="showCloseButton">The show close button.</param>
+        /// <returns></returns>
+        toastr.options = {
+            "closeButton": showCloseButton,
+            "debug": false,
+            "positionClass": "toast-bottom-right",
+            "preventDuplicates": true,
+            "onclick": null,
+            "showDuration": "500",
+            "hideDuration": "2000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        }
+
+        $("#toastrOptions").text("Command: toastr["
+                        + shortCutFunction
+                        + "](\""
+                        + msg
+                        + (title ? "\", \"" + title : '')
+                        + "\")\n\ntoastr.options = "
+                        + JSON.stringify(toastr.options, null, 2)
+        );
+
+        var $toast = toastr[shortCutFunction](msg, title); // Wire up an event handler to a button in the toast, if it exists
+        $toastlast = $toast;
+    }
+
+    $(function() {
+        $("#btnSendForgotPasswordEmail").on('click', function() {
+            var emailid = $("#txtEmailId").val();
+            if (emailid != '') {
+                var jsonData = JSON.stringify({
+                    emailid: emailid
+                });
+                $.ajax({
+                    type: "POST",
+                    url: "/Home/IsPatientEmailValid",//"/Home/GetPhoneCodes",
+                    async: false,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: jsonData,
+                    beforeSend: function() {
+                        $.blockUI({
+                            message: '<img src="/images/ajax-loader-bar.GIF"><p>Please wait...</p>',
+                            css: {
+                                border: 'none',
+                                padding: '15px',
+                                '-webkit-border-radius': '10px',
+                                '-moz-border-radius': '10px',
+                                baseZ: 2000
+                            }
+                        });
+                    },
+                    success: function (data) {
+                        if (data) {
+                            var message = data.status != '' ? data.status : "";
+                            ShowMessage(message, "Info", "info", true);
+                            $("#PatPorForLoginpopup").hide();
+                            hideOverlay();
+                            $.unblockUI();
+                        }
+                        else {
+                        }
+                    },
+                    error: function (msg) {
+                        ShowMessage('Error while send reset password details', "Info", "error", true);
+                        $.unblockUI();
+                    }
+                });
+            } else {
+                return false;
+            }
+        });
+    });
+</script> 

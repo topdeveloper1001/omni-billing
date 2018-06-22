@@ -1,0 +1,67 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<TPXMLParsedDataCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            WebGrid grid = new WebGrid(Model, ajaxUpdateContainerId: "gridTPXMLParsedDataContent");
+            <div id="gridTPXMLParsedDataContent">
+                 @grid.GetHtml(htmlAttributes: new {id = "TPXMLParsedDataTable"}, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                                grid.Column("TPXMLParsedDataID", header: "TPXMLParsedDataID" , canSort: true),
+                                grid.Column("TPFileID", header: "TPFileID" , canSort: true),
+                                grid.Column("CClaimID", header: "CClaimID" , canSort: true),
+                                grid.Column("CMemberID", header: "CMemberID" , canSort: true),
+                                grid.Column("CPayerID", header: "CPayerID" , canSort: true),
+                                grid.Column("CProviderID", header: "CProviderID" , canSort: true),
+                                grid.Column("CEmiratesIDNumber", header: "CEmiratesIDNumber" , canSort: true),
+                                grid.Column("CGross", header: "CGross" , canSort: true),
+                                grid.Column("CPatientShare", header: "CPatientShare" , canSort: true),
+                                grid.Column("CNet", header: "CNet" , canSort: true),
+                                grid.Column("EFacilityID", header: "EFacilityID" , canSort: true),
+                                grid.Column("EType", header: "EType" , canSort: true),
+                                grid.Column("EPatientID", header: "EPatientID" , canSort: true),
+                                grid.Column("EligibilityIDPayer", header: "EligibilityIDPayer" , canSort: true),
+                                grid.Column("EStart", header: "EStart" , canSort: true),
+                                grid.Column("EEnd", header: "EEnd" , canSort: true),
+                                grid.Column("EStartType", header: "EStartType" , canSort: true),
+                                grid.Column("EEndType", header: "EEndType" , canSort: true),
+                                grid.Column("DType", header: "DType" , canSort: true),
+                                grid.Column("DCode", header: "DCode" , canSort: true),
+                                grid.Column("AStart", header: "AStart" , canSort: true),
+                                grid.Column("AType", header: "AType" , canSort: true),
+                                grid.Column("ACode", header: "ACode" , canSort: true),
+                                grid.Column("AQuantity", header: "AQuantity" , canSort: true),
+                                grid.Column("ANet", header: "ANet" , canSort: true),
+                                grid.Column("AOrderingClinician", header: "AOrderingClinician" , canSort: true),
+                                grid.Column("AExecutingClinician", header: "AExecutingClinician" , canSort: true),
+                                grid.Column("APriorAuthorizationID", header: "APriorAuthorizationID" , canSort: true),
+                                grid.Column("CNPackageName", header: "CNPackageName" , canSort: true),
+                                grid.Column("ModifiedBy", header: "ModifiedBy" , canSort: true),
+                                grid.Column("ModifiedDate", header: "ModifiedDate" , canSort: true),
+                                grid.Column("PStatus", header: "PStatus" , canSort: true),
+                                grid.Column("OMCorporateID", header: "OMCorporateID" , canSort: true),
+                                grid.Column("OMFacilityID", header: "OMFacilityID" , canSort: true),
+                                grid.Column("OMPatientID", header: "OMPatientID" , canSort: true),
+                                grid.Column("OMEncounterID", header: "OMEncounterID" , canSort: true),
+                                grid.Column("OMBillID", header: "OMBillID" , canSort: true),
+                                grid.Column("OMInsuranceID", header: "OMInsuranceID" , canSort: true),
+                                grid.Column("OMOrderingClincialID", header: "OMOrderingClincialID" , canSort: true),
+                                grid.Column("OMExecutingClincialID", header: "OMExecutingClincialID" , canSort: true),
+                grid.Column(header: "Action", format: @<text>
+                <a href="javascript:void(0);" onclick="EditTPXMLParsedData('@item.TPXMLParsedDataId')" style="float: left; margin-right: 7px; width: 15px;">
+                    <img src="@Url.Content("~/images/edit.png")" /></a>
+                <a href="javascript:void(0);" title="Delete" onclick="return DeleteTPXMLParsedData('@item.TPXMLParsedDataId');" style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" /></a>
+                </text>)
+                                ));
+            </div>            
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>

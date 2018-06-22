@@ -1,0 +1,34 @@
+﻿@model List<BillingSystem.Model.CustomModel.ChargesReportCustomModel> 
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentERChargesReport", canPage: false, canSort: false);
+    <div id="gridContentERChargesReport">
+        @grid.GetHtml(htmlAttributes: new { id = "ERChargesDetailReport" }, tableStyle: "table table_scroll_ER", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+            grid.Column("EncounterNumber", "Encounter Number", style: "col2", canSort: false),
+                grid.Column("PatientName", "Patient Name", style: "col2", canSort: false),
+                grid.Column("ActivityDate", "Activity Date", style: "col1", canSort: false, format: @<text>@if (item.ActivityDate != null)
+                {
+                    @item.ActivityDate.ToString("dd/MM/yyyy")
+                }</text>),
+                                 grid.Column("ActivityType", "Activity Type", style: "col2", canSort: false),
+                                 grid.Column("Payor", "Payor", style: "col2", canSort: false),
+                                 grid.Column("ActivityTotal", "Activity Cost", style: "col3", canSort: false),
+                                 grid.Column("Department", "Department A/C No.", style: "col5", canSort: false),
+                                 grid.Column("DepartmentName", "Department Description", style: "col5", canSort: false)
+            ))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        if ($('#ERChargesDetailReport tr').length > 0) {
+            $('.table_scroll_ER').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+            $("#ERChargesDetailReport tbody tr:last").addClass('rowColor9');
+        }
+        //SetGridSorting(SortERChargesReportGrid, "#gridContentERChargesReport");
+    });
+</script>

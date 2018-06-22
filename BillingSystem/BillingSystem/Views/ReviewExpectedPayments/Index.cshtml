@@ -1,0 +1,146 @@
+﻿@using BillingSystem.Models
+@model ReviewExpectedPaymentsView
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<script src="~/Scripts/ReviewExpectedPayments/ReviewExpectedPayments.js"></script>
+<div class="white-bg">
+  
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable" id="divNoReceivedPaymentList" style="display:none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseNoReceivedPayment">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" /></span>&nbsp;<span id="spnReceivedCount">Not Received Payment List</span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseNoReceivedPayment" class="panel-collapse collapse in tableImg">
+            <div class="panel-body scroller">
+                <div class="base-color" id="divNoReceivedPayment">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colExpectedPaymentInsNotPaid">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" /></span>&nbsp;
+                <span>Encounters with No Insurance Payment</span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colExpectedPaymentInsNotPaid" class="panel-collapse collapse in tableImg">
+            <div class="panel-body scroller">
+                <div class="base-color table-responsive">
+                    @{Html.RenderPartial("~/Views/ReviewExpectedPayments/UserControls/_ExpectedPaymentInsNotPaidListView.cshtml", Model.ExpectedPaymentInsNotPaidList);}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colExpectedPaymentPatientVar">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" /></span>&nbsp;
+                <span>Patient Variance Report</span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colExpectedPaymentPatientVar" class="panel-collapse collapse in tableImg">
+            <div class="panel-body scroller">
+                <div class="base-color table-responsive">
+                    @{Html.RenderPartial("~/Views/ReviewExpectedPayments/UserControls/_ExpectedPaymentPatientVarListView.cshtml", Model.ExpectedPaymentPatientVarList);}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colExpectedPaymentInsVariance">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" /></span>&nbsp;
+                <span>Insurance Variance Report</span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colExpectedPaymentInsVariance" class="panel-collapse collapse in tableImg">
+            <div class="panel-body scroller">
+                <div class="base-color table-responsive">
+                    @{Html.RenderPartial("~/Views/ReviewExpectedPayments/UserControls/_ExpectedPaymentInsVarianceListView.cshtml", Model.ExpectedPaymentInsVarianceList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+      <div class="panel panel-default collapsecss ourcollapse bordertable" >
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseSearchPatient">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Patient Information
+            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </a>
+            </h1>
+        </div>
+        <div id="collapseSearchPatient" class="panel-collapse collapse in">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        @{Html.RenderPartial("~/Views/ReviewExpectedPayments/UserControls/_PatientSearch.cshtml", new PatientSearchView());}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Search Result
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h1>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse in">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form" id="divpatientSearchResult">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable" id="divAccountSummaryList" style="display: none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseAccountSummary">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")" /></span>&nbsp;Account Summary List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseAccountSummary" class="panel-collapse collapse in tableImg">
+            <div class="panel-body scroller">
+                <div class="base-color" id="divAccountSummary">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>

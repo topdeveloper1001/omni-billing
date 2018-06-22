@@ -1,0 +1,158 @@
+﻿@using BillingSystem.Model.CustomModel
+@using System.Linq
+
+@model IEnumerable<AgingReportCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridPatientAgeingReport", canPage: false, canSort: false);
+    <div id="gridPatientAgeingReport">
+        @grid.GetHtml(htmlAttributes: new {id = "PatientAgeingReportGrid"}, tableStyle: "table table_scroll1", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                //grid.Column("ID", header: "Patient ID", canSort: false, style: "col1"),
+                grid.Column("Name", header: "Patient Name", canSort: false, style: "col2"),
+                 grid.Column("EncounterNumber", header: "Encounter Number", canSort: false, style: "col3"),
+                 grid.Column("EncounterEnd", header: "End Date", canSort: false, style: "col1", format: @<text>@if (item.EncounterEnd != null)
+                                                                                                              {
+                                                                                                                  @item.EncounterEnd.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                              }
+                                                                                                              else
+                                                                                                              {
+                                                                                                                  <span>In House.</span>
+                                                                                                              }</text>),
+                                  grid.Column("DueDate", header: "Bill Date", canSort: false, style: "col11", format: @<text>@if (item.EncounterEnd != null)
+                                                                                                           {
+                                                                                                               if (item.DueDate != null)
+                                                                                                               {
+                                                                                                                   @item.DueDate.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                               }
+                                                                                                               else
+                                                                                                               {
+                                                                                                                   <span> Bill Is Pending.</span>
+                                                                                                               }
+                                                                                                           }
+                                                                                                           else
+                                                                                                           {
+                                                                                                              if (item.DueDate != null)
+                                                                                                               {
+                                                                                                                   @item.DueDate.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                               }
+                                                                                                               else
+                                                                                                               {
+                                                                                                                   <span> </span>
+                                                                                                               } 
+                                                                                                           }</text>),
+                                                   grid.Column("Ontime", header: "In House", canSort: false, style: "col3", format: @<text>@if (item.Ontime != null)
+                                                                                                        {
+                                                                                                            @item.Ontime.ToString("#,##0")
+                                                                                                        }
+                                                                                                        else
+                                                                                                        {
+                                                                                                            <span> - </span>
+                                                                                                        }
+                                                                                                  </text>),
+                grid.Column("Days1To30", header: "Days 0 - 30", canSort: false, style: "col4", format: @<text>@if (item.Days1To30 != null)
+                                                                                                              {
+                                                                                                                  @item.Days1To30.ToString("#,##0")
+                                                                                                              }
+                                                                                                              else
+                                                                                                              {
+                                                                                                                  <span> - </span>
+                                                                                                              }
+                                                                                                        </text>),
+                grid.Column("Days31To60", header: "Days 31 - 60", canSort: false, style: "col5", format: @<text>@if (item.Days31To60 != null)
+                                                                                                                {
+                                                                                                                    @item.Days31To60.ToString("#,##0")
+                                                                                                                }
+                                                                                                                else
+                                                                                                                {
+                                                                                                                    <span> - </span>
+                                                                                                                }
+                                                                                                          </text>),
+                grid.Column("Days61To90", header: "Days 61 - 90", canSort: false, style: "col6", format: @<text>@if (item.Days61To90 != null)
+                                                                                                                {
+                                                                                                                    @item.Days61To90.ToString("#,##0")
+                                                                                                                }
+                                                                                                                else
+                                                                                                                {
+                                                                                                                    <span> - </span>
+                                                                                                                }
+                                                                                                          </text>),
+                grid.Column("Days91To120", header: "Days 91 - 120", canSort: false, style: "col7", format: @<text>@if (item.Days91To120 != null)
+                                                                                                                  {
+                                                                                                                      @item.Days91To120.ToString("#,##0")
+                                                                                                                  }
+                                                                                                                  else
+                                                                                                                  {
+                                                                                                                      <span> - </span>
+                                                                                                                  }
+                                                                                                            </text>),
+                grid.Column("Days121To150", header: "Days 121 - 150", canSort: false, style: "col8", format: @<text>@if (item.Days121To150 != null)
+                                                                                                                   {
+                                                                                                                       @item.Days121To150.ToString("#,##0")
+                                                                                                                   }
+                                                                                                                   else
+                                                                                                                   {
+                                                                                                                       <span> - </span>
+                                                                                                                   }
+                                                                                                             </text>),
+                grid.Column("Days151To180", header: "Days 151 - 180", canSort: false, style: "col9", format: @<text>@if (item.Days151To180 != null)
+                                                                                                                    {
+                                                                                                                        @item.Days151To180.ToString("#,##0")
+                                                                                                                    }
+                                                                                                                    else
+                                                                                                                    {
+                                                                                                                        <span> - </span>
+                                                                                                                    }
+                                                                                                              </text>),
+                grid.Column("Days181More", header: "Days 180+", canSort: false, style: "col10", format: @<text>@if (item.Days181More != null)
+                                                                                                               {
+                                                                                                                   @item.Days181More.ToString("#,##0")
+                                                                                                               }
+                                                                                                               else
+                                                                                                               {
+                                                                                                                   <span> - </span>
+                                                                                                               }
+                                                                                                         </text>),
+                grid.Column("Total", header: "Total", canSort: false, style: "col10", format: @<text>@if (item.Total != null)
+                                                                                                     {
+                                                                                                         @item.Total.ToString("#,##0")
+                                                                                                     }
+                                                                                                     else
+                                                                                                     {
+                                                                                                         <span> - </span>
+                                                                                                     }
+                                                                                               </text>)
+                ))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script type="text/javascript">
+    $(function () {
+        if ($('#PatientAgeingReportGrid tr').length > 0) {
+            $('.table_scroll1').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        $("#PatientAgeingReportGrid tbody tr").each(function (i, row) {
+            var $actualRow = $(row);
+            if ($actualRow.find('.col11').html().indexOf('Bill Is Pending.') != -1) {
+                $actualRow.addClass('rowColor10');
+            } else if ($actualRow.find('.col1').html().indexOf("In House.") != -1) {
+                $actualRow.addClass('rowColor2');
+            }
+        });
+        $("#PatientAgeingReportGrid tbody tr:last").each(function (i, row) {
+            var $actualRow = $(row);
+            if ($actualRow.find('.col1').html().indexOf("In House.") != -1) {
+                $actualRow.find('.col1').html('');
+            }
+        });
+    });
+</script>
+@*<script>
+    $(function () {
+        SetGridSorting(SortPayorAgingReport, "#gridPatientAgeingReport");
+    });
+</script>*@

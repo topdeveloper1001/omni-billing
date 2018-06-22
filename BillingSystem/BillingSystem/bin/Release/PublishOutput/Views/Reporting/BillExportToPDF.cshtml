@@ -1,0 +1,65 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@using NPOI.SS.Formula.Functions
+
+@model BillFormatDetailView
+@{
+    ViewBag.Title = "BillExportToPDF";
+    Layout = "~/Views/Shared/_PdfLayout.cshtml";
+}
+
+
+
+<paragraph style="font-family: Helvetica; font-size: 10px; font-style: italic;">
+	<chunk red="255" green="0" blue="0">Bill</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Bill Date: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("MM/dd/yyyy")</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Bill Time: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("hh:mm tt")</chunk>
+</paragraph>
+<paragraph style="font-family: Helvetica; font-size: 10px; font-style: italic;">
+    <chunk red="255" green="0" blue="0">@Model.FacilityDetails.FacilityName </chunk>
+    <chunk red="255" green="0" blue="0"> @Model.FacilityDetails.FacilityStreetAddress ,&nbsp;@Model.FacilityDetails.FacilityStreetAddress2
+        @Model.FacilityDetails.FacilityState - @Model.FacilityDetails.FacilityZipCode</chunk>
+    <chunk red="255" green="0" blue="0">Tel:</chunk>
+    <chunk red="255" green="0" blue="0"> @Model.FacilityDetails.FacilityMainPhone, &nbsp;@Model.FacilityDetails.FacilitySecondPhone</chunk>
+    <chunk red="255" green="0" blue="0">Fax:</chunk>
+    <chunk red="255" green="0" blue="0">@Model.FacilityDetails.FacilityFax</chunk>
+</paragraph>
+
+<div class="row">
+        <div class="col-sm-4">
+            <span>
+                <img src="~/images/logo.png" alt="" />
+            </span>
+        </div>
+        <div class="col-sm-4 text-center"><strong>Bill</strong></div>
+
+        <div class="col-sm-4">
+            <div>
+                <h4>@Model.FacilityDetails.FacilityName Hospital</h4>
+                <div class="rowTable">
+                    @Model.FacilityDetails.FacilityStreetAddress ,   @Model.FacilityDetails.FacilityStreetAddress2
+                    @Model.FacilityDetails.FacilityState - @Model.FacilityDetails.FacilityZipCode
+                </div>
+                <div class="rowTable">
+                    <span>Tel: &nbsp;</span><span>@Model.FacilityDetails.FacilityMainPhone</span>, &nbsp;<span>@Model.FacilityDetails.FacilitySecondPhone</span>
+                </div>
+                <div class="rowTable">
+                    <span>Fax: &nbsp;</span><span></span>, &nbsp;<span></span>
+                </div>
+                <div class="rowTable">
+                    @*<span>Email: &nbsp;</span><span>@Model.FacilityDetails.Facility</span>*@
+                </div>
+                <div class="rowTable">
+                    @*<span>Website: &nbsp;</span><span>www.test.com</span>*@
+                </div>
+            </div>
+        </div>
+    </div>
+
+

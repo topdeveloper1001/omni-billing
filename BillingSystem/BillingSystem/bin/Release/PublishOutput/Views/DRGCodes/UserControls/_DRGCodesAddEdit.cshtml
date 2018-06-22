@@ -1,0 +1,89 @@
+﻿@model BillingSystem.Model.DRGCodes
+
+@{
+    ViewBag.Title = "DRGCodes";
+    var btnSaveText = "Save";
+    if (Model.DRGCodesId != 0)
+    {
+        btnSaveText = "Update";
+    }
+}
+<style>
+    .btn-group {
+        margin-left: 5px;
+        margin-top: 10px;
+    }
+</style>
+@*<script src="~/Scripts/DRGCodes/DRGCodes.js"></script>*@
+
+<form name="form1" id="form1">
+    <div class="form" id="DRGCodesFormDiv">
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            @*<div class="rowTable">
+                <label><span class="mandatoryStar"></span>Table Number:</label>
+                @Html.TextBoxFor(m => m.CodeTableNumber, new { @maxlength = "4", @ID = "txtCodeTableNumber", @class = "validate[required]" })
+            </div>*@
+            
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Code:</label>
+                @Html.TextBoxFor(m => m.CodeNumbering, new { @maxlength = "50", @resize = "vertical", @ID = "txtCodeNumbering", @class = "validate[required]" })
+            </div>
+            <div class="rowTable">
+                <label>Table Description:</label>
+                @Html.TextAreaFor(m => m.CodeTableDescription, new { @maxlength = "50", @resize = "vertical", @ID = "txtCodeTableDescription" })
+               @Html.HiddenFor(m => m.DRGCodesId, new { @ID = "hdDRGCodesId" })
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+          
+            <div class="rowTable">
+                <label>Code Description:</label>
+                @Html.TextAreaFor(m => m.CodeDescription, new { @maxlength = "120", @resize = "vertical", @ID = "txtCodeDescription" })
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Application Rule:</label>
+                @Html.TextAreaFor(m => m.ApplicationRule, new { @maxlength = "500", @resize = "vertical", @ID = "txtApplicationRule", @class = "validate[required]" })
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Price:</label>
+                @Html.TextBoxFor(m => m.CodePrice, new { @maxlength = "50", @resize = "vertical", @ID = "txtCodePrice", @class = "validate[required]" })
+            </div>
+            <div class="rowTable">
+                <label>DRGWeight:</label>
+                @Html.TextBoxFor(m => m.CodeDRGWeight, new { @maxlength = "50", @resize = "vertical", @ID = "txtCodeDRGWeight" })
+            </div>
+            <div class="rowTable">
+                <label class="control-label">
+                    Is Active: @Html.CheckBoxFor(m => m.IsActive, new { @id = "chkIsActive" })
+                </label>
+            </div>
+            
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Effective Date:</label>
+                @Html.TextBoxFor(m => m.CodeEffectiveDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @ID = "dtCodeEffectiveDate", @class = "dtGeneral validate[required]" })
+            </div>
+            <div class="rowTable">
+                <label>Expiry Date:</label>
+                @Html.TextBoxFor(m => m.CodeExpiryDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @ID = "dtCodeExpiryDate", @class = "dtGreaterThanCurrent", @onchange = "CheckValidDateNotLessThanTodayDate(this,'dtCodeExpiryDate')" })
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Expected Length Of Stay:</label>
+                @Html.TextBoxFor(m => m.Alos, new { @maxlength = "15", @ID = "txtAlos", @class = "validate[required[number]]" })
+            </div>
+        </div>
+        <div class="clear"></div>
+        <div class="btn-group">
+            <div style="float: left;">
+                <input type="submit" class="btn btn-primary edit-btn marginBtn" value="@btnSaveText" onclick="return SaveDRGCodes('@Model.DRGCodesId    ')" />
+                <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearDrgFrom();">Cancel</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+

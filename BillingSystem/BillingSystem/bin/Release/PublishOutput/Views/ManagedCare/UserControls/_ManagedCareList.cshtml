@@ -1,0 +1,48 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@*@model List<ManagedCareCustomModel>*@
+@model List<ManagedCareCustomModel>
+
+
+@if (Model != null)
+{
+    if (Model.Any())
+    {
+        var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentManagedCare", canPage: false);
+                                  <div id="gridContentManagedCare">
+                                      @grid.GetHtml(htmlAttributes: new { id = "ManagedCareGrid" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                                        grid.Column("InsuranceCompany", header: "Insurance Company", canSort: true, style: "col1"),
+                                        grid.Column("InsurancePlan", header: "ManagedCare Plan", canSort: true, style: "col2"),
+                                        grid.Column("InsuarancePolicy", header: "ManagedCare Policy", canSort: true, style: "col3"),
+                                        grid.Column("ManagedCareMultiplier", header: "Multiplier", canSort: true, style: "col4"),
+                                        grid.Column("ManagedCareInpatientDeduct", header: "Inpatient Deduction", canSort: true, style: "col5"),
+                                        grid.Column("ManagedCareOutpatientDeduct", header: "Outpatient Deduction", canSort: true, style: "col6"),
+                                        grid.Column("ManagedCarePerDiems", header: "ManagedCare Per Diems", canSort: true, style: "col7"),
+                                        grid.Column("IsActive", header: "Active", canSort: true, style: "col8", format: @<text> @if (item.IsActive != null && (bool)item.IsActive)
+                                                                                                                                {
+<span>Active</span> }
+                                                                                                                                else
+                                                                                                                                {
+            <span>In Active</span>                                                                                                                    }
+                                      </text>),
+                            grid.Column(header: "Action", style: "col9", format: @<text>
+                              <a href="javascript:void(0);" title="Edit Managed Care" onclick="EditManagedCare('@item.ManagedCareID')" style="float: left; margin-right: 7px; width: 15px;">
+                                  <img src="../images/edit.png" />
+                              </a>
+                                                                                      &nbsp;
+                                      @*<a href="javascript:void(0);" title="Delete ManagedCare" onclick="return DeleteManagedCare('@item.ManagedCareID');" style="float: left; width: 15px;">
+                                  <img src="../images/delete.png" />
+                              </a>*@
+                                      <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.ManagedCareID','Delete Managed Care','',DeleteManagedCare,null); " style="float: left; width: 15px;">
+                                          <img src="@Url.Content("~/images/delete.png")" />
+                                      </a>                                                 
+                                      </text>)
+))<h6>* Click on any column heading to sort</h6>
+                                  </div>
+    }
+    else
+    {
+                                  <h2>No Record found</h2>
+    }
+}

@@ -1,0 +1,105 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model.CustomModel
+
+@model List<PatientInfoXReturnPaymentCustomModel>
+<div id="divSearchResult">
+    <div class="table-responsive">
+        @if (Model != null)
+        {
+            if (Model.Any())
+            {
+                var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent", canPage: false);
+                <div id="gridContent">
+                    @grid.GetHtml(htmlAttributes: new { id = "PatientSearch" }, tableStyle: "table table-grid table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                            grid.Column(header: "Is VIP", canSort: false, style: "col1", format: @<text>
+                                                                                                      @if (!string.IsNullOrEmpty(item.IsPersonVIP))
+                                                                                                      {
+                                                                                                          <span style="float: left;">
+                                    <img style="height: 20px; width: 20px" src="~/images/vip2.png" />
+                                </span>
+                                                                                                      } </text>),
+                            grid.Column("PersonFirstName", "First Name", canSort: false, style: "col2"),
+                            grid.Column("PersonLastName", "Last Name", canSort: false, style: "col3"),
+                            grid.Column("PersonBirthDate", "Birth Date", canSort: false, style: "col4", format: @<text>
+                                                                                                                     @if (item.PersonBirthDate != null)
+                                                                                                                     {
+                                                                                                                         @item.PersonBirthDate.ToString("dd/MM/yyyy")
+                                                                                                                     }
+                                                                                                                 </text>),
+                            grid.Column("EncounterStartTime", "Encounter Start Time", canSort: false, style: "col4", format: @<text>
+                                                                                                                                  @if (item.EncounterStartTime != null)
+                                                                                                                                  {
+                                                                                                                                      @item.EncounterStartTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                                                  }
+                                                                                                                                  
+                                                                                                                              </text>),
+                            grid.Column("EncounterEndTime", "Encounter End Time", canSort: false, style: "col4", format: @<text>
+                                                                                                                              @if (item.EncounterEndTime != null)
+                                                                                                                              {
+                                                                                                                                  @item.EncounterEndTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                                              }
+                                                                                                                              else if (item.VirtualDischarge == "1")
+                                                                                                                              {
+                                                                                                                                  <span style='background: yellowgreen' title="View Details">Virtually Discharge</span>
+                                                                                                                                  @*<a onclick="ViewVirtualDischargePopup('@item.PatientID', '@item.EncounterID', '@item.BillHeaderID')" style="float: left;" title="View Details">
+                                                                                                                                       <span style='background: yellowgreen' title="View Details">Virtually Discharge</span>
+                                                                                                                                  </a>*@
+                                                                                                                              }
+                                                                                                                              else
+                                                                                                                              {
+                                                                                                                                  <span style='background: darkorange' title="">Encounter not end yet</span>
+                                                                                                                              }
+                                                                                                                          </text>),
+                                                                                                                                               grid.Column("EncounterNumber", "Encounter Number", canSort: false, style: "col6"),
+                                                                                                                                               grid.Column("BillNumber", "Bill Number", canSort: false, style: "col6"),
+                                                                                                                                               grid.Column("PhoneNo", "Contact Number", canSort: false, style: "col7"),
+                                                                                                                                               grid.Column("PersonEmiratesIDNumber", ResourceKeyValues.GetKeyValue("socialsecuritynumber"), canSort: false, style: "col8"),
+                                                                                                                                               grid.Column("BillStatus", "Bill Status", canSort: false, style: "col8"),
+                                                                                                                                               grid.Column("EncounterType", "Encounter Type", canSort: false, style: "col10"),
+                                                                                                                                               grid.Column(header: "Action", style: "col7", format: @<text>
+                                <a href="#divAddEditOrder" class="AddmanualCharges" onclick="AddManualCharges('@item.PatientID', '@item.EncounterID', '@item.BillHeaderID', '@item.AActivityID', '@item.EStartFormatted', '@item.EEndFormatted') " style="float: left; margin-right: 7px; width: 15px;" title="Add Manual Charges">
+                                    <img src="@Url.Content("~/images/edit.png")" />
+                                                                                      </a> 
+                                                                                      @if (@item.EncounterType == "InPatient")
+                                                                                      {
+                                                                                          <a href="#RoomChargesDiv" class="AddmanualCharges" onclick="AddManualRoomCharges('@item.PatientID', '@item.EncounterID', '@item.BillHeaderID', '@item.AActivityID', '@item.EStartFormatted', '@item.EEndFormatted') " style="float: left; margin-right: 7px; width: 15px;" title="Add Manual Room Charges">
+                                                                                              <img src="~/images/add_manual.png" />
+                                                                                          </a>
+                                                                                      }
+                                <a href="#divAddEditOrder" class="AddmanualCharges" title="Add/Update Diagnosis" onclick="AddUpdateDiagnosis('@item.EncounterID', '@item.PatientID','@item.EStartFormatted') " style="float: left; margin-right: 7px; width: 15px;">
+                                    <img src="@Url.Content("~/images/diagnose-icon.png")" />
+                                                                                      </a>
+                    @*<a href="divAddEditOrder" class="AddmanualCharge" title="Add/Update Diagnosis" onclick="AddUpdateDiagnosisData('@item.EncounterID', '@item.PatientID','@item.EncounterStartTime')" style="float: left; margin-right: 7px; width: 15px;">
+                        <img src="@Url.Content("~/images/diagnose-icon.png")"/>
+                    </a>*@
+                                <a href="#divBillActivitesList" class="AddmanualCharges" title="View Bill Activites" onclick="ViewBillActivites('@item.BillHeaderID') " style="float: left; margin-right: 7px; width: 15px;">
+                                    <img src="@Url.Content("~/images/view_bill_activity.png")" />
+                                                                                      </a>
+                                                                                  </text>)
+                                                     ))
+                </div>
+            }
+            else
+            {
+                <h2>No Record found</h2>
+            }
+        }
+    </div>
+</div>
+
+
+<script>
+    $(function () {
+        $('.AddmanualCharges').on('click', function () {
+            var tr = $(this).parents('tr:first');
+            $('.table').find('a').closest('tr').removeClass('highlighted_row');
+            tr.css('background', '#ffff00');
+            $(this).closest('tr').addClass('highlighted_row');
+            tr.siblings().css('background', 'none');
+        });
+        if ($('#PatientSearch tr').length > 6) {
+            $('#PatientSearch').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+    });
+</script>

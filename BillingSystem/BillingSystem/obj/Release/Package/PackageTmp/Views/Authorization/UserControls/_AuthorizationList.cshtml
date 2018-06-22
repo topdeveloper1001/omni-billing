@@ -1,0 +1,67 @@
+﻿   @* @using Kendo.Mvc.UI*@
+@model List<BillingSystem.Model.CustomModel.AuthorizationCustomModel>
+
+<div class="form">
+    <div class="table-responsive scroller">
+        @if (Model != null)
+        {
+            if (Model.Count > 0)
+            {
+                var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent");
+                @grid.GetHtml(htmlAttributes: new {id = "AutorizationGrid"}, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridRow",
+            columns:
+                grid.Columns(
+                    grid.Column("AuthrizationTypeStr", "Authorization Type", canSort: false),
+                    grid.Column("AuthorizationCode", "Authorization Code", canSort: false),
+                    grid.Column("AuthorizationLimit", "Limit", canSort: false),
+                    grid.Column("AuthorizationStart", "Start Date", style: "col2", canSort: false, format: @<text>@if (item.AuthorizationStart != null)
+                                                                                                                          {
+                                                                                                                              @item.AuthorizationStart.ToString("dd/MM/yyyy")
+                                                                                                                          }</text>),
+                    grid.Column("AuthorizationEnd", "End Date", canSort: false, style: "col1", format: @<text>@if (item.AuthorizationEnd != null)
+                                                                                                                      {
+                                                                                                                          @item.AuthorizationEnd.ToString("dd/MM/yyyy")
+                                                                                                                          <input type="hidden" name="hdIsActive" value="@item.isActive" id="hdIsActive" />
+                                                                                                                      }
+                                                                                                                </text>),
+                    grid.Column("IdPayer", "ID Payer", canSort: false),
+                    grid.Column("AuthorizationMemberID", "Member ID", canSort: false),
+                    grid.Column("AuthorizationComments", "Comments", canSort: false),
+                    grid.Column("AuthorizedServiceLevel", "Service Level", canSort: false),
+                    grid.Column(header: "Action", format: @<text>
+                                                               @if (item.isActive)
+                                                               {
+                                                                   <a href="javascript:void(0);" onclick="EditAuthorization('@item.AuthorizationId') " style="float: left; margin-right: 7px; width: 15px;"><img src="~/images/edit.png" /></a>
+                                                               @*&nbsp;<a href="javascript:void(0);" title="Delete" onclick="return DeleteAuthorization('@item.AuthorizationId'); " style="float: left; width: 15px;"><img src="~/images/delete.png" /></a>*@
+
+    @*<a href="javascript:void(0);" title="Delete Authorization" onclick="return OpenConfirmPopup('@item.AuthorizationId','Delete Authorization','',DeleteAuthorization,null); " style="float: left; width: 15px;">
+        <img src="@Url.Content("~/images/delete.png")" />
+    </a>*@
+
+                                                               }
+                                                           </text>)
+                    ))
+            }
+            else
+            {
+
+                <h2>No Record found</h2>
+            }
+        }
+    </div>
+</div>
+<script>
+    $(function() {
+        $("#AutorizationGrid tbody tr").each(function (i, row) {
+            var $actualRow = $(row);
+            if ($actualRow.find('.col1 input[type="hidden"]').val() == 'true') {
+                $actualRow.addClass('rowColor1');
+            } else if ($actualRow.find('.col1 input[type="hidden"]').val() == 'false') {
+                $actualRow.addClass('rowColor2');
+            } else {
+                $actualRow.removeClass('rowColor1');
+                $actualRow.removeClass('rowColor2');
+            }
+        });
+    });
+</script>

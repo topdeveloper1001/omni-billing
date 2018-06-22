@@ -1,0 +1,68 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@model AppointmentTypesView
+
+@{
+    ViewBag.Title = "AppointmentTypes View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    .home {
+        -webkit-box-shadow: 10px 10px 1px 0px;
+        margin: 4px 31px 62px 41px;
+        border: 6px solid #E6E6FA;
+        box-shadow: 10px 10px 1px 0px;
+        width: 150px;
+        height: 65px;
+        float: left;
+        text-align: center;
+        background-color: #5c7499;
+    }
+</style>
+
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseAppointmentTypesAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Add AppointmentTypes
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseAppointmentTypesAddEdit" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @{Html.RenderPartial("~/Views/AppointmentTypes/UserControls/_AppointmentTypesAddEdit.cshtml", Model.CurrentAppointmentTypes);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseAppointmentTypesList">
+            <h4 class="panel-title collapseTitle">
+                <span><img src="../images/list.png" /></span>AppointmentTypes List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseAppointmentTypesList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="AppointmentTypesListDiv">
+                    @{Html.RenderPartial("~/Views/AppointmentTypes/UserControls/_AppointmentTypesList.cshtml", Model.AppointmentTypesList);}
+                </div>
+            </div>
+        </div>
+        <span class="inactive">
+            View In active records
+            <input id="chkShowInActive" type="checkbox" onchange="ShowInActiveRecordsInAppointmentTypes('#chkShowInActive');" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+
+<script src="~/Scripts/AppointmentTypes/AppointmentTypesScript.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

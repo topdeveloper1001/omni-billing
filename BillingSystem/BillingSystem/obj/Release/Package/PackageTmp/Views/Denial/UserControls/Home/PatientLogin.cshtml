@@ -1,0 +1,349 @@
+﻿@using BillingSystem.Common 
+@model DTO.PatientLoginDTO 
+
+@{
+    ViewBag.Title = "Patient Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Scripts/Registration.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#BirthDate").datepicker({
+            yearRange: "-130: +0",
+            changeMonth: true,
+            dateFormat: 'dd/mm/yy',
+            changeYear: true
+        });
+        $(".PhoneMask").mask("999-9999999");
+        $(".EmiratesMask").mask("999-99-9999");
+    });
+
+    function SelectVerifyItem(id, textboxid, otherdropdwn, lblmsg, lblmsg1)
+    {
+        
+        var value=$("#" + id).val();
+        if (value != 0) {
+            $("#" + textboxid).attr('maxlength', '20');
+            $("#" + textboxid).val("");
+            if (value == "7") {
+                $("#" + textboxid).datepicker({
+                    yearRange: "-130: +0",
+                    changeMonth: true,
+                    dateFormat: 'dd/mm/yy',
+                    changeYear: true
+                });
+            }
+            else {
+                $("#" + textboxid).datepicker("destroy");
+            }
+            if (value == "4") {
+                $("#" + textboxid).attr('maxlength', '15');
+            }
+            if (value == "8")
+            {
+                $("#" + textboxid).addClass("PhoneMask");
+                $(".PhoneMask").mask("999-9999999");
+                $("#" + id + "MobileCode").css("display", "block");
+            }
+            else {
+                if($("#" + otherdropdwn).val() == "8")
+                {
+
+                }
+                $(".PhoneMask").unmask();
+                $("#" + textboxid).removeClass("PhoneMask"); 
+                $("#" + id + "MobileCode").css("display", "none");
+        }
+           
+            if ($("#" + otherdropdwn).val() != value)
+            {
+                $("#" + textboxid).css("visibility", "visible");
+                $("#" + lblmsg).text("");
+                $("#" + lblmsg1).text("");
+            }
+            else
+            {
+                $("#" + id + "MobileCode").css("display", "none");
+                $("#" + textboxid).css("visibility", "hidden");
+                $("#" + lblmsg).text("Please select different items for search.");               
+                document.getElementById(id).selectedIndex = 0;
+            }
+          
+        }
+    }
+    var flag = true;
+    function ValidateControl()
+    {
+        
+        if ($("#LastName").val() == "" && $("#EmirateID").val() == "" && $("#PassportNumber").val() == "" && $("#MedicalRecordNumber").val() == "" && $("#PatientFinancialNumber").val() == "" && $("#BirthDate").val() == "" && $("#MobileNumber").val() == "") {
+            flag = false;
+            $("#lblMsg").text("Please enter at least one item for search.");
+
+        }
+        else {
+            ("#lblMsg").text("");
+            flag = true;
+        }
+
+        //
+        //var emirates = $("#EmiratesItemIndex").val();
+        //var passport = $("#PassportItemIndex").val();
+        
+
+        //if (passport == "" && emirates == "") {
+        //    $("#spPassport").text("Please select at least one item for search.");
+        //    return false;
+        //}
+        //else if (passport == emirates)
+        //{
+        //    $("#spPassport").text("");
+        //    $("#spPassport").text("Please select different items for search.");
+        //    return false;
+        //}
+        //else {
+        //    $("#spPassport").text("");
+        //    var emirates1 = $("#EmiratesItem").val();
+        //    var passport1 = $("#PassportItem").val();
+        //    if (passport1 == "" && emirates1 == "") {
+        //        if (emirates != "") {
+        //            $("#EmiratesItem").css("border", "1px solid red")
+                   
+        //        }
+        //        else {
+        //            $("#EmiratesItem").css("border", "1px solid grey")
+        //        }
+        //        if (passport != "") {
+        //            $("#PassportItem").css("border", "1px solid red")
+                    
+        //        }
+        //        else {
+        //            $("#PassportItem").css("border", "1px solid grey")
+        //        }
+        //        $("#spPassport").text("Please enter item(s) value for search");
+        //        return false;
+        //    }
+            if (flag == true) {
+                return true;
+            }
+           else {
+               return false;
+           }          
+        
+    }
+   
+    function ValidateValue(txt, dropdwn, lblmsg)
+    {
+        
+        if ($("#" + txt).val() != "") {
+            $("#" + lblmsg).text("");
+        if ($("#" + dropdwn).val()=='4')
+        {          
+            value = parseInt($("#"+ txt).val());           
+            if (isNaN(value) == true) {
+                $("#" + lblmsg).text("Enter 15 Numeric digits.")
+                flag = false;               
+            }
+            else if ($("#" + txt).val().length < 15)
+            {
+                $("#" + lblmsg).text("Enter 15 Numeric digits.")
+                flag = false;
+            }
+            else if ($("#" + txt).val().length > 15) {
+                $("#" + lblmsg).text("Enter 15 Numeric digits.")
+                flag = false;
+            }
+            else {
+                flag = true;
+            }
+           
+        }
+        else if($("#" + dropdwn).val() == '5')
+        {
+            value = parseInt($("#" + txt).val());
+            if (isNaN(value) == true) {
+                $("#" + lblmsg).text("Enter Numeric digits.")
+                flag = false;
+            }
+            else {
+                flag = true;
+            }
+        }
+    else if($("#" + dropdwn).val() == '8')
+    {
+        if ($("#" + dropdwn + "MobileCode").val() == "") {
+            $("#" + lblmsg).text("Please Select Country Code.")
+            $("#" + txt).val("");
+            flag = false;
+        }
+        else {
+            flag = true;
+        }
+    }
+       }
+    
+    }
+
+    function SelectCode(phoneid, dropdwnid, lblmsg) {
+        var reg = /^[0-9]{3}\-[0-9]{7}$/;
+        
+        if ($("#" + dropdwnid).val() == 0) {
+            $("#" + lblmsg).text("Please select country code.");
+            $("#" + phoneid).val("");
+        }
+        else {
+            if (!reg.test($("#" + phoneid).val())) {
+                $("#" + lblmsg).text("Please enter correct format of phone number.");
+                $("#" + phoneid).val("");
+            }
+            else {
+                $("#" + lblmsg).text("");
+            }
+        }
+    }
+</script> 
+
+  @using (Html.BeginForm("PatientLogin", "Home"))
+      {
+<div class="white-bg title">
+    	<h1 class="title" style="margin-bottom: 10px;">Patient Information/Lookup <a href="#" class="big-link pull-right" style="display: block; font-size: 14px; font-weight: normal;"><span class="glyphicon glyphicon-info-sign" style="color: #06a9ef;font-size: 16px;"></span> Confirm at least two pieces of information</a></h1>
+        <div class="form">
+            <table class="table mytable">
+                @if (TempData["SearchPatient"] != null)
+    {
+            <tr>
+                <td colspan="2">
+                    <div style="margin:10px;"><b>@TempData["SearchPatient"]</b></div>
+                </td>
+
+            </tr>
+}
+
+
+                @if (TempData["SuccessMessage"] != null)
+    {
+            <tr>
+                <td colspan="2">
+                    <span style="color:red;">  @TempData["SuccessMessage"]</span>
+                </td>
+
+            </tr>
+}
+
+                <tr style="position: absolute; right: 0;"><td rowspan="4" class="v-top pull-right"><img src="../images/avatar.png" class="user-img"></td></tr>
+
+                <tr style="margin-top: 10px;">
+                    <td> @Html.LabelFor(m => m.LastName)  </td>
+                    <td>@Html.TextBoxFor(m => m.LastName, new { @maxlength = "20", @class = "large pull-left" }) @Html.ValidationMessageFor(m => m.LastName)</td>
+                </tr>
+
+                <tr>
+                    <td> @Html.LabelFor(m => m.EmirateID)  </td>
+                    <td>@Html.TextBoxFor(m => m.EmirateID, new { @maxlength = "20", @class = "large pull-left EmiratesMask" }) @Html.ValidationMessageFor(m => m.EmirateID)</td>
+                </tr>
+
+                @*<tr>
+            <td> @Html.LabelFor(m=>m.MedicalRecordNumber)  </td>
+            <td>@Html.TextBoxFor(m=>m.MedicalRecordNumber , new { @maxlength="20",@class="large pull-left"}) @Html.ValidationMessageFor(m => m.MedicalRecordNumber)</td>
+        </tr>
+
+          <tr>
+            <td> @Html.LabelFor(m=>m.PatientFinancialNumber)  </td>
+            <td>@Html.TextBoxFor(m=>m.PatientFinancialNumber , new { @maxlength="20",@class="large pull-left"}) @Html.ValidationMessageFor(m => m.PatientFinancialNumber)</td>
+        </tr>*@
+
+                <tr>
+                    <td> @Html.LabelFor(m => m.PassportNumber)  </td>
+                    <td>@Html.TextBoxFor(m => m.PassportNumber, new { @maxlength = "20", @class = "large pull-left" }) @Html.ValidationMessageFor(m => m.PassportNumber)</td>
+                </tr>
+
+                <tr>
+                    <td> @Html.LabelFor(m => m.BirthDate)  </td>
+                    <td>@Html.TextBoxFor(m => m.BirthDate, new { @maxlength = "10", @class = "large pull-left" }) @Html.ValidationMessageFor(m => m.BirthDate)</td>
+                </tr>
+
+                <tr>
+                    <td> @Html.LabelFor(m => m.MobileNumber)  </td>
+                    <td>
+                        <div style="width:100%;">
+                            <div style="width:100%;float:left;">
+                                @*
+                        * Owner: Shashank Awasthy
+                        * On: 11092014
+                        * Purpose: Set focus on mobile number on drop down list change event.
+                                *@
+                                @Html.DropDownListFor(m => m.MobileCode, new SelectList(Model.LstCountryCode, "CodeValue", "CodeValue"), "Select One", new { id = "MobileCode", @style = "float: left;", @onchange = "$('#MobileNumber').focus();" })
+                                @Html.TextBoxFor(m => m.MobileNumber, new { ID = "MobileNumber", @maxlength = "20", @class = "large pull-left PhoneMask", @style = "width: 115px;margin-left: 5px;", @onchange = "SelectCode('MobileNumber','MobileCode','spMobileValue');" })
+                                <div><span id="spMobileValue" style="color:red;margin-left: 2px;"></span></div>
+
+
+                            </div>
+                        </div>
+
+                        @Html.ValidationMessageFor(m => m.LastName)
+
+                    </td>
+                </tr>
+
+                @* <tr>
+            <td width="180">ResourceKeyValues.GetKeyValue("socialsecuritynumber") :</td>
+            <td>
+                <div style="width:100%;">
+                    <div style="width:27%;float:left;">
+                        @Html.DropDownListFor(m => m.EmiratesItemIndex, new SelectList(Model.LstItems, "Id", "Value"), "Select One", new { id = "EmiratesItemIndex", @style = "width: 250px;height:26px;", @onchange = "SelectVerifyItem('EmiratesItemIndex','EmiratesItem','PassportItemIndex','spEmirateID','spPassport');" })
+                        <div> <span id="spEmirateID" style="color:red;"></span></div>
+                         </div>
+                        <div style="width:70%;float:left;">
+                          @Html.DropDownListFor(m => m.MobileCode, new SelectList(Model.LstCountryCode, "CodeValue", "CodeValue"), "Select One", new { id = "EmiratesItemIndexMobileCode", @style = "width: 95px;display:none;float: left;height: 24px;margin-top: 2px;" })
+                         @Html.TextBoxFor(m=>m.EmiratesItem , new { @maxlength="20",@class="large pull-left" , @style="visibility:hidden;width: 250px;margin-left: 5px;", @onchange="ValidateValue('EmiratesItem','EmiratesItemIndex','spEmirateValue');"})
+                            <div><span id="spEmirateValue" style="color:red;margin-left: 2px;"></span></div>
+
+
+                </div>
+
+
+
+            </td>
+
+
+        </tr>
+        <tr>
+            <td width="180">Passport Number :</td>
+            <td>
+               <div style="width:100%;">
+                    <div style="width:27%;float:left;">
+                 @Html.DropDownListFor(m => m.PassportItemIndex, new SelectList(Model.LstItems, "Id", "Value"), "Select One", new { id = "PassportItemIndex", @style = "width: 250px;height: 26px;" , @onchange = "SelectVerifyItem('PassportItemIndex','PassportItem','EmiratesItemIndex','spPassport','spEmirateID');"})
+                  <div><span id="spPassport" style="color:red;"></span></div>
+                        </div>
+                        <div style="width:70%;float:left;">
+
+                             @Html.DropDownListFor(m => m.MobileCode, new SelectList(Model.LstCountryCode, "CodeValue", "CodeValue"), "Select One", new { id = "PassportItemIndexMobileCode", @style = "width: 95px;display:none;float: left;height: 24px;margin-top: 2px;" })
+                             @Html.TextBoxFor(m=>m.PassportItem,  new {@maxlength="20",@class="large pull-left",  @style="visibility:hidden;width: 250px;margin-left: 5px;" ,  @onchange="ValidateValue('PassportItem','PassportItemIndex','spPassportValue');"})
+                  <div><span id="spPassportValue" style="color:red;margin-left: 2px;"></span></div>
+                            </div>
+                   </div>
+             </td>
+        </tr>*@
+                <tr>
+                    <td colspan="2">
+                        <span id="lblMsg" style="color:red;"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="180"></td>
+                    <td><input type="submit" onclick="return ValidateControl();" value="Submit" class="blue-btn btn btn-primary" /></td>
+                </tr>
+                <tr><td colspan="2"></td></tr>
+
+            </table>
+        </div>
+    
+    <!--form end-->
+        
+        <div class="clear"></div>
+      
+    </div>
+  }
+<script type="text/javascript" >
+    $("#PassportNumber").val(""); 
+</script>

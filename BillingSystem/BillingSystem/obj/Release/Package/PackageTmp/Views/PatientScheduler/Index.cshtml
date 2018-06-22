@@ -1,0 +1,72 @@
+﻿@model BillingSystem.Models.PatientSchedulerView
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="divPhysician" class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFacultySelection">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Patient Schedule
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFacultySelection" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @{Html.RenderPartial("~/Views/PatientScheduler/UserControls/_PatientScheduleAddEdit.cshtml", Model.ObjScheduling);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colorcodes">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Color Codes
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colorcodes" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-lg-12">
+                            <div class="color_symbols">
+                                <ul>
+                                    <li class="color_code1"><span></span>Available/Open</li>
+                                    <li class="color_code2"><span></span>Initial Booking</li>
+                                    <li class="color_code3"><span></span>Confirmed</li>
+                                    <li class="color_code4"><span></span>Lunch/Meetings/Adm</li>
+                                    <li class="color_code5"><span></span>Holiday</li>
+                                    <li class="color_code6"><span></span>Cancelled/Not refilled</li>
+                                    <li class="color_code7"><span></span>Expired/No booking</li>
+                                    @*<li class="color_code8"><span></span>Physicians Available</li>
+                                    <li class="color_code9"><span></span>Physicians Booking</li>
+                                    <li class="color_code10"><span></span>Physicians Lunch/Meetings/Adm</li>
+                                    <li class="color_code11"><span></span>Physicians Holiday</li>
+                                    <li class="color_code12"><span></span>Physicians No show/Sick</li>*@
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="divPatientCalenderView" style="display: none;">
+    @{Html.RenderPartial("~/Views/PatientScheduler/UserControls/_PatientCalenderView.cshtml", null);}
+</div>
+<div class="clear"></div>
+<input id="hfPatientId" value='@Model.PatientId' type="hidden"/>
+<input id="hfSchedulingId" value='@Model.PatientId' type="hidden"/>
+<input id="hfPhysicianSpeciality" type="hidden" value="0" />
+<input id="hfPhysicianLocation" type="hidden" value="" />
+<script src="~/Scripts/PatientScheduler/PatientScheduler.js"></script>
+

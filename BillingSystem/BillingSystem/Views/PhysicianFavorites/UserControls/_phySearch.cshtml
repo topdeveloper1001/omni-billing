@@ -1,0 +1,44 @@
+﻿
+@using Kendo.Mvc.UI
+@using BillingSystem.Model.CustomModel
+@*@model IEnumerable<OpenOrderCustomModel>*@
+@model IEnumerable<OpenOrderCustomModel>
+
+    @*
+        Owner: Amit Jain
+        On: 05092014
+        Purpose: To show all the vacant beds list that are assigned to the concerned patient
+    *@
+
+    @{
+        ViewBag.Title = "Physicians Orders List";
+    }
+
+    @if (Model != null)
+    {
+        var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentOpenOrder", canPage: false);
+        <div id="gridContentOpenOrder">
+            @grid.GetHtml(htmlAttributes: new {id = "PatientEncountersGrid"}, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                columns:
+                    grid.Columns(
+                        grid.Column("OrderTypeName", header: "Activity Code", canSort: true, style: "col1"),
+                         grid.Column("OrderCode", header: "Order Code", canSort: true, style: "col3"),
+                         grid.Column("OrderDescription", header: "Order Description", canSort: true, style: "width"),
+                        grid.Column(header: "Action", style: "col9", format:
+                            @<text>
+                                 <a href="javascript:void(0);" title="Add as Favorite" onclick="AddAsFav('@item.OpenOrderID') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px;">
+                                     <img src="~/images/edit_small.png" />
+                                 </a>
+                             </text>)))
+            @*<h6>* Click on any column heading to sort</h6>*@
+        </div>
+    }
+    else
+    {
+        <h2>No Record found</h2>
+    }
+@*<script>
+    $(function() {
+        SetGridSorting(SearchCodeList, "#PatientEncountersGrid");
+    });
+</script>*@

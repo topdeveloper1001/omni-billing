@@ -1,0 +1,103 @@
+﻿@using System.Web.Optimization
+@using BillingSystem.Model.CustomModel
+@using Kendo.Mvc.UI
+@model XPaymentReturnCustomModel
+
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+<div class="grayBg">
+    <div class="personal-detail">
+        <div class="col-md-12">
+            <div class="col-sm-6 col-lg-3">
+                <div class="rowTable">
+                    <label>Start Date:</label>
+                    <span>@if (@Model.AStart.HasValue)
+                          {
+                        @Model.AStart.Value.ToShortDateString() 
+                          }
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="rowTable">
+                    <label>Type:</label>
+                    <span>@Model.ActivityTypeName</span>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="rowTable">
+                    <label>Code:</label>
+                    <span>@Model.ACode</span>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="rowTable">
+                    <label>Quantity:</label>
+                    <span>@Model.AQuantity</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="col-lg-3">
+                <div class="rowTable">
+                    <label>Net:</label>
+                    <span>@Model.AANet</span>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="rowTable">
+                    <label>Gross:</label>
+                    <span>@Model.AAGross</span>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="rowTable">
+                    <label>Patient Share:</label>
+                    <span>@Model.AAPatientShare</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="col-sm-6 col-lg-3">
+                <div class="rowTable">
+                    <label>Payment Amount:</label>
+                    @Html.TextBoxFor(m => m.AAPaymentAmount, new { @id = "txtAAPaymentAmount", @class = "validate[required, custom[number]]" })
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="rowTable">
+                    <label>Denial Code:</label>
+                    @Html.HiddenFor(x => x.AADenialCode, new { @id = "hdAADenialCode" })
+                    <input type="hidden" id="hdAADenialCodeName" />
+                    @(Html.Kendo().AutoComplete()
+                      .Name("txtAADenialCode")
+                      .DataTextField("Menu_Title")
+                      .Placeholder("Search Denial Code or Description...")
+                      .Filter("contains")
+                      .MinLength(3)
+                      .Events(e => e.Select("SelectAADenailCode"))
+                      .HtmlAttributes(new
+                      {
+                          id = "txtAADenialCode",
+                          onfocus = "ajaxStartActive = false;",
+                          onblur = "ajaxStartActive = true;",
+                          style = "width:100%",
+                          maxlength = "6",
+                      })
+                      .DataSource(source => source.Read(read => read.Action("GetDenailCodes", "Denial")
+                          .Data("OnSelection"))
+                          .ServerFiltering(true))
+                      )
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="btn-group" style="margin-bottom: 20px; margin-left: 30px;">
+        <input type="submit" onclick="return SaveXPaymentDetailReturn('@Model.XPaymentReturnID    ');" class="btn btn-primary edit-btn marginBtn" value="Update" />
+        <input type="submit" onclick="return CancelXPayment();" class="btn btn-primary edit-btn marginBtn" value="Cancel" />
+    </div>
+</div>
+

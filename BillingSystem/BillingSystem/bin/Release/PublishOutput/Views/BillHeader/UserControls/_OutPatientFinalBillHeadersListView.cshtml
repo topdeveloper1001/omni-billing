@@ -1,0 +1,72 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<BillHeaderCustomModel>
+
+<h4 class="table_heading">Out Patient List</h4>
+@if (Model != null && Model.Count > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "finalBillsGridContentOP", canPage: false);
+    //var gridColumns = new List<WebGridColumn>();
+    <div id="finalBillsGridContentOP">
+        @* @grid.GetHtml("table", "gridHead", "gridFooter", "gridRow", columns: grid.Columns(*@
+        @grid.GetHtml(htmlAttributes: new { id = "finalBillsGridOp" }, tableStyle: "table table_scroll_17", headerStyle: "gridHead", footerStyle: "gridFooter", columns: grid.Columns(
+        grid.Column(header: " ", format: @<text><input class="check-boxOutPatient checkboxCls" id="assignChkBx_@item.BillHeaderID" name="chkFinalBillHeaders" type="checkbox"  value="@item.BillHeaderID" /></text>),
+            grid.Column("BillNumber", "Bill No", canSort: true, style: "col1"),
+            grid.Column("PatientName", "Patient Name", canSort: true, style: "col2"),
+            grid.Column("EncounterNumber", "Encounter Number", canSort: true, style: "col2"),
+            grid.Column("EncounterPatientType", "Encounter Type", canSort: true, style: "col2"),
+            grid.Column("InsuranceCompany", "Payer", canSort: true, style: "col3"),
+            grid.Column("Gross", "Activities Cost", canSort: true, style: "col5"),
+            grid.Column("GrossChargesSum", "Gross Charges", canSort: true, style: "col5"),
+            grid.Column("PayerShareNet", "Expected Insurance Payment", canSort: true, style: "col6"),
+            grid.Column("PatientShare", "Patient Share", canSort: true, style: "col7"),
+            grid.Column("Status", "Status", canSort: false, style: "colStatus"),
+            grid.Column(header: "View Activities", style: "col8", format: @<text>
+                <div class="iconsAction">
+                    @* <a href="#CollapseBillActivitiesList" title="View Bill Activities" onclick=" ViewBillActivities('@item.BillHeaderID', '@Url.Action("GetBillActivitiesByBillHeaderId", "BillHeader")') " style="float: left; margin-right: 7px; width: 20px;">
+                            <img src="@Url.Content("~/images/details-icon.png")" />
+                        </a>*@
+                    <a href="#CollapseBillActivitiesList" title="View XML Preview" onclick="ViewPreXMLFile('@item.BillHeaderID', '@item.FacilityID') ">
+                        <img src="@Url.Content("~/images/pre_XML.png")" />
+                    </a>
+                    &nbsp;
+                    @*<a href="javascript:void(0);" title="Send-Claim" onclick="SendClaimsByPayerIds('@item.BillHeaderID','@item.PayerID')">
+                        <img src="@Url.Content("~/images/sendClaimIcon20x20.png")" />
+                    </a>*@
+                </div>
+            </text>)
+
+              ))
+    </div>
+    <h6>* Click on any column heading to sort</h6>
+}
+else
+{
+
+    <h2>No Record found</h2>
+}
+
+
+<script>
+    $(function () {
+
+        //var count = 1;
+        //$('.table_scroll_17 thead tr th').each(function () {
+        //    if (count == 1) {
+        //        this.innerHTML = "<input type='checkbox' id='chkHeader'  title='Select All' />";
+        //        count++;
+        //    }
+        //});
+
+        SetGridCheckBoxesOutPatient();
+
+        if ($('#finalBillsGrid tr').length > 4) {
+            $('.table_scroll_17').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(SortFinalBillOutPatient, "#finalBillsGridContentOP");
+        $('.table_scroll').find('a').on('click', function (e) {
+            $('.table').find('a').closest('tr').removeClass('highlighted_row');
+            $(this).closest('tr').addClass('highlighted_row');
+        });
+    });
+    
+</script>

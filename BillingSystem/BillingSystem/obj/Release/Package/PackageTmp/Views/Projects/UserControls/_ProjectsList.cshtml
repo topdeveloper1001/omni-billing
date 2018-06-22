@@ -1,0 +1,54 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<ProjectsCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridProjectsContent",canPage: false, canSort: false);
+            <div id="gridProjectsContent">
+                @grid.GetHtml(htmlAttributes: new { id = "ProjectsTable" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                        grid.Column("FacilityName", "Facility"),
+                        grid.Column("ProjectNumber", "Project Number"),
+                        grid.Column("Name", "Name"),
+                        grid.Column("ProjectDescription", "Description"),
+                        grid.Column("ProjectType", "Type"),
+                        grid.Column("ProjectStatus", "Status Color"),
+                        grid.Column("StartDate", "Start Date", format: @<text>
+                @if (item.StartDate != null)
+                {
+                    @item.StartDate.ToString("MM/dd/yyyy")
+                }
+                </text>),
+                        grid.Column("EstCompletionDate", "Estimated Due Date", format: @<text>
+                @if (item.EstCompletionDate != null)
+                {
+                    @item.EstCompletionDate.ToString("MM/dd/yyyy")
+                }
+                </text>),
+                        grid.Column("Responsible", "Responsible User"),
+                        grid.Column(header: "Action", format: @<text>
+                <a href="javascript:void(0);" onclick="EditProjects('@item.ProjectId') " style="float: left; margin-right: 7px; width: 15px;">
+                    <img src="@Url.Content("~/images/edit.png")" /></a>
+                     @*<a href="javascript:void(0);" title="Delete" onclick="return DeleteProjects('@item.ProjectId'); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" /></a>*@
+                <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.ProjectId','Delete Projects','',DeleteProjects,null); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>
+
+                                                               </text>)
+                        ))
+            </div>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+<script>
+    $(function () {
+        $('#gridProjectsContent').Scrollable();
+    });
+</script>

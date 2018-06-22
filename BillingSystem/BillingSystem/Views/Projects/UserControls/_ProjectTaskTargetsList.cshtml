@@ -1,0 +1,50 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<ProjectTaskTargetsCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            WebGrid grid = new WebGrid(Model, ajaxUpdateContainerId: "gridProjectTaskTargetsContent", canPage: false, canSort: false);
+            <div id="gridProjectTaskTargetsContent">
+                @grid.GetHtml(htmlAttributes: new { id = "ProjectTaskTargetsTable" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                        grid.Column("TaskNumber", "Task Number"),
+                        grid.Column("TaskDate", "Task Date", format: @<text>
+                                                                          @if (item.TaskDate != null)
+                                                                          {
+                                                                              @item.TaskDate.ToString("MM/dd/yyyy")
+                                                                          }
+                                                                      </text>),
+                        grid.Column("TargetPercentageValueStr", "Value (%)"),
+                        grid.Column("CreatedDate", "Created On", format: @<text>
+                                                                              @if (item.CreatedDate != null)
+                                                                              {
+                                                                                  @item.CreatedDate.ToString("MM/dd/yyyy")
+                                                                              }
+                                                                          </text>),
+                        grid.Column("IsActive", "Active"),
+                        grid.Column(header: "Action", format: @<text>
+                                                                   <a href="javascript:void(0);" onclick="EditProjectTaskTargets('@item.Id')" style="float: left; margin-right: 7px; width: 15px;">
+                                                                       <img src="@Url.Content("~/images/edit.png")" /></a>
+                                                                   @*<a href="javascript:void(0);" title="Delete" onclick="return DeleteProjectTaskTargets('@item.Id');" style="float: left; width: 15px;">
+                                                                       <img src="@Url.Content("~/images/delete.png")" /></a>*@
+                <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.Id','Delete Project Task Targets','',DeleteProjectTaskTargets,null); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>
+                                                               </text>)
+                        ))
+            </div>            
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+<script>
+    $(function () {
+        $('#gridProjectTaskTargetsContent').Scrollable();
+    });
+</script>

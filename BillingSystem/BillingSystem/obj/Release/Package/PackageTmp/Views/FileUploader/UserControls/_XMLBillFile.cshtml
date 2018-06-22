@@ -1,0 +1,56 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<TPFileHeaderCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridTPXMLParsedDataContent", canPage: false, canSort: false);
+            <div id="gridTPXMLParsedDataContent">
+                @grid.GetHtml(htmlAttributes: new { id = "TPXMLFilesTable" }, tableStyle: "table table_scroll_1", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                        grid.Column("SystemBatchNumber", header: "Batch Number", canSort: false),
+                        grid.Column("RecordCount", header: "Record Count", canSort: false),
+                        grid.Column("SentDate", header: "Added on Date", canSort: false),
+                        grid.Column("SenderID", header: "Sender ID", canSort: false),
+                        grid.Column("ReceiverID", header: "Receiver ID", canSort: false),
+                        grid.Column("Status", header: "Status", canSort: false, style: "col7"),
+                        grid.Column(header: "Action", format: @<text>
+                            <div class="iconsAction">
+                                <a href="javascript:void(0);" title="View XML File" onclick="return ViewXMLFile('@item.TPFileHeaderID');"><img src="~/images/XML.png" /></a>
+                                &nbsp;
+                                @if (item.Status.ToString() != "Failure" && item.Status.ToString() != "Duplicate File")
+                                {
+                                    <a href="javascript:void(0);" title="View Parsed Data" onclick="return ViewParsedData('@item.TPFileHeaderID');"><img src="~/images/view_bill_activity.png" /></a>
+                                }
+                                @*@if (Convert.ToBoolean(item.ShowExecute) == true)
+                                {
+                                    <a href="javascript:void(0);" title="Execute XML" onclick="return OpenConfirmPopup('@item.TPFileHeaderID','Execute XML Parse Data Details','This action will execute the XML Parsed Data Details. Continue?',ExecuteXmlParseDetails,null); "><img src="@Url.Content("~/images/parseXMLicon16x16.png")" /></a>
+                                }
+                                <a href="javascript:void(0);" title="Delete All XML Parsed Data" onclick="return OpenConfirmPopup('@item.TPFileHeaderID','Delete All XML Parsed Data','',DeleteXmlFileData,null); "><img src="@Url.Content("~/images/delete.png")" /></a>*@
+                            </div>
+                        </text>)
+                        ))
+            </div>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+<script>
+    $(function () {
+        if ($('.table_scroll_1 tr').length > 5) {
+            $('.table_scroll_1').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        $("#TPXMLFilesTable tbody tr").each(function (i, row) {
+            var $actualRow = $(row);
+            $actualRow.removeClass('rowColor10');
+            if ($actualRow.find('.col7').html().indexOf("FL0") != -1) {
+                $actualRow.addClass('rowColor10');
+                $actualRow.attr('title', 'Error in Imported File! Record Count and Claims in XML File does not match. ');
+            }
+        });
+    });
+</script>

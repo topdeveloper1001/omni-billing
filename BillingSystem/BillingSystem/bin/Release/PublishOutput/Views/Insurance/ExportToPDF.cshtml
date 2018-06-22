@@ -1,0 +1,46 @@
+﻿@using BillingSystem.Common
+
+@model dynamic
+
+@{
+    Layout = "~/Views/Shared/_PdfLayout.cshtml";
+}
+
+
+<paragraph style="font-family: Helvetica; font-size: 10px; font-style: italic;">
+	<chunk red="255" green="0" blue="0">@ViewBag.Title</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Date: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("MM/dd/yyyy")</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Time: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("hh:mm tt")</chunk>
+</paragraph>
+
+
+<table width="100%" cellpadding="1.0" cellspacing="1.0" widths="2;4;4;3;3;4;4">
+    <row>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Payor ID</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Company Name</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Address</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">City</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Company ZipCode</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Company Main Phone</chunk></cell>
+            @*<cell><chunk style="font-size: 10; color: #317cb3;">IP Address</chunk></cell>*@
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Email Address</chunk></cell>
+        </row>
+    @foreach (var item in Model)
+    {
+        <row> 
+                <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyLicenseNumber</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyName</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyStreetAddress</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyCity</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyZipCode</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyMainPhone</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyEmailAddress</chunk></cell>
+            </row>
+    }
+</table>

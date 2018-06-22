@@ -1,0 +1,45 @@
+﻿
+@using BillingSystem.Models
+@using BillingSystem.Model
+@using BillingSystem.Model.CustomModel
+@using BillingSystem.Common.Common
+
+@model MedicalVitalView
+
+<div class="panel-group">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="display:none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseVitalList">
+            <h4 class="panel-title collapseTitle">
+                Lab Test Result List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseVitalList" class="panel-collapse collapse in">
+            <div id="LabTestListDiv">
+                @{Html.RenderPartial("~/Views/Summary/UserControls/_LabTestList.cshtml", Model.MedicalVitalList);}
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div id="LabAdministeredOrdersDiv">
+        @{
+            Html.RenderPartial("~/Views/Summary/UserControls/_OperOrderActivityView.cshtml", new OrderActivityView
+                                    {
+                                        CurrentOrderActivity = new OrderActivity() { OrderActivityStatus = 1 },
+                                        CurrentLabOrderActivity = new OrderActivityCustomModel() { OrderActivityStatus = 1 },
+                                        OpenOrdersList = Model.OpenOrdersList,
+                                        OrderActivityList = Model.OpenOrdersActivitesList,
+                                        ClosedOrdersList = Model.ClosedOrdersList,
+                                        ClosedOrderActivityList = Model.ClosedOrdersActivitesList,
+                                        labOrderActivityList = Model.LabOpenOrdersActivitesList,
+                                        ClosedLabOrderActivityList = Model.ClosedLabOrdersActivitesList,
+                                        IsLabTest = Model.IsLabTest,
+                                        EncounterOrder = Model.EncounterOrder,
+                                        CurrentMedicalVital = new MedicalVitalCustomModel(),
+                                        MedicalVitalList = new List<MedicalVitalCustomModel>()
+                                    });
+        }
+    </div>
+</div>

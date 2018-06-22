@@ -1,0 +1,41 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<MedicalVitalCustomModel>
+
+<div class="table-responsive scrollable-panel">
+    @if (Model != null)
+    {
+        if (Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentLabTest", canSort: true, canPage: false);
+            <div id="gridContentLabTest">
+                @grid.GetHtml(htmlAttributes: new { id = "LabtestGrid" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                    grid.Column("LabTestName", header: "Test Name", canSort: true),
+                    //grid.Column("MedicalVital.AnswerValueMax", header: "Max Value", canSort: true),
+                    grid.Column("LabTestValues", header: "Test Results", canSort: true),
+                    //grid.Column("UnitOfMeasureName", header: "UOM", canSort: true),
+                    grid.Column("LabTestRange", header: "Test Range", canSort: true),
+                    grid.Column("MedicalVital.Comments", header: "Comments", canSort: true),
+                    grid.Column("VitalAddedBy", header: "Added By", canSort: true),
+                    grid.Column("VitalAddedOn", header: "Added Date", canSort: true),
+                    grid.Column(header: "Action", format: @<text>
+                                                               @*<a href="#" onclick="EditLabTest('@item.MedicalVital.MedicalVitalID')" style="float: left; margin-right: 7px; width: 15px;"><img src="../images/edit.png" /></a>*@
+                                                               &nbsp;
+                                                               @*<a class="deleteLabTest" href="javascript:void(0);" title="Delete" onclick="return DeleteLabTest('@item.MedicalVital.MedicalVitalID'); " style="float: left; width: 15px;"><img src="../images/delete.png" /></a>*@
+                <a class="deleteLabTest" href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.MedicalVital.MedicalVitalID','Delete Lab Test','',DeleteLabTest,null);" style="float: left; width: 15px;"><img src="../images/delete.png" /></a>
+
+                                                           </text>)
+                    ))<h6>* Click on any column heading to sort</h6>
+            </div>
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    }
+</div>
+<script>
+    $(function() {
+        SetGridSorting(SortLabTest, "#LabtestGrid");
+    });
+</script>

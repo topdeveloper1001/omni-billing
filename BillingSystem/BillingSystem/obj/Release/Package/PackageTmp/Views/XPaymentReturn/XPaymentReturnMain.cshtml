@@ -1,0 +1,74 @@
+﻿@using BillingSystem.Models
+@model XPaymentReturnView
+
+@{
+    ViewBag.Title = "XPaymentReturn View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Scripts/XPaymentReturn/XPaymentReturn.js"></script>
+@Html.HiddenFor(x => x.ClaimId, new {@id="hdClaimId"})
+@Html.HiddenFor(x => x.PatientId, new {@id="hdPatientId"})
+@Html.HiddenFor(x => x.EncounterId, new {@id="hdEncounterId"})
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseXPaymentReturnAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Payment Return
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseXPaymentReturnAddEdit" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-md-12">
+                            <div id="divClaimInfo" class="rowTable">
+                                @* Add the Header details here *@
+                                @{Html.RenderPartial("~/Views/XPaymentReturn/UserControls/_XPaymentHeader.cshtml", Model.CurrentXPaymentReturnCustomModel);}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="display: none;" id="divAddUpdateRemittanceDetail">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" /></span>&nbsp;Edit Payment
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in tableImg">
+            <div class="panel-body rowTable">
+                <div class="base-color col-md-12" id="XPaymentDetailAddEditDiv">
+                    @* Add the Header column here *@
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseXPaymentReturnList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" /></span>&nbsp;Payment Return List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseXPaymentReturnList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body scroller">
+                <div class="base-color" id="XPaymentReturnListDiv">
+                    @{Html.RenderPartial("~/Views/XPaymentReturn/UserControls/_XPaymentReturnList.cshtml", Model.XPaymentReturnList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>

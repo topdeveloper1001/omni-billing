@@ -1,0 +1,25 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@model PatientDischargeSummaryView
+
+@{
+    ViewBag.Title = "PatientDischargeSummary View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    .home {
+        -webkit-box-shadow: 10px 10px 1px 0;
+        margin: 4px 31px 62px 41px;
+        border: 6px solid #E6E6FA;
+        -ms-box-shadow: 10px 10px 1px 0;
+        box-shadow: 10px 10px 1px 0;
+        width: 150px;
+        height: 65px;
+        float: left;
+        text-align: center;
+        background-color: #5c7499;
+    }
+</style>
+<div class="white-bg">
+    @{Html.RenderPartial("~/Views/Discharge/UserControls/_DischargeSummaryTab.cshtml", Model);}
+</div>

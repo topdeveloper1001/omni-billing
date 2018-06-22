@@ -1,0 +1,218 @@
+﻿@using BillingSystem.Model.CustomModel
+@model SchedulingParametersCustomModel
+
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    .home {
+        -webkit-box-shadow: 10px 10px 1px 0px;
+        margin: 4px 31px 62px 41px;
+        border: 6px solid #E6E6FA;
+        box-shadow: 10px 10px 1px 0px;
+        width: 150px;
+        height: 65px;
+        float: left;
+        text-align: center;
+        background-color: #5c7499;
+    }
+
+    .btn-group {
+        margin-left: 0;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseSPAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Scheduling Configuration
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseSPAddEdit" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <form id="bspForm1" name="bspForm1">
+                            <div class="form" id="addEditForm">
+                                @Html.HiddenFor(m => m.Id)
+                                @Html.HiddenFor(m => m.CorporateId)
+                                <div class="col-sm-2">
+                                    <div class="rowTable">
+                                        <label>Corporate:</label>
+                                        <select id="ddlCorporate" class="validate[required]"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="rowTable">
+                                        <label><span class="mandatoryStar"></span>Facility:</label>
+                                        <select id="ddlFacility" class="validate[required]"></select>
+                                        @Html.HiddenFor(m => m.FacilityId)
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="rowTable">
+                                        <label title="Last Hour set for the Calendar View">Start Hour:</label>
+                                        <select id="ddlStartHour" class="validate[required]"></select>
+                                        @Html.HiddenFor(m => m.StartHour)
+                                        @*@Html.TextBoxFor(m => m.StartHour, new { @maxlength = "2", @class = "validate[optional[number]]" })*@
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="rowTable">
+                                        <label title="Last Hour set for the Calendar View">End Hour:</label>
+                                        <select id="ddlEndHour" class="validate[required]"></select>
+                                        @Html.HiddenFor(m => m.EndHour)
+                                        @*@Html.TextBoxFor(m => m.EndHour, new { @maxlength = "2", @class = "validate[optional[number]]" })*@
+                                    </div>
+                                </div>
+                                <div class="clear"></div>
+                                <div class="col-sm-3">
+                                    <div class="btn-group">
+                                        <div style="float: left;">
+                                            <button id="btnSave" class="btn btn-primary edit-btn">Update</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+
+<script>
+    $(function () {
+
+        $("#addEditForm").validationEngine();
+
+        BindCorporateDataInParametersSection();
+
+        $("#ddlCorporate").change(function () {
+            var selectedValue = $(this).val();
+            $("#CorporateId").val($(this).val());
+            if (selectedValue > 0) {
+                BindFacilitiesDropdownDataWithFacilityId("#ddlFacility", "");
+            } else {
+                BindDropdownData("", "#ddlFacility", "");
+                $("#bspForm1").clearForm();
+            }
+        });
+
+        $("#ddlFacility").change(function () {
+            var selectedValue = $(this).val();
+            $("#FacilityId").val($(this).val());
+            GetDetailsByFacilityId(selectedValue);
+        });
+
+        $("#ddlStartHour").change(function () {
+            var selectedValue = $(this).val();
+            $("#StartHour").val(selectedValue);
+        });
+
+        $("#ddlEndHour").change(function () {
+            var selectedValue = $(this).val();
+            $("#EndHour").val(selectedValue);
+        });
+
+        BindNumbersDropdownData(23, "#ddlStartHour");
+        BindNumbersDropdownData(23, "#ddlEndHour");
+
+
+        $("#btnSave").click(function () {
+            var isValid = jQuery("#addEditForm").validationEngine({ returnIsValid: true });
+            var formData = $("#bspForm1").serializeArray();
+            if (isValid == true && formData != null) {
+                $.post("/SchedulingParameters/Save", formData, function (data) {
+                    if (data > 0) {
+                        var msg = "Records Saved successfully !";
+                        if ($("#Id").val() > 0)
+                            msg = "Records updated successfully";
+                        ShowMessage(msg, "Success", "success", true);
+                    }
+                });
+            }
+            return false;
+        });
+    });
+
+    function BindDetails(data) {
+        $("#Id").val(data != null ? data.Id : 0);
+        $("#FacilityId").val(data.FacilityId != null ? data.FacilityId : $("#ddlFacility").val());
+
+        $("#ddlStartHour").val(data.StartHour != null ? data.StartHour : '0');
+        $("#StartHour").val(data != null ? data.StartHour : '0');
+
+        $("#ddlEndHour").val(data.EndHour != null ? data.EndHour : '0');
+        $("#EndHour").val(data != null ? data.EndHour : '0');
+
+        if (data.IsActive)
+            $("#IsActive")[0].checked = true;
+        $("#addEditForm").validationEngine();
+    }
+
+    function GetDetailsByFacilityId(selectedValue) {
+        if (selectedValue != null && selectedValue > 0) {
+            $.post("/SchedulingParameters/GetDataByFacilityId", { fId: selectedValue }, function (data) {
+                if (data != null) BindDetails(data);
+            });
+        }
+    }
+
+    function BindCorporateDataInParametersSection() {
+        //Bind Corporates
+        /// <summary>
+        /// Binds the corporates.
+        /// </summary>
+        /// <param name="selector">The selector.</param>
+        /// <param name="selectedId">The selected identifier.</param>
+        /// <returns></returns>
+        $.ajax({
+            type: "POST",
+            url: "/Home/GetCorporatesDropdownData",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: null,
+            success: function (data) {
+                BindDropdownData(data, "#ddlCorporate", $("#CorporateId").val());
+                if ($("#CorporateId").val() > 0) {
+                    BindFacilitiesDropdownDataWithFacilityId("#ddlFacility", $("#FacilityId").val());
+                }
+            },
+            error: function (msg) {
+            }
+        });
+    }
+
+    function BindFacilitiesDropdownDataWithFacilityId(ddlSelector, hdSelector) {
+        $.ajax({
+            type: "POST",
+            url: "/Home/GetFacilitiesDropdownData",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify({ corporateId: $("#CorporateId").val() }),
+            success: function (data) {
+                BindDropdownData(data, ddlSelector, hdSelector);
+            },
+            error: function (errorResponse) {
+            }
+        });
+    }
+</script>

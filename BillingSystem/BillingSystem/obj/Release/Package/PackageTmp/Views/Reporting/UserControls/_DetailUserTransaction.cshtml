@@ -1,0 +1,52 @@
+﻿@model BillingSystem.Models.ChargesReportViews
+
+<div class="panel-body">
+    <div class="greyBox"></div>
+    <div class="base-color">
+        <div class="form">
+            <div class="table-responsive" id="InPatientActiveEncounterList">
+                @if (Model.IPChargesList != null && Model.IPChargesList.Any())
+                {
+                    var grid = new WebGrid(Model.IPChargesList, ajaxUpdateContainerId: "gridContentIPChargesDetailReport", canPage: false, canSort: true);
+                    <div id="gridContentIPChargesReport">
+                        @grid.GetHtml(htmlAttributes: new { id = "IPChargesDetailReport" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                            rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                               grid.Column("Date", "Date/Time", style: "col1",format: @<text>@if (item.ActivityDate != null)
+                                                                                                     {
+                                                                                                         @item.ActivityDate.ToString("dd/MM/yyyy")
+                                                                                                     }</text>),
+                                                                grid.Column("User", "User", style: "col2"),
+
+                                               grid.Column("TypeOfTrasction", "Type Of Trasction", style: "col5"),
+                                                 grid.Column("EncounterId", "Encounter Id", style: "col5"),
+                               grid.Column("FieldAdjusted", "Field Adjusted", style: "col5"),
+              grid.Column("DataChangedFrom", "Data Changed From", style: "col3"),
+              grid.Column("DataChangedTo", "Data Changed To", style: "col6")
+                                ))
+                    </div>
+                }
+                else
+                {
+                    <h2>No Record found</h2>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function() {
+        if ($('#IPChargesDetailReport tr').length > 0) {
+            $('#IPChargesDetailReport').Scrollable();
+            $("#IPChargesDetailReport tbody tr:last").addClass('rowColor9');
+            SetGridSorting(SortDailyChargeReportGrid, "#InPatientActiveEncounterList");
+        }
+        if ($('#OPChargesDetailReport tr').length > 0) {
+            $('#OPChargesDetailReport').Scrollable();
+            $("#OPChargesDetailReport tbody tr:last").addClass('rowColor9');
+        }
+        if ($('#ERChargesDetailReport tr').length > 0) {
+            $('#ERChargesDetailReport').Scrollable();
+            $("#ERChargesDetailReport tbody tr:last").addClass('rowColor9');
+        }
+    });
+</script>

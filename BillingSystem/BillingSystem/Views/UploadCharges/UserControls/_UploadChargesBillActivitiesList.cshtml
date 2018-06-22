@@ -1,0 +1,57 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<BillDetailCustomModel>
+
+@if (Model != null && Model.Count > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "BillActivityGridContent", canPage: false);
+    <div id="BillActivityGridContent">
+        @grid.GetHtml(htmlAttributes: new {id = "BillActivityGridDi1v"}, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                grid.Column("ActivityTypeName", "Activity Type", canSort: false, style: "col1"),
+                grid.Column("ActivityCode", "Activity Code", canSort: false, style: "col2"),
+                grid.Column("ActivityType", "Activity Type Number", canSort: false),
+                grid.Column("ActivityCodeDescription", "Activity Code Description", canSort: false, style: "col3"),
+                grid.Column("OrderedOn", "Ordered On", canSort: false, style: "col4", format: @<text> @if (item.OrderedOn != null)
+                                                                                                      {
+                                                                                                          @item.OrderedOn.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                      } </text>),
+                grid.Column("ExecutedOn", "Executed On", canSort: false, style: "col5", format: @<text> @if (item.ExecutedOn != null)
+                                                                                                        {
+                                                                                                            @item.ExecutedOn.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                        } </text>),
+                grid.Column("QuantityOrdered", "Quantity Ordered", canSort: false, style: "col6"),
+                grid.Column("ActivityCost", "Activity Cost", canSort: false, style: "colGrossCharges"),
+                grid.Column("GrossChargesSum", "Charges", canSort: false, style: "col6"),
+                grid.Column(header: "Action", style: "col7", format: @<text>
+                                                                          @if (!Convert.ToString(item.ActivityCodeDescription).Trim().ToLower().Equals("total"))
+                                                                          {
+                    @*<a href="javascript:void(0);" title="Delete Current Activity" onclick="DeleteBillActivity('@item.BillActivityID', '@item.BillHeaderID') " style="float: left; margin-right: 7px; width: 15px;">
+                        <img src="@Url.Content("~/images/delete_small.png")" />
+                    </a>*@
+    <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopupWithTwoId('@item.BillActivityID','@item.BillHeaderID','Delete Current Activity','',DeleteBillActivity,null); " style="float: left; width: 15px;">
+        <img src="@Url.Content("~/images/delete.png")" />
+    </a>
+
+                                                                          }
+                                                                      </text>)
+                ))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function () {
+        $('#BillActivityGridDi1v').Scrollable();
+        $("#BillActivityGridDi1v tbody tr").each(function (i, row) {
+            var $actualRow = $(row);
+            if ($actualRow.find('.col3').html().indexOf('Total') != -1) {
+                $actualRow.addClass('rowColor9');
+            } else {
+                $actualRow.removeClass('rowColor9');
+            }
+        });
+    });
+</script>

@@ -1,0 +1,52 @@
+﻿@using BillingSystem.Models
+
+@model RuleStepView
+
+@{
+    ViewBag.Title = "RuleStep View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Scripts/RuleStep/RuleStep.js"></script>
+
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRuleStepAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span> Add Rule Step
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapscollapseRuleStepAddEditeOne" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @{Html.RenderPartial("~/Views/RuleStep/UserControls/_RuleStepAddEdit.cshtml", Model.CurrentRuleStep);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRuleStepList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" /></span> Rule Step List 
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseRuleStepList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body scroller">
+                <div class="base-color" id="RuleStepListDiv">
+                    @{Html.RenderPartial("~/Views/RuleStep/UserControls/_RuleStepList.cshtml", Model.RuleStepList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+

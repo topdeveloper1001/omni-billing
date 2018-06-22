@@ -1,0 +1,59 @@
+﻿@using BillingSystem.Model.CustomModel
+@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using System.Reflection
+
+@model dynamic
+
+@{
+    Layout = "~/Views/Shared/_PdfLayout.cshtml";
+}
+
+
+<paragraph style="font-family: Helvetica; font-size: 18; font-style: italic;">
+	<chunk red="255" green="0" blue="0">@ViewBag.Title</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Date: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("MM/dd/yyyy")</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Time: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("hh:mm tt")</chunk>
+</paragraph>
+
+<table width="100%" cellpadding="0.5" cellspacing="0.7 " widths="3;3;3;3;2;2;3;3;3;2;2;3;3">
+        <row>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Created on</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Tracking Type Name</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Tracking Type</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Column Name</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Table Name</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Value</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Bill Status</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Bill Number</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Encounter Number</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Patient</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Facility</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Corporate</chunk></cell>
+            <cell><chunk style="font-size: 8; color: #317cb3;">Created By</chunk></cell>
+        </row>
+        @foreach (var item in Model)
+        {
+            <row> 
+                <cell>@item.CreatedDate</cell>
+                <cell>@item.TrackingTypeNameValStr</cell>
+                <cell>@item.TrackingTypeStr</cell>
+                <cell>@item.TrackingColumnName</cell>
+                <cell>@item.TrackingTableName</cell>
+                <cell>@item.TrackingValue</cell>
+                <cell>@item.TrackingBillStatusStr</cell>
+                <cell>@item.BillNumber</cell>
+                <cell>@item.EncounterNumber</cell>
+                <cell>@item.PatientName</cell>
+                <cell>@item.FacilityName</cell>
+                <cell>@item.CorporateName</cell>
+                <cell>@item.UpdatedBy</cell>
+            </row>
+        }
+    </table>

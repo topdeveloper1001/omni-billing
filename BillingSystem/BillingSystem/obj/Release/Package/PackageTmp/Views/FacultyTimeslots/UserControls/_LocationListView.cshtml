@@ -1,0 +1,46 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model
+@model IEnumerable<Facility>
+
+<style type="text/css">
+    #TreeView .k-group li {
+        float: left;
+        width: 45%;
+    }
+    
+</style>
+
+@*@(Html.Kendo().TreeView().Name("treeviewLocations").Events(events => events.Select("onCheckLocation")).HtmlAttributes(new { }).HighlightPath(true).Items(menu =>
+      {
+          var list = Model;
+          foreach (var item in list)
+          {
+              if (item.FacilityId == Helpers.GetDefaultFacilityId())
+              {
+                  menu.Add().Text(item.FacilityName).HasChildren(false).Id(item.FacilityId.ToString()).Selected(true).Expanded(false);
+              }
+              else
+              {
+                  menu.Add().Text(item.FacilityName).HasChildren(false).Id(item.FacilityId.ToString()).Expanded(false);
+              }
+          }
+      })
+      )
+@Html.Kendo().DeferredScripts()*@
+<ul id="treeviewLocations" class="tree_viewlist">
+    @foreach (var item in Model)
+    {
+        if (item.FacilityId == Helpers.GetDefaultFacilityId())
+        {
+            <li id="liLocationCheckBox_@item.FacilityId" onclick="BindLocationSechudler('@item.FacilityId', '@item.FacilityName')" class="active">
+                <a id="@item.FacilityId">@item.FacilityName</a>
+            </li>
+        }
+        else
+        {
+            <li id="liLocationCheckBox_@item.FacilityId" onclick="BindLocationSechudler('@item.FacilityId', '@item.FacilityName')">
+                <a id="@item.FacilityId">@item.FacilityName</a>
+            </li>
+        }
+    }
+</ul>

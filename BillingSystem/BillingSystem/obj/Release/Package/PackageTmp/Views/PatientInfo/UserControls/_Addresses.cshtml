@@ -1,0 +1,15 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Models.PatientInfoView
+@{
+    ViewBag.Title = "Address";
+}
+<div class="form" id="AddressDiv">
+    <div id="divPatientAddress" class="editform">
+        @{Html.RenderPartial("~/Views/PatientInfo/UserControls/_addressAddEdit.cshtml", Model.CurrentPatientAddressRelation);}
+    </div>
+    <div class="ourcollapse bordertable table-responsive" id="divPatientAddressGrid">
+        @{Html.RenderPartial("~/Views/PatientInfo/UserControls/_addressRelationGrid.cshtml", Model.PatientAddressRealtionList);}
+    </div>
+</div>
+<script src="~/Scripts/PatientInfo/PatientAddress.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

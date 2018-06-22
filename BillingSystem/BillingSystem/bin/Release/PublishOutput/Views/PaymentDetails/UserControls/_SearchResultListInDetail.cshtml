@@ -1,0 +1,93 @@
+﻿
+@using System.Data
+@using BillingSystem.Common.Common
+@using BillingSystem.Model.CustomModel
+@using BillingSystem.Common
+
+@*@model IEnumerable<PatientInfoCustomModel>*@
+@model  IEnumerable<PatientInfoXReturnPaymentCustomModel>
+
+<div id="divSearchResult">
+    <div class="table-responsive">
+        @if (Model != null)
+        {
+           if (Model.Any())
+            {
+                var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent", canPage: false);
+                <div id="gridContent">
+                    @grid.GetHtml(htmlAttributes: new { id = "PatientSearch" }, tableStyle: "table table_scroll12", headerStyle: "gridHead", footerStyle: "gridFooter",
+                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                            grid.Column(header: "Is VIP", canSort: false, style: "col1", format: @<text>
+                                                                                                      @if (!string.IsNullOrEmpty(item.IsPersonVIP))
+                                                                                                      {
+                                                                                                          <span style="float: left;">
+                                    <img style="height: 20px; width: 20px" src="~/images/vip2.png" />
+                                </span>
+                                                                                                      } </text>),
+                            grid.Column("PersonFirstName", "First Name", canSort: false, style: "col2"),
+                            grid.Column("PersonLastName", "Last Name", canSort: false, style: "col3"),
+                            grid.Column("PersonBirthDate", "Birth Date", canSort: false, style: "col4", format: @<text>
+                                                                                                                     @if (item.PersonBirthDate != null)
+                                                                                                                     {
+                                                                                                                         @item.PersonBirthDate.ToString("dd/MM/yyyy")
+                                                                                                                     }
+                                                                                                                 </text>),
+                            grid.Column("EncounterStartTime", "Encounter Start Time", canSort: false, style: "col4", format: @<text>
+                                                                                                                                  @if (item.EncounterStartTime != null)
+                                                                                                                                  {
+                                                                                                                                      @item.EncounterStartTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                                                  }
+                                                                                                                                  
+                                                                                                                              </text>),
+                            grid.Column("EncounterEndTime", "Encounter End Time", canSort: false, style: "col4", format: @<text>
+                                                                                                                              @if (item.EncounterEndTime != null)
+                                                                                                                              {
+                                                                                                                                  @item.EncounterEndTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                                              }
+                                                                                                                              else
+                                                                                                                              {
+                                                                                                                                  <span style='background: darkorange'>Encounter not end yet</span>
+                                                                                                                              }
+                                                                                                                          </text>),
+                            grid.Column("EncounterNumber", "Encounter Number", canSort: false, style: "col6"),
+                            grid.Column("BillNumber", "Bill Number", canSort: false, style: "col6"),
+                            grid.Column("PhoneNo", "Contact Number", canSort: false, style: "col7"),
+                            grid.Column("PersonEmiratesIDNumber", ResourceKeyValues.GetKeyValue("socialsecuritynumber"), canSort: false, style: "col8"),
+                            //grid.Column("AActivityID", "Activity ID", canSort: false, style: "col7"),
+                            //grid.Column("ClaimID", "Claim ID", canSort: false, style: "col8"),
+                            //grid.Column("DenialCode", "DenialCode", canSort: false, style: "col7"),
+                            grid.Column("BillStatus", "Bill Status", canSort: false, style: "col8"),
+                            grid.Column("EncounterType", "Encounter Type", canSort: false, style: "col10"),
+                            grid.Column(header: "Action", style: "col7", format: @<text>
+                               
+                           @*<a href="javascript:void(0);" title="View Patient Detail" onclick="GetEncounterNumberOfPatient('@item.EncounterNumber');  GetPatientNameById('@item.PatientID'); GetBillHeaderListByEncounterId('@item.EncounterID'); SetPatientAndEncounterId('@item.PatientID','@item.EncounterID'); BindPatientDetails('@item.PatientID');" style="float: left; margin-right: 7px; width: 20px;">
+                        <img src="@Url.Content("~/images/payment_icon.png")" />
+                    </a>*@
+                    <a href="javascript:void(0);" title="View Patient Detail" onclick="PatientDetailData('@item.PatientID','@item.EncounterNumber','@item.EncounterID')" style="float: left; margin-right: 7px; width: 20px;">
+                        <img src="@Url.Content("~/images/payment_icon.png")" />
+                    </a>
+                                                                                  </text>)
+                            ))
+                </div>
+            }
+            else
+            {
+                <h2>No Record found</h2>
+            }
+        }
+    </div>
+</div>
+
+
+
+<script>
+    $(document).ready(function () {
+        if ($('#PatientSearch tr').length > 4) {
+            $('.table_scroll12').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        $('.table_scroll12').find('a').on('click', function (e) {
+            $('.table').find('a').closest('tr').removeClass('highlighted_row');
+            $(this).closest('tr').addClass('highlighted_row');
+        });
+    });
+</script>

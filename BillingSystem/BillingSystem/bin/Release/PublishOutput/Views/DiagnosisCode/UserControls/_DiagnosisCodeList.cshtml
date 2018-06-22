@@ -1,0 +1,80 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using BillingSystem.Model
+@model BillingSystem.Models.DiagnosisCodeView
+
+@{
+    var tableNumber = "";
+    if (Session[SessionNames.SessionClass.ToString()] != null)
+    {
+        var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+        tableNumber = objSession.DiagnosisCodeTableNumber;
+    }
+}
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.DiagnosisCodeList != null && Model.DiagnosisCodeList.Count > 0)
+        {
+            var grid = new WebGrid(Model.DiagnosisCodeList, ajaxUpdateContainerId: "gridContentDiagnosisCode", canPage: false);
+            var gridColumns = new List<WebGridColumn>();
+            gridColumns.Add(grid.Column(header: " ", format: @<text><input class="check-box" id="assignChkBx" name="assignChkBx" type="checkbox" value="@item.DiagnosisTableNumberId" /></text>));
+            gridColumns.Add(grid.Column("DiagnosisTableNumber", "Diagnosis Table Number"));
+            gridColumns.Add(grid.Column("DiagnosisTableName", "Diagnosis Table Name"));
+            gridColumns.Add(grid.Column("DiagnosisCode1", "Diagnosis Code", canSort: true, style: "col3"));
+            gridColumns.Add(grid.Column("ShortDescription", "Short Description"));
+            gridColumns.Add(grid.Column("DiagnosisMediumDescription", "Diagnosis Medium Description"));
+            gridColumns.Add(grid.Column("DiagnosisFullDescription", "Diagnosis Full Description"));
+            gridColumns.Add(grid.Column(header: "Action", format: @<text>
+                <a href="javascript:;" onclick="EditDiagnosisCode('@item.DiagnosisTableNumberId')" class="unFav" style="float: left; margin-right: 3px; width: 15px;">
+                    <img src="~/images/edit.png" />
+                </a>
+                                                                       &nbsp;
+        @*<a href="javascript:;" title="Delete" class="unFav" onclick="return DeleteDiagnosisCode('@item.DiagnosisTableNumberId'); " style=" float: left; width: 15px;"><img src="~/images/delete.png" /></a>*@
+        <a href="javascript:;" title="Delete" class="unFav" onclick="return OpenConfirmPopup('@item.DiagnosisTableNumberId','Delete DiagnosisCode','',DeleteDiagnosisCode,null);  " style=" float:left; width:15px;"><img src="~/images/delete.png" /></a>
+
+        &nbsp;<a href="javascript:;" class="AddFav" title="Add As Favorite" onclick="return MarkAsFav('@item.DiagnosisCode1'); " style=" float: left; width: 15px; display: none">
+                    <img src="~/images/Fav (1).png" />
+                </a></text>));
+                @grid.GetHtml(htmlAttributes: new { id = "DiagnosisCodegrid" },
+                tableStyle: "table table_scroll",
+                headerStyle: "gridHead",
+                footerStyle: "gridFooter",
+                rowStyle: "gridRow",
+                alternatingRowStyle: "gridRow", columns: grid.Columns(gridColumns.ToArray()))
+        }
+    </div>
+    <div id="loadingDiv" style="text-align: center; display: none; margin-bottom: 20px;">
+        <img alt="Loading" src="@Url.Content("~/images/ajax-loader.gif")" />
+    </div>
+</div>
+
+<script>
+    $(function () {
+        if ($('#DiagnosisCodegrid tr').length > 0) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(SortDiagnosisCodeList, "#DiagnosisCodeListDiv");
+        $("div .fht-tbody").scroll(function (e) {
+            if ($(this).scrollTop() + $(this).innerHeight() >= this.scrollHeight && !noMoreData && !inProgress) {
+                e.preventDefault();
+                inProgress = true;
+                $("#loadingDiv").show();
+                ajaxStartActive = false;
+                setTimeout(function () {
+                    $.post("/DiagnosisCode/RebindDiagnosisCodeList", { "blockNumber": blockNumber, "tableNumber": $("#ddlTableSet").length > 0 && $("#ddlTableSet").val() ? $("#ddlTableSet").val() : @tableNumber },
+                        function (data) {
+                            blockNumber = blockNumber + 1;
+                            noMoreData = data.NoMoreData;
+                            var list = AppendDataToDiagnosisCodeGrid(data.list, data.UserId);
+                            $("#DiagnosisCodegrid tbody").append(list);
+                            $("#loadingDiv").hide();
+                            inProgress = false;
+                            ajaxStartActive = true;
+
+                            CheckBoxIsSelectedEvent();
+                        });
+                }, 1000);
+            }
+        });
+    });
+</script>

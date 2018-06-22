@@ -1,0 +1,96 @@
+﻿@using BillingSystem.Model
+@model ErrorMaster
+
+<style>
+    .btn-group {
+        margin-top: 10px;
+    }
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="ErrorMasterFormDiv">
+    @*// BBCOLUMNSHERE*@
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        @Html.HiddenFor(m => m.ErrorMasterID, new { @maxlength = "10", @id = "hdErrorMasterID" })
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Corporate:</label>
+            @Html.HiddenFor(m => m.CorporateID, new { @maxlength = "10", @id = "hdCorporateID" })
+            <select id="ddlCorporates" class="validate[required]"></select>
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Facility:</label>
+            @Html.HiddenFor(m => m.FacilityID, new { @maxlength = "10", @id = "hdFacilityID" })
+            <select id="ddlFacilities" class="validate[required]"></select>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Error Code:</label>
+            @Html.TextBoxFor(m => m.ErrorCode, new { @maxlength = "20", @id = "txtErrorCode", @class="validate[required]" })
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Error Type:</label>
+            @Html.HiddenFor(m => m.ErrorType, new { @id = "hdErrorType" })
+            <select id="ddlErrorTypes" class="validate[required]">
+            </select>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable">
+            <label>Error Resolution:</label>
+            @Html.TextBoxFor(m => m.ErrorResolution, new { @maxlength = "500", @id = "txtErrorResolution" })
+        </div>
+        <div class="rowTable">
+            <label>Other Values:</label>
+            @Html.TextBoxFor(m => m.ExtValue1, new { @maxlength = "50", @id = "txtExtValue1" })
+        </div>
+        @* <div class="rowTable">
+                <label>ExtValue2:</label>
+                @Html.TextBoxFor(m => m.ExtValue2, new { @maxlength = "50", @id = "txtExtValue2" })
+            </div>
+            <div class="rowTable">
+                <label>ExtValue3:</label>
+                @Html.TextBoxFor(m => m.ExtValue3, new { @maxlength = "50", @id = "txtExtValue3" })
+            </div>*@
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable">
+            <label>Description:</label>
+            @Html.TextAreaFor(m => m.ErrorDescription, new { @maxlength = "500", @id = "txtErrorDescription" })
+        </div>
+        <div class="form-group">
+            <label>
+                Is Active:
+            </label>
+                @{
+                var isActive = false;
+                if (Model != null && Model.IsActive != null)
+                {
+                    isActive = (bool)Model.IsActive;
+                }
+                }
+                @Html.CheckBoxFor(m => isActive, new { @maxlength = "10", @id = "chkIsActive" })
+            
+        </div>
+        @*<div class="rowTable">
+                <label>CreatedBy:</label>
+                @Html.TextBoxFor(m => m.CreatedBy, new { @maxlength = "10", @id = "txtCreatedBy" })
+            </div>*@
+    </div>
+    <div class="clear"></div>
+
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.ErrorMasterID != null && Model.ErrorMasterID != 0)
+            {
+                <input type="submit" id="btnUpdate" class="btn btn-primary edit-btn marginBtn" value="Update" onclick=" return SaveErrorMaster('@Model.ErrorMasterID'); " />
+            }
+            else
+            {
+                <input type="submit" id="btnSave" onclick=" return SaveErrorMaster('@Model.ErrorMasterID'); " class="btn btn-primary edit-btn marginBtn" value="Save" />
+            }
+             <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,79 @@
+﻿   @* @using Kendo.Mvc.UI*@
+@model List<BillingSystem.Model.CustomModel.AlergyCustomModel>
+
+
+               <div class="table-responsive scrollable-panel">
+
+
+                   @if (Model != null)
+                   {
+                       if (Model.Count > 0)
+                       {
+                           @*
+                    @(Html.Kendo().Grid(Model)
+                        .Name("MedicalRecordGrid")
+                        .HtmlAttributes(new { style = "height: 460px" })
+                        .Columns(columns =>
+                        {
+                            columns.Bound(p => p.MedicalRecordId).Title("Company");
+                            columns.Bound(p => p.MedicalRecordStreetAddress).Title("Address");
+                            columns.Bound(p => p.MedicalRecordCity).Title("City");
+
+
+                            //columns.Bound(p => p.PolicyBeginDate).Format("{0:MM/dd/yyyy}").Title("License Number Expire").Filterable(f => f.UI("DateTimeFilter")); ;
+                            //columns.Bound(p => p.PolicyEndDate).Format("{0:MM/dd/yyyy}").Title("License Number Expire").Filterable(f => f.UI("DateTimeFilter")); ;
+                           columns.Command(command =>
+                                  {
+                                      command.Custom("Edit").Click("editDetails");
+                                      command.Custom("Delete").Click("deleteDetails");
+                                  }).Title("Actions");
+                        })
+                        .Groupable()
+                        .Scrollable()
+                        .Sortable()
+                        .Filterable(filterable => filterable
+                            .Extra(false)
+                            .Operators(operators => operators
+                                .ForString(str => str.Clear()
+                                    .StartsWith("Starts with")
+                                    .IsEqualTo("Is equal to")
+                                    .IsNotEqualTo("Is not equal to")
+                                ))
+                            )
+                       .Pageable(pageable => pageable
+                                .Refresh(true)
+                                .PageSizes(true)
+                                .ButtonCount(5))
+                        .DataSource(dataSource => dataSource
+                            .Ajax()
+                            .PageSize(10)
+                            .ServerOperation(false)
+                         )
+                     .Resizable(resize => resize.Columns(true))
+                           )
+                           *@
+
+                           WebGrid grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentAllergy", canPage: false, canSort: true);
+                           <div id="gridContentAllergyPatientSummary">
+                               @grid.GetHtml(tableStyle: "table table-striped table-hover", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+
+                                //grid.Column("CurrentAlergy.EncounterID", header: "EncounterID" , canSort: true),
+                               //grid.Column("CurrentAlergy.MedicalRecordNumber", header: "MedicalRecordNumber" , canSort: true),
+                                grid.Column("AlergyType", header: "Type", canSort: true),
+                                grid.Column("AlergyName", header: "Allergy", canSort: true),
+                                grid.Column("CurrentAlergy.ShortAnswer", header: "Short Answer", canSort: true),
+                                grid.Column("CurrentAlergy.DetailAnswer", header: "Detail Answer", canSort: true),
+                                grid.Column("CurrentAlergy.Comments", header: "Comments", canSort: true),
+                                 grid.Column("AddedBy", header: "Added By", canSort: true),
+                                 grid.Column("CurrentAlergy.CreatedDate", header: "Added On", canSort: true)
+                                ))<h6>* Click on any column heading to sort</h6>
+                           </div>
+                       }
+                       else
+                       {
+
+                           <h2>No Record found</h2>
+                       }
+                   }
+               </div>
+

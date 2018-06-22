@@ -1,0 +1,63 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model
+@model HolidayPlanner
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="HolidayPlannerFormDiv">
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Select Corporate:</label>
+            <select id="ddlCorporate" onchange="BindFacilityDropdownFilterInHolidayPlanner($('#ddlCorporate').val())" class="validate[required]"></select>
+            <input type="hidden" id="hfCorporateId" value="@Helpers.GetSysAdminCorporateID()" />
+        </div>
+        <div class="rowTable" id="showHideItems">
+            <label>Item:</label>
+            <select id="ddlItemId" class="validate[required]" onchange="ShowHideYear()"></select>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Select Facility:</label>
+            <select id="ddlFacilityFilter" class="validate[required]"></select>
+            <input type="hidden" id="hfFacilityId" value="@Helpers.GetDefaultFacilityId()" />
+        </div>
+        <div class="rowTable" id="showHideYear">
+            <label>Year:</label>
+            <select id="ddlYear" class="validate[required]">
+                <option class="" value='0'>--Select--</option>
+                <option class="" value='2015'>2015</option>
+                <option class="" value='2016'>2016</option>
+                <option class="" value='2017'>2017</option>
+                <option class="" value="2018">2018</option>
+                <option class="" value="2019">2019</option>
+                <option class="" value="2020">2020</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable">
+            <label>Item Type:</label>
+            <select id="ddlItemTypeId" class="validate[required]" disabled="disabled"></select>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable">
+            <label>&nbsp;</label>
+            <input type="submit" class="btn btn-primary edit-btn marginBtn" id="btnShowCalendar" value="View Calender" />
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>

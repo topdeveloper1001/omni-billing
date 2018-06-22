@@ -1,0 +1,51 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<LabTestResultCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "LabtestRangeGrid",canPage:false);
+            <div id="LabtestRangeGrid">
+                @grid.GetHtml(tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                    grid.Column("LabTestResultCPTCode", header: "CPT Code", canSort: true),
+                    grid.Column("LabTestResultTestName", header: "Test Name", canSort: true),
+                    grid.Column("SpecifimenString", header: "Specimen", canSort: true),
+                    grid.Column("GenderString", header: "Gender", canSort: true),
+                    grid.Column("AgeFromString", header: "Age From", canSort: true),
+                    grid.Column("AgeToString", header: "Age To", canSort: true),
+                    grid.Column("MeasurementValueString", header: "Measurement Value", canSort: true),
+                    grid.Column("LabTestResultLowRangeResult", header: "Low Range Result", canSort: true),
+                    grid.Column("LabTestResultHighRangeResult", header: "High Range Result", canSort: true),
+                    grid.Column("LabTestResultGoodFrom", header: "Good From", canSort: true),
+                    grid.Column("LabTestResultGoodTo", header: "Good To", canSort: true),
+                    grid.Column("LabTestResultCautionFrom", header: "Caution From", canSort: true),
+                    grid.Column("LabTestResultCautionTo", header: "Caution To", canSort: true),
+                    grid.Column("LabTestResultBadFrom", header: "Bad From", canSort: true),
+                    grid.Column("LabTestResultBadTo", header: "Bad To", canSort: true),
+                    grid.Column(header: "Action", format: @<text>
+                                                               <a href="javascript:void(0);" onclick="EditLabTestResult('@item.LabTestResultId')" style="float: left; margin-right: 7px; width: 15px;">
+                                                                   <img src="~/images/edit.png" /></a>
+                                                               &nbsp;
+                @*<a href="javascript:void(0);" title="Delete" onclick="return DeleteLabTestResult('@item.LabTestResultId'); " style="float: left; width: 15px;"><img src="~/images/delete.png" /></a>*@
+                <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.LabTestResultId','Delete Lab Test Result','',DeleteLabTestResult,null); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>                                      
+                  </text>)
+                    ))
+            </div>
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        SetGridSorting(SortLabTestResult, "#LabtestRangeGrid");
+        });
+</script>

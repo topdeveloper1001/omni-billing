@@ -1,0 +1,45 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<ManualDashboardCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent", canPage: false);
+            <div id="gridContent">
+                @grid.GetHtml(tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                    grid.Column("BudgetTypeStr", header: "Budget Type", canSort: true),
+                    grid.Column("DashboardTypeStr", header: "Dashboard Type", canSort: true),
+                    grid.Column("KPICategoryTypeStr", header: "KPI Category", canSort: true),
+                    grid.Column("IndicatorTypeStr", header: "Indicators", canSort: true),
+                    grid.Column("SubCategory1", header: "Sub Category 1", canSort: true),
+                    grid.Column("SubCategory2", header: "Sub Category 2", canSort: true),
+                    grid.Column("FrequencyTypeStr", header: "Frequency", canSort: true),
+                    grid.Column("Defination", header: "Defination", canSort: true),
+                    grid.Column("DataType", header: "Data Type", canSort: true),
+                    grid.Column("CompanyTotal", header: "Company Total", canSort: true),
+                    grid.Column("FacilityStr", header: "Facility", canSort: true),
+                    grid.Column("OwnerShip", header: "OwnerShip", canSort: true),
+                    grid.Column("Year", header: "Year", canSort: true),
+                    grid.Column("M1", header: "Jan", canSort: true),
+                    grid.Column("M2", header: "Feb", canSort: true),
+                    grid.Column("M3", header: "Mar", canSort: true),
+                    grid.Column("M4", header: "Apr", canSort: true),
+                    grid.Column("M5", header: "May", canSort: true),
+                    grid.Column("M6", header: "Jun", canSort: true),
+                    grid.Column("M7", header: "Jul", canSort: true),
+                    grid.Column("M8", header: "Aug", canSort: true),
+                    grid.Column("M9", header: "Sep", canSort: true),
+                    grid.Column("M10", header: "Oct", canSort: true),
+                    grid.Column("M11", header: "Nov", canSort: true),
+                    grid.Column("M12", header: "Dec", canSort: true),
+                    grid.Column("OtherDescription", header: "OtherDescription", canSort: true)
+                    ))
+            </div>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>

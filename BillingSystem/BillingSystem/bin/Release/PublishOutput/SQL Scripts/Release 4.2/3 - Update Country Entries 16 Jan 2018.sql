@@ -1,0 +1,15 @@
+--Delete From Country Where CountryID IN (26,27)
+
+--Update Country Set CodeValue='1' Where CountryName='Canada'
+--Update Country Set CodeValue='1-868' Where CountryName='Trinidad and Tobago'
+--Update Country Set CodeValue='1-758' Where CountryName='Saint Lucia'
+--Update Country Set CodeValue='1-869' Where CountryName='Saint Kitts and Nevis'
+--Update Country Set CodeValue='1-876' Where CountryName='Jamaica'
+--Update Country Set CodeValue='7' Where CountryName='Russian Federation'
+--Update Country Set CodeValue='1-473' Where CountryName='Grenada'
+--Update Country Set CodeValue='1-784' Where CountryName='Saint Vincent and the Grenadines'
+--Update Country Set CodeValue='212' Where CountryName='Western Sahara'
+--Update Country Set CodeValue='352' Where CountryName='Luxembourg'
+--Update Country Set CodeValue='673' Where CountryName='Brunei'
+--Update Country Set CodeValue='685' Where CountryName='Samoa'
+--Update Country Set CodeValue='95' Where CountryName='Myanmar'

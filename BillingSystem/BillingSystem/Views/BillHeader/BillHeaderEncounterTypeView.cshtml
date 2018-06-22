@@ -1,0 +1,36 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@model BillDetailsView
+
+<style type="text/css">
+    .btn-group {
+        margin: 5px 0 5px 0;
+    }
+
+    .scrollable-panel {
+        overflow: visible;
+    }
+
+    .colBillHeaderAction {
+        width: 12%;
+    }
+</style>
+<div id="CollapseBillHeaderList" class="panel-collapse collapse in">
+    <div id="FinalBillsListDiv">
+        <div class="table-responsive">
+            <div id="IpPatientFinalList">
+                @{Html.RenderPartial("~/Views/BillHeader/UserControls/_InPatientFinalBillHeadersListView.cshtml", Model.InPatientListView);}
+            </div>
+            <div class="clear"></div>
+            <div id="OutPatientFinalList">
+                @{ Html.RenderPartial("~/Views/BillHeader/UserControls/_OutPatientFinalBillHeadersListView.cshtml", Model.OutPatientListView);}
+            </div>
+            <div class="clear"></div>
+            <div id="ErPatientFinalList">
+                @{ Html.RenderPartial("~/Views/BillHeader/UserControls/_ErPatientFinalBillHeadersListView.cshtml", Model.ErPatientListView);}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/BillHeader/FinalBillsView.js?@Helpers.CurrentAssemblyTicks"></script>

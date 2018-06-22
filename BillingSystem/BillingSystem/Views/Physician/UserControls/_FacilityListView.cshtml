@@ -1,0 +1,28 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<DropdownListData>
+
+<style type="text/css">
+    
+</style>
+<h4>Associated Facilities: </h4>
+<div id="checkBox_Facilities" class="list_body">
+    @if (Model != null && Model.Any())
+    {
+        <ul id="ulRoles">
+            @foreach (var item in Model)
+            {
+                <li class="col-sm-12 inline_fields">
+                    <input type="checkbox" id="@item.Value" value="@item.Value" name="@item.Text" />&nbsp;<div class="inline_fieldtxt">@item.Text</div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <span>No Records Found</span>
+    }
+</div>
+
+<script>
+
+</script>

@@ -1,0 +1,88 @@
+﻿@using BillingSystem.Models
+
+@model XclaimView
+
+@{
+    ViewBag.Title = "Xclaim View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Scripts/Xclaim/Xclaim.js"></script>
+@*<script src="~/Scripts/XPaymentReturn/XPaymentReturn.js"></script>*@
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" >
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" /></span>&nbsp;Select Claim
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in tableImg">
+            <div class="panel-body rowTable">
+                <div class="base-color col-md-12" id="XClaimSelectionDiv">
+                    <div class="col-md-12 clear">
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Select Patient: </label>
+                                <select id="ddlPatients" onchange="BindEncounters(); BindClaimGrid();" class="validate[required]"></select>
+                                @Html.HiddenFor(x => x.PatientId, new {@id="hdPatientId"})
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Select Encounter: </label>
+                                <select id="ddlEncounters" onchange="BindClaimsDDL(); BindClaimGrid();" class="validate[required] emptyddl"></select>
+                                @Html.HiddenFor(x => x.EncounterId, new {@id="hdEncounterId"})
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-8 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Claim ID:</label>
+                                <select id="ddlClaim" class="emptyddl emptyddl1 emptyddl2" onchange="BindClaimGrid();"></select>
+                                @Html.HiddenFor(x => x.ClaimId, new {@id="hdClaimId"})
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseXclaimList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" /></span> Claim List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseXclaimList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="XclaimListDiv">
+                    @{Html.RenderPartial("~/Views/Xclaim/UserControls/_XclaimList.cshtml", Model.XclaimList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+
+
+<div id="divhidepopup" style="display: none;">
+    <div class="popup-coverbg"></div>
+    <div class="popup-frame">
+        <div class="popup-main">
+            <div class="popup-content">
+                <div>
+                    <div class="popup-close" onclick="$('#divhidepopup').hide();">X</div>
+                    <div id="xmlBillingView">
+                        <textarea id="txtXmlBillingView" cols="105" rows="30" readonly="readonly" class="minHeight1" ></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

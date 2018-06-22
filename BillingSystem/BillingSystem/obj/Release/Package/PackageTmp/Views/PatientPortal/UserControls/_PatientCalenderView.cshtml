@@ -1,0 +1,40 @@
+﻿@{
+    ViewBag.Title = "Patient Schedular";
+}
+
+<style type="text/css" media="screen">
+    table tr td {
+        padding: 0;
+        border-right: none;
+    }
+</style><script src="~/Scripts/Scheduler/codebase/sources/dhtmlxscheduler.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_outerdrag.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/sources/ext/dhtmlxscheduler_recurring.js"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_readonly.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_pdf.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_tooltip.js"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_serialize.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/sources/ext/dhtmlxscheduler_timeline.js" type="text/javascript" charset="utf-8"></script>
+<link rel='stylesheet' type='text/css' href="~/Scripts/Scheduler/codebase/dhtmlxscheduler.css" />
+<script src="~/Scripts/Scheduler/common/dhtmlxTree/dhtmlxtree.js" type="text/javascript" charset="utf-8"></script>
+<link rel='stylesheet' type='text/css' href="~/Scripts/Scheduler/common/dhtmlxTree/dhtmlxtree.css" />
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_units.js" type="text/javascript" charset="utf-8"></script><script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_readonly.js" type="text/javascript" charset="utf-8"></script>
+<div id="my_form">
+    <label for="description">Event text </label><input type="text" name="description" value="" id="description"><br>
+    <label for="Availability">Availability </label><select class="validate[required]" name="Availability" id="Availability">
+                                                       <option value="0">--Select--</option>
+                                                       <option value="1">Available</option>
+                                                       <option value="2">Busy</option>
+                                                   </select><br>
+    <input type="button" name="save" value="Save" id="save" style='width: 100px;' onclick=" save_form() ">
+    <input type="button" name="close" value="Close" id="close" style='width: 100px;' onclick=" close_form() ">
+    <input type="button" name="delete" value="Delete" id="delete" style='width: 100px;' onclick=" delete_event() ">
+</div><div id="scheduler_here" class="dhx_cal_container" style='width: 100%; height: 870px; border: solid 1px #ccc; border-radius: 4px;'>
+    <div class="dhx_cal_navline">
+        <div class="dhx_cal_date"></div>
+    </div>
+    <div class="dhx_cal_header">
+    </div>
+    <div class="dhx_cal_data">
+    </div>
+</div>

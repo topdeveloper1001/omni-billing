@@ -1,0 +1,168 @@
+﻿@model BillingSystem.Model.Drug
+
+@{
+    ViewBag.Title = "Drug";
+}
+<style>
+    .btn-group {
+        margin-left: 5px;
+    }
+</style>
+<div class="form" id="DrugFormDiv">
+    @{
+        var drugStatus = true; var DrugInStock = false;
+        var drugTableNumber = "1010";
+        var description = "Greenrain";
+        if (Model.Id > 0 && !string.IsNullOrEmpty(Model.DrugStatus))
+        {
+            var status = Convert.ToString(Model.DrugStatus).ToLower();
+            if (status == "deleted")
+            {
+                drugStatus = false;
+            }
+
+            if (!string.IsNullOrEmpty(Convert.ToString(Model.DrugDescription)))
+            {
+                description = Convert.ToString(Model.DrugDescription);
+            }
+            DrugInStock = Model.InStock != null && Model.InStock== true;
+        }
+    }
+
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div class="rowTable" style="display: none;">
+            <label>Id:</label>
+            @Html.HiddenFor(m => m.Id, new { @maxlength = "10", @id = "hdDrugId" })
+        </div>
+        @*<div class="rowTable">
+            <label>Table Number:</label>
+            @Html.TextBoxFor(m => drugTableNumber, new { @maxlength = "50", @id = "txtDrugTableNumber", @readonly = "readonly" })
+        </div>*@
+        @*<div class="rowTable">
+            <label>Description:</label>
+            @Html.TextBoxFor(m => description, new { @maxlength = "50", @id = "txtDrugDescription" })
+        </div>*@
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Drug Code:</label>
+            @Html.TextBoxFor(m => m.DrugCode, new { @maxlength = "50", @id = "txtDrugCode",@class="validate[required]"})
+        </div>
+        <div class="rowTable">
+            <label>Insurance Plan:</label>
+            @Html.TextBoxFor(m => m.DrugInsurancePlan, new { @maxlength = "50", @id = "txtDrugInsurancePlan" })
+        </div>
+        <div class="rowTable">
+            <label>Strength Hardcode UOM:</label>
+            @Html.TextBoxFor(m => m.DrugStrengthHardcodeUOM, new { @maxlength = "50", @id = "txtDrugStrengthHardcodeUOM" })
+        </div>
+        <div class="rowTable">
+            <label>Packagesize Hardcode:</label>
+            @Html.TextBoxFor(m => m.DrugPackagesizeHardcode, new { @maxlength = "50", @id = "txtDrugPackagesizeHardcode" })
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div class="rowTable">
+            <label>Package Name:</label>
+            @Html.TextBoxFor(m => m.DrugPackageName, new { @maxlength = "200", @id = "txtDrugPackageName" })
+        </div>
+        <div class="rowTable">
+            <label>Generic Name:</label>
+            @Html.TextBoxFor(m => m.DrugGenericName, new { @maxlength = "-1", @id = "txtDrugGenericName" })
+        </div>
+        <div class="rowTable">
+            <label>Strength:</label>
+            @Html.TextBoxFor(m => m.DrugStrength, new { @maxlength = "-1", @id = "txtDrugStrength" })
+        </div>
+        <div class="rowTable">
+            <label>Dosage:</label>
+            @Html.TextBoxFor(m => m.DrugDosage, new { @maxlength = "250", @id = "txtDrugDosage" })
+        </div>
+        <div class="rowTable">
+            <label>Package Size:</label>
+            @Html.TextBoxFor(m => m.DrugPackageSize, new { @maxlength = "250", @id = "txtDrugPackageSize" })
+        </div>
+        <div class="rowTable">
+            <label style="margin: 10px 0;">Is Active:</label>
+            @Html.CheckBoxFor(m => drugStatus, new { id = "chkDrugStatus" })
+            @* @Html.TextBoxFor(m => m.DrugStatus, new { @maxlength = "50", @id = "txtDrugStatus" })*@
+        </div>
+        
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div class="rowTable">
+            <label>Price Public:</label>
+            @Html.TextBoxFor(m => m.DrugPricePublic, new { @maxlength = "50", @id = "txtDrugPricePublic", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Price Pharmacy:</label>
+            @Html.TextBoxFor(m => m.DrugPricePharmacy, new { @maxlength = "50", @id = "txtDrugPricePharmacy", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Unit Price Public:</label>
+            @Html.TextBoxFor(m => m.DrugUnitPricePublic, new { @maxlength = "50", @id = "txtDrugUnitPricePublic" , @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Unit Price Pharmacy:</label>
+            @Html.TextBoxFor(m => m.DrugUnitPricePharmacy, new { @maxlength = "50", @id = "txtDrugUnitPricePharmacy", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Strength Hardcode:</label>
+            @Html.TextBoxFor(m => m.DrugStrengthHardcode, new { @maxlength = "50", @id = "txtDrugStrengthHardcode" })
+        </div>
+        <div class="rowTable">
+            <label style="margin: 10px 0;">Is In Stock:</label>
+            @Html.CheckBoxFor(m => DrugInStock, new { id = "chkDrugInStock" })
+            @* @Html.TextBoxFor(m => m.DrugStatus, new { @maxlength = "50", @id = "txtDrugStatus" })*@
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div class="rowTable">
+            <label>Expired On:</label>
+            @Html.TextBoxFor(m => m.DrugDeleteDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtDrugDeleteDate", @class = "dtGeneral" })
+        </div>
+        <div class="rowTable">
+            <label>Last Changed On:</label>
+            @Html.TextBoxFor(m => m.DrugLastChange, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtDrugLastChange", @class = "dtGeneral" })
+        </div>
+        <div class="rowTable">
+            <label>Agent Name:</label>
+            @Html.TextBoxFor(m => m.DrugAgentName, new { @maxlength = "250", @id = "txtDrugAgentName" })
+        </div>
+        <div class="rowTable">
+            <label>Manu facturer:</label>
+            @Html.TextBoxFor(m => m.DrugManufacturer, new { @maxlength = "250", @id = "txtDrugManufacturer" })
+        </div>
+        <div class="rowTable">
+            <label>Packagesize Hardcode UOM:</label>
+            @Html.TextBoxFor(m => m.DrugPackagesizeHardcodeUOM, new { @maxlength = "50", @id = "txtDrugPackagesizeHardcodeUOM" })
+        </div>
+        <div class="rowTable">
+            <label>Brand Name:</label>
+            @Html.TextBoxFor(m => m.BrandCode, new { @maxlength = "20", @id = "txtBrandCode" })
+        </div>
+        <div class="rowTable">
+            <label>ATC Code:</label>
+            @Html.TextBoxFor(m => m.ATCCode, new { @maxlength = "10", @id = "txtATCCode" })
+        </div>
+    </div>
+
+        <div class="clear"></div>
+
+        <div class="btn-group">
+            <div style="float: left;">
+                @if (Model.Id != null && Model.Id != 0)
+                {  
+                    <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SaveDrug('@Model.Id    ');" />
+                }
+                else
+                {
+                    <input type="submit" onclick="return SaveDrug('@Model.Id    ');" class="btn btn-primary edit-btn marginBtn" value="Save" />
+                }
+                <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>
+                <a id="indexUrl" href="@Html.AttributeEncode(Url.Action("Drug", "Drug"))" style="display:none;"></a>
+                <a id="Url" href="@Html.AttributeEncode(Url.Action("Drug", "Drug"))" style="display:none;"></a>
+                <br />
+                <span id="lblMessage" style="display: none; font-weight: bold; margin-top: 5px;">Fields marked with <span style="color: red;">* </span>are mendatory.</span>
+            </div>
+        </div>
+
+</div>

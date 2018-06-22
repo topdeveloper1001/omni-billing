@@ -1,0 +1,30 @@
+﻿@using BillingSystem.Models
+
+@model AssignWorkQueueView
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Scripts/AssignWorkQueue/AssignWorkQueue.js"></script>
+<div class="white-bg">
+    @* Section having claims that contain the potential bill edit issues *@
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseScrubHeaderWithErrorsList">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp; Claims with Potential Rules Error
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseScrubHeaderWithErrorsList" class="panel-collapse collapse in">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form" id="divScrubHeaderWithErrorsList">
+                        @{Html.RenderPartial("~/Views/AssignWorkQueue/UserControls/_ClaimWithRuleErrors.cshtml", Model.AssignWorkQueue);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

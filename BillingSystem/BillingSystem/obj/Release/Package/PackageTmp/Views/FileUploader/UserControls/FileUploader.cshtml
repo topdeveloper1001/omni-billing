@@ -1,0 +1,242 @@
+﻿
+@using BillingSystem.Common
+@using BillingSystem.Models
+@model FileUploaderView
+
+@*@if (Model.OpenOrdersList != null && Model.OpenOrdersList.Any())
+{
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOpenOrderlist">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Orders
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOpenOrderlist" class="panel-collapse collapse in">
+            <div class="panel-body nopadding scrollable-panel">
+                <div id="divOpenOrdersRadImaging" class="table-responsive">
+                    @{ Html.RenderPartial("~/Views/Summary/UserControls/_OpenOrderList.cshtml", Model.OpenOrdersList); }
+                </div>
+            </div>
+        </div>
+    </div>
+}*@
+
+<div class="panel panel-default collapsecss ourcollapse">
+    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFileUploaderAddEdit">
+        <h4 class="panel-title collapseTitle">
+            <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Upload Documents<a class="btn btn-default btn-sm pull-right collapse-btn">
+                                                                                         <span class="glyphicon glyphicon-chevron-down"></span>
+                                                                                     </a>
+        </h4>
+    </div>
+    <div id="collapseFileUploaderAddEdit" class="panel-collapse collapse in">
+        <div class="panel-body">
+            <div class="base-color">
+                <div class="form" id="divDocumentUpload">
+                    @{Html.RenderPartial("~/Views/FileUploader/UserControls/_FilesAddEdit.cshtml", Model.CurrentAttachment);}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default collapsecss ourcollapse bordertable">
+    <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseFileUploaderList">
+        <h4 class="panel-title collapseTitle">
+            <span>
+                <img src="~/images/list.png">
+            </span>Document's List
+            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </a>
+        </h4>
+    </div>
+    <div id="collapseFileUploaderList" class="panel-collapse tableImg collapse in">
+        <div class="panel-body">
+            <div class="base-color">
+                <div class="table-responsive scrollable-panel" id="divDocumentsGrid">
+                    @{Html.RenderPartial("~/Views/FileUploader/UserControls/_FilesListing.cshtml", Model.Attachments);}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="divhidefile" style="display: none;">
+    <div class="popup-coverbg"></div>
+    <div class="popup-frame">
+        <div class="popup-main1" style="margin: 50px auto; width:72%;">
+            <div class="popup-content" style="min-height: 555px;">
+                <div class="popup-close" onclick="$('#divhidefile').hide(); $.validationEngine.closePrompt('.formError', true);">X</div>
+                <div class="minHeight" style="min-height: 535px">
+                    <div id="Documentdiv">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.ViewType != null && Model.ViewType == "2" )
+{
+    @*Add orders Section Starts*@
+    <div class="panel panel-default collapsecss ourcollapse" id="divAddEditOpenOrders" >
+        <div class=" panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOpenOrderAddEdit" onclick=" $.validationEngine.closePrompt('.formError', true);">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Orders
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+            <div id="collapseOpenOrderAddEdit" class="panel-collapse collapse">
+                <div class="panel-body" id="OpenOrderDiv">
+                    @{ Html.RenderPartial("~/Views/Summary/UserControls/_OpenOrderAddEdit.cshtml", Model.EncounterOrder); }
+                </div>
+            </div>
+        </div>
+    @*Add orders Section Ends*@
+   
+    @*Current Encounter Open Orders Section Starts*@
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOpenOrderlist">
+            <h4 class="panel-title collapseTitle" id="NurseAdminListHeading">
+                 <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Open Orders
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOpenOrderlist" class="panel-collapse collapse in openOrderActivity">
+            <div id="NurseAdminOpenOrdersListDiv" class="table-responsive">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_OpenOrderList.cshtml", Model.OpenOrdersList); }
+            </div>
+        </div>
+    </div>
+    @*Current Encounter Open Orders Section Ends*@
+    
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseNurseAdminAddEdit">
+            <h4 class="panel-title collapseTitle" id="NurseAdminHeading">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Administer Open Activity
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="CollapseNurseAdminAddEdit" class="panel-collapse collapse  openOrderActivity">
+            <div id="NurseAdminAddEditFormDiv">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_AdministerOrdersByNurse.cshtml", Model.CurrentOrderActivity); }
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colActivityList">
+            <h4 class="panel-title collapseTitle" id="colActivityListHeading">
+                <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Order Activities
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colActivityList" class="panel-collapse collapse in openOrderActivity">
+             <div class="col-sm-12">
+                    <div class="rowTable1 pull-right">
+                        <h4 class="colorCodeTitle">Color Codes</h4>
+                        <span><label class="colorCodes rowColor5"></label>Open --> Ready to Administer</span> <span><label class="colorCodes rowColor6"></label>Open</span>
+                    </div>
+                </div>
+            <div id="colActivityListDiv" class="table-responsive clear">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_OrderActivitiesList.cshtml", Model.OpenActvitiesList); }
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colClosedActivities">
+                <h4 class="panel-title collapseTitle" id="colClosedActivitiesHeading">
+                    <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Closed Activities
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="colClosedActivities" class="panel-collapse collapse openOrderActivity">
+                <div class="col-sm-12">
+                    <div class="rowTable1 pull-right">
+                        <h4 class="colorCodeTitle">Color Codes</h4>
+                        <span><label class="colorCodes rowColor8"></label>Closed/Cancel/Missed Administration/Patient Unavailable</span> <span><label class="colorCodes rowColor2"></label>On Bill/Administered</span>
+                    </div>
+                </div>
+                <div id="ClosedActivitiesDiv" class="table-responsive clear">
+                    @{ Html.RenderPartial("~/Views/Summary/UserControls/_OrderClosedActivitiesList.cshtml", Model.ClosedActvitiesList); }
+                </div>
+            </div>
+        </div>
+     @*
+    Current Closed Order Section Starts
+    *@
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colClosedOrders">
+            <h4 class="panel-title collapseTitle" id="colClosedOrdersHeading">
+                 <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Closed Orders
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colClosedOrders" class="panel-collapse collapse openOrderActivity">
+            <div class="col-sm-12">
+                <div class="rowTable1 pull-right">
+                    <h4 class="colorCodeTitle">Color Codes</h4>
+                    <span><label class="colorCodes rowColor8"></label>Closed/Cancel</span> <span><label class="colorCodes rowColor2"></label>On Bill/Administered</span> 
+                </div>
+            </div>
+            <div id="ClosedOrdersDiv" class="table-responsive clear">
+                @{ Html.RenderPartial("~/Views/Summary/UserControls/_ClosedOrderList.cshtml", Model.ClosedOrdersList); }
+            </div>
+        </div>
+    </div>
+    @*
+    Current Closed Order Section Ends
+    *@
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseMedicalNotesAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span id="divnotesCaptionAddEdit"><span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Notes</span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseMedicalNotesAddEdit" class="panel-collapse collapse">
+            <div id="phyMedicalNotesFormDiv">
+                @{Html.RenderPartial("~/Views/MedicalNotes/UserControls/_MedicalNotesAddEdit.cshtml", Model.CurrentMedicalNotes);}
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseMedicalNotesList">
+            <h4 class="panel-title collapseTitle">
+                <span id="divnotesCaptionListing"><span class="glyphicon glyphicon-align-justify"></span>&nbsp;Notes List</span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseMedicalNotesList" class="panel-collapse collapse in">
+            <div id="phyMedicalNotesListDiv" class="table-responsive">
+                @{Html.RenderPartial("~/Views/MedicalNotes/UserControls/_MedicalNotesList.cshtml", Model.MedicalNotesList);}
+            </div>
+        </div>
+    </div>
+}
+
+<script src="~/Scripts/FileUploader/FileUploader.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

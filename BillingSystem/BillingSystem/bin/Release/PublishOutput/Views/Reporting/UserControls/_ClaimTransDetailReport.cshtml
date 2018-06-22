@@ -1,0 +1,39 @@
+﻿@model dynamic
+
+@if (Model != null && Model.Count > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "claimTransDetailReport", canPage: false, canSort: true);
+    <div id="revenueForecastReport">
+        @grid.GetHtml(htmlAttributes: new {id = "claimTransaDetailReportGrid"}, tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                grid.Column("TransactionDate", header: "Transaction Date", canSort: false, style: "col1", format: @<text>@if (item.TransactionDate!= null)
+                            { @item.TransactionDate.ToString("dd/MM/yyyy HH:mm:ss" ) 
+                            }</text> ),
+                grid.Column("PersonFirstName", header: "Person First Name", canSort: true, style: "col2"),
+                                 grid.Column("PersonLastName", header: "Person Last Name", canSort: true, style: "col3"),
+                                 grid.Column("PersonEmiratesIDNumber", header: "Person EmiratesID Number", canSort: true, style: "col4"),
+                                 grid.Column("EncounterNumber", header: "Encounter Number", canSort: true, style: "col5"),
+                                 grid.Column("InsuranceCompanyName", header: "Insurance Company Name", canSort: true, style: "col6"),
+                                 grid.Column("BillNumber", header: "Bill Number", canSort: true, style: "col7"),
+                                 grid.Column("Gross", header: "Gross", canSort: true, style: "col8"),
+                                 grid.Column("PatientShare", header: "Patient Share", canSort: true, style: "col9"),
+                                 grid.Column("Net", header: "Net", canSort: true, style: "col10")
+                                 //grid.Column("EncounterID", header: "Encounter ID", canSort: true, style: "col11"),
+                                 //grid.Column("PayorID", header: "Payor ID", canSort: true, style: "col12"),
+                                 //grid.Column("ClaimID", header: "Claim ID", canSort: true, style: "col13")
+                ))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        if ($('#claimTransaDetailReportGrid tr').length > 0) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(SortClaimTransReportGrid, "#revenueForecastReport");
+    });
+</script>

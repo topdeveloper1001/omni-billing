@@ -1,0 +1,38 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<AlergyCustomModel>
+
+<div class="table-responsive">
+    @if (Model != null)
+    {
+        if (Model.Count > 0)
+        {
+
+
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentAllergy", canSort: true, rowsPerPage: 50);
+        <div id="gridContentAllergy">
+            @grid.GetHtml(htmlAttributes: new { id = "PatientCurrentAllergy" },tableStyle: "table table_scroll_Allergy", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+
+                                     grid.Column("AlergyType", "Type", canSort: true),
+                                     grid.Column("AlergyName", "Allergy", canSort: true),
+                                     grid.Column("CurrentAlergy.DetailAnswer", "Description", canSort: true),
+                                      grid.Column("AddedBy", "Added By", canSort: true),
+                                 grid.Column("CurrentAlergy.CreatedDate", "Added On", @<text>@if (item.CurrentAlergy.CreatedDate != null)
+                                                                                             { @item.CurrentAlergy.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss") 
+                                                                                             }</text>)))
+        </div>
+        }
+        else
+        {
+
+        <h2>No Record found</h2>
+        }
+    }
+</div>
+<script>
+    $(function () {
+        if ($('#PatientCurrentAllergy tr').length > 4) {
+            $('.table_scroll_Allergy').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(SortEHRAllergiesList, "#gridContentAllergy");
+    });
+</script>

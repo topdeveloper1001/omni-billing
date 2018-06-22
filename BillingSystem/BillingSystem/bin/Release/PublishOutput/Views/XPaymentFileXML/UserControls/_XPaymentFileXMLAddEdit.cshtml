@@ -1,0 +1,35 @@
+﻿@using BillingSystem.Model
+@model XPaymentFileXML
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+    select {
+    margin-bottom: 10px;}
+</style>
+<div class="form" id="XPaymentFileXMLFormDiv">
+    <div class="clear"></div>
+
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.XPaymentFileXMLID != null && Model.XPaymentFileXMLID != 0)
+            {  
+              <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SaveXPaymentFileXML();" />                
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveXPaymentFileXML();" class="btn btn-primary edit-btn marginBtn" value="Save" />                
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>            
+        </div>
+    </div>
+
+
+
+</div>

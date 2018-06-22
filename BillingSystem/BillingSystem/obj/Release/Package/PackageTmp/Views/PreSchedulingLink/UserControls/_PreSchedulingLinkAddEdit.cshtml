@@ -1,0 +1,66 @@
+﻿@using BillingSystem.Model
+@model PreSchedulingLink
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="PreSchedulingLinkFormDiv">
+    @*// BBCOLUMNSHERE*@
+    <div class="col-sm-3">
+         @Html.HiddenFor(m => m.Id, new { @id = "hdId" })
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Corporate:</label>
+            <select id="ddlCorporateId" class="validate[required] dis"></select>
+            @Html.HiddenFor(m => m.CorporateId, new { @id = "hdCorporateId" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Facility:</label>
+            <select id="ddlFacilityId" class="validate[required] dis"></select>
+            @Html.HiddenFor(m => m.FacilityId, new { @id = "hdFacilityId" })
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="rowTable">
+
+            <label><span class="mandatoryStar"></span>Public Link Url:</label>
+            <div class="row">
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.PublicLinkUrl, new { @maxlength = "200", @id = "txtPublicLinkUrl" , @readonly="readonly" })
+                </div>
+                <div class="col-sm-2">
+                    <a href="javascript:void(0);" title="Generate Public Link" class="pull-right" id="ankCreatePublicLink" onclick="CreatePublicLink();">
+                        <img src="@Url.Content("~/images/generateNo.png")" title="Create Public link for the Presecheduling" />
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="btn-group">
+            <div style="float: left;">
+                @if (Model.Id != 0)
+                {  
+                    <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SavePreSchedulingLink();" />                
+                }
+                else
+                {
+                    <input type="submit" onclick="return SavePreSchedulingLink();" class="btn btn-primary edit-btn marginBtn" value="Save" />                
+                }
+                <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearPresechedulingLink();">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

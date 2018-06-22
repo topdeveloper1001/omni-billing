@@ -1,0 +1,593 @@
+﻿@model BillingSystem.Models.ExecutiveDashboardView
+@{
+    ViewBag.Title = "Clinical Quality Dashboard";
+    const string style = "display:block;";
+    var section1closec = @Model.Section1RemarksList.Any() ? "in" : "";
+    var section2closec = @Model.Section2RemarksList.Any() ? "in" : "";
+    var section3closec = @Model.Section3RemarksList.Any() ? "in" : "";
+    var section4closec = @Model.Section4RemarksList.Any() ? "in" : "";
+    var section5closec = @Model.Section5RemarksList.Any() ? "in" : "";
+    var section6closec = @Model.Section6RemarksList.Any() ? "in" : "";
+    var section7closec = @Model.Section7RemarksList.Any() ? "in" : "";
+    var section8closec = @Model.Section8RemarksList.Any() ? "in" : "";
+    var section9closec = @Model.Section9RemarksList.Any() ? "in" : "";
+}
+
+@*------------------------------------------Section 1 Graphs Starts ------------------*@
+<div id="divADCGraphSection">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseADCGraphSection">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 1
+                    
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseADCGraphSection" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-6 row" id="myDashboardManagementHighAlertMedication" style="float: left;">
+                                @*Average Daily Census Monthly Trend Compared to Budget 3D Bar Chart*@
+                            </div>
+                            <div class="col-sm-6 row pull-right" id="myDashboardPatientFallRatewithInjury">
+                                @*Average Daily Census Pie Chart by Service Code*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 1 Graphs Ends ------------------*@
+
+@*------------------------------------------Section 1 Remarks starts------------------*@
+<div id="divSection1Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection1Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 1 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection1Remarks" class="panel-collapse collapse @section1closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection1">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section1RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+            <input id="chkShowAllSection1" type="checkbox" checked="checked" onchange=" BindRemarksList(1); " />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 1 Remarks Ends------------------*@
+
+@*------------------------------------------Section 2 Graphs Starts -----------------*@
+<div id="divSection2GraphsClinical">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection2Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 2
+                    
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection2Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-6 row" id="myDashboardDischargeCommunityRate" style="float: left;">
+                                @*Patient Fall Rate with Injury*@
+                            </div>
+                            <div class="col-sm-6 row pull-right" id="myDashboardLostReferals">
+                                @*Pain Management Compliance  Rate*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 2 Graphs Ends------------------*@
+
+@*------------------------------------------Section 2 Remarks starts------------------*@
+<div id="divSection2Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection2Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 2 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection2Remarks" class="panel-collapse collapse @section2closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection2">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section2RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+            <input id="chkShowAllSection2" type="checkbox" checked="checked" onchange=" BindRemarksList(2); " />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 2 Remarks Ends------------------*@
+
+@*------------------------------------------Section 3 Graphs Starts i.e. Readmission within 30 Days for same purpose and Pain Management Compliance  Rate------------------*@
+<div id="divSection3Graphs">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection3Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 3
+                    
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection3Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-6 row" id="myDashboardTransferOutRate" style="float: left;">
+                                @*Discharge to Community Rate dashboard*@
+                            </div>
+                            <div class="col-sm-6 row pull-right" id="myDashboardPressureUlcerIncidentRate">
+                                @*Lost Referals Dashboard*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 3 Graphs Ends i.e. Readmission within 30 Days for same purpose and Pain Management Compliance  Rate------------------*@
+
+@*------------------------------------------Section 3 Remarks starts------------------*@
+<div id="divSection3Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection3Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 3 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection3Remarks" class="panel-collapse collapse @section3closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection3">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section3RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+            <input id="chkShowAllSection3" type="checkbox" checked="checked" onchange=" BindRemarksList(3); " />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 3 Remarks Ends------------------*@
+
+@*------------------------------------------Section 4  starts------------------*@
+<div id="Section4Div">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection4Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 4
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+       <div id="colSection4Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-6 row" id="myDashboardMDRORate" style="float: left;">
+                                @*Transfer Out Rate dashboard*@
+                            </div>
+                            <div class="col-sm-6 row pull-right" id="myDashboardMRSARate">
+                                @*Nursing Staff Competency Dashboard*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 4 Ends------------------*@
+
+@*------------------------------------------Section 4 Remarks starts------------------*@
+<div id="divSection4Remarks">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection4Remarks">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 4 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection4Remarks" class="panel-collapse collapse @section4closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection4">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section4RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+            <input id="chkShowAllSection4" type="checkbox" checked="checked" onchange=" BindRemarksList(4); " />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 4 Remarks Ends------------------*@
+
+@*------------------------------------------Section 5 Grpahs  starts------------------*@
+<div id="Section5Div">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection5Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 5
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+       <div id="colSection5Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-6 row" id="myDashboardESBLRate" style="float: left;">
+                                @*Nursing Department Orientation dashboard*@
+                            </div>
+                           <div class="col-sm-6 row pull-right" id="myDashboardLRTIRate">
+                                @*Patient Identification Dashboard*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 5 Grpahs Ends------------------*@
+
+@*------------------------------------------Section 5 Narrative starts------------------*@
+<div id="divSection5Narrative">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#coldivSection5Narrative">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 5 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="coldivSection5Narrative" class="panel-collapse collapse @section5closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection5">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section5RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+                <input id="chkShowAllSection5" type="checkbox" checked="checked" onchange="BindRemarksList(5);" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 5 Narrative Ends------------------*@
+
+@*------------------------------------------Section 6 Grpahs  starts------------------*@
+<div id="Section6Div">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection6Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 6
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+       <div id="colSection6Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-6 row" id="myDashboardCautiRate" style="float: left;">
+                               
+                            </div>
+                           <div class="col-sm-6 row pull-right" id="myDashboardBSIRate">
+                               
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 6 Grpahs Ends------------------*@
+
+@*------------------------------------------Section 6 Narrative starts------------------*@
+<div id="divSection6Narrative">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#coldivSection6Narrative">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 6 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="coldivSection6Narrative" class="panel-collapse collapse @section6closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection6">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section6RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+                <input id="chkShowAllSection6" type="checkbox" checked="checked" onchange="BindRemarksList(6);" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 6 Narrative Ends------------------*@
+
+@*------------------------------------------Section 7 Graphs Starts i.e. Readmission within 30 Days for same purpose and Pain Management Compliance  Rate------------------*@
+<div id="divSection7Graphs">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection7Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 7
+                    
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection7Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e7;">
+                            <div class="col-sm-6 row" id="myDashboardInappropriateAntiBioticUsageRate" style="float: left;">
+                                @*Fall Risk Assessment Protocol Compliance Rate dashboard*@
+                            </div>
+                            <div class="col-sm-6 row pull-right" id="myDashboardCategoryOfIncidents">
+                                @*Pain Management Compliance Rate Dashboard*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+
+@*------------------------------------------Section 7 Graphs Ends i.e. Readmission within 30 Days for same purpose and Pain Management Compliance  Rate------------------*@
+
+@*------------------------------------------Section 7 Narrative starts------------------*@
+<div id="divSection7Narrative">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#coldivSection7Narrative">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 7 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="coldivSection7Narrative" class="panel-collapse collapse @section7closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection7">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section7RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+                <input id="chkShowAllSection7" type="checkbox" checked="checked" onchange="BindRemarksList(7);" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 7 Narrative Ends------------------*@
+
+@*------------------------------------------Section 8 Remarks  starts------------------*@
+<div id="Section8Div">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection8Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 8
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colSection8Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-6 row" id="myDashboardTypesOfIncidents" style="float: left;">
+                                @*Pressure Ulcer Incident Rate dashboard*@
+                            </div>
+                            <div class="col-sm-6 row pull-right" id="myDashboardIncidents">
+                                @*Compliance to Pressure Ulcer Prevention Protocol Dashboard*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 8 Remarks Ends------------------*@
+
+@*------------------------------------------Section 8 Narrative starts------------------*@
+<div id="divSection8Narrative">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#coldivSection8Narrative">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 8 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="coldivSection8Narrative" class="panel-collapse collapse @section8closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection8">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section8RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+                <input id="chkShowAllSection8" type="checkbox" checked="checked" onchange="BindRemarksList(8);" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 8 Narrative Ends------------------*@
+
+@*------------------------------------------Section 9 Grpahs  starts------------------*@
+<div id="Section9Div">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colSection9Graphs">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 9
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+       <div id="colSection9Graphs" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 marginBottom10 row" style="border-bottom: solid 2px #e1e1e8;">
+                            <div class="col-sm-12 row" id="myDashboardMedicationError" style="float: left;">
+                                @*SBAR Protocol Compliance Rate dashboard*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 9 Grpahs Ends------------------*@
+
+@*------------------------------------------Section 9 Narrative starts------------------*@
+<div id="divSection9Narrative">
+    <div class="panel panel-default collapsecss ourcollapse bordertable" style="@style">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#coldivSection9Narrative">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>
+                @Model.Title Section 9 - Remarks
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="coldivSection9Narrative" class="panel-collapse collapse @section9closec">
+            <div class="panel-body">
+                <div class="base-color" id="divSection9">
+                    @{ Html.RenderPartial("~/Views/ExternalDashboard/UserControls/_RemarksList.cshtml", Model.Section9RemarksList); }
+                </div>
+            </div>
+        </div>
+        <span class="inactive">View All Months 
+                <input id="chkShowAllSection9" type="checkbox" checked="checked" onchange="BindRemarksList(9);" />
+        </span>
+    </div>
+    <div class="clear"></div>
+</div>
+@*------------------------------------------Section 9 Narrative Ends------------------*@

@@ -1,0 +1,164 @@
+﻿@using BillingSystem.Model
+@model OpenOrder
+@using Kendo.Mvc.UI
+
+@{
+    ViewBag.Title = "Add Physician Order";
+}
+<style>
+    .btn-group {
+        margin-left: 15px;
+    }
+</style>
+
+
+<div class="base-color">
+    <div class="form">
+
+        <div class="col-sm-6 col-md-6 col-lg-4">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Order Type Category</label>
+                <select id="ddlOrderTypeCategory" name="ddlOrderTypeCategory" class="validate[required]" onchange="OnChangeCategory('#ddlOrderTypeCategory', '#ddlOrderTypeSubCategory','#hdOrderTypeSubCategoryID');"></select>
+                @Html.HiddenFor(m => m.CategoryId, new { @id = "hdOrderTypeCategoryID" })
+                @Html.HiddenFor(m => m.IsActivitySchecduled, new { @id = "hdIsActivitySchecduled" })
+                @Html.HiddenFor(m => m.ActivitySchecduledOn, new { @id = "hdActivitySchecduledOn" })
+                @Html.HiddenFor(m => m.OpenOrderID, new { @id = "hfOpenOrderid" })
+            </div>
+            <div class="rowTable">
+                <label id="lblSubcategory"><span class="mandatoryStar"></span>Order Type Sub-Category</label>
+                @*<select id="ddlOrderTypeSubCategory" name="ddlOrderTypeSubCategory" class="validate[required] js-example-basic-hide-search" onchange="OnChangeSubCatgory('#ddlOrderTypeSubCategory')"></select>*@
+                <select id="ddlOrderTypeSubCategory" name="ddlOrderTypeSubCategory" class="validate[required]" onchange="OnChangeSubCatgory('#ddlOrderTypeSubCategory')"></select>
+                @Html.HiddenFor(m => m.SubCategoryId, new { @id = "hdOrderTypeSubCategoryID" })
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Activity Type:</label>
+                <label id="CodeTypeValue"></label>
+                @Html.HiddenFor(m => m.OrderType, new { @id = "hdOrderTypeId" })
+            </div>
+            <div class="rowTable" id="divSpecimanType" style="display: none;">
+                <label><span class="mandatoryStar"></span>Type Of Speciman:</label>
+                <label id="TypeOfSpeciman"></label>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-6 col-lg-4">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Frequency</label>
+                <select id="ddlFrequencyList" name="ddlFrequencyList" class="validate[required] emptyddl"></select>
+                @Html.HiddenFor(m => m.FrequencyCode, new { @id = "hdFrequencyCode" })
+            </div>
+            <div class="rowTable OtherFrequnecy" style="display: none;">
+                <label><span class="mandatoryStar"></span>Other Frequency</label>
+                @Html.TextBoxFor(m => m.FrequencyCode, new { id = "txtOtherFrequnecy", @maxlength = "15", @class = "emptytxt" })
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Quantity</label>
+                @*@Html.TextBoxFor(m => m.Quantity, new { id = "txtQuantity", @maxlength = "5", @class = "validate[required] emptytxt" })*@
+                <select id="ddlQuantityList" name="ddlQuantityList" class="validate[required] emptyddl"></select>
+                @Html.HiddenFor(m => m.Quantity, new { @id = "hdQuantity" })
+            </div>
+            <div class="rowTable">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label><span class="mandatoryStar"></span>Start Date</label>
+                        @Html.TextBoxFor(m => m.StartDate, new { @Value = Model.StartDate.HasValue ? Convert.ToDateTime(Model.StartDate).ToString("MM/dd/yyyy") : string.Empty, @id = "txtOrderStartDate", @maxlength = "18", @placeholder = "Enter Start Date...", @class = "dtGreaterThanCurrent emptytxt validate[required]", @onChange = "CheckTwoDates($('#txtOrderStartDate'),$('#txtOrderEndDate'),'txtOrderStartDate');CheckValidDateNotLessThanTodayDate(this,'txtOrderStartDate')"  })
+                    </div>
+                    <div class="col-sm-6">
+                        <label><span class="mandatoryStar"></span>End Date</label>
+                        @Html.TextBoxFor(m => m.EndDate, new { @Value = Model.EndDate.HasValue ? Convert.ToDateTime(Model.EndDate).ToString("MM/dd/yyyy") : string.Empty, id = "txtOrderEndDate", @maxlength = "18", @placeholder = "Enter End Date...", @class = "dtGreaterThanCurrent emptytxt validate[required]", @onchange= "CheckTwoDates($('#txtOrderStartDate'),$('#txtOrderEndDate'),'txtOrderEndDate')" })
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-6 col-lg-4">
+            <div class="rowTable">
+                <label>Comments</label>
+                @Html.TextAreaFor(m => m.OrderNotes, new { id = "txtOrderNotes", @maxlength = "500", @placeholder = "Enter your additional comments here...", @style = "height:34px;", @class = "emptytxt" })
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Order Status</label>
+                <select id="ddlOrderStatus" name="ddlOrderStatus" class="validate[required] emptyddl"></select>
+                @Html.HiddenFor(m => m.OrderStatus, new { @id = "hdOrderStatus" })
+            </div>
+            <div class="row">
+                <div class="col-sm-6 col-md-6">
+                    <div class="rowTable">
+                        <label>Mark As Favorite</label>
+                        <input type="hidden" id="hdFavoriteId" />
+                        <input type="checkbox" id="chkMarkAsFavorite" onchange="OnChangeMarkAsFavorite();" />
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-6">
+                    <div class="rowTable">
+                        <label>Future Order</label>
+                        <input type="checkbox" id="chkOutstandingOrder" onchange="OnChangeOutstandingOrder();" />
+                    </div>
+                </div>
+            </div>
+            <div class="rowTable" id="favoriteOrderDescDiv" style="display: none">
+                <textarea id="txtFavoriteDescription" maxlength="1000"></textarea>
+            </div>
+        </div>
+
+        <div class="clear"></div>
+        <div class="col-sm-12">
+            <div>
+                <label><span class="mandatoryStar"></span>Order Codes (You can Select from the dropdown or search the Codes / Description through Smart TextBox):</label>
+                @*<select name="select_this" id="ddlOrderCodes" class="testselectset validate[required] js-example-basic-hide-search" onchange="CheckForIsFav(); "></select>*@
+                <select name="select_this" id="ddlOrderCodes" class="testselectset validate[required]" onchange="CheckForIsFav(); "></select>
+                @Html.HiddenFor(m => m.OrderCode, new { @id = "hdOrderCodeId" })
+                @Html.HiddenFor(m => m.OrderCode, new { @id = "hdAutocompleteOrderCodeId" })
+                @Html.HiddenFor(m => m.OrderType, new { @id = "hdOrderType" })
+                <input type="hidden" id="hidOrderCodeValue" />
+                @Html.HiddenFor(m => m.EncounterID, new { @id = "hdCurrentEncounterId1" })
+                @Html.HiddenFor(m => m.PatientID, new { @id = "hdPatientID1" })
+                <input type="hidden" name="hdOrderExternalCode" value="" id="hdOrderExternalCode" />
+                <div class="field-group rowTable">
+                    @(Html.Kendo().AutoComplete()
+                      .Name("txtOrderCode")
+                      .DataTextField("CodeDescription")
+                      .Placeholder("Search By entering Code or Description...")
+                      .Filter("contains")
+                      .MinLength(3)
+                      .Events(e => e.Select("SelectOrderingCode"))
+                      .HtmlAttributes(new
+                      {
+                          id = "txtOrderCode",
+                          onfocus = "ajaxStartActive = false;",
+                          onblur = "ajaxStartActive = true;",
+                          style = "width:100%",
+                          maxlength = "20",
+                          onchange = "$('#txtOrderCode').val(); $('#hdAutocompleteOrderCodeId').val();  BindDrugDDLValue();"
+                          //@class = "validate[required]",
+                      })
+                      .DataSource(source => source.Read(read => read.Action("GetOrderingCodes", "Home")
+                          .Data("OnCodeSelection"))
+                          .ServerFiltering(true))
+                    )
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <div class="button-block">
+                    <input type="submit" class="btn btn-primary edit-btn marginrightBtn AddOrder" id="btnAddOrder" onclick="return IsValidOrder('@Model.OpenOrderID    ');" value="Submit" />
+                    <input type="button" class="btn btn-primary edit-btn marginrightBtn" value="Cancel" onclick="ResetOrder();" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        $("#ddlQuantityList").val('1.00');
+        var currentdate = new Date();
+        var datewithFormat = currentdate.format('mm/dd/yyyy');
+        if ($('#txtOrderStartDate').val() == '') {
+            $('#txtOrderStartDate').val(datewithFormat);
+            $('#txtOrderEndDate').val(datewithFormat);
+        }
+        //OrderAdministratorJsCalls();
+        //$(".js-example-basic-hide-search").select2({
+        //    //minimumResultsForSearch: Infinity,
+        //    placeholder: "Select"
+        //});
+    });
+
+</script>

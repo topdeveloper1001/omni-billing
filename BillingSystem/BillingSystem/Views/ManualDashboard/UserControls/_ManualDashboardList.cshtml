@@ -1,0 +1,124 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<ManualDashboardCustomModel>
+<style>
+    .width40{width:40px; display:block; }
+    .width250{display:block;}
+    .width105{width:105px; display:block;}
+    th{overflow:hidden; white-space:nowrap;}
+</style>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            
+                        <table class="table table-bordered table-striped table_scroll" id="ManualDashboardGridDiv" >
+                            <thead>
+                                <tr class="gridHead">
+                                    <th><span class="width40">Action</span></th>
+                                    <th> <a id="ankBudgetTypeStr" onclick=" BindGridByOrder('BudgetTypeStr', 'DESC', this.id);">BudgetType</a></th>
+                                    <th><a id="ankIndicatorNumber" onclick=" BindGridByOrder('Indicators', 'DESC', this.id);">IndicatorNo.</a></th>
+                                    <th><a id="ankIndicatorTypeStr" class="width250" onclick=" BindGridByOrder('IndicatorTypeStr', 'DESC', this.id);">Indicators</a></th>
+                                    <th><a id="ankSubCategoryValue1Str" onclick=" BindGridByOrder('SubCategoryValue1Str', 'DESC', this.id);">SubCategory1</a></th>
+                                    <th><a id="ankSubCategoryValue2Str" onclick=" BindGridByOrder('SubCategoryValue2Str', 'DESC', this.id);">SubCategory2</a></th>
+                                    <th><a id="ankOwnerShip" class="width105" onclick=" BindGridByOrder('OwnerShip', 'DESC', this.id);">OwnerShip</a></th>
+                                    <th><a id="ankFrequencyTypeStr" onclick=" BindGridByOrder('FrequencyTypeStr', 'DESC', this.id);">Frequency</a></th>
+                                    <th><a id="ankFacilityStr" class="width250"  onclick=" BindGridByOrder('FacilityStr', 'DESC', this.id);">Facility</a></th>
+                                    <th><a id="ankSortOrder" onclick=" BindGridByOrder('SortOrder', 'DESC', this.id);">Sort Order</a></th>
+                                    <th><a id="ankYear" onclick=" BindGridByOrder('Year', 'DESC', this.id); ">Year</a></th>
+                                    <th><a id="ankM1" onclick=" BindGridByOrder('M1', 'DESC', this.id);">Jan</a> </th>
+                                    <th><a id="ankM2" onclick=" BindGridByOrder('M2', 'DESC', this.id);">Feb</a> </th>
+                                    <th><a id="ankM3" onclick=" BindGridByOrder('M3', 'DESC', this.id);">Mar</a> </th>
+                                    <th><a id="ankM4" onclick=" BindGridByOrder('M4', 'DESC', this.id);">Apr</a> </th>
+                                    <th><a id="ankM5" onclick=" BindGridByOrder('M5', 'DESC', this.id);">May</a> </th>
+                                    <th><a id="ankM6" onclick=" BindGridByOrder('M6', 'DESC', this.id);">Jun</a> </th>
+                                    <th><a id="ankM7" onclick=" BindGridByOrder('M7', 'DESC', this.id);">Jul</a> </th>
+                                    <th><a id="ankM8" onclick=" BindGridByOrder('M8', 'DESC', this.id);">Aug</a> </th>
+                                    <th><a id="ankM9" onclick=" BindGridByOrder('M9', 'DESC', this.id);">Sep</a> </th>
+                                    <th><a id="ankM10" onclick=" BindGridByOrder('M10', 'DESC', this.id);">Oct</a></th>
+                                    <th><a id="ankM11" onclick=" BindGridByOrder('M11', 'DESC', this.id);">Nov</a></th>
+                                    <th><a id="ankM12" onclick=" BindGridByOrder('M12', 'DESC', this.id);">Dec</a></th>
+                                </tr>
+                            </thead>
+                        
+                    
+                        
+                            
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr class="gridRow">
+                                        <td>
+                                            @*@{
+                                                var isNumber = !string.IsNullOrEmpty(item.ExternalValue2) ? (int.Parse(item.ExternalValue2) > 0 && int.Parse(item.ExternalValue2) == 3 ? false : true) : true;
+                                                        }
+                                                        @if (isNumber)
+                                                        {
+                                                            <a href="javascript:void(0);" title="Edit Data" onclick=" EditManualDashboard('@item.FacilityId', '@item.CorporateId', '@item.Indicators', '@item.BudgetType', '@item.Year') " style="float: left; margin-right: 7px; width: 15px;">
+                                                                <img src="@Url.Content("~/images/edit.png")"></a>
+                                                            <a href="javascript:void(0);" title="Delete Data" onclick=" DeleteManualDashboard('@item.FacilityId', '@item.CorporateId', '@item.Indicators', '@item.BudgetType', '@item.Year') " style="float: left; margin-right: 7px; width: 15px;">
+                                                                <img src="@Url.Content("~/images/delete.png")"></a>
+                                                        }*@
+                                            <a href="javascript:void(0);" title="Edit Data" onclick="EditManualDashboard('@item.FacilityId', '@item.CorporateId', '@item.Indicators', '@item.BudgetType', '@item.Year', '@item.SubCategory1','@item.SubCategory2') " style="float: left; margin-right: 7px; width: 15px;">
+                                                <img src="@Url.Content("~/images/edit.png")">
+                                            </a>
+                                            <a href="javascript:void(0);" title="Delete Data" onclick="DeleteManualDashboard('@item.FacilityId', '@item.CorporateId', '@item.Indicators', '@item.BudgetType', '@item.Year', '@item.SubCategory1','@item.SubCategory2') " style="float: left; width: 15px;">
+                                                <img src="@Url.Content("~/images/delete.png")">
+                                            </a>
+                                            @*<a href="javascript:void(0);" title="Delete Data" onclick="return OpenConfirmPopupWithSevenId('@item.FacilityId','@item.CorporateId','@item.Indicators','@item.BudgetType','@item.Year','@item.SubCategory1','@item.SubCategory2','Delete Current Activity','',DeleteManualDashboard,null); " style="float: left; width: 15px;">
+                                                <img src="@Url.Content("~/images/delete.png")">
+                                            </a>*@
+                                        </td>
+                                        <td>@item.BudgetTypeStr</td>
+                                        <td>@item.Indicators</td>
+                                        <td>@item.IndicatorTypeStr</td>
+                                        <td>@item.SubCategoryValue1Str</td>
+                                        <td>@item.SubCategoryValue2Str</td>
+                                        <td>@item.OwnerShip</td>
+                                        <td>@item.FrequencyTypeStr</td>
+                                        <td>@item.FacilityStr</td>
+                                        <td>@item.SortOrder</td>
+                                        <td>@item.Year</td>
+                                        <td>@item.M1</td>
+                                        <td>@item.M2</td>
+                                        <td>@item.M3</td>
+                                        <td>@item.M4</td>
+                                        <td>@item.M5</td>
+                                        <td>@item.M6</td>
+                                        <td>@item.M7</td>
+                                        <td>@item.M8</td>
+                                        <td>@item.M9</td>
+                                        <td>@item.M10</td>
+                                        <td>@item.M11</td>
+                                        <td>@item.M12</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    
+        }
+        else
+        {
+            <h5 class="col-sm-12">No Record found</h5>
+        }
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //if ($('#ManualDashboardGridDiv tr').length > 6) {
+            
+        //}
+        $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+    });
+    //$headerDiv = $('.header-wrapper');
+    //$rowDiv = $('.row-wrapper');
+    //$rowDiv.scroll(function (e) {
+    //    $headerDiv.css({
+    //        left: -$rowDiv[0].scrollLeft + 'px'
+    //    });
+    //});
+</script>
+
+

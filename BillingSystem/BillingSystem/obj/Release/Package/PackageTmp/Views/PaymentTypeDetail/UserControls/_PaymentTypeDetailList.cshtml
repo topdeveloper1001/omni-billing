@@ -1,0 +1,43 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<PaymentTypeDetailCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            WebGrid grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent");
+            <div id="gridContent">
+                @grid.GetHtml(tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                                grid.Column("Id", header: "Id" , canSort: true),
+                                grid.Column("PaymentType", header: "PaymentType" , canSort: true),
+                                grid.Column("CardNumber", header: "CardNumber" , canSort: true),
+                                grid.Column("ExpiryMonth", header: "ExpiryMonth" , canSort: true),
+                                grid.Column("ExpiryYear", header: "ExpiryYear" , canSort: true),
+                                grid.Column("CardHolderName", header: "CardHolderName" , canSort: true),
+                                grid.Column("ExtValue1", header: "ExtValue1" , canSort: true),
+                                grid.Column("ExtValue2", header: "ExtValue2" , canSort: true),
+                                grid.Column("ExtValue3", header: "ExtValue3" , canSort: true),
+                                grid.Column("ExtValue4", header: "ExtValue4" , canSort: true),
+                                grid.Column("ExtValue6", header: "ExtValue6" , canSort: true),
+                                grid.Column("CreatedBy", header: "CreatedBy" , canSort: true),
+                                grid.Column("CreatedDate", header: "CreatedDate" , canSort: true),
+                
+                grid.Column(header: "Action", format: @<text>
+                <a href="#" onclick="EditPaymentTypeDetail('@item.PaymentTypeDetailId')" style="float: left; margin-right: 7px; width: 15px;">
+                    <img src="../images/edit.png" /></a>
+                                                           &nbsp;
+                                                           @*<a href="#" title="Delete" onclick="return DeletePaymentTypeDetail('@item.PaymentTypeDetailId');" style="float: left; width: 15px;"><img src="../images/delete.png" /></a>*@
+                <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.PaymentTypeDetailId','Delete Payment Type Detail','',DeletePaymentTypeDetail,null); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>
+                </text>)
+                                ));
+            </div>            
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>

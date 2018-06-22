@@ -1,0 +1,69 @@
+﻿@model BillingSystem.Model.PatientAddressRelation
+
+@if (Model != null)
+{
+    <div id="divAddessAddEditDisabled">
+        @Html.HiddenFor(m => m.PatientAddressRelationID)
+        <div class="clear"></div>
+        <div class="col-xs-12 col-sm-4 col-md-4 col-lg-4">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Relationship Type:</label>
+                <select id="ddlPersonRelation" name="ddlPersonRelation" class="validate[required]" onchange="GetUserSelfInfo(this, $('#PatientId').val()) "></select>
+                @Html.HiddenFor(m => m.PatientAddressRelationType)
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>First Name:</label>
+                @Html.TextBoxFor(m => m.FirstName, new { @maxlength = "50", @class = "validate[required]" })
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Last Name:</label>
+                @Html.TextBoxFor(m => m.LastName, new { @maxlength = "50", @class = "validate[required]" })
+            </div>
+            <div class="form-group">
+                <label class="control-label" style="width: 200px;">Is Primary: @Html.CheckBox("chkIsPrimary", Model.IsPrimary ?? false)</label>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-4 col-md-4 col-lg-4">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Street Address 1:</label>
+                @Html.TextBoxFor(m => m.StreetAddress1, new { @maxlength = "100", @class = "validate[required]" })
+            </div>
+            <div class="rowTable">
+                <label>Street address 2:</label>
+                @Html.TextBoxFor(m => m.StreetAddress2, new { @maxlength = "100" })
+            </div>
+            <div class="rowTable">
+                <label>PO Box:</label>
+                @Html.TextBoxFor(m => m.POBox, new { @maxlength = "7", @class = "validate[optional[nameFormat]]" })
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-4 col-md-4 col-lg-4">
+            @{ Html.RenderPartial("~/Views/CommonUserControls/CascadingCountryView.cshtml", new BillingSystem.Models.CommonDataView
+               {
+                   CountryList = new List<BillingSystem.Model.Country>(),
+                   StatesList = new List<BillingSystem.Model.State>(),
+                   CityList = new List<BillingSystem.Model.City>(),
+                   CountryId = Convert.ToInt32(Model.CountryID),
+                   StateId = Convert.ToInt32(Model.StateID),
+                   CityId = Convert.ToInt32(Model.CityID),
+               }); }
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Zip Code:</label>
+                @Html.TextBoxFor(m => m.ZipCode, new { @maxlength = "7", @class = "validate[required]" })
+            </div>
+        </div>
+        <div class="btn-group" id="divSaveAddressButtons">
+            @{
+               var btnAddressRelationSaveText = "Save";
+               if (Model.PatientAddressRelationID > 0)
+               {
+                   btnAddressRelationSaveText = "Update";
+               }
+            }
+            <input type="submit" id="btnSaveAddressRelation" class="blue-btn btn btn-primary edit-btn marginBtn" style="margin-left: 2px;" value="@btnAddressRelationSaveText" onclick="IsValidAddress();" />
+            <input type="submit" class="blue-btn btn btn-primary edit-btn marginBtn" value="Cancel" onclick=" ClearAddressAll(); " />
+        </div>
+    </div>
+}
+
+

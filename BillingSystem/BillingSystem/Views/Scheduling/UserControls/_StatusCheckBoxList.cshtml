@@ -1,0 +1,21 @@
+﻿@using BillingSystem.Model
+@using Kendo.Mvc.UI
+@model IEnumerable<GlobalCodes>
+
+<style type="text/css">
+    #TreeView .k-group li {
+        float: left;
+        width: 45%;
+    }
+    
+</style>
+@(Html.Kendo().TreeView().Name("treeviewStatusCheck").Checkboxes(checkboxes => checkboxes.Name("checkedFiles").CheckChildren(false)).Events(iten => iten.Check("onCheckFilters")).HtmlAttributes(new { }).HighlightPath(false).Items(menu =>
+      {
+          var list = Model;
+          foreach (var item in list)
+          {
+              menu.Add().Text(item.GlobalCodeName).HasChildren(false).Id(item.GlobalCodeValue.ToString()).SpriteCssClasses(item.ExternalValue2).Expanded(false).Checked(true);
+          }
+      })
+      )
+@Html.Kendo().DeferredScripts()

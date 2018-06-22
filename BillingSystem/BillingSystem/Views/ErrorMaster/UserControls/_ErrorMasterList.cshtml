@@ -1,0 +1,48 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model List<ErrorMasterCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "ErrorMasterGridContent", canPage: false);
+            <div id="ErrorMasterGridContent">
+                @grid.GetHtml("table table-grid", "gridHead", "gridFooter", "gridRow", "gridAltRow", columns:
+                    grid.Columns(
+                        grid.Column("ErrorCode", "Error Code"),
+                        grid.Column("ErrorTypeString", "Error Type"),
+                        grid.Column("ErrorDescription", "Error Description"),
+                        grid.Column("ErrorResolution", "Error Resolution"),
+                        grid.Column("ExtValue1", "Other Values"),
+                        grid.Column("IsActive", "Active"),
+                        grid.Column("CreatedDate", "CreatedDate", format: @<text>@if (item.CreatedDate!= null)
+                                  { @item.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss" ) 
+                                  }</text> ),
+                        grid.Column(header: "Action", style: "colErrorAction", format:
+                            @<text>
+                                 @if (!item.IsPredefinedDenial)
+                                 {
+                                     <a href="javascript:void(0);" onclick="EditErrorMaster('@item.ErrorMasterId') " style="float: left; margin-right: 7px; width: 15px;">
+                                         <img src="@Url.Content("~/images/edit.png")" /></a>
+                                     @*<a href="javascript:void(0);" title="Delete" onclick=" return DeleteErrorMaster('@item.ErrorMasterId'); " style="float: left; width: 15px;">
+                                         <img src="@Url.Content("~/images/delete.png")" /></a>*@
+    <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.ErrorMasterId','Delete Error Master','',DeleteErrorMaster,null); " style="float: left; width: 15px;">
+        <img src="@Url.Content("~/images/delete.png")" />
+    </a>
+                                 }
+                             </text>)))
+            </div>
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+<script>
+    $(function() {
+        SetGridSorting(SortErrorMasterGrid, "#ErrorMasterGridContent");
+    });
+</script>

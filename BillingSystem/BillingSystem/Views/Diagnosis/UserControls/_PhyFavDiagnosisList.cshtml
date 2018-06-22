@@ -1,0 +1,51 @@
+﻿@using BillingSystem.Model.CustomModel
+@*@model IEnumerable<OpenOrderCustomModel>*@
+@model IEnumerable<FavoritesCustomModel>
+
+@{
+    ViewBag.Title = "Physicians Fav Diagnosis List";
+}
+
+@if (Model != null)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentphysicianFavDiag", canPage: false);
+    <div id="gridContentphysicianFavDiag">
+        @grid.GetHtml(htmlAttributes: new {id = "PatientFavDiagnosisGrid"}, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+            columns:
+                grid.Columns(
+                    grid.Column("CategoryName", "Activity", canSort: true, style: "col4"),
+                     grid.Column("CodeId", "Code", canSort: true, style: "col3"),
+                     grid.Column("CodeDesc", "Description", canSort: true, style: "col6"),
+                     grid.Column("UserDefineDescription", "User Define Description", canSort: true, style: "col1"),
+                    grid.Column(header: "Action", style: "col9", format:
+                        @<text>
+        <a href="#" class="RemoveDiagnosis" title="Remove Favorite" onclick="return OpenConfirmPopup('@item.UserDefinedDescriptionId','Delete Favorite','',DeleteFavDiagnosis,null); " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px;">
+            <img class="img-responsive" src="~/images/delete_small.png" />
+        </a>
+                             &nbsp;
+                             <a href="#" class="AddAsDiagnosis" title="Add as Diagnosis" onclick="AddAsDiagnosis('@item.CodeId') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px; display: none;">
+                                 <img class="img-responsive" src="~/images/edit_small.png" />
+                             </a>
+                         </text>)))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function () {
+        if ($('#PatientFavDiagnosisGrid tr').length > 4) {
+            if ($('#collapsePhyFavDiagnosisList').hasClass('in')) {
+                //$('#PatientFavDiagnosisGrid').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+            } else {
+                $('#collapsePhyFavDiagnosisList').addClass('in');
+                //$('#PatientFavDiagnosisGrid').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+                $('#collapsePhyFavDiagnosisList').removeClass('in');
+            }
+        }
+        SetGridSorting(SortPhFav, "#gridContentphysicianFavDiag");
+    });
+</script>

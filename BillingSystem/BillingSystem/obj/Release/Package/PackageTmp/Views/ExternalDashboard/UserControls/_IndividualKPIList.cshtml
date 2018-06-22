@@ -1,0 +1,95 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<ManualDashboardCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridProjectDashboardContent", canPage: false);
+            <div id="gridProjectDashboardContent">
+                @grid.GetHtml(htmlAttributes: new {id = "ProjectDashboardTable"}, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                        grid.Column("SubCategoryValue1Str", header: "Objective", canSort: false),
+                        grid.Column("SubCategoryValue2Str", header: "Breakdown of Objectives", canSort: false),
+                        grid.Column("BudgetTypeStr", header: "Category", canSort: false),
+                        grid.Column("M1", header: "Jan", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M1) && @item.M1 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M1))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M2", header: "Feb", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M2) && @item.M2 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M2))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M3", header: "Mar", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M3) && @item.M3 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M3))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M4", header: "Apr", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M4) && @item.M4 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M4))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M5", header: "May", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M5) && @item.M5 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M5))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M6", header: "Jun", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M6) && @item.M6 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M6))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M7", header: "Jul", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M7) && @item.M7 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M7))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M8", header: "Aug", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M8) && @item.M8 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M8))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M9", header: "Sep", canSort: false, format: @<text>
+                                                                                      @if (!string.IsNullOrEmpty(@item.M9) && @item.M9 != "0.0000")
+                                                                                      {
+                                                                                          <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M9))</span>
+                                                                                      }
+                                                                                  </text>),
+                        grid.Column("M10", header: "Oct", canSort: false, format: @<text>
+                                                                                       @if (!string.IsNullOrEmpty(@item.M10) && @item.M10 != "0.0000")
+                                                                                       {
+                                                                                           <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M10))</span>
+                                                                                       }
+                                                                                   </text>),
+                        grid.Column("M11", header: "Nov", canSort: false, format: @<text>
+                                                                                       @if (!string.IsNullOrEmpty(@item.M11) && @item.M11 != "0.0000")
+                                                                                       {
+                                                                                           <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M11))</span>
+                                                                                       }
+                                                                                   </text>),
+                        grid.Column("M12", header: "Dec", canSort: false, format: @<text>
+                                                                                       @if (!string.IsNullOrEmpty(@item.M12) && @item.M12 != "0.0000")
+                                                                                       {
+                                                                                           <span>@string.Format("{0:0.00%}", Convert.ToDecimal(item.M12))</span>
+                                                                                       }
+                                                                                   </text>)
+                        ))
+            </div>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>

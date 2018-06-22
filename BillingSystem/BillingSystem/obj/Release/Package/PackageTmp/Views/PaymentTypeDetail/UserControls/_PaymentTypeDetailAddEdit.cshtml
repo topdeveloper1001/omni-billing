@@ -1,0 +1,93 @@
+﻿@using BillingSystem.Model
+@model PaymentTypeDetail
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+    select {
+    margin-bottom: 10px;}
+</style>
+<div class="form" id="PaymentTypeDetailFormDiv">
+    @*// BBCOLUMNSHERE*@
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>Id:</label>
+        @Html.TextBoxFor(m => m.Id, new { @maxlength = "10", @id = "txtId" })
+      </div>
+      <div class="rowTable">
+        <label>PaymentType:</label>
+        @Html.TextBoxFor(m => m.PaymentType, new { @maxlength = "50", @id = "txtPaymentType" })
+      </div>
+      <div class="rowTable">
+        <label>CardNumber:</label>
+        @Html.TextBoxFor(m => m.CardNumber, new { @maxlength = "50", @id = "txtCardNumber" })
+      </div>
+      <div class="rowTable">
+        <label>ExpiryMonth:</label>
+        @Html.TextBoxFor(m => m.ExpiryMonth, new { @maxlength = "50", @id = "txtExpiryMonth" })
+      </div>
+      <div class="rowTable">
+        <label>ExpiryYear:</label>
+        @Html.TextBoxFor(m => m.ExpiryYear, new { @maxlength = "50", @id = "txtExpiryYear" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>CardHolderName:</label>
+        @Html.TextBoxFor(m => m.CardHolderName, new { @maxlength = "100", @id = "txtCardHolderName" })
+      </div>
+      <div class="rowTable">
+        <label>ExtValue1:</label>
+        @Html.TextBoxFor(m => m.ExtValue1, new { @maxlength = "50", @id = "txtExtValue1" })
+      </div>
+      <div class="rowTable">
+        <label>ExtValue2:</label>
+        @Html.TextBoxFor(m => m.ExtValue2, new { @maxlength = "50", @id = "txtExtValue2" })
+      </div>
+      <div class="rowTable">
+        <label>ExtValue3:</label>
+        @Html.TextBoxFor(m => m.ExtValue3, new { @maxlength = "50", @id = "txtExtValue3" })
+      </div>
+      <div class="rowTable">
+        <label>ExtValue4:</label>
+        @Html.TextBoxFor(m => m.ExtValue4, new { @maxlength = "50", @id = "txtExtValue4" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>ExtValue6:</label>
+        @Html.TextBoxFor(m => m.ExtValue6, new { @maxlength = "50", @id = "txtExtValue6" })
+      </div>
+      <div class="rowTable">
+        <label>CreatedBy:</label>
+        @Html.TextBoxFor(m => m.CreatedBy, new { @maxlength = "10", @id = "txtCreatedBy" })
+      </div>
+      <div class="rowTable">
+        <label>CreatedDate:</label>
+        @Html.TextBoxFor(m => m.CreatedDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtCreatedDate" })
+      </div>
+    <div class="clear"></div>
+
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.PaymentTypeDetailID != null && Model.PaymentTypeDetailID != 0)
+            {  
+                <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SavePaymentTypeDetail();" />                
+            }
+            else
+            {
+                <input type="submit" onclick="return SavePaymentTypeDetail();" class="btn btn-primary edit-btn marginBtn" value="Save" />                
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>            
+        </div>
+    </div>
+
+
+
+</div>

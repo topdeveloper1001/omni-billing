@@ -1,0 +1,38 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<ProjectDashboardCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridProjectDashboardContent",canPage:false);
+            <div id="gridProjectDashboardContent">
+                @grid.GetHtml(htmlAttributes: new {id = "ProjectDashboardTable"}, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                    rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                        grid.Column("ProjectNumber", header: "Project Number", canSort: false),
+                        grid.Column("ProjectDescription", header: "Project Description", canSort: false),
+                        grid.Column("RepsonsibleParty", header: "Repsonsible Party", canSort: false),
+                        grid.Column("ProjectStartDate", header: "Start Date", canSort: false),
+                        grid.Column("ProjectEstimatedCompletionDate", header: "Estimated Completion Date", canSort: false),
+                        grid.Column("ProjectRevisedCompletionDate", header: "Revised Completion Date", canSort: false),
+                        grid.Column("JanTarget", header: "Jan", canSort: false),
+                        grid.Column("FebTarget", header: "Feb", canSort: false),
+                        grid.Column("MarTarget", header: "Mar", canSort: false),
+                        grid.Column("AprTarget", header: "Apr", canSort: false),
+                        grid.Column("MayTarget", header: "May", canSort: false),
+                        grid.Column("JunTarget", header: "Jun", canSort: false),
+                        grid.Column("JulTarget", header: "Jul", canSort: false),
+                        grid.Column("AugTarget", header: "Aug", canSort: false),
+                        grid.Column("SepTarget", header: "Sep", canSort: false),
+                        grid.Column("OctTarget", header: "Oct", canSort: false),
+                        grid.Column("NovTarget", header: "Nov", canSort: false),
+                        grid.Column("DecTarget", header: "Dec", canSort: false)
+                        ))
+            </div>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>

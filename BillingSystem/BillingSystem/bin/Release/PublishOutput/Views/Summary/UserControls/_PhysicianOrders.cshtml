@@ -1,0 +1,55 @@
+﻿@using Kendo.Mvc.UI
+@model IEnumerable<BillingSystem.Model.EncounterOrder>
+
+    @*
+        Owner: Amit Jain
+        On: 05092014
+        Purpose: To show all the vacant beds list that are assigned to the concerned patient
+    *@
+
+    @{
+        ViewBag.Title = "Physicians Orders List";
+    }
+
+    @(Html.Kendo().Grid(Model)
+    .Name("PhysicianOrderGrid")
+    .HtmlAttributes(new { style = "height: 400px" })
+    .Columns(columns =>
+    {
+        columns.Bound(p => p.OrderedDateTime).Format("{0:MM/dd/yyyy}").Title("Ordered").Filterable(f => f.UI("DateTimeFilter")); ;
+        columns.Bound(p => p.Comments).Title("Description");
+        columns.Bound(p => p.Units).Title("Units-Ordered");
+        columns.Bound(p => p.StartDate).Format("{0:MM/dd/yyyy}").Title("Start Date").Filterable(f => f.UI("DateTimeFilter")); ;
+        columns.Bound(p => p.EndDate).Format("{0:MM/dd/yyyy}").Title("End Date").Filterable(f => f.UI("DateTimeFilter")); ;
+        columns.Command(command => command.Custom("Edit").Click("EditPhysicanOrderDetails")).Title("Actions");
+    })
+    .Groupable()
+    .Scrollable()
+    .Sortable()
+    .Filterable(filterable => filterable
+        .Extra(false)
+        .Operators(operators => operators
+            .ForString(str => str.Clear()
+                .StartsWith("Starts with")
+                .IsEqualTo("Is equal to")
+                .IsNotEqualTo("Is not equal to")
+            ))
+        )
+   .Pageable(pageable => pageable
+            .Refresh(true)
+            .PageSizes(true)
+            .ButtonCount(5))
+    .DataSource(dataSource => dataSource
+        .Ajax()
+        .PageSize(10)
+        .ServerOperation(false)
+     )
+ .Resizable(resize => resize.Columns(true))
+    )
+    <script type="text/javascript">
+        function DateTimeFilter(control) {
+            $(control).kendoDateTimePicker({
+                format: "MM/dd/yyyy"
+            });
+        }
+    </script>

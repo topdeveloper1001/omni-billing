@@ -1,0 +1,52 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model.CustomModel
+@model AlergyView
+
+<div class="panel-group">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading">
+            @*data-toggle="collapse" data-parent="#accordion" href="#collapseK"*@
+            <h4 class="panel-title collapseTitle">
+                @ResourceKeyValues.GetKeyValue("allergieshistoryform")
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseK" class="panel-collapse">
+            <div id="AlergyAddAdit">
+                @{ Html.RenderPartial("~/Views/MedicalRecord/UserControls/_AlergiesAddEdit.cshtml", Model); }
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable" id="MedHistoryAddEdit" style="display: none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentMedicationAddEdit">
+            <h4 class="panel-title collapseTitle">
+                @ResourceKeyValues.GetKeyValue("addcurrentmedication")
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colCurrentMedicationAddEdit" class="panel-collapse collapse">
+            <div id="MedicalHistory">
+                @{ Html.RenderPartial("~/Views/MedicalHistory/UserControls/_MedicalHistoryAddEdit.cshtml", Model.MedicalHistoryView.CurrentMedicalHistory); }
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable" id="MedHistoryList" style="display: none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#colCurrentMedicationList">
+            <h4 class="panel-title collapseTitle">
+                @ResourceKeyValues.GetKeyValue("medicationlist")
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="colCurrentMedicationList" class="panel-collapse collapse in">
+            <div id="MedicalHistoryListDiv">
+                @{ Html.RenderPartial("~/Views/MedicalHistory/UserControls/_MedicalHistoryList.cshtml", Model.MedicalHistoryView.MedicalHistoryList); }
+            </div>
+        </div>
+    </div>
+</div>

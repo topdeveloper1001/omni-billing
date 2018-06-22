@@ -1,0 +1,67 @@
+﻿
+@using BillingSystem.Model.CustomModel
+@using System.Linq
+
+@model IEnumerable<ReconcilationReportCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridReconcilationReportMonthWise", canPage: false, canSort: true);
+    <div id="gridReconcilationReportMonthWise">
+        @grid.GetHtml(htmlAttributes: new { id = "PayorReconcilationReportGridMonthWise" }, tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                //grid.Column("ID", header: "ID", canSort: false, style: "col1"),
+                grid.Column("Name", header: "Name", canSort: true, style: "col2"),
+                 grid.Column("D1", header: "1", canSort: true, style: "col3"),
+                 grid.Column("D2", header: "2", canSort: true, style: "col3"),
+                 grid.Column("D3", header: "3", canSort: true, style: "col4"),
+                 grid.Column("D4", header: "4", canSort: true, style: "col5"),
+                 grid.Column("D5", header: "5", canSort: true, style: "col6"),
+                 grid.Column("D6", header: "6", canSort: true, style: "col7"),
+                 grid.Column("D7", header: "7", canSort: true, style: "col8"),
+                 grid.Column("D8", header: "8", canSort: true, style: "col9"),
+                 grid.Column("D9", header: "9", canSort: true, style: "col10"),
+                 grid.Column("D10", header: "10", canSort: true, style: "col11"),
+                 grid.Column("D11", header: "11", canSort: true, style: "col12"),
+                 grid.Column("D12", header: "12", canSort: true, style: "col13"),
+                 grid.Column("D13", header: "13", canSort: true, style: "col4"),
+                 grid.Column("D14", header: "14", canSort: true, style: "col5"),
+                 grid.Column("D15", header: "15", canSort: true, style: "col6"),
+                 grid.Column("D16", header: "16", canSort: true, style: "col7"),
+                 grid.Column("D17", header: "17", canSort: true, style: "col8"),
+                 grid.Column("D18", header: "18", canSort: true, style: "col9"),
+                 grid.Column("D19", header: "19", canSort: true, style: "col10"),
+                 grid.Column("D20", header: "20", canSort: true, style: "col11"),
+                 grid.Column("D21", header: "21", canSort: true, style: "col12"),
+                 grid.Column("D22", header: "22", canSort: true, style: "col13"),
+                 grid.Column("D23", header: "23", canSort: true, style: "col4"),
+                 grid.Column("D24", header: "24", canSort: true, style: "col5"),
+                 grid.Column("D25", header: "25", canSort: true, style: "col6"),
+                 grid.Column("D26", header: "26", canSort: true, style: "col7"),
+                 grid.Column("D27", header: "27", canSort: true, style: "col8"),
+                 grid.Column("D28", header: "28", canSort: true, style: "col9"),
+                 grid.Column("D29", header: "29", canSort: true, style: "col10"),
+                 grid.Column("D30", header: "30", canSort: true, style: "col11"),
+                 grid.Column("D31", header: "31", canSort: true, style: "col11")
+                ))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        //if ($('#PayorReconcilationReportGridMonthWise tr').length > 0) {
+        //    $('#PayorReconcilationReportGridMonthWise').Scrollable();
+        //}
+        $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+    });
+</script>
+
+<script>
+    $(function () {
+        SetGridSorting(SortRecancilationReportGrid, "#gridReconcilationReportMonthWise");
+    });
+</script>

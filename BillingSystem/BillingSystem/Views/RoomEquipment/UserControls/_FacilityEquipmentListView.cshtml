@@ -1,0 +1,25 @@
+﻿@using System.Web.Optimization
+@using BillingSystem.Model
+@using Kendo.Mvc.UI
+@model IEnumerable<BillingSystem.Model.CustomModel.EquipmentCustomModel>
+
+<style type="text/css">
+    #TreeView .k-group li {
+        float: left;
+        width: 45%;
+    }
+    
+</style>
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+@(Html.Kendo().TreeView().Name("treeviewFacilityEquipments").Checkboxes(checkboxes => checkboxes.Name("checkedFiles").CheckChildren(true)).Events(iten => iten.Check("onCheckEquipment")).HighlightPath(false).Items(menu =>
+      {
+          var list = Model;
+          foreach (var item in list)
+          {
+              menu.Add().Text(item.EquipmentName).HasChildren(false).Id(item.EquipmentMasterId.ToString()).Checked(false).Expanded(false);
+          }
+      })
+      )
+@Html.Kendo().DeferredScripts()

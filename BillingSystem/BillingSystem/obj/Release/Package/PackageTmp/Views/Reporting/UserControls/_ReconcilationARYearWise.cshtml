@@ -1,0 +1,47 @@
+﻿@using BillingSystem.Model.CustomModel
+@using System.Linq
+
+@model IEnumerable<ReconcilationReportCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridReconcilationReportYearwise", canPage: false, canSort: true);
+    <div id="gridReconcilationReportYearwise">
+        @grid.GetHtml(htmlAttributes: new { id = "PayorReconcilationReportGridYearwise" }, tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                // grid.Column("ID", header: "ID", canSort: true, style: "col1"),
+                 grid.Column("Name", header: "Name", canSort: true, style: "col2"),
+                 grid.Column("D1", header: "January", canSort: true, style: "col3"),
+                 grid.Column("D2", header: "February", canSort: true, style: "col3"),
+                 grid.Column("D3", header: "March", canSort: true, style: "col4"),
+                 grid.Column("D4", header: "April", canSort: true, style: "col5"),
+                 grid.Column("D5", header: "May", canSort: true, style: "col6"),
+                 grid.Column("D6", header: "June", canSort: true, style: "col7"),
+                 grid.Column("D7", header: "July", canSort: true, style: "col8"),
+                 grid.Column("D8", header: "August", canSort: true, style: "col9"),
+                 grid.Column("D9", header: "September", canSort: true, style: "col10"),
+                 grid.Column("D10", header: "October", canSort: true, style: "col11"),
+                 grid.Column("D11", header: "November", canSort: true, style: "col12"),
+                 grid.Column("D12", header: "December", canSort: true, style: "col13")
+                ))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        //if ($('#PayorReconcilationReportGridYearwise tr').length > 0) {
+        //    $('#PayorReconcilationReportGridYearwise').Scrollable();
+        //}
+        $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+    });
+</script>
+
+<script>
+    $(function () {
+        SetGridSorting(SortRecancilationReportGrid, "#gridReconcilationReportYearwise");
+    });
+</script>

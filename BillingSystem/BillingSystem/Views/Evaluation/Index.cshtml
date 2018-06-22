@@ -1,0 +1,1174 @@
+﻿@using BillingSystem.Model
+@using BillingSystem.Model.CustomModel
+@using BillingSystem.Models
+@model EvaluationViews
+
+@{
+    ViewBag.Title = "Evaluation";
+}
+@* Patient Summary Tab View *@
+
+
+
+<style>
+    input[type="checkbox"] { margin: 0; }
+
+    .table-grid { width: 100% !important; }
+</style>
+
+<script>
+    $(function() {
+        BindGlobalCodesWithValue("#ddlConsult",4549,'');
+    });
+</script>
+
+<div class="white-bg overflowHidden">
+    <div class="title">
+        <div class="row">
+            <div class="col-sm-5">
+                <h1>Evaluation and Management Form</h1>
+            </div>
+        </div>
+    </div>
+    <div class="summery-bg">
+        <div class="personal-detail">
+
+            <div class="col-sm-6 col-lg-4">
+                <div class="col-sm-10 row">
+                    <div class="col-sm-6 col-lg-12 row">
+                        <div class="rowTable">
+                            <span class="bold">Date: </span><span>@DateTime.Now.ToString("dd-mmm-yyyy")</span>
+                        </div>
+                        <div class="rowTable">
+                            <span class="bold">Time : </span><span>@DateTime.Now.ToShortTimeString()</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#1Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Chief Complaint/Reason for Consult:
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="1Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Consult</label>
+                                <div>
+                                    <select id="ddlConsult"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Others</label>
+                                <div>
+                                    <textarea cols="50" rows="5"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel overflowHidden">
+        <div class="col-sm-12">
+            <div class="col-sm-3">
+                <input id="" type="checkbox"/> New Patient
+            </div>
+            <div class="col-sm-3">
+                <input id="" type="checkbox"/> Established Patient
+            </div>
+            <div class="col-sm-3">
+                <input id="" type="checkbox"/> Patient nonverbal
+            </div>
+        </div>
+        <div class="col-sm-12 marginTop">
+            <div class="col-sm-3">
+                <span>History obtained from : </span><input id="" type="checkbox"/> Family
+            </div>
+            <div class="col-sm-3">
+                <input id="" type="checkbox"/> Medical Personnel
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#2Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Current Medications
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h1>
+        </div>
+        <div class="panel-collapse collapse in" id="2Collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form scroller">
+                        <div id="divSearchResult">
+                            <div class="table-responsive">
+                                @{ Html.RenderPartial("~/Views/MedicalHistory/UserControls/_MedicalHistoryList.cshtml", Model.MedicalHistoryList); }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#3Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Current Vitals:
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="3Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="table-responsive scrollable-panel">
+                            @{Html.RenderPartial("~/Views/MedicalVital/UserControls/_MedicalVitalList.cshtml", Model.MedicalVitalList);}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#4Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                History of Present Illness :
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="4Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 row">
+                            <div class="col-sm-3">
+                                <div class="rowTable">
+                                    <input id="" type="checkbox"/> New Problem
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="rowTable">
+                                    <input id="" type="checkbox"/> Existing Problem
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 row">
+                            <div class="col-sm-4">
+                                <ul class="style_UL">
+                                    <li>
+                                        Location
+                                    </li>
+                                    <li>
+                                        Quality
+                                    </li>
+                                    <li>
+                                        Severity
+                                    </li>
+                                    <li>
+                                        Duration
+                                    </li>
+                                    <li>
+                                        Timing
+                                    </li>
+                                    <li>
+                                        Context
+                                    </li>
+                                    <li>
+                                        Modifying Factors
+                                    </li>
+                                    <li>
+                                        Other Signs & Symptoms
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-sm-8"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#5Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Family History :
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="5Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="table-responsive scrollable-panel">
+                            @{Html.RenderPartial("~/Views/MedicalRecord/UserControls/_AlergiesList.cshtml", Model.AlergyList);}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#6Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Review of Systems :
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="6Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <ul class="style_UL1">
+                            <li>
+                                <p class="col-sm-2">Constitutional</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Wt Loss
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Fever
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Fatigue
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Eyes</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Vision Change
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Glasses/contacts
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Visible irritation
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">ENT/Mouth</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Ulcers
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> sinusitis
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> tinnitus
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> headache
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Cardiovascular</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> orthopnea
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> chest pain
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> DOE
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> edema
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> palpitation
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Respiratory</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> wheezing
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> hemoptysis
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> SOB
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> cough
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Gastrointestinal</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Diarrhea
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Bldy stool
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> N/V
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Constipation
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Flatulence
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Pain
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Genitourinary</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Hematuria
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Dysuria
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Urgncy
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Frqncy
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Incomp. Emptying
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Incontinent
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Abnormal Bleeding
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Dyspareunia
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Musculoskeletal</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Muscle weakness
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Muscle pain
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Visible knot
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Skin/breast</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Mastalgia
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Dicharge
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Masses
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Rash
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Ulcer
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Neurological</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Syncope
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Seizures
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Numbness
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Trouble Walking   
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Psychiatric</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Depression
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Crying
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>
+                            <li>
+                                <p class="col-sm-2">Endocrine</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Diabetes
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Hypothyroid
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Hperthyroid
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Hot flashes
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>   
+                            <li>
+                                <p class="col-sm-2">Hemat/Lymph</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Bruises
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Bleeding
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> Adenopathy
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>   
+                            <li>
+                                <p class="col-sm-2">Allergic/Immuno</p>
+                                <div class="col-sm-10">
+                                    <span>
+                                        <input id="" type="checkbox"/> Negative
+                                    </span>
+                                    <span>
+                                        <input id="" type="checkbox"/> other
+                                    </span>
+                                </div>
+                            </li>   
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#7Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Organ Systems :
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="7Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12">
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Eyes:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Ears, Nose, Mouth, Throat:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Cardiovascular:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Respiratory:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Gastrointestinal:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Skin:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Musculoskeletal:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Neurological:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Hematological/Lymphatic:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Psychiatric:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        
+
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#8Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                BODY AREAS :
+               
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="8Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12">
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Head/Face:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Neck:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Chest/Breasts/Axillae:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Abdomen:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Genitalia/Groin/Buttocks:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        Back/Spine:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+                     @{
+                            Html.RenderPartial("~/Views/Summary/UserControls/_OperOrderActivityView.cshtml", new OrderActivityView
+                            {
+                                CurrentOrderActivity = new OrderActivity {OrderActivityStatus = 1},
+                                OpenOrdersList = Model.OpenOrdersList,
+                                OrderActivityList = Model.OrderActivityList,
+                                ClosedOrdersList = Model.ClosedOrdersList,
+                                ClosedOrderActivityList = Model.ClosedOrderActivityList,
+                                ClosedLabOrderActivityList = new List<OrderActivityCustomModel>(),
+                                labOrderActivityList = new List<OrderActivityCustomModel>(),
+                                IsLabTest = Model.IsLabTest,
+                                EncounterOrder = Model.EncounterOrder,
+                                CurrentMedicalVital = new MedicalVitalCustomModel(),
+                                MedicalVitalList = Model.MedicalVitalList
+                            });
+                        }
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#9Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Physician Orders :
+               
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="9Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#10Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Previous Test Results  :
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="10Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        Content here
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#11Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                AMOUNT AND COMPLEXITY OF DATA REVIEWED:
+               
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="11Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12 checkFloat">
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        <input id="" type="checkbox"/> Laboratory:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        <input id="" type="checkbox"/> Radiology/Ultrasound:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+                            <div class="rowTable1">
+                                <label> Review of Records:</label>
+                            </div>
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        <input id="" type="checkbox"/> Previous Test Results:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        <input id="" type="checkbox"/> Discussion of test results with other physician:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        <input id="" type="checkbox"/> Old records reviewed:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        <input id="" type="checkbox"/> History obtained from other source:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" rows="3" cols=""></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        
+
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#12Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                DIAGNOSIS/MANAGEMENT OPTIONS:
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="12Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <ul class="style_UL1">
+                            <li>
+                                <span>
+                                    <input type="checkbox" id=""> Established Problem
+                                </span>
+                                <span>
+                                    <input type="checkbox" id=""> New Problem
+                                </span>
+                                <span>
+                                    <input type="checkbox" id=""> Minimal=Minor Problem
+                                </span>
+                                <span>
+                                    <input type="checkbox" id=""> Limited=Established problem/stable/improved
+                                </span>
+                                <span>
+                                    <input type="checkbox" id=""> Multiple=Established problem, uncertain status, New problem, stable
+                                </span>
+                                <span>
+                                    <input type="checkbox" id=""> Extensive=New problem uncertain status
+                                </span>     
+                            </li>
+                            <li>
+                                <div class="rowTable">
+                                    <div class="col-sm-2">
+                                        <label>
+                                            Assessment and Plan:
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-10">
+                                        <textarea class="form-control" rows="3" cols=""></textarea>
+                                    </div>
+                                </div>
+                               
+                            </li>
+                        </ul>
+
+                        
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#13Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                RISK OF COMPLICATIONS :
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="13Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12">
+                            <div class="rowTable">
+
+                                <label>
+                                    <input id="" type="checkbox"/> Minimal:   (eg, Cold, Aches & pains, insect bite)
+                                </label>
+
+                            </div>
+
+
+                            <div class="rowTable">
+
+                                <label>
+                                    <input id="" type="checkbox"/> Low: (eg, Cystitis, vaginitis, minor surgery w/no risk factors, OTC meds)
+                                </label>
+
+                            </div>
+
+                            <div class="rowTable">
+
+                                <label>
+                                    <input id="" type="checkbox"/> Moderate: (eg, Breast mass, irregular bleeding, headaches, biopsy, minor surgery w/risk factors, Rx drug mgmt)
+                                </label>
+
+                            </div>
+                            
+                            <div class="rowTable">
+
+                                <label>
+                                    <input id="" type="checkbox"/> High: (eg, Pelvic pain, rectal bleeding, Multiple complaints, Major surgery planned, Chemotherapy)
+                                </label>
+
+                            </div>
+
+
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#14Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                PATIENT COUNSELED RE :
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="14Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12">
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                    <label>
+                                        PATIENT COUNSELED RE:
+                                    </label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <textarea cols="" rows="3" class="form-control"></textarea>
+                                    <div class="rowTable">
+                                        <div class="col-sm-6">Minutes Counseled: <span></span></div>
+                                        <div class="col-sm-6">Total Encounter Time: <span></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div href="#15Collapse" data-parent="#accordion" data-toggle="collapse" class="panel-heading">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="/images/list.png">
+                </span>
+                Electronic Signature:
+
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="15Collapse">
+            <div class="panel-body scroller">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-sm-12">
+                            <div class="rowTable">
+                                <div class="col-sm-2">
+                                
+                                    <label>Electronic Signature:</label>
+                                </div>
+                        
+                                <div class="col-sm-4">
+                                    <input type="text"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

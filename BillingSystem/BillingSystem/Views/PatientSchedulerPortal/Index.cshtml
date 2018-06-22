@@ -1,0 +1,98 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Models.PatientSchedulerPortalView
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (ViewBag.Message != null)
+{
+    <h3 class="errorMsg mandatoryInfo"><span class="glyphicon glyphicon-warning-sign"></span>@ViewBag.Message</h3>
+}
+else
+{
+    {
+        Html.RenderPartial("~/Views/PatientSchedulerPortal/UserControls/_PatientSchedularView.cshtml", null);
+    }
+}
+
+@Html.HiddenFor(m => m.IsPreviousEncounter, new {  @id="hdIsPreviousEncounter"})
+@Html.HiddenFor(m => m.PreviousEncounterPhysicianName, new {  @id="hdPreviousEncounterPhysicianName"})
+@Html.HiddenFor(m => m.PreviousEncounterPhysicianId, new {  @id="hdPreviousEncounterPhysicianId"})
+@Html.HiddenFor(m => m.PatientId, new {  @id="hdPatientId"})
+@Html.HiddenFor(m => m.CorporateId, new {  @id="hdCorporateId"})
+@Html.HiddenFor(m => m.FacilityId, new {  @id="hdFacilityId"})
+
+
+<div aria-hidden="false" class="modal fade in" tabindex="-1" id="divPreviousEncounter" style="display: none;">
+    <div class="modal-dialog modal-sm modal_custom_position previous_encounter">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button aria-hidden="true" data-dismiss="modal" class="close top-btn" type="button" onclick=" hidePopup('divRegistrationPopupView') ">
+                </button>
+                <h4 class="modal-title">Previous Encounter Physician
+                </h4>
+            </div>
+            <div class="modal-body">
+                <h5>Do you wish to book appointment with your previous physician "Dr. @Html.Raw(Model.PreviousEncounterPhysicianName)"?
+                </h5>
+            </div>
+            <div class="modal-footer" style="margin-top:0;">
+                <input type="button" id="btnBookAppointmentyes" class="btn btn-sm btn-primary" value="Yes" />
+                <input type="button" id="btnBookAppointmentno" class="btn btn-sm btn-default" value="No" />
+            </div>
+        </div>
+    </div>
+</div>
+<div class="overlay" style="display: none"></div>
+
+<script>
+    $(function() {
+
+        setTimeout(showPreviousEncounter(), 1000);
+
+        $('#btnBookAppointmentno').click(function () {
+            hidePopup('divPreviousEncounter');
+        });
+
+        $('#btnBookAppointmentyes').click(function() {
+            hidePopup('divPreviousEncounter');
+            $('#hidSchedulingType').val('1');
+            $("#divSchedularPopUpContent .modal-title").html("Appointments Scheduler");
+            ShowLightBoxStyle("1");//1 means schedule appointment
+            scheduler.addEventNow();
+            LoadPhysicianPatientData();
+        });
+    });
+
+    function hidePopup(divId) {
+        divId = '#' + divId;
+        $(divId).hide();
+        hideOverlay();
+    }
+
+    function showOverlay() {
+        $('.overlay').show();
+    }
+
+    function hideOverlay() {
+        $('.overlay').hide();
+    }
+
+    var showPreviousEncounter = function() {
+        if ($('#hdIsPreviousEncounter').val() == 'True') {
+            if ($("#divPreviousEncounter").is(":hidden")) {
+                $("#divPreviousEncounter").show();
+                showOverlay();
+            } else {
+                $("#divPreviousEncounter").hide();
+                hideOverlay();
+            }
+            //if ($('#hdIsPreviousEncounter').val() == 'True') {
+            //    $.blockUI({ message: $('#divPreviousEncounter'), css: { width: '357px' } });
+            //    return false;
+            //}
+        }
+    }
+</script>

@@ -1,0 +1,51 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model List<PaymentCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "PaymentsGridContent",canPage:false);
+    <div id="PaymentsGridContent">
+        @grid.GetHtml(htmlAttributes: new { id = "PaymentsGrid" }, tableStyle: "table table_scroll12", headerStyle: "gridHead", footerStyle: "gridFooter",
+                                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                                        columns: grid.Columns(
+                                        grid.Column("PayBillNumber", header: "Bill Number", canSort: true, style: "col1"),
+                                        grid.Column("PayEncounterID", header: "Encounter ID", canSort: true, style: "col2"),
+                                        grid.Column("PayForPatientName", header: "Pay For", canSort: true, style: "col3"),
+                                        grid.Column("PayAmount", header: "Pay Amount", canSort: true, style: "col4"),
+                                        grid.Column("PayType", header: "Pay Type", canSort: true, style: "col5"),
+                                        grid.Column("PayDate", header: "Pay Date", canSort: true, style: "col6", format: @<text>@if (item.PayDate!= null)
+                                                   { @item.PayDate.ToString("dd/MM/yyyy HH:mm:ss" ) 
+                                                   }</text> ),
+                                        grid.Column("PayReference", header: "Pay Reference", canSort: true, style: "col7"),
+                                        grid.Column("PayByPatientName", header: "Pay By", canSort: true, style: "col8"),
+                                        grid.Column("PayActivityID", header: "Activity ID", canSort: true, style: "col9"),
+                                        grid.Column("PayXAFileHeaderID", header: "File ID", canSort: true, style: "col10"),
+                                        grid.Column("PayXAAdviceID", header: "Advice ID", canSort: true, style: "col11"),
+                                        grid.Column("PayXADenialCode", header: "Denial Code", canSort: true, style: "col12"),
+                                        grid.Column("PayStatus", header: "Pay Status", canSort: true, style: "col13"),
+                                        grid.Column("PayCreatedBy", header: "Created By", canSort: true, style: "col14"),
+                                        grid.Column("PayCreatedDate", header: "Created On", canSort: true, style: "col15", format: @<text>@if (item.PayCreatedDate!= null)
+                                                    { @item.PayCreatedDate.ToString("dd/MM/yyyy HH:mm:ss" ) 
+                                                    }</text> ),
+                            grid.Column(header: "Action", style: "col16", format: @<text>
+        <a href="javascript:void(0);" title="Edit Payment" class="EditmanualCharges" onclick="EditPayment('@item.PaymentID')" style="float: left; margin-right: 7px; width: 15px;">
+            <img src="@Url.Content("~/images/edit.png")" />
+        </a>
+        @* &nbsp;<a href="javascript:void(0);" title="Delete Facility" onclick="return DeleteFacility('@item.FacilityId');" style="float: left; width: 15px;">
+            <img src="@Url.Content("~/images/delete.png")" />
+        </a>*@
+        </text>)))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    //$(document).ready(function () {
+    //    $('.table_scroll12').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+    //});
+</script>

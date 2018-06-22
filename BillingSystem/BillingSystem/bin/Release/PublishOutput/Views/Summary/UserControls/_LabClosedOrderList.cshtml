@@ -1,0 +1,63 @@
+﻿@using Kendo.Mvc.UI
+@using BillingSystem.Model.CustomModel
+
+@*@model IEnumerable<OpenOrderCustomModel>*@
+@model IEnumerable<OpenOrderCustomModel>
+                          @if (Model != null)
+                          {
+                              var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentLabClosedOrders", canPage: false);
+                              <div id="gridContentLabClosedOrders">
+                                  @grid.GetHtml(htmlAttributes: new {id = "NurseClosedOrdersGrid"}, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow",
+                                      columns:
+                                          grid.Columns(
+                                              grid.Column("Quantity", header: "Quantity", canSort: true, style: "col2"),
+                                               grid.Column("OrderCode", header: "Order Code", canSort: true, style: "col3"),
+                                               grid.Column("OrderDescription", header: "Order Description", canSort: true, style: "col4"),
+                                              //grid.Column("FrequencyText", header: "Frequency", canSort: false, style: "col5"),
+                                               grid.Column("CategoryName", header: "Order Category", canSort: true, style: "col6"),
+                                               grid.Column("SubCategoryName", header: "Order Sub-Category", canSort: true, style: "col7"),
+                                               grid.Column("SpecimenTypeStr", "Type of Specimen", canSort: true, style: "col7"),
+                                               grid.Column("PeriodDays", header: "Duration", canSort: true, style: "col8"),
+                                               grid.Column("OrderNotes", header: "Notes", canSort: true, style: "col9"),
+                                               grid.Column("Status", header: "Status", canSort: true, style: "col10")
+                                              )
+                                      )
+                              </div>
+                          }
+                          else
+                          {
+                              <h2>No Record found</h2>
+                          }
+
+<script type="text/javascript">
+    $(function () {
+        if ($('#colClosedOrders').hasClass('in'))
+            $('#NurseClosedOrdersGrid').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        else {
+            $('#colClosedOrders').addClass('in');
+            $('#NurseClosedOrdersGrid').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+            $('#colClosedOrders').removeClass('in');
+        }
+        $("#NurseClosedOrdersGrid tbody tr").each(function (i, row) {
+            var $actualRow = $(row);
+            if ($actualRow.find('.col10').html().indexOf('Open') != -1) {
+                $actualRow.removeClass('rowColor8');
+                $actualRow.removeClass('rowColor1');
+                $actualRow.removeClass('rowColor2');
+            }
+            else if ($actualRow.find('.col10').html().indexOf("Administered") != -1) {
+                $actualRow.addClass('rowColor2');
+            }
+            else if ($actualRow.find('.col10').html().indexOf('Closed') != -1) {
+                $actualRow.addClass('rowColor8');
+            }
+            else if ($actualRow.find('.col10').html().indexOf('On Bill') != -1) {
+                $actualRow.addClass('rowColor2');
+            }
+            else if ($actualRow.find('.col10').html().indexOf('Cancel/Revoked') != -1) {
+                $actualRow.addClass('rowColor8');
+            }
+        });
+        SetGridSorting(SortLabClosedOrderList1, "#gridContentLabClosedOrders");
+    });
+</script>

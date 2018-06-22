@@ -1,0 +1,35 @@
+﻿@using BillingSystem.Model.CustomModel
+@using System.Linq
+
+@model IEnumerable<DenialReportCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridDenialReport", canPage: false, canSort: true);
+    <div id="gridDenialReport" class="scrollable-panel">
+        @grid.GetHtml(htmlAttributes: new { id = "DenialReportGrid" }, tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                grid.Column("PaymentDate", header: "Payment Date", canSort: true, style: "col1", format: @<text>@if (item.PaymentDate!= null) 
+                        { @item.PaymentDate.ToString("dd/MM/yyyy HH:mm:ss" ) 
+                        }</text> ),
+                grid.Column("DenialCount", header: "Denial Count", canSort: true, style: "col2"),
+                grid.Column("PayXADenialCode", header: "Denial Code", canSort: true, style: "col3"),
+                grid.Column("PayBy", header: "Pay By", canSort: true, style: "col4"),
+                grid.Column("InsuranceCompanyName", header: "Insurance Company Name", canSort: true, style: "col5")
+                ))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        if ($('#DenialReportGrid tr').length > 0) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(SortDenialCodeReport, "#gridDenialReport");
+    });
+</script>
+

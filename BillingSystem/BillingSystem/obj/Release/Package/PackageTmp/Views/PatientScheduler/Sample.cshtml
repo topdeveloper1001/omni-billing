@@ -1,0 +1,713 @@
+﻿@{
+    ViewBag.Title = "Sample";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Sample Scheduler</h2>
+<style type="text/css" media="screen">
+    #my_form {
+        position: absolute;
+        top: 100px;
+        left: 200px;
+        z-index: 10001;
+        display: none;
+        background-color: white;
+        border: 2px outset gray;
+        padding: 20px;
+        font-family: Tahoma;
+        font-size: 10pt;
+    }
+
+        #my_form label {
+            width: 200px;
+        }
+    /* enabling marked timespans for month view */
+    .dhx_scheduler_month .dhx_marked_timespan {
+        display: block;
+    }
+    /* style to display special dates, e.g. holidays */
+    .holiday {
+        background-color: #fadcd3;
+        text-align: center;
+        font-size: 24px;
+        opacity: 0.8;
+        color: #e2b8ac;
+    }
+    /* if there are still pending tasks for some day */
+    .pending {
+        background: #fdffd3 url('data/imgs/!_yellow.png') no-repeat center center;
+    }
+    /* if all tasks for this day were completed */
+    .completed {
+        background: #d9f5db url('data/imgs/v_green.png') no-repeat center center;
+    }
+    /* we don't want to show that marked timespans on day and week views */
+    .dhx_scheduler_day .pending, .dhx_scheduler_week .pending, .dhx_scheduler_day .completed, .dhx_scheduler_week .completed {
+        display: none;
+    }
+
+
+
+    .dhx_time_block {
+        /*background: red !important;*/
+    }
+
+    .dhx_time_block_reset {
+        opacity: 0.5 !important;
+        background: #fadcd3 !important;
+    }
+
+    .red_section {
+        background: #fffe80 !important;
+        opacity: 0.25;
+        filter: alpha(opacity = 25);
+        color: #222;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .yellow_section {
+        background-color: #ffa749;
+        opacity: 0.25;
+        filter: alpha(opacity = 25);
+    }
+
+    /* background color for whole container and it's border*/
+    .my_event {
+        background-color: #add8e6;
+        border: 1px solid #778899;
+        overflow: hidden;
+    }
+    /* disabling default color for select menu */
+    .dhx_cal_select_menu.my_event div {
+        border: 0;
+        background-color: transparent;
+        color: black;
+    }
+    /* styles for event content */
+    .dhx_cal_event.my_event .my_event_body {
+        padding-top: 3px;
+        padding-left: 5px;
+    }
+    /* event's date information */
+    .my_event .event_date {
+        font-weight: bold;
+        padding-right: 5px;
+    }
+    /* event's resizing section */
+    .my_event_resize {
+        height: 3px;
+        position: absolute;
+        bottom: -1px;
+    }
+    /* event's move section */
+    .my_event_move {
+        position: absolute;
+        top: 0;
+        height: 10px;
+        cursor: pointer;
+    }
+</style>
+<script src="~/Scripts/Scheduler/codebase/sources/dhtmlxscheduler.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_outerdrag.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_recurring.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_readonly.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_active_links.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_editors.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_limit.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_pdf.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_tooltip.js"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_collision.js"></script>
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_minical.js"></script>
+
+<script src="~/Scripts/Scheduler/codebase/ext/dhtmlxscheduler_serialize.js" type="text/javascript" charset="utf-8"></script>
+<script src="~/Scripts/Scheduler/codebase/sources/ext/dhtmlxscheduler_timeline.js" type="text/javascript" charset="utf-8"></script>
+
+<link rel='stylesheet' type='text/css' href="~/Scripts/Scheduler/codebase/dhtmlxscheduler.css" />
+<script src="~/Scripts/Scheduler/common/dhtmlxTree/dhtmlxtree.js" type="text/javascript" charset="utf-8"></script>
+<link rel='stylesheet' type='text/css' href="~/Scripts/Scheduler/common/dhtmlxTree/dhtmlxtree.css" />
+<script type="text/javascript">
+    function init() {
+        scheduler.config.multi_day = true;
+        scheduler.config.mark_now = true;
+        //scheduler.config.first_hour = 8;//start time of the calendar view
+        //scheduler.config.last_hour = 12;// end time of the calendar view
+        scheduler.config.xml_date = "%m-%d-%Y %H:%i";
+        scheduler.xy.editor_width = 0; //disable editor's auto-size
+        scheduler.config.scroll_hour = (new Date).getHours();
+
+        scheduler.config.time_step = 15;
+        scheduler.xy.min_event_height = 21;
+        scheduler.config.hour_size_px = 88;
+        scheduler.config.full_day = true; // enable parameter to get full day event option on the lightbox form
+        scheduler.templates.event_class = function (start, end, event) {
+            
+            return "my_event";
+        };
+        scheduler.templates.event_text = function (start, end, ev) {
+            
+            return ev.dd;
+        };
+        scheduler.renderEvent = function (container, ev, width, height, header_content, body_content) {
+            
+            var container_width = container.style.width; // e.g. "105px"
+
+            // move section
+            var html = "<div class='dhx_event_move my_event_move' style='width: " + container_width + "'></div>";
+
+            // container for event contents
+            html += "<div class='my_event_body'>";
+            html += "<span class='event_date'>";
+            // two options here: show only start date for short events or start+end for long
+            if ((ev.end_date - ev.start_date) / 60000 > 40) { // if event is longer than 40 minutes
+                html += scheduler.templates.event_header(ev.start_date, ev.end_date, ev);
+                html += "</span><br/>";
+            } else {
+                html += scheduler.templates.event_date(ev.start_date) + "</span>";
+            }
+            // displaying event text
+            html += "<span>" + scheduler.templates.event_text(ev.start_date, ev.end_date, ev) + "</span>";
+            html += "</div>";
+
+            // resize section
+            html += "<div class='dhx_event_resize my_event_resize' style='width: " + container_width + "'></div>";
+
+            container.innerHTML = html;
+            return true; // required, true - we've created custom form; false - display default one instead
+        };
+        //scheduler.blockTime(new Date(2015, 9, 8), [9 * 60, 10 * 60]);//Block particular time slot
+        /*scheduler.blockTime({
+            days: new Date(2015, 9, 8),
+            zones: [9 * 60, 10 * 60],
+            css: "holiday"
+        });*/
+        /*scheduler.addMarkedTimespan({
+            days: new Date(2015, 9, 8),               // marks each Friday["0,2"]
+            zones: [9 * 60, 10 * 60],       // marks the entire day
+            css: "red_section",   // the applied css style
+            html: "<strong>Lunch</strong>", //creating events on those dates will be disabled - dates are blocked 
+            type: "dhx_time_block"
+        });*/
+
+        /*AddMarked and DeleteMarkedTimeSpan block - start*/
+        /*scheduler.addMarkedTimespan({
+            days: new Date(2015, 9, 8),               // marks each Friday["0,2"]
+            zones: "fullday",       // marks the entire day
+            css: "yellow_section",
+            type: "dhx_time_block"
+        });*/
+
+        scheduler.addMarkedTimespan({
+            days: new Date(2015, 9, 8),               // marks each Friday["0,2"]
+            zones: "fullday",       // marks the entire day
+            css: "yellow_section",   // the applied css style
+            type: "dhx_time_block"
+        });
+        scheduler.addMarkedTimespan({
+            days: new Date(2015, 9, 8),               // marks each Friday["0,2"]
+            zones: [11.5 * 60, 12 * 60],       // marks the entire day
+            css: "red_section",   // the applied css style
+            html: "<strong>Lunch</strong>", //creating events on those dates will be disabled - dates are blocked 
+            type: "dhx_time_block"
+        });
+        scheduler.deleteMarkedTimespan({
+            days: new Date(2015, 9, 8),
+            zones: [9 * 60, 10 * 60]
+        });
+        /*AddMarked and DeleteMarkedTimeSpan block - end*/
+        var format = scheduler.date.date_to_str("%H:%i");
+        var step = 15;
+
+        scheduler.templates.hour_scale = function (date) {
+            html = "";
+            for (var i = 0; i < 60 / step; i++) {
+                html += "<div style='height:21px;line-height:10px;'>" + format(date) + "</div>";
+                date = scheduler.date.add(date, step, "minute");
+            }
+            return html;
+        }
+        scheduler.locale.labels.workweek_tab = "W-Week";
+        scheduler.locale.labels.decade_tab = "Decade";
+        scheduler.config.details_on_dblclick = true;
+        scheduler.config.details_on_create = true;
+        scheduler.attachEvent("onEventAdded", function (id, ev) {
+            
+        });
+        scheduler.attachEvent("onEventChanged", function (id, ev) {
+            
+        });
+        scheduler.attachEvent("onEventDeleted", function (id) {
+            
+        });
+        scheduler.attachEvent("onViewChange", function (new_mode, new_date) {
+            
+            var tt = scheduler._mode;
+            var minDate = scheduler.getState().min_date;
+            var maxDate = scheduler.getState().max_date;
+            var date = new Date(minDate).getWeek();
+        });
+
+        scheduler.form_blocks["contact_view"] = {
+            render: function (sns) {
+                var html = '<div class="dhx_cal_ltext" style="height:23px;">';
+                html += '<input type="text" placeholder="name" size="25" class="search" id="name">&nbsp;';
+                html += '<input type="text" placeholder="custom2" size="25" class="search" id="custom2">&nbsp;';
+                html += '<select id="sel"><option value="volvo">Volvo</option><option value="saab">Saab</option><option value="mercedes">Mercedes</option></select>';
+                html += '</div>';
+                return html;
+            },
+            set_value: function (node, value, ev) {
+                
+
+                // we must loop through all nodes because we use the autocomplete plugin which sometimes adds
+                // additional html elements therefore changing the position of the inputs
+                $.each(node.childNodes, function (index, item) {
+                    if ($(item).attr("id") == "custom2") {
+                        node.childNodes[index].value = ev.custom2 || "";
+                    }
+                    else if ($(item).attr("id") == "name") {
+                        node.childNodes[index].value = ev.name || "";
+                    }
+                    else if ($(item).attr("id") == "sel") {
+                        node.childNodes[index].value = ev.dd || "";
+                    }
+                });
+            },
+            get_value: function (node, ev) {
+                
+                // we must loop through all nodes because we use the autocomplete plugin which sometimes adds
+                // additional html elements therefore changing the position of the inputs
+                $.each(node.childNodes, function (index, item) {
+                    if ($(item).attr("id") == "custom2") {
+                        ev.custom2 = node.childNodes[index].value;
+                    }
+                    else if ($(item).attr("id") == "name") {
+                        ev.name = node.childNodes[index].value;
+                    }
+                    else if ($(item).attr("id") == "sel") {
+                        ev.dd = node.childNodes[index].value;
+                    }
+                });
+                return node.childNodes[1].value;
+            },
+            focus: function (node) {
+                //var a = node.childNodes[0]; a.select(); a.focus();
+            }
+        }
+        scheduler.form_blocks["appointment"] = {
+            render: function (sns) {
+                var html = '<div class="dhx_cal_ltext" style="height:23px;">';
+                html += '<input type="text" placeholder="name" size="25" class="search" id="name">&nbsp;';
+                html += '<input type="text" placeholder="custom2" size="25" id="custom2">&nbsp;';
+                html += '<select id="sel"><option value="volvo">Volvo</option><option value="saab">Saab</option><option value="mercedes">Mercedes</option></select>';
+                html += '</div>';
+                return html;
+            },
+            set_value: function (node, value, ev) {
+                
+
+                // we must loop through all nodes because we use the autocomplete plugin which sometimes adds
+                // additional html elements therefore changing the position of the inputs
+                $.each(node.childNodes, function (index, item) {
+                    if ($(item).attr("id") == "custom2") {
+                        node.childNodes[index].value = ev.custom2 || "";
+                    }
+                    else if ($(item).attr("id") == "name") {
+                        node.childNodes[index].value = ev.name || "";
+                    }
+                    else if ($(item).attr("id") == "sel") {
+                        node.childNodes[index].value = ev.sel || "";
+                    }
+                });
+            },
+            get_value: function (node, ev) {
+                
+                // we must loop through all nodes because we use the autocomplete plugin which sometimes adds
+                // additional html elements therefore changing the position of the inputs
+                $.each(node.childNodes, function (index, item) {
+                    if ($(item).attr("id") == "custom2") {
+                        ev.custom2 = node.childNodes[index].value;
+                    }
+                    else if ($(item).attr("id") == "name") {
+                        ev.name = node.childNodes[index].value;
+                    }
+                    else if ($(item).attr("id") == "sel") {
+                        ev.sel = node.childNodes[index].value;
+                    }
+                });
+                return node.childNodes[1].value;
+            },
+            focus: function (node) {
+                //var a = node.childNodes[0]; a.select(); a.focus();
+            }
+        }
+        scheduler.attachEvent("onLightbox", function (event_id) {
+            
+            var availableTags = [
+  "ActionScript",
+  "AppleScript",
+  "Asp",
+  "BASIC",
+  "C",
+  "C++",
+  "Clojure",
+  "COBOL",
+  "ColdFusion",
+  "Erlang",
+  "Fortran",
+  "Groovy",
+  "Haskell",
+  "Java",
+  "JavaScript",
+  "Lisp",
+  "Perl",
+  "PHP",
+  "Python",
+  "Ruby",
+  "Scala",
+  "Scheme"
+            ];
+            $(".search").autocomplete({
+                source: availableTags
+            });
+            // watch for autocomplete search
+            /*$(".search").autocomplete({
+            minLength: 5, // only start searching 5 digits into the phone number
+            source: function (request, response) {
+            $.ajax({
+            url: "clients/search_clients/some_ajax_url",
+            type: "POST",
+            dataType: "json",
+            data: {
+            contact_number: $("#contact_number").val(),
+            '677ubdbs7s7busbfisf8sbfs_some_post_token_to_prevent_csrf': "1"
+            },
+            success: function (data) {
+            response(jQuery.map(data, function (item) {
+            return {
+            client_id: item.client_id,
+            country_id: item.country_id,
+            contact_number: item.contact_number,
+            email: item.email,
+            first_name: item.first_name,
+            last_name: item.last_name,
+            gender: item.gender,
+            dob_day: item.dob_day,
+            dob_month: item.dob_month,
+            dob_year: item.dob_year,
+            client_notes: item.client_notes,
+            value: item.contact_number,
+            desc: item.first_name + " " + item.last_name
+            }
+            }));
+            }
+            });
+            },
+            focus: function (event, ui) {
+            $(".search").val(ui.item.value);
+            return false;
+            },
+            select: function (event, ui) {
+            $("#contact_number").val(ui.item.contact_number);
+            $("#country_id").val(ui.item.country_id);
+            $("#email").val(ui.item.email);
+            $("#first_name").val(ui.item.first_name);
+            $("#last_name").val(ui.item.last_name);
+            $("#client_id").val(ui.item.client_id);
+            $("#gender").val(ui.item.gender);
+            $("#dob_day").val(ui.item.dob_day);
+            $("#dob_month").val(ui.item.dob_month);
+            $("#dob_year").val(ui.item.dob_year);
+            $("#client_notes").val(ui.item.client_notes);
+            return false;
+            }
+            })
+            .data("autocomplete")._renderItem = function (ul, item) {
+            return $("<li>")
+            .data("item.autocomplete", item)
+            .append("<a>" + item.contact_number + "<br><small>" + item.desc + "</small></a>")
+            .appendTo(ul);
+            };*/
+        });
+        /* scheduler.attachEvent("onLightbox", function () {
+             
+             $(".dhx_section_time").hide();
+             var obj = $("input[name*='full_day']");
+             $(obj).prop("checked", true);
+         });*/
+        scheduler.attachEvent("onTemplatesReady", function () {
+            //work week
+            scheduler.date.workweek_start = scheduler.date.week_start;
+            scheduler.templates.workweek_date = scheduler.templates.week_date;
+            scheduler.templates.workweek_scale_date = scheduler.templates.week_scale_date;
+            scheduler.date.add_workweek = function (date, inc) { return scheduler.date.add(date, inc * 7, "day"); }
+            scheduler.date.get_workweek_end = function (date) { return scheduler.date.add(date, 5, "day"); }
+
+
+
+            //decade
+            scheduler.date.decade_start = function (date) {
+                var ndate = new Date(date.valueOf());
+                ndate.setDate(Math.floor(date.getDate() / 10) * 10 + 1);
+                return this.date_part(ndate);
+            }
+            scheduler.templates.decade_date = scheduler.templates.week_date;
+            scheduler.templates.decade_scale_date = scheduler.templates.week_scale_date;
+            scheduler.date.add_decade = function (date, inc) { return scheduler.date.add(date, inc * 10, "day"); }
+        });
+
+        scheduler.config.lightbox.sections = [
+            { name: "description", height: 130, map_to: "text", type: "textarea", focus: true },
+            { name: "parent", height: 23, type: "textarea", map_to: "custom1" },
+            {
+                name: "recurring", height: 115, type: "recurring", map_to: "rec_type",
+                button: "recurring"
+            },
+            { name: "time", height: 72, type: "time", map_to: "auto" },
+            { name: "contact", height: 23, map_to: "name", type: "contact_view", focus: true },
+        ];
+
+        scheduler.init('scheduler_here', new Date(), "workweek");
+        /*scheduler.form_blocks["my_editor"] = {
+            render: function (sns) {
+                return "<div class='dhx_cal_ltext' style='height:60px;'>Text&nbsp;<input type='text'><br/>Details&nbsp;<input type='text'></div>";
+            },
+            set_value: function (node, value, ev) {
+                node.childNodes[1].value = value || "";
+                node.childNodes[4].value = ev.details || "";
+            },
+            get_value: function (node, ev) {
+                ev.details = node.childNodes[4].value;
+                return node.childNodes[1].value;
+            },
+            focus: function (node) {
+                var a = node.childNodes[1];
+                a.select();
+                a.focus();
+            }
+        };
+        scheduler.config.lightbox.sections = [
+            { name: "description", height: 200, map_to: "text", type: "my_editor", focus: true },
+            { name: "time", height: 72, type: "time", map_to: "auto" }
+        ];*/
+
+        scheduler.parse([
+    { text: "Meeting", start_date: "10/07/2015 14:00", end_date: "10/07/2015 17:00", custom1: "c1", custom2: "c1", name: "name1", dd:"volvo" },
+    { text: "Conference", start_date: "10/07/2015 12:00", end_date: "10/07/2015 19:00", custom1: "c1", custom2: "c2", name: "name2", dd: "saab" },
+    { text: "Interview", start_date: "10/07/2015 09:00", end_date: "10/07/2015 10:00", custom1: "c1", custom2: "c2", name: "name3", dd: "mercedes" },
+        ], "json");
+
+    }
+    var html = function (id) { return document.getElementById(id); }; //just a helper
+
+    /*scheduler.showLightbox = function (id) {
+        var ev = scheduler.getEvent(id);
+        scheduler.startLightbox(id, html("my_form"));
+
+        html("description").focus();
+        html("description").value = ev.text;
+        html("custom1").value = ev.custom1 || "";
+        html("custom2").value = ev.custom2 || "";
+    };*/
+
+    function save_form() {
+        var ev = scheduler.getEvent(scheduler.getState().lightbox_id);
+        ev.text = html("description").value;
+        ev.custom1 = html("custom1").value;
+        ev.custom2 = html("custom2").value;
+
+        scheduler.endLightbox(true, html("my_form"));
+    }
+    function close_form() {
+        scheduler.endLightbox(false, html("my_form"));
+    }
+
+    function delete_event() {
+        var event_id = scheduler.getState().lightbox_id;
+        scheduler.endLightbox(false, html("my_form"));
+        scheduler.deleteEvent(event_id);
+    }
+    Date.prototype.getWeek = function () {
+        var onejan = new Date(this.getFullYear(), 0, 1);
+        return Math.ceil((((this - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+    }
+
+    function show_minical() {
+        if (scheduler.isCalendarVisible())
+            scheduler.destroyCalendar();
+        else
+            scheduler.renderCalendar({
+                position: "dhx_minical_icon",
+                date: scheduler._date,
+                navigation: true,
+                handler: function (date, calendar) {
+                    scheduler.setCurrentView(date);
+                    scheduler.destroyCalendar()
+                }
+            });
+    }
+
+    //scheduler.showLightbox(1);
+</script>
+
+<body onload="init();">
+    @*<div class="dhx_cal_ltext" id="divtest" style="height: 23px;">
+        <input type="text" placeholder="name" size="25" class="search" id="name">
+        <input type="text" placeholder="custom2" size="25" class="search" id="custom2">
+    </div>*@
+    <div id="my_form">
+        <label for="description">Event text </label>
+        <input type="text" name="description" value="" id="description"><br>
+        <label for="custom1">Custom 1 </label>
+        <input type="text" name="custom1" value="" id="custom1"><br>
+        <label for="custom2">Custom 2 </label>
+        <input type="text" name="custom2" value="" id="custom2"><br>
+        <br>
+        <input type="button" name="save" value="Save" id="save" style='width: 100px;' onclick="save_form()">
+        <input type="button" name="close" value="Close" id="close" style='width: 100px;' onclick="close_form()">
+        <input type="button" name="delete" value="Delete" id="delete" style='width: 100px;' onclick="delete_event()">
+
+        @*<div class="dhx_wrap_section">
+            <div id="area_1444210969662" class="dhx_cal_lsection">
+                <div class="dhx_custom_button" index="1">
+                    <div class="dhx_custom_button_recurring" style="background-position: -5px 20px;"></div>
+                    <div>Disabled</div>
+                </div>
+                Repeat event</div>
+            <div class="dhx_form_repeat" style="height: 0px;">
+                <form>
+                    <div class="dhx_repeat_left">
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="repeat" value="day">Daily</label><br>
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="repeat" value="week">Weekly</label><br>
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="repeat" value="month" checked="">Monthly</label><br>
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="repeat" value="year">Yearly</label>
+                    </div>
+                    <div class="dhx_repeat_divider"></div>
+                    <div class="dhx_repeat_center">
+                        <div style="display: none;" id="dhx_repeat_day">
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" name="day_type" value="d">Every</label><input class="dhx_repeat_text" type="text" name="day_count" value="1">day<br>
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" name="day_type" checked="" value="w">Every workday</label>
+                        </div>
+                        <div style="display: none;" id="dhx_repeat_week">Repeat every<input class="dhx_repeat_text" type="text" name="week_count" value="1">week next days:<br>
+                            <table class="dhx_repeat_days">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <label>
+                                                <input class="dhx_repeat_checkbox" type="checkbox" name="week_day" value="1">Monday</label><br>
+                                            <label>
+                                                <input class="dhx_repeat_checkbox" type="checkbox" name="week_day" value="4">Thursday</label>
+                                        </td>
+                                        <td>
+                                            <label>
+                                                <input class="dhx_repeat_checkbox" type="checkbox" name="week_day" value="2">Tuesday</label><br>
+                                            <label>
+                                                <input class="dhx_repeat_checkbox" type="checkbox" name="week_day" value="5">Friday</label>
+                                        </td>
+                                        <td>
+                                            <label>
+                                                <input class="dhx_repeat_checkbox" type="checkbox" name="week_day" value="3">Wednesday</label><br>
+                                            <label>
+                                                <input class="dhx_repeat_checkbox" type="checkbox" name="week_day" value="6">Saturday</label>
+                                        </td>
+                                        <td>
+                                            <label>
+                                                <input class="dhx_repeat_checkbox" type="checkbox" name="week_day" value="0">Sunday</label><br>
+                                            <br>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="dhx_repeat_month">
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" name="month_type" value="d">Repeat</label><input class="dhx_repeat_text" type="text" name="month_day" value="1">day every<input class="dhx_repeat_text" type="text" name="month_count" value="1">month<br>
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" name="month_type" checked="" value="w">On</label><input class="dhx_repeat_text" type="text" name="month_week2" value="1"><select name="month_day2"><option value="1" selected="">Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5">Friday</option>
+                                    <option value="6">Saturday</option>
+                                    <option value="0">Sunday</option>
+                                </select>every<input class="dhx_repeat_text" type="text" name="month_count2" value="1">month<br>
+                        </div>
+                        <div style="display: none;" id="dhx_repeat_year">
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" name="year_type" value="d">Every</label><input class="dhx_repeat_text" type="text" name="year_day" value="1">day<select name="year_month"><option value="0" selected="">January</option>
+                                    <option value="1">February</option>
+                                    <option value="2">March</option>
+                                    <option value="3">April</option>
+                                    <option value="4">May</option>
+                                    <option value="5">June</option>
+                                    <option value="6">July</option>
+                                    <option value="7">August</option>
+                                    <option value="8">September</option>
+                                    <option value="9">October</option>
+                                    <option value="10">November</option>
+                                    <option value="11">December</option>
+                                </select>month<br>
+                            <label>
+                                <input class="dhx_repeat_radio" type="radio" name="year_type" checked="" value="w">On</label><input class="dhx_repeat_text" type="text" name="year_week2" value="1"><select name="year_day2"><option value="1" selected="">Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5">Friday</option>
+                                    <option value="6">Saturday</option>
+                                    <option value="7">Sunday</option>
+                                </select>of<select name="year_month2"><option value="0" selected="">January</option>
+                                    <option value="1">February</option>
+                                    <option value="2">March</option>
+                                    <option value="3">April</option>
+                                    <option value="4">May</option>
+                                    <option value="5">June</option>
+                                    <option value="6">July</option>
+                                    <option value="7">August</option>
+                                    <option value="8">September</option>
+                                    <option value="9">October</option>
+                                    <option value="10">November</option>
+                                    <option value="11">December</option>
+                                </select><br>
+                        </div>
+                    </div>
+                    <div class="dhx_repeat_divider"></div>
+                    <div class="dhx_repeat_right">
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="end" checked="">No end date</label><br>
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="end">After</label><input class="dhx_repeat_text" type="text" name="occurences_count" value="1">occurrences<br>
+                        <label>
+                            <input class="dhx_repeat_radio" type="radio" name="end">End by</label><input class="dhx_repeat_date" type="text" name="date_of_end" value="undefined"><br>
+                    </div>
+                </form>
+            </div>
+            <div style="clear: both"></div>
+        </div>*@
+    </div>
+
+    <div id="scheduler_here" class="dhx_cal_container" style='width: 100%; height: 870px; border: solid 1px #ccc; border-radius: 4px;'>
+        <div class="dhx_cal_navline">
+            <div class="dhx_cal_prev_button">&nbsp;</div>
+            <div class="dhx_cal_next_button">&nbsp;</div>
+            <div class="dhx_cal_today_button"></div>
+            <div class="dhx_cal_date"></div>
+
+            <div class="dhx_cal_tab" name="day_tab" style="left: 100px;"></div>
+            <div class="dhx_cal_tab" name="week_tab" style="left: 200px;"></div>
+            <div class="dhx_cal_tab" name="workweek_tab" style="right: 300px;"></div>
+            <div class="dhx_cal_tab" name="month_tab" style="right: 500px;"></div>
+            @*<div class="dhx_cal_tab" name="decade_tab" style="right: 400px;"></div>*@
+            <div class="dhx_minical_icon" id="dhx_minical_icon" name="cal_icon" onclick="show_minical()">&nbsp;</div>
+        </div>
+        <div class="dhx_cal_header">
+        </div>
+        <div class="dhx_cal_data">
+        </div>
+    </div>
+</body>

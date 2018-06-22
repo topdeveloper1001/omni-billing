@@ -1,0 +1,45 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@*@model List<BillingSystem.Model.DocumentsTemplates>*@
+@model IEnumerable<BillingSystem.Model.CustomModel.PatientEvaluationSetCustomModel>
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentEmDT", canPage: false);
+    <div id="gridContentEM">
+        @grid.GetHtml(htmlAttributes: new { id = "NurseAssessmentFormGrid" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow",
+            columns:
+                grid.Columns(
+                    @grid.Column("DocumentName", "Form Name", canSort: true, style: "col2"),
+                    
+                    grid.Column("PhysicianName", "Physician", canSort: true, style: "col2"),
+                    
+                    grid.Column("EncounterNumber", "Encounter Number", canSort: true, style: "col2"),
+         grid.Column("CreatedDate", "Entered On", canSort: true, style: "col7", format: @<text>
+        @if (item.CreatedDate != null)
+        {
+            @item.CreatedDate.ToString("MM/dd/yyyy")
+        }
+        </text>),
+        grid.Column(header: "", format: @<text>
+        <a class="editLabActivity" href="javascript:void(0);" title="View Document" onclick="EditNurseAssessmentForm('@item.SetId')" style="float: left; margin-right: 7px; width: 15px;">
+            View
+        </a>
+
+        </text>)
+        ))
+    </div>
+}
+else
+{
+    <p>No Record found</p>
+}
+
+<script>
+    $(function () {
+        SetGridSorting(SortEandMGrid, "#NurseAssessmentFormGrid");
+    });
+    function ViewOpenDocument(fp) {
+        $("#divDocumentsGrid").show();
+        document.getElementById('DocumentsGridDiv').src = fp;
+    }
+</script>

@@ -1,0 +1,159 @@
+﻿@model BillHeaderCustomModel
+@using BillingSystem.Model.CustomModel
+@using Kendo.Mvc.UI
+@using Kendo.Mvc.UI.Fluent
+@using Kendo.Mvc.UI.Html
+
+
+<style>
+    .btn-group {
+        margin-left: 15px;
+    }
+</style>
+
+<div class="form">
+    <div>
+        <div class="col-lg-12 billHeaderAddEdit">
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>Bill Header ID:</label>
+                    <span>@Model.BillHeaderID</span>
+                </div>
+                <div class="rowTable">
+                    <label>Encounter Number:</label>
+                    <span>@Model.EncounterNumber</span>
+                </div>
+                <div class="rowTable">
+                    <label>Bill Number: </label>
+                    <span>@Model.BillNumber</span>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>Payer ID:</label>
+                    <span>@Model.PayerID</span>
+                </div>
+                <div class="rowTable">
+                    <label>Member ID:</label>
+                    <span>@Model.MemberID</span>
+                </div>
+                <div class="rowTable">
+                    <label>Gross Amount:</label>
+                    <span>@Model.Gross</span>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>Patient Share:</label>
+                    <span>@Model.PatientShare</span>
+                </div>
+                <div class="rowTable">
+                    <label>Payer Share Net:</label>
+                    <span>@Model.PayerShareNet</span>
+                </div>
+                <div class="rowTable">
+                    <label>Claim ID:</label>
+                    <span>@Model.ClaimID</span>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>File ID:</label>
+                    <span>@Model.FileID</span>
+                </div>
+                <div class="rowTable">
+                    <label>AR File ID:</label>
+                    <span>@Model.ARFileID</span>
+                </div>
+            </div>
+        </div>
+       
+        <div class="col-lg-12 billHeaderAddEdit">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <div id="fdocupload">
+                    <div class="control-label rowTable">
+                        @using (Html.BeginForm("UploadRemittanceXml", "BillHeader", FormMethod.Post, new { enctype = "multipart/form-data", encounterId = Model.EncounterID }))
+                        {
+                            @Html.HiddenFor(m => m.EncounterID, new { @class = "form-control" })
+                            <div class="validateUploadXml importBillUpload">
+                                <input type="file" id="xmlFile" name="xmlFile" accept="XML" />
+                                <input type="submit" class="btn btn-primary edit-btn marginrightBtn" onclick="return ValidateFile();" title="Import XML files for Remittance Advice" value="Import XML" />
+                                @if (!string.IsNullOrEmpty(ViewBag.check))
+                                {
+                                    <span id="spImportExcelfile" style="color: red;">@ViewBag.check</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+        <div class="col-lg-12 billHeaderAddEdit">
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>Denial Code:</label>
+                    @Html.HiddenFor(m => m.DenialCode, new { @id = "hdDenialCode" })
+                    @Html.HiddenFor(m => m.DenialCodeDescritption, new { @id = "hdDenialCodeDescritption" })
+                    @(Html.Kendo().AutoComplete()
+                        .Name("txtDenialCodes")
+                        .DataTextField("Menu_Title")
+                        .Placeholder("Search Denial Code or Description...")
+                        .Filter("contains")
+                        .MinLength(3)
+                        .Events(e => e.Select("SelectDenialCode"))
+                        .HtmlAttributes(new
+                        {
+                            id = "txtDenialCodes",
+                            onfocus = "ajaxStartActive = false;",
+                            onblur = "ajaxStartActive = true;",
+                            style = "width:100%",
+                            maxlength = "6",
+                            @class = "validate[required]"
+                        })
+                        .DataSource(source => source.Read(read => read.Action("GetDenialCodes", "BillHeader")
+                            .Data("OnSelection"))
+                            .ServerFiltering(true))
+                    )
+
+                    <h6>* Here, you can search the Denial Codes / Description.</h6>
+                </div>
+                <div class="rowTable">
+                    <label>Payment Reference:</label>
+                    @Html.TextBoxFor(m => m.PaymentReference, new { @maxlength = "10", @ID = "txtPaymentReference" })
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>Date Settlement:</label>
+                    @Html.TextBoxFor(m => m.DateSettlement, new { @maxlength = "10", @ID = "txtDateSettlement", @class = "dtGeneralWithTime" })
+                </div>
+                <div class="rowTable">
+                    <label>Payment Amount:</label>
+                    @Html.TextBoxFor(m => m.PaymentAmount, new { @maxlength = "20", @ID = "txtPaymentAmount", @class = "validate[optional[number]]" })
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>Patient Pay Reference:</label>
+                    @Html.TextBoxFor(m => m.PatientPayReference, new { @maxlength = "20", @ID = "txtPatientPayReference" })
+                </div>
+                <div class="rowTable">
+                    <label>Patient Date Settlement:</label>
+                    @Html.TextBoxFor(m => m.PatientDateSettlement, new { @maxlength = "20", @ID = "txtPatientDateSettlement", @class = "dtGeneralWithTime" })
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="rowTable">
+                    <label>Patient Pay Amount:</label>
+                    @Html.TextBoxFor(m => m.PatientPayAmount, new { @maxlength = "10", @ID = "txtPatientPayAmount", @class = "validate[optional[number]]" })
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <input type="submit" class="blue-btn btn btn-primary edit-btn marginBtn" value="Update" onclick="SaveManualPayment('@Model.BillHeaderID    ');" />
+        <button name="ClientCancel" class="blue-btn btn btn-primary edit-btn marginBtn" onclick="ClearManualPaymentForm();" type="button">Cancel</button>
+    </div>
+</div>

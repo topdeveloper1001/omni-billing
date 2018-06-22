@@ -1,0 +1,152 @@
+﻿@model BillingSystem.Model.CustomModel.ManualDashboardCustomModel
+
+@{
+    string btnSaveText = "Save";
+    if (Model.ID != 0)
+    {
+        btnSaveText = "Update";
+    }
+}
+<div class="form" id="ManualDashboardFormDiv">
+    <div class="col-sm-3">
+        <div class="rowTable">
+            @Html.HiddenFor(m => m.ID, new { @id = "txtID" })
+            <label><span class="mandatoryStar"></span>Budget Type:</label>
+            <select id="ddlBudgetType" class="validate[required] clsDisabled"></select>
+            @Html.HiddenFor(m => m.BudgetType, new { @id = "hfBudgetType" })
+        </div>
+        @*<div class="rowTable">
+            <label><span class="mandatoryStar"></span>Dashboard Type:</label>
+             <select id="ddlDashboardType" class="validate[required]"></select>
+            @Html.HiddenFor(m => m.DashboardType, new { @id = "hfDashboardType"})
+        </div>*@
+        @* <div class="rowTable">
+            <label><span class="mandatoryStar"></span>KPI Category:</label>
+            <select id="ddlKPICategory" class="validate[required]"></select>
+            @Html.HiddenFor(m => m.KPICategory, new { @id = "hfKPICategory"})
+        </div>*@
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Select Facility:</label>
+            <select id="ddlFacility" class="validate[required] clsDisabled"></select>
+            @Html.HiddenFor(m => m.FacilityId, new { @id = "hfFacilityId" })
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Department:</label>
+            <select id="ddlDepartment"></select>
+            @Html.HiddenFor(m => m.ExternalValue1, new { @id = "hfDepartment" })
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Indicators:</label>
+            <select id="ddlIndicators" class="validate[required] clsDisabled"></select>
+            @Html.HiddenFor(m => m.Indicators, new { @id = "hfIndicators" })
+        </div>
+        @* <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Defination:</label>
+            @Html.TextBoxFor(m => m.Defination, new {@maxlength = "50", @id = "txtDefination",@class="validate[required]"})
+        </div>*@
+        <div class="rowTable">
+            <label>Other Description:</label>
+            @Html.TextBoxFor(m => m.OtherDescription, new { @maxlength = "500", @id = "txtOtherDescription" })
+        </div>
+        <div class="rowTable">
+        <label>IsActive:</label>
+        @Html.CheckBox("chkStatus", Model.ID == 0 || (Model.IsActive == null || Model.IsActive==true))
+      </div>
+    </div>
+    <div class="col-sm-3">
+
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Frequency:</label>
+            <select id="ddlFrequency" class="validate[required] clsDisabled"></select>
+            @Html.HiddenFor(m => m.Frequency, new { @id = "hfFrequency" })
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Company Total:</label>
+            @Html.TextBoxFor(m => m.CompanyTotal, new { @maxlength = "10", @id = "txtCompanyTotal", @class = "validate[required]" })
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>OwnerShip User:</label>
+            @Html.TextBoxFor(m => m.OwnerShip, new { @maxlength = "50", @id = "txtOwnerShip", @class = "validate[required]" })
+        </div>
+        @* <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Data Type:</label>
+            <select id="ddlDataType" class="validate[required]"></select>
+            @Html.HiddenFor(m => m.DataType, new { @id = "hfDataType"})
+        </div>*@
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Year:</label>
+            <select id="ddlYear" class="validate[required] clsDisabled"></select>
+            @Html.HiddenFor(m => m.Year, new { @id = "hfYear" })
+        </div>
+        <div class="rowTable">
+            <label>SubCategory1:</label>
+            <select id="ddlSubCategory1"></select>
+            @*@Html.TextBoxFor(m => m.SubCategoryValue1Str, new { @maxlength = "50" })*@
+        </div>
+        <div class="rowTable">
+            <label>SubCategory2:</label>
+            <select id="ddlSubCategory2"></select>
+            @*@Html.TextBoxFor(m => m.SubCategoryValue2Str, new { @maxlength = "50" })*@
+        </div>
+    </div>
+    <div class="col-sm-3 divMonths">
+        <div class="rowTable">
+            <label>January <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M1, new { @maxlength = "50", @id = "txtM1", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>February <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M2, new { @maxlength = "50", @id = "txtM2", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>March <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M3, new { @maxlength = "50", @id = "txtM3", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>April <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M4, new { @maxlength = "50", @id = "txtM4", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>May <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M5, new { @maxlength = "50", @id = "txtM5", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>June <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M6, new { @maxlength = "50", @id = "txtM6", @class = "validate[optional[number]]" })
+        </div>
+
+    </div>
+    <div class="col-sm-3 divMonths">
+        <div class="rowTable">
+            <label>July <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M7, new { @maxlength = "50", @id = "txtM7", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>August <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M8, new { @maxlength = "50", @id = "txtM8", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>September <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M9, new { @maxlength = "50", @id = "txtM9", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>October <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M10, new { @maxlength = "50", @id = "txtM10", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>November <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M11, new { @maxlength = "50", @id = "txtM11", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>December <span class="clsType">Data</span>:</label>
+            @Html.TextBoxFor(m => m.M12, new { @maxlength = "50", @id = "txtM12", @class = "validate[optional[number]]" })
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <div style="float: left;">
+            <input type="submit" id="btnSave" class="btn btn-primary edit-btn marginBtn" value="@btnSaveText" onclick="return SaveManualDashboard();" />
+            <button name="ClientCancel" id="btnCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearManualDashboardForm();">Cancel</button>
+        </div>
+    </div>
+</div>

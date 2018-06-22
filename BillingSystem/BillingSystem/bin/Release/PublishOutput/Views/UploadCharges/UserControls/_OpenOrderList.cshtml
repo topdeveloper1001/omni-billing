@@ -1,0 +1,56 @@
+﻿@using BillingSystem.Model.CustomModel
+@model List<OpenOrderCustomModel>
+
+@*
+        Owner: Amit Jain
+        On: 05092014
+        Purpose: To show all the vacant beds list that are assigned to the concerned patient
+    *@
+
+@{
+    ViewBag.Title = "Physicians Orders List";
+}
+
+@if (Model != null && Model.Count > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentOpenOrder", canPage: false);
+    <div id="gridContentOpenOrder1">
+        @grid.GetHtml(htmlAttributes: new {id = "gridContentOpenOrder"}, tableStyle: "table table_scroll1", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+            columns:
+                grid.Columns(
+                    grid.Column("OrderCode", "Order Code", canSort: false, style: "col3"),
+                    grid.Column("OrderDescription", "Order Description", canSort: false, style: "col4"),
+                    grid.Column("CategoryName", "Order Category", canSort: false, style: "col6"),
+                    grid.Column("SubCategoryName", "Order Sub-Category", canSort: false, style: "col7"),
+                    grid.Column("Status", "Status", canSort: false, style: "col7"),
+                    grid.Column("Quantity", "Quantity", canSort: false, style: "col2"),
+                    //grid.Column("FrequencyCode", header: "Frequency", canSort: false, style: "col5"),
+                    grid.Column("PeriodDays", "Duration", canSort: false, style: "col8"),
+                    grid.Column("OrderNotes", "Notes", canSort: false, style: "col9"),
+                    grid.Column("OpenOrderPrescribedDate", "Ordered On", canSort: false, style: "col4", format: @<text> @if (item.OpenOrderPrescribedDate != null)
+                                                                                                          {
+                                                                                                              @item.OpenOrderPrescribedDate.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                          } </text>),
+                              grid.Column("StartDate", "Start Date", canSort: false, style: "col4", format: @<text> @if (item.StartDate != null)
+                                                                                               {
+                                                                                                              @item.StartDate.ToString("dd/MM/yyyy")
+                                                                                               } </text>),
+                              grid.Column("EndDate", "End Date", canSort: false, style: "col5", format: @<text> @if (item.EndDate != null)
+                                                                                                         {
+                                                                                                             @item.EndDate.ToString("dd/MM/yyyy")
+                                                                                                         } </text>)
+                                         )
+                                 )
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        if ($('#gridContentOpenOrder tr').length > 4) {
+            $('#gridContentOpenOrder').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+    });
+</script>

@@ -1,0 +1,57 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model.CustomModel
+
+@model List<EncounterCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "EncountersGridContent", canPage: false);
+    <div id="EncountersGridContent">
+        @grid.GetHtml(htmlAttributes: new {id = "EncountersGridContent"}, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+            columns: grid.Columns(
+                grid.Column(header: "Is VIP", canSort: false, style: "col1", format: @<text>
+                                                                                         @if (!string.IsNullOrEmpty(item.PatientIsVIP))
+                                                                                         {
+                                                                                             <span style="float: left;">
+                                                                                                 <img style="height: 20px; width: 20px" src="~/images/vip2.png" />
+                                                                                             </span>
+                                                                                         } </text>),
+                grid.Column("FirstName", header: "First Name", canSort: false, style: "col2"),
+                grid.Column("LastName", header: "Last Name", canSort: false, style: "col3"),
+                grid.Column("BirthDate", header: "Birth Date", canSort: false, style: "col4", format: @<text>@if (item.BirthDate != null)
+                                                                                                            {
+                                                                                                                @item.BirthDate.ToString("dd/MM/yyyy")
+                                                                                                            }</text>),
+                grid.Column("EncounterNumber", header: "Encounter Number", canSort: false, style: "col5"),
+                grid.Column("PersonEmiratesIDNumber", header: ResourceKeyValues.GetKeyValue("socialsecuritynumber"), canSort: false, style: "col6"),
+                grid.Column("EncounterStartTime", header: "Encounter Start", canSort: false, style: "col7", format: @<text>@item.EncounterStartTime.ToString("dd/MM/yyyy HH:mm:ss")</text>),
+                grid.Column("EncounterEndTime", header: "Encounter End", canSort: false, style: "col7", format: @<text>@if (item.EncounterEndTime != null)
+                                                                                                            {
+                                                                                                                @item.EncounterEndTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                                                                                            }</text>),
+                grid.Column("BedName", header: "Bed Assigned", canSort: false, style: "col8"),
+                grid.Column(header: "Primary Diagnosis", canSort: false, style: "colPrimaryDiagnosis", format: @<text>
+                                                                                                                   @if (item.IsPrimaryDiagnosisDone)
+                                                                                                                   {
+                                                                                                                       <span>Yes</span>
+                                                                                                                   }
+                                                                                                                   else
+                                                                                                                   {
+                                                                                                                       <span>No</span>
+                                                                                                                   }
+                                                                                                               </text>),
+                grid.Column(header: "Action", style: "col9", format: @<text>
+                                                                          <div class="iconsAction">
+                                                                              <a href="#divAddEditOrder" title="Add Manual Charges" onclick=" AddCharges('@item.EncounterID', '@item.PatientID') ">
+                                                                                  <img src="~/images/edit_small.png" />
+                                                                              </a>
+                                                                              
+                                                                          </div>
+                                                                      </text>)))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}

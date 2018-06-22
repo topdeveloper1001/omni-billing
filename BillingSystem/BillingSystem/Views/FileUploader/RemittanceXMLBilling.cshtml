@@ -1,0 +1,134 @@
+﻿@{
+    ViewBag.Title = "Enter/Upload Remittance Advice";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using BillingSystem.Common
+@using BillingSystem.Models
+
+@model RemittanceAdviceView
+
+@{
+    ViewBag.Title = "Import XML Billing";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="white-bg">
+    <input id="hdMessage" type="hidden" value="@ViewBag.Message" />
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFileUploaderAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;
+                Upload XML Remittance File
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFileUploaderAddEdit" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form" id="divDocumentUpload">
+                        <div class="col-sm-6">
+                            <div id="fdocupload">
+                                <div class="control-label rowTable">
+                                    @using (Html.BeginForm("UploadXMLs", "FileUploader", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                                    {
+                                        <div class="validateUploadExcel importBillUpload">
+                                            <input type="file" id="ImportXMLfile" class="validate[required]" name="file" accept="XML" />
+                                            <input type="submit" class="btn btn-primary edit-btn marginrightBtn" onclick="return ValidateFile();" value="Import XML File" />
+                                            @if (!string.IsNullOrEmpty(ViewBag.check))
+                                            {
+                                                <span id="spImportExcelfile" style="color: red;">@ViewBag.check</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseXmlFilesData">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png">
+                </span>Imported Files
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseXmlFilesData" class="panel-collapse tableImg collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="table-responsive" id="XMLFilesView">
+                        @{Html.RenderPartial("~/Views/FileUploader/UserControls/_XMLRemittanceFile.cshtml", Model.FilesUploaded);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseXmlParsedData">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png">
+                </span>XML Parsed Data (Existing Claims)
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseXmlParsedData" class="panel-collapse tableImg collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="table-responsive" id="RemittanceXMLParsedView">
+                        @*@{Html.RenderPartial("~/Views/FileUploader/UserControls/_RemittanceXMLParsedDataView.cshtml", Model.XAdviceXMLData);}*@
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseXmlParsedDataNonSystem">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png">
+                </span>XML Parsed Data (Non Existing Claims)
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseXmlParsedDataNonSystem" class="panel-collapse tableImg collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="table-responsive" id="RemittanceXMLParsedViewNonSystem">
+                        @*@{Html.RenderPartial("~/Views/FileUploader/UserControls/_RemittanceXMLParsedDataView.cshtml", Model.XAdviceXMLData);}*@
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* User role selection pop up *@
+<div id="divhidepopup" style="display: none;">
+    <div class="popup-coverbg"></div>
+    <div class="popup-frame">
+        <div class="popup-main">
+            <div class="popup-content">
+                <div>
+                    <div class="popup-close" onclick="$('#divhidepopup').hide();">X</div>
+                    <div id="xmlRemittanceBillingView">
+                        <textarea id="txtXmlRemittanceBillingView" cols="105" rows="30" readonly="readonly" class="minHeight1"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/Scripts/FileUploader/RemittanceAdvice.js?@Helpers.CurrentAssemblyTicks"></script>

@@ -1,0 +1,252 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model.CustomModel
+
+@model List<MarGroupCustomModel>
+
+
+@*<div class="main_head">
+        <div class="row">
+            <div class="col-sm-4 patient_info">
+                <img src="~/images/user-img.png" />
+                <h3>Pat Anderson</h3>
+            </div>
+            <div class="col-sm-8">
+                <div class="text-center month_head">
+                    <h3>June</h3>
+                </div>
+            </div>
+        </div>
+    </div>*@
+
+<style>
+    .drug_grid table td { text-align: center; padding:3px 0 !important; width:20px !important;    }
+    .drug_grid table th{padding:3px 0 !important; width:20px !important; text-align: center;}
+</style>
+<div class="content_wrapper">
+    <div class="row">
+        @if (Model.Count > 0)
+        {
+            foreach (var item in Model)
+            {
+
+            <div class="content_row">
+                <div class="col-md-3">
+                    <div class="content_block">
+                        <div class="col-sm-3">
+                            <div class="img_panel">
+                                <img src="~/images/medicine.jpg" />
+                            </div>
+                        </div>
+                        <div class="col-sm-9">
+                            <div class="row">
+                            @{
+                var orderInfo = item.OrderInfo.Split('`');
+                            
+                                <div class="info_panel">
+
+                                    <h4>@orderInfo[2]</h4>
+                                    @if (orderInfo.Count() > 3)
+                                    {
+                                    <p>@orderInfo[3]</p>
+                                      
+                                    }
+                                    @*<p>Doses Left: 30 Rafils Left:3</p>*@
+                                </div>
+                            
+                                <div class="info_panel">
+                                    <p>@orderInfo[1]</p>
+                                    <p>@orderInfo[0]</p>
+
+                                </div>
+                            
+                            }
+
+                            @{
+                var orderStatus = item.OrderStatus.Split('`');
+                                <div class="info_panel">
+                                        <p>@orderStatus[0] </p>
+                                        <p>@orderStatus[1] </p>
+                                    
+                                        <p>@orderStatus[2] </p>
+                                    
+                                </div>
+                            }
+                        </div>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="col-md-9">
+                    <div class="drug_grid">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="tbl">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>1</th>
+                                        <th>2</th>
+                                        <th>3</th>
+                                        <th>4</th>
+                                        <th>5</th>
+                                        <th>6</th>
+                                        <th>7</th>
+                                        <th>8</th>
+                                        <th>9</th>
+                                        <th>10</th>
+                                        <th>11</th>
+                                        <th>12</th>
+                                        <th>13</th>
+                                        <th>14</th>
+                                        <th>15</th>
+                                        <th>16</th>
+                                        <th>17</th>
+                                        <th>18</th>
+                                        <th>19</th>
+                                        <th>20</th>
+                                        <th>21</th>
+                                        <th>22</th>
+                                        <th>23</th>
+                                        <th>24</th>
+                                        <th>25</th>
+                                        <th>26</th>
+                                        <th>27</th>
+                                        <th>28</th>
+                                        <th>29</th>
+                                        <th>30</th>
+                                        <th>31</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var obj in item.Collection)
+                                    {
+                                        <tr>
+                                            <td>@obj.SchTime</td>
+                                            <td class="tdm" value="@obj.D1"></td>
+                                            <td class="tdm" value="@obj.D2"></td>
+                                            <td class="tdm" value="@obj.D3"></td>
+                                            <td class="tdm" value="@obj.D4"></td>
+                                            <td class="tdm" value="@obj.D5"></td>
+                                            <td class="tdm" value="@obj.D6"></td>
+                                            <td class="tdm" value="@obj.D7"></td>
+                                            <td class="tdm" value="@obj.D8"></td>
+                                            <td class="tdm" value="@obj.D9"></td>
+                                            <td class="tdm" value="@obj.D10"></td>
+                                            <td class="tdm" value="@obj.D11"></td>
+                                            <td class="tdm" value="@obj.D12"></td>
+                                            <td class="tdm" value="@obj.D13"></td>
+                                            <td class="tdm" value="@obj.D14"></td>
+                                            <td class="tdm" value="@obj.D15"></td>
+                                            <td class="tdm" value="@obj.D16"></td>
+                                            <td class="tdm" value="@obj.D17"></td>
+                                            <td class="tdm" value="@obj.D18"></td>
+                                            <td class="tdm" value="@obj.D19"></td>
+                                            <td class="tdm" value="@obj.D20"></td>
+                                            <td class="tdm" value="@obj.D21"></td>
+                                            <td class="tdm" value="@obj.D22"></td>
+                                            <td class="tdm" value="@obj.D23"></td>
+                                            <td class="tdm" value="@obj.D24"></td>
+                                            <td class="tdm" value="@obj.D25"></td>
+                                            <td class="tdm" value="@obj.D26"></td>
+                                            <td class="tdm" value="@obj.D27"></td>
+                                            <td class="tdm" value="@obj.D28"></td>
+                                            <td class="tdm" value="@obj.D29"></td>
+                                            <td class="tdm" value="@obj.D30"></td>
+                                            <td class="tdm" value="@obj.D31"></td>
+                                            @*<td class="tdm"> </td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>
+                                                    <td class="tdm"></td>*@
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                       
+                </div>
+            </div>
+
+            }
+        }
+        else
+        {
+            <p class="col-sm-12">No Results</p>
+        }
+    </div>
+</div>
+<script>
+    //$(".tdm").each(function (i, row) {
+    //    
+    //    var $actualRow = $(row);
+    //    if ($actualRow.html() == "0") {
+    //        //$(this).addClass('rowColor7');
+    //    }
+    //    else if ($actualRow.html() == "1") {
+    //        $(this).addClass('open');
+    //    }
+    //    else if ($actualRow.html() == "2") {
+    //        $(this).addClass('administered');
+    //    }
+    //    else if ($actualRow.html() == "3") {
+    //        $(this).addClass('partial');
+    //    }
+    //    else if ($actualRow.html() == "4") {
+    //        $(this).addClass('waiting_approval');
+    //    }
+    //    else {
+    //        $(this).addClass('cancel');
+    //    }
+    //});
+
+    $(function () {
+        $(".tdm").each(function (i, row) {
+            
+            var $actualRow = $(row);
+            //if ($actualRow.attr('value') > 0) {
+            //    alert('Amit Jain');
+            //}
+            if ($actualRow.attr('value') == "0") {
+                //$(this).addClass('rowColor7');
+            } else if ($actualRow.attr('value') == "1") {
+                $(this).addClass('open');
+            } else if ($actualRow.attr('value') == "2") {
+                $(this).addClass('administered');
+            } else if ($actualRow.attr('value') == "3") {
+                $(this).addClass('partial');
+            } else if ($actualRow.attr('value') == "4") {
+                $(this).addClass('waiting_approval');
+            } else if ($actualRow.attr('value') == "10") {
+                $(this).addClass('delayed');
+            } else {
+                $(this).addClass('cancel');
+            }
+        });
+    });
+</script>

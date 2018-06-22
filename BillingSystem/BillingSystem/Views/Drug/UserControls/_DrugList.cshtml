@@ -1,0 +1,105 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using BillingSystem.Model
+@using BillingSystem.Models
+@using Elmah.ContentSyndication
+@model DrugView
+
+@{
+    var tableNumber = "";
+    if (Session[SessionNames.SessionClass.ToString()] != null)
+    {
+        var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+        tableNumber = objSession.DrugTableNumber;
+    }
+}
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.DrugList != null && Model.DrugList.Count > 0)
+        {
+            var grid = new WebGrid(Model.DrugList, ajaxUpdateContainerId: "gridContent", canPage: false);
+            var gridColumns = new List<WebGridColumn>();
+            //if (Model.UserId == 1)
+            //{
+            gridColumns.Add(grid.Column(header: " ", format: @<text><input class="check-box" id="assignChkBx" name="assignChkBx" type="checkbox" value="@item.Id" /></text>));
+            //}
+            gridColumns.Add(grid.Column("DrugTableNumber", "Drug Table Number"));
+            gridColumns.Add(grid.Column("DrugCode", "Drug Code", canSort: true, style: "col3"));
+            gridColumns.Add(grid.Column("DrugGenericName", "Generic Name", canSort: true, style: "col2"));
+            gridColumns.Add(grid.Column("DrugPackageName", "Package Name", canSort: true, style: "col1"));
+            gridColumns.Add(grid.Column("DrugStrength", "Drug Strength", canSort: true, style: "col4"));
+            gridColumns.Add(grid.Column("DrugDosage", "Drug Dosage", canSort: true, style: "col5"));
+            gridColumns.Add(grid.Column("DrugLastChange", "Effective Date", canSort: true, style: "col7", format: @<text>@if (item.DrugLastChange != null)
+                                                                                                         {
+                                                                                                             @item.DrugLastChange.ToString("dd/MM/yyyy")
+                                                                                                         }</text>));
+           
+            gridColumns.Add(grid.Column("DrugPackageSize", "Drug Package Size", canSort: true, style: "col6"));
+            gridColumns.Add(grid.Column("DrugPricePublic", "Price Public", canSort: true, style: "col7"));
+            gridColumns.Add(grid.Column("DrugUnitPricePublic", "Drug Unit Price Public", canSort: true, style: "col8"));
+            gridColumns.Add(grid.Column(header: "Action", style: "col9", format: @<text>
+                <a href="javascript:;" onclick="EditDrug('@item.Id') " style=" float: left; margin-right: 4px; width: 15px;" class="unFav">
+                    <img src="@Url.Content("~/images/edit.png")" alt="" />
+                </a>
+                                                                                      &nbsp;
+                                                                                      @*<a href="javascript:;" title="Delete" onclick="return DeleteDrug('@item.Id') " style=" float: left; width: 15px;" class="unFav"><img src="@Url.Content("~/images/delete.png")" alt="" /></a>*@
+        <a href="javascript:;" title="Delete" onclick="return OpenConfirmPopup('@item.Id','Delete Drug','',DeleteDrug,null); " style=" float: left; width: 15px;" class="unFav"><img src="@Url.Content("~/images/delete.png")" alt="" /></a>
+
+                &nbsp;<a href="javascript:;" class="AddFav" title="Add As Favorite" onclick="return MarkAsFav('@item.DrugCode') " style=" float: left; width: 15px; display: none">
+                    <img src="@Url.Content("~/images/Fav (1).png")" alt="" />
+                </a>
+            </text>));
+            @grid.GetHtml(htmlAttributes: new { id = "DrugListgrid" },
+                tableStyle: "table table_scroll_Data",
+                headerStyle: "gridHead",
+                footerStyle: "gridFooter",
+                rowStyle: "gridRow",
+                alternatingRowStyle: "gridRow", columns: grid.Columns(gridColumns.ToArray()))
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+    <div id="loadingDiv" style="text-align: center; display: none; margin-bottom: 20px;">
+        <img alt="Loading" src="@Url.Content("~/images/ajax-loader.gif")" />
+    </div>
+</div>
+
+<style>
+    .col2{width:100px;}
+</style>
+
+<script>
+    $(function () {
+        //if ($('#DrugListgrid tr').length > 0) {
+        $('.table_scroll_Data').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        //}
+            SetGridSorting(SortDrugCodeGrid, "#DrugListDiv");
+
+            $("div .fht-tbody").scroll(function (e) {
+                
+            if ($(this).scrollTop() + $(this).innerHeight() >= this.scrollHeight && !noMoreData && !inProgress) {
+                e.preventDefault();
+                inProgress = true;
+                $("#loadingDiv").show();
+                ajaxStartActive = false;
+                setTimeout(function () {
+                    $.post("/Drug/RebindBindDrugList", { "blockNumber": blockNumber, "viewVal": $('#ddlDrugGridView').val() == "0" ? "All" : $('#ddlDrugGridView').val(), "tableNumber": $("#ddlTableSet").length > 0 && $("#ddlTableSet").val() ? $("#ddlTableSet").val() : @tableNumber },
+                        function (data) {
+                            blockNumber = blockNumber + 1;
+                            noMoreData = data.NoMoreData;
+                            var list = AppendDataToDrugGrid(data.list, data.UserId);
+                            $("#DrugListgrid tbody").append(list);
+                            $("#loadingDiv").hide();
+                            inProgress = false;
+                            ajaxStartActive = true;
+
+                            CheckBoxIsSelectedEvent();
+                        });
+                }, 1000);
+            }
+        });
+    });
+</script>

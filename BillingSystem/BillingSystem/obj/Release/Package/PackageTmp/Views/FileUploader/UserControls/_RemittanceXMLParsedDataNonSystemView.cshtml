@@ -1,0 +1,67 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model List<XAdviceXMLParsedDataCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentXmlParsedNonSystemData", canPage: false);
+    <div id="gridContentXmlParsedNonSystemData">
+        @grid.GetHtml(htmlAttributes: new { id = "XmlParsedNonSystemDataGrid" }, tableStyle: "table table_scroll_non", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridRow", columns: grid.Columns(
+                //grid.Column("XAdviceXMLParsedDataID", header: "ID", canSort: false, style: "col1"),
+                grid.Column("SenderIdStr", header: "Sender ID", canSort: false, style: "colSenderId"),
+                grid.Column("XACProviderID", header: "Provider ID", canSort: false, style: "col2"),
+                grid.Column("XACClaimID", header: "Claim ID", canSort: false, style: "col3"),
+                grid.Column("BillNumber", header: "Bill Number", canSort: false, style: "col3"),
+                 grid.Column("EncounterNumber", header: "EncounterNumber", canSort: false, style: "col3"),
+                  grid.Column("PatientName", header: "Patient Name", canSort: false, style: "col3"),
+                grid.Column("XAModifiedDate", "Transaction Date", canSort: false, style: "colOrderedOn",
+                        format: @<text>
+                                     @if (item.XAModifiedDate != null)
+                                     {
+                                         @item.XAModifiedDate.ToString("dd/MM/yyyy")
+                                     }
+                                 </text>),
+                grid.Column("XACDenialCode", header: "Claim Denial Code", canSort: false, style: "col4"),
+                grid.Column("XACIDPayer", header: "Payer ID", canSort: false, style: "col5"),
+                grid.Column("XACProviderID", header: "Claim Provider ID", canSort: false, style: "col6"),
+                grid.Column("XACPaymentReference", header: "Payment Reference", canSort: false, style: "col6"),
+                grid.Column("XACDateSettlement", header: "Date Settlement", canSort: false, style: "col7", format: @<text>@if (!string.IsNullOrEmpty(item.XACDateSettlement))
+                                                                                                                          {
+                                                                                                                              @item.XACDateSettlement //  String.Format("{0:yyyy-MM-dd}", Convert.ToDateTime(@item.XACDateSettlement));
+                                                                                                                          }</text>),
+                grid.Column("FacilityLicType", header: "Facility ID", canSort: false, style: "col6"),
+                grid.Column("XAAStart", "Start", canSort: false, style: "colOrderedOn",
+                        format: @<text>
+                                     @if (item.XAAStart != null)
+                                     {
+                                         @item.XAAStart
+                                     }
+                                 </text>),
+                grid.Column("XAAType", header: "Activity Type", canSort: false, style: "col6"),
+                grid.Column("XAACode", header: "Activity Code", canSort: false, style: "col6"),
+                grid.Column("XAAQuantity", header: "Quantity", canSort: false, style: "col6"),
+                grid.Column("XAAGross", header: "Activity Net", canSort: false, style: "col6"),
+                grid.Column("XAAGross", header: "Activity List", canSort: false, style: "col6"),
+                grid.Column("OrderingClinician", header: "Ordering Clinician", canSort: false, style: "col6"),
+                grid.Column("OrderingClinician", header: "Clinician", canSort: false, style: "col6"),
+                grid.Column("XAAPriorAuthorizationID", header: "Prior Authorization ID", canSort: false, style: "col8"),
+                grid.Column("XAAGross", header: "Activity Gross", canSort: false, style: "col9"),
+                grid.Column("XAAPatientShare", header: "Patient Share", canSort: false, style: "col9"),
+                grid.Column("XAAPaymentAmount", header: "Payment Amount", canSort: false, style: "col9"),
+                grid.Column("XAADenialCode", header: "Activity Denial Code", canSort: false, style: "col10")
+                ))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        if ($('.table_scroll_non tr').length > 0) {
+            $('.table_scroll_non').fixedHeaderTable({ cloneHeadToFoot: true,  autoShow: true });
+            $("#XmlParsedNonSystemDataGrid tbody tr:last").addClass('rowColor9');
+        }
+    });
+</script>

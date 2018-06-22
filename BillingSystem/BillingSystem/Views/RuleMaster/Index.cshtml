@@ -1,0 +1,184 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+
+@model RuleMasterView
+
+@{
+    ViewBag.Title = "Rule Master View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userId = Helpers.GetLoggedInUserId();
+}
+<div class="white-bg">
+    <input type="hidden" name="hidUserID" id="hidUserID" value="@userId" />
+    @if (@userId == 1)
+    {
+        <div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseCopyFacilityData">
+                <h4 class="panel-title collapseTitle">
+                    <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Create New Table Sets
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseCopyFacilityData" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <div class="base-color">
+                        <div class="form" id="divCopyDataSection">
+                            <div class="col-sm-4 col-md-2">
+                                <div class="rowTable">
+                                    <label>Select Table Number:</label>
+                                    <select id="ddlTableSet" class="validate[required]"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 col-md-2">
+                                <div class="rowTable">
+                                    <label class="checkbox_margintop">
+                                        <input type="checkbox" id="rdNewTableNumber" onchange="ShowTableSetPanel(this,1);" value="" />
+                                        Create New Table Set
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 col-md-2">
+                                <div class="rowTable">
+                                    <label class="checkbox_margintop">
+                                        <input type="checkbox" id="rdCopyExisting" onchange="ShowTableSetPanel(this,2);" value="" />
+                                        Copy Existing
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4" id="tableSetPanel" style="display: none;">
+                            <div class="rowTable" style="display: none;" id="divNewTableNumber">
+                                <label>Enter New Table Number:</label>
+                                <input type="text" id="tableNumber" class="validate[optional[integer]]" />
+                            </div>
+                            <div class="rowTable">
+                                <label class="col-lg-12">&nbsp;</label>
+                                <button id="btnSave" class="btn btn-primary edit-btn" onclick="SaveTableSet('19',false); return false;">Copy Data</button>
+                                <label class="col-lg-12">&nbsp;</label>
+                                <button id="btnSaveALL" class="btn btn-primary edit-btn" onclick="SaveTableSet('19', true); return false;">Copy All</button>
+                            </div>
+                        </div>
+                        @*<div class="col-sm-4" id="btnSetPanel" style="display: none;">
+                                <div class="rowTable">
+                                    <label class="col-lg-12">&nbsp;</label>
+                                    <button id="btnCopy" class="btn btn-primary edit-btn" onclick="SaveRuleSet('19',false); return false;">Copy Data</button>
+                                    <label class="col-lg-12">&nbsp;</label>
+                                    <button id="btnCopyALL" class="btn btn-primary edit-btn" onclick="SaveRuleSet('19', true); return false;">Copy All</button>
+                                </div>
+                            </div>*@
+
+                        <div class="col-sm-3 col-md-2">
+                            <div class="rowTable">
+                                <label class="col-lg-12">&nbsp;</label>
+                                <button id="btnViewALL" class="btn btn-primary edit-btn" onclick="ViewRuleMasterList('19'); return false;">View Records</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRuleMasterAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Add Rule
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseRuleMasterAddEdit" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        @{Html.RenderPartial("~/Views/RuleMaster/UserControls/_RuleMasterAddEdit.cshtml", Model.CurrentRuleMaster);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRuleMasterList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" />
+                </span>Rule Master List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseRuleMasterList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="RuleMasterListDiv">
+                    @{Html.RenderPartial("~/Views/RuleMaster/UserControls/_RuleMasterList.cshtml", Model.RuleMasterList);}
+                </div>
+            </div>
+        </div>
+        <span class="inactive">
+            <span class="inactive_fields" style="float:left;">View in-active
+            <input id="chkShowInActive" type="checkbox" onchange="ShowInActiveRuleMaster('#chkShowInActive');" />
+            </span>
+            <span class="inactive_fields" style="top: 0px;">
+                <input id="btnMarkAsInActive" class="btn edit-btn btn-primary" value="Delete Selected" type="button" />
+            </span>
+        </span>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRuleStepAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Add Rule Step <span class="spnRuleMasterDesc"></span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseRuleStepAddEdit" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+
+                        @{Html.RenderPartial("~/Views/RuleStep/UserControls/_RuleStepAddEdit.cshtml", Model.RuleStepView.CurrentRuleStep);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRuleStepList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" />
+                </span>Rule Step List <span class="spnRuleMasterDesc"></span>
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseRuleStepList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="rowTable1 pull-right">
+                    <h4 class="colorCodeTitle">Color Codes</h4>
+                    <span>
+                        <label class="colorCodes rowColor3"></label>
+                        IF
+                    </span><span>
+                        <label class="colorCodes rowColor5"></label>
+                        THEN
+                    </span>
+                </div>
+                <div class="base-color" id="RuleStepListDiv">
+                    @{Html.RenderPartial("~/Views/RuleStep/UserControls/_RuleStepList.cshtml", Model.RuleStepView.RuleStepList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+
+<script src="~/Scripts/RuleMaster/RuleMasterScript.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/RuleStep/RuleStepScript.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

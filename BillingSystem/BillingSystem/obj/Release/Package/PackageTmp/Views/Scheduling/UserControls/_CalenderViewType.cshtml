@@ -1,0 +1,20 @@
+﻿@using System.Web.Optimization
+@using Kendo.Mvc.UI
+<style type="text/css">
+    #TreeView .k-group li {
+        float: left;
+        width: 45%;
+    }
+    
+</style>
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+@(Html.Kendo().TreeView().Name("treeviewCalenderType").Events(events => events.Select("onCheckView")).HtmlAttributes(new { }).HighlightPath(true).Items(menu =>
+      {
+          menu.Add().Text("Day").Id("1").Checked(true).Selected(true);
+          menu.Add().Text("Week").Id("2");
+          menu.Add().Text("Month").Id("3");
+      })
+      )
+@Html.Kendo().DeferredScripts()

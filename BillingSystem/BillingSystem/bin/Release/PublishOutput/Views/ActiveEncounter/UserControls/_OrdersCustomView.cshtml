@@ -1,0 +1,36 @@
+﻿@using BillingSystem.Models
+
+@model OrdersFullView
+@*<script src="~/Scripts/Summary/PatientSummary.js"></script>*@
+<div class="row">
+    <div class="col-lg-12" style="min-height: 600px; overflow: hidden;">
+        @*overflow: hidden;*@
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOpenOrderlist">
+                <h4 class="panel-title collapseTitle">
+                    <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Current Orders
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseOpenOrderlist" class="panel-collapse collapse in">
+                <div class="panel-body nopadding scrollable-panel">
+                    <div id="NurseAdminOpenOrdersListDiv" class="table-responsive">
+                        @{Html.RenderPartial("~/Views/ActiveEncounter/UserControls/_OpenOrderList.cshtml", Model.OpenOrdersList);}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="order-detail">
+            <div class="row">
+                <div class="col-lg-12 collapse-btn pull-right">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

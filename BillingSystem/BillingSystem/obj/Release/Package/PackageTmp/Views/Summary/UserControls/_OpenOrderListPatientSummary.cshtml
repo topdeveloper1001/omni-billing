@@ -1,0 +1,23 @@
+﻿@model IEnumerable<BillingSystem.Model.CustomModel.OpenOrderCustomModel>
+@if (Model != null)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentOpenOrder", canPage: true, rowsPerPage: 5);
+    <div id="gridContentOpenOrderPatientSummary">
+        @grid.GetHtml(htmlAttributes: new { id = "PatientEncountersGrid" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+    columns:
+    grid.Columns(
+    grid.Column("Quantity", "Quantity", canSort: true, style: "col2"),
+    grid.Column("OrderCode", "Order Code", canSort: true, style: "col3"),
+    grid.Column("DiagnosisCode", "Diagnosis Code", canSort: true, style: "col4"),
+    grid.Column("FrequencyText", "Frequency", canSort: true, style: "col5"),
+    grid.Column("PeriodDays", "Duration", canSort: true, style: "col6"),
+     grid.Column("OrderNotes", "Comments", canSort: true, style: "col1")
+
+    )
+    )<h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}

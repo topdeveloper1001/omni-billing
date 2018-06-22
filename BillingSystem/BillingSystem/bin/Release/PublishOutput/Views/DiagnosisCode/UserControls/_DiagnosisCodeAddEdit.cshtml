@@ -1,0 +1,95 @@
+﻿@model BillingSystem.Model.DiagnosisCode
+
+@{
+    ViewBag.Title = "DiagnosisCode";
+}
+<style>
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="DiagnosisCodeFormDiv">
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        @*<div class="rowTable">
+                <label><span class="mandatoryStar"></span>Diagnosis Table Number:</label>
+                @Html.TextBoxFor(m => m.DiagnosisTableNumber, new { @maxlength = "4", @id = "txtDiagnosisTableNumber", @class = "validate[required]" })
+            </div>
+        *@
+        <div class="rowTable">
+            <label>Diagnosis Medium Description:</label>
+            @Html.TextBoxFor(m => m.DiagnosisMediumDescription, new { @maxlength = "1000", @id = "txtDiagnosisMediumDescription" })
+        </div>
+        <div class="rowTable">
+            <label>DiagnosisDiseaseChapter:</label>
+            @Html.TextBoxFor(m => m.DiagnosisDiseaseChapter, new { @maxlength = "100", @id = "txtDiagnosisDiseaseChapter" })
+        </div>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Diagnosis Table Name:</label>
+            @Html.TextBoxFor(m => m.DiagnosisTableName, new { @maxlength = "100", @id = "txtDiagnosisTableName", @class = "validate[required]" })
+        </div>
+        <div class="rowTable">
+            <label>Diagnosis Full Description:</label>
+            @Html.TextBoxFor(m => m.DiagnosisFullDescription, new { @maxlength = "1000", @id = "txtDiagnosisFullDescription" })
+        </div>
+        <div class="rowTable">
+            <label>Diagnosis Weight:</label>
+            @Html.TextBoxFor(m => m.DiagnosisWeight, new { @maxlength = "10", @id = "txtDiagnosisWeight" })
+        </div>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Diagnosis Code:</label>
+            @Html.TextBoxFor(m => m.DiagnosisCode1, new { @maxlength = "100", @id = "txtDiagnosisCode", @class = "validate[required]" })
+        </div>
+        <div class="rowTable">
+            <label>Diagnosis Disease Group:</label>
+            @Html.TextBoxFor(m => m.DiagnosisDiseaseGroup, new { @maxlength = "100", @id = "txtDiagnosisDiseaseGroup" })
+        </div>
+        <div class="rowTable">
+            <label>Diagnosis Effective Start Date:</label>
+            @Html.TextBoxFor(m => m.DiagnosisEffectiveStartDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtDiagnosisEffectiveStartDate", @class = "dtGeneral", @onchange = "CheckTwoDates($('#dtDiagnosisEffectiveStartDate'),$('#dtDiagnosisEffectiveEndDate'),'dtDiagnosisEffectiveStartDate')" })
+        </div>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Short Description:</label>
+            @Html.TextBoxFor(m => m.ShortDescription, new { @maxlength = "1000", @id = "txtShortDescription", @class = "validate[required]" })
+        </div>
+        <div class="rowTable">
+            <label>DiagnosisDiseaseCategory:</label>
+            @Html.TextBoxFor(m => m.DiagnosisDiseaseCategory, new { @maxlength = "100", @id = "txtDiagnosisDiseaseCategory" })
+        </div>
+        <div class="rowTable">
+            <label>Diagnosis Effective End Date:</label>
+            @Html.TextBoxFor(m => m.DiagnosisEffectiveEndDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtDiagnosisEffectiveEndDate", @class = "dtGeneral", @onchange = "CheckTwoDates($('#dtDiagnosisEffectiveStartDate'),$('#dtDiagnosisEffectiveEndDate'),'dtDiagnosisEffectiveEndDate')" })
+        </div>
+    </div>
+
+
+
+
+
+
+    <div class="col-sm-3">
+        <div class="button-block">
+            @if (Model.DiagnosisTableNumberId != null && Model.DiagnosisTableNumberId != 0)
+            {  <input type="submit" class="btn btn-primary edit-btn marginrightBtn" value="Update" onclick="return SaveDiagnosisCode('@Model.DiagnosisTableNumberId');" />
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveDiagnosisCode('@Model.DiagnosisTableNumberId');" class="btn btn-primary edit-btn marginrightBtn" value="Save" />
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginrightBtn" type="button" onclick="return ClearAll();">Cancel</button>
+
+
+        </div>
+    </div>
+    <div class="clear"></div>
+    <p id="lblMessage" class="field-mendatory" font-weight bold; margin-top 5px;">Fields marked with <span style="color: red;">* </span>are mendatory.</p>
+
+</div>

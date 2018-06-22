@@ -1,0 +1,40 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<OpenOrderCustomModel>
+
+    @if (Model != null)
+    {
+        var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridphyAllOrdersGrid", canPage: false);
+        <div id="gridphyAllOrdersGrid">
+            @grid.GetHtml(htmlAttributes: new {id = "phyAllOrdersGridSummary"}, tableStyle: "table ", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                columns:
+                    grid.Columns(
+                        grid.Column("ActivityCode", header: "Activity Code", canSort: true, style: "col4"),
+                         grid.Column("OrderCode", header: "Order Code", canSort: true, style: "col5"),
+                         grid.Column("OrderDescription", header: "Order Description", canSort: true, style: "col6"),
+                        grid.Column(header: "Action", style: "col9", format:
+                            @<text>
+                                 <a href="javascript:void(0);" title="Add as fav." class="FavAdd" onclick="AddAsFav('@item.OpenOrderID') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px; display: none;">
+                                     <img src="~/images/edit_small.png" />
+                                 </a>
+                                 <a href="javascript:void(0);" title="Add to Order." class="OrderAdd" onclick="AddToOrder('@item.OpenOrderID') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px;">
+                                     <img src="~/images/edit_small.png" />
+                                 </a>
+                             </text>)))
+        </div>
+    }
+    else
+    {
+        <h2>No Record found</h2>
+    }
+<script>
+    $(function () {
+        if ($('#collapsePhysicianMostOrderList').hasClass('in')) {
+            $('#phyAllOrdersGridSummary').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        } else {
+            $('#collapsePhysicianMostOrderList').addClass('in');
+            $('#phyAllOrdersGridSummary').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+            $('#collapsePhysicianMostOrderList').removeClass('in');
+        }
+        SetGridSorting(SortPhysiciansAllorders, "#gridphyAllOrdersGrid");
+    });
+</script>

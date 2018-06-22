@@ -1,0 +1,165 @@
+﻿
+@using System.Web.Optimization
+@using BillingSystem.Model
+
+@model OpenOrder
+
+@using Kendo.Mvc.UI
+
+@{
+    ViewBag.Title = "Add Physician Order";
+}
+<style>
+    .btn-group {
+        margin-left: 15px;
+    }
+
+    .marginNone .k-state-default {
+        margin-bottom: 0 !important;
+    }
+</style>
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+<div class="base-color">
+    <div class="form">
+        <div>
+            <div class="col-sm-6 col-md-6 col-lg-4">
+                <div class="rowTable">
+                    <label><span class="mandatoryStar"></span>Order Type Category</label>
+                    <select id="ddlRoomCharges" class="validate[required]" disabled="disabled">
+                        <option value="8">Service Code</option>
+                    </select>
+                </div>
+               </div>
+            <div class="col-sm-6 col-md-6 col-lg-4">
+                <div class="rowTable">
+                    <label><span class="mandatoryStar"></span>Activity Type:</label>
+                    <label>Service Code/Room Charges</label>
+                </div>
+                <div class="rowTable" style="min-height: 47px;">
+                    <label><span class="mandatoryStar"></span>Order Status</label>
+                     <select id="ddlOrderStatus" class="validate[required]" disabled="disabled">
+                        <option value="3">Closed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6 col-lg-4">
+                <div class="rowTable">
+                    <label>Comments</label>
+                    @Html.TextAreaFor(m => m.OrderNotes, new { id = "txtOrderNotes1", @maxlength = "500", @placeholder = "Enter your additional comments here...", @style = "height:80px;", @class = "emptytxt" })
+                </div>
+            </div>
+        </div>
+        <div class="clear"></div>
+        <div class="col-sm-12">
+            <div class="rowTable">
+                <label>Service Codes (You can Select from the dropdown or search the Codes / Description through Smart TextBox):</label>
+                <select name="select_this" id="ddlServiceCodes" class="testselectset validate[required]" onchange="SetTextFieldValue();"></select>
+                @Html.HiddenFor(m => m.OrderCode, new { @id = "hdOrderCodeId1" })
+                @Html.HiddenFor(m => m.OrderCode, new { @id = "hdAutocompleteOrderCodeId1" })
+                @Html.HiddenFor(m => m.OrderType, new { @id = "hdOrderType1" })
+
+                @Html.HiddenFor(m => m.EncounterID, new { @id = "hdCurrentEncounterId1" })
+                @Html.HiddenFor(m => m.PatientID, new { @id = "hdPatientID2" })
+
+                <input type="hidden" name="hdOrderExternalCode" value="" id="hdOrderExternalCode" />
+                <input type="hidden" name="hdOrderActivityID" value="" id="hdOrderActivityID" />
+                <input type="hidden" name="hdOrderClaimID" value="" id="hdOrderClaimID" />
+                <input type="hidden" name="hdEncounterStartDate" value="" id="hdEncounterStartDate1" />
+                <input type="hidden" name="hdEncounterEndDate" value="" id="hdEncounterEndDate1" />
+                <div class="field-group rowTable marginNone">
+                    @(Html.Kendo().AutoComplete()
+                      .Name("txtServiceCode")
+                      .DataTextField("CodeDescription")
+                      .Placeholder("Enter Code / Description...")
+                      .Filter("contains")
+                      .MinLength(1)
+                      .Events(e => e.Select("SelectServiceCode"))
+                      .HtmlAttributes(new
+                      {
+                          id = "txtServiceCode",
+                          onfocus = "ajaxStartActive = false;",
+                          onblur = "ajaxStartActive = true;",
+                          style = "width:100%",
+                          maxlength = "20",
+                          onchange = "$('#txtServiceCode').val($('#hdAutocompleteOrderCodeId').val());",
+                          @class = "emptytxt",
+                      })
+                      .DataSource(source => source.Read(read => read.Action("GetServiceCodes", "Home")
+                          .Data("OnCodeSelection"))
+                          .ServerFiltering(true))
+                )
+                </div>
+            </div>
+        </div>
+        <div class="clear"></div>
+        <div>
+            <div class="col-sm-6 col-md-6 col-lg-4">
+                <div class="rowTable">
+                    <label><span class="mandatoryStar"></span>Type of Manual Charge</label>
+                    <select id="ddlFrequencyList1" name="ddlFrequencyList1" class="validate[required] emptyddl" onchange="DisableEnableQqantity()"></select>
+                    @Html.HiddenFor(m => m.FrequencyCode, new { @id = "hdFrequencyCode" })
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6 col-lg-8">
+                <div class="rowTable">
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <label><span class="mandatoryStar"></span>Activity Date Start:</label>
+                            @Html.TextBoxFor(m => m.StartDate, new { @Value = Model.StartDate.HasValue ? Convert.ToDateTime(Model.StartDate).ToString("MM/dd/yyyy") : DateTime.Now.ToString("MM/dd/yyyy"), @id = "txtOrderStartDate1", @maxlength = "18", @placeholder = "Enter Start Date...", @class = "DateTime" })
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="col-sm-6">
+                                 <label><span class="mandatoryStar"></span>Hours:</label>
+                            @Html.TextBoxFor(m => m.StartDate, new { @Value = Model.StartDate.HasValue ? Convert.ToDateTime(Model.StartDate).ToString("HH") : DateTime.Now.ToString("HH"), @id = "txtOrderStartTimeH1", @maxlength = "2", @placeholder = "Hour", @class = "TimePicker1" })
+                            </div>
+                            <div class="col-sm-6">
+                                <label><span class="mandatoryStar"></span>Mins:</label>
+                            @Html.TextBoxFor(m => m.StartDate, new { @Value = Model.StartDate.HasValue ? Convert.ToDateTime(Model.StartDate).ToString("mm") : DateTime.Now.ToString("mm"), @id = "txtOrderStartTimeM1", @maxlength = "2", @placeholder = "mins", @class = "TimePicker1" })
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <label><span class="mandatoryStar"></span>Activity Date End:</label>
+                            @Html.TextBoxFor(m => m.EndDate, new { @Value = Model.EndDate.HasValue ? Convert.ToDateTime(Model.EndDate).ToString("MM/dd/yyyy") : DateTime.Now.ToString("MM/dd/yyyy"), @id = "txtOrderEndDate1", @maxlength = "18", @placeholder = "Enter End Date...", @class = "DateTime" })
+                        </div>
+                         <div class="col-sm-3">
+                            <div class="col-sm-6">
+                              <label><span class="mandatoryStar"></span>Hours:</label>
+                            @Html.TextBoxFor(m => m.EndDate, new { @Value = Model.EndDate.HasValue ? Convert.ToDateTime(Model.EndDate).ToString("HH") : DateTime.Now.ToString("HH"), @id = "txtOrderEndTimeH1", @maxlength = "2", @placeholder = "hour" })
+                            </div>
+                            <div class="col-sm-6">
+                               <label><span class="mandatoryStar"></span>Mins:</label>
+                            @Html.TextBoxFor(m => m.EndDate, new { @Value = Model.EndDate.HasValue ? Convert.ToDateTime(Model.EndDate).ToString("mm") : DateTime.Now.ToString("mms"), @id = "txtOrderEndTimeM1", @maxlength = "2", @placeholder = "min"})
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div id="divQuantitySingle">
+                    <div class="col-sm-6 col-md-6 col-lg-4">
+                        <div class="rowTable">
+                            <label>Room Charges:</label>
+                            <label id="lblServiceCodeCharges">&nbsp;</label>
+                              </div>
+                    </div>
+                    <div class="col-sm-6 col-md-6 col-lg-4">
+                        <div class="rowTable">
+                            <label><span class="mandatoryStar"></span>Quantity for day</label>
+                            <select id="ddlQuantityList1" name="ddlQuantityList1" class="validate[required] emptyddl"></select>
+                            @Html.HiddenFor(m => m.Quantity, new { @id = "hdQuantity" })
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-6 col-lg-4">&nbsp;</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="button-block">
+                <input type="submit" class="btn btn-primary edit-btn marginrightBtn AddOrder" id="btnAddRoomCharges" onclick="return SaveRoomCharges();" value="Submit"  />
+                <input type="button" class="btn btn-primary edit-btn marginrightBtn" value="Cancel" onclick="ResetRoomCharges();" />
+            </div>
+        </div>
+    </div>
+</div>

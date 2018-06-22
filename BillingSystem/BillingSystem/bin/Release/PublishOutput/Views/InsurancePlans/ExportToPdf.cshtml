@@ -1,0 +1,43 @@
+﻿@using BillingSystem.Common
+
+@model dynamic
+
+@{
+    Layout = "~/Views/Shared/_PdfLayout.cshtml";
+}
+
+
+<paragraph style="font-family: Helvetica; font-size: 18px; font-style: italic;">
+	<chunk red="255" green="0" blue="0">@ViewBag.Title</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Date: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("MM/dd/yyyy")</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Time: </chunk>
+    <chunk style="font-family:Times;">@Helpers.GetInvariantCultureDateTime().ToString("hh:mm tt")</chunk>
+</paragraph>
+
+
+<table width="100%" cellpadding="1.0" cellspacing="1.0" widths="3;4;4;4;4;4">
+    <row>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Company Name</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Plan Name</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Package ID Payer</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Description</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">Begin Date</chunk></cell>
+            <cell><chunk style="font-size: 10px; color: #317cb3;">End Date</chunk></cell>
+        </row>
+    @foreach (var item in Model)
+    {
+        <row> 
+                <cell><chunk style="font-size: 8px; color: #000;">@item.InsuranceCompanyName</chunk></cell>
+                <cell><chunk style="font-size: 8px; color: #000;">@item.InsurancePlan.PlanName</chunk></cell>
+                <cell><chunk style="font-size: 8px; color: #000;">@item.InsurancePlan.PlanNumber</chunk></cell>
+                <cell><chunk style="font-size: 8px; color: #000;">@item.InsurancePlan.PlanDescription</chunk></cell>
+                <cell><chunk style="font-size: 8px; color: #000;">@item.InsurancePlan.PlanBeginDate</chunk></cell>
+                <cell><chunk style="font-size: 8px; color: #000;">@item.InsurancePlan.PlanEndDate</chunk></cell>
+            </row>
+    }
+</table>

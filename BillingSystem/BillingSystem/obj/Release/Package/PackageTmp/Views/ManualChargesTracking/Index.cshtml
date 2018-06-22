@@ -1,0 +1,104 @@
+﻿@using BillingSystem.Models
+
+@model ManualChargesTrackingView
+
+@{
+    ViewBag.Title = "ManualChargesTracking View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@*<script src="~/Scripts/ManualChargesTracking/ManualChargesTracking.js"></script>*@
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseManualChargesTrackingAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>Select Date Range
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseManualChargesTrackingAddEdit" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="rowTable">
+                                <label>From:</label>
+                                <input id="txtFromDate" class="dtLessThanCurrent large pull-left" maxlength="10" type="text" value="">
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="rowTable">
+                                <label>Till:</label>
+                                <input id="txtTillDate" class="dtLessThanCurrent large pull-left" maxlength="10" type="text" value="">
+                            </div>
+                        </div>     
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="rowTable">
+                            <input type="submit" class="blue-btn btn btn-primary edit-btn marginBtn" value="Submit" onclick="BindReport();" />
+                                <div id="rdExportDiv" class="exportOptions" style="float: left;">
+                                    <a class="excelexportIcon" id="btnExportExcel" href="javascript:void(0);" title="Export as Excel" > </a>
+                                    <a class="pdfexportIcon" id="btnExportPDF" href="javascript:void(0);" title="Export as PDF" > </a>
+                                </div>
+                                </div>
+                        </div>                   
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseManualChargesTrackingList">
+            <h4 class="panel-title collapseTitle">
+                <span><img src="~/images/list.png" /></span>Tracking List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseManualChargesTrackingList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="ManualChargesTrackingListDiv">
+                    @{Html.RenderPartial("~/Views/ManualChargesTracking/UserControls/_ManualChargesTrackingList.cshtml", Model.ManualChargesTrackingList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+<script>
+    var BindReport = function () {
+        var fromdate = $('#txtFromDate').val();
+        var tilldate = $('#txtTillDate').val();
+        $.ajax({
+            type: "POST",
+            url: '/ManualChargesTracking/BindReport',
+            async: false,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            data: JSON.stringify({ fromDate: fromdate, tilldate: tilldate }),
+            success: function (data) {
+                $('#ManualChargesTrackingListDiv').empty();
+                $('#ManualChargesTrackingListDiv').html(data);
+            },
+            error: function (msg) {
+            }
+        });
+    };
+
+    $(function () {
+        var datenow = new Date();
+        $('#txtFromDate').val(datenow.format('mm/dd/yyyy'));
+        $('#txtTillDate').val(datenow.format('mm/dd/yyyy'));
+        $('#btnExportExcel').click(function (e) {
+            e.preventDefault();
+            window.location = '/ManualChargesTracking/ExportToExcel?fromDate=' + $('#txtFromDate').val() + '&tilldate=' + $('#txtTillDate').val();
+        });
+        $('#btnExportPDF').click(function (e) {
+            e.preventDefault();
+            window.location = '/ManualChargesTracking/ExportToPDF?fromDate=' + $('#txtFromDate').val() + '&tilldate=' + $('#txtTillDate').val();
+        });
+    });
+</script>

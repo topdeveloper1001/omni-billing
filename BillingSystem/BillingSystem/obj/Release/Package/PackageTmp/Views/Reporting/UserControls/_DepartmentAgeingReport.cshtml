@@ -1,0 +1,41 @@
+﻿@using BillingSystem.Model.CustomModel
+@using System.Linq
+
+@model IEnumerable<AgingReportCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridDepartmentAgeingReport", canPage: false, canSort: true);
+    <div id="gridDepartmentAgeingReport" class="scrollable-panel">
+        @grid.GetHtml(htmlAttributes: new { id = "DepartmentAgeingReportGrid" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                grid.Column("DepartmentNumber", header: "Department Number", canSort: true, style: "col1"),
+                 grid.Column("DepartmentName", header: "Department Name", canSort: true, style: "col2"),
+                  grid.Column("Ontime", header: "In House", canSort: true, style: "col3"),
+                 grid.Column("Days1To30", header: "Days 1 - 30", canSort: true, style: "col4"),
+                  grid.Column("Days31To60", header: "Days 31 - 60", canSort: true, style: "col5"),
+                  grid.Column("Days61To90", header: "Days 61 - 90", canSort: true, style: "col6"),
+                  grid.Column("Days91To120", header: "Days 91 - 120", canSort: true, style: "col7"),
+                   grid.Column("Days121To150", header: "Days 121 - 90", canSort: true, style: "col8"),
+                   grid.Column("Days151To180", header: "Days 151 - 180", canSort: true, style: "col9"),
+                  grid.Column("Days180More", header: "Days 180+", canSort: true, style: "col10")
+                ))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+<script>
+    $(function() {
+        if ($('#DepartmentAgeingReportGrid tr').length > 0) {
+            $('#DepartmentAgeingReportGrid').Scrollable();
+        }
+    });
+</script>
+<script>
+    $(function () {
+        SetGridSorting(SortPayorAgingReport, "#DepartmentAgeingReportGrid");
+    });
+</script>

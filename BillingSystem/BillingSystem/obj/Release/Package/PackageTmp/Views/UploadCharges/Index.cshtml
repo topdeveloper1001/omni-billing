@@ -1,0 +1,179 @@
+﻿@using System.Web.Optimization
+@using BillingSystem.Common
+@model BillingSystem.Models.UploadChargesView
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+
+<style>
+    .table {
+        margin-bottom: 0px !important;
+    }
+</style>
+<div class="white-bg">
+    @Html.HiddenFor(m => m.PatientId, new { @id = "CorrectionsViewHfPatientId" })
+    @Html.HiddenFor(m => m.EncounterId, new { @id = "CorrectionsViewHfEncounterId" })
+    @Html.HiddenFor(m => m.BillHeaderId, new { @id = "CorrectionsViewHfBillHeaderId" })
+
+    @*<div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseEncounter">
+                <h4 class="panel-title collapseTitle">
+                    <span><img src="~/images/list.png" /></span>&nbsp;Encounter List
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseEncounter" class="panel-collapse collapse in">
+                <div class="panel-body scroller">
+                    <div class="base-color">
+                        <div class="form">
+                            @{Html.RenderPartial("~/Views/UploadCharges/UserControls/_Encounters.cshtml", Model.EncounterList);}
+                            <input type="hidden" id="hdPatientId1"/>
+                            <input type="hidden" id="hdCurrentEncounterId1"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>*@
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapsePatientSearch">
+            <h1 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Search Patient
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h1>
+        </div>
+        <div id="collapsePatientSearch" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <p class="mandatoryText">By entering more than one piece of information, you will receive a more accurate search result:</p>
+                    <div class="form" id="ValidatePatientSearch">
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Person Last Name</label>
+                                <input type="text" name="txtLastName" id="txtLastName" class="large pull-left Atleast" maxlength="20" />
+                            </div>
+                            <div class="rowTable">
+                                <label>Person Passport Number</label>
+                                <input type="text" name="txtPassportnumber" id="txtPassportnumber" class="large pull-left Atleast" maxlength="20" />
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Contact Number</label>
+                                <div class="telephoneCol1">
+                                    <select id="ddlCountries" name="ddlCountries" class="marginBottomNone" onchange="OnCountryDropdownChange('#lblCountryCode','#ddlCountries'); $('#txtMobileNumber').focus();"></select>
+                                </div>
+                                <span id="lblCountryCode" class="marginTopPhoneNo" style="margin-left: 2px;"></span>
+                                <input type="hidden" name="hdCountry" value="" id="hdCountry" />
+                                <input type="text" name="txtMobileNumber" id="txtMobileNumber" class="telephoneCol2 large PhoneMask" maxlength="11" />
+                            </div>
+                            <div class="rowTable">
+                                <label>Person Birth Date</label>
+                                <input type="text" name="txtBirthDate" id="txtBirthDate" class="dtLessThanCurrent large pull-left" maxlength="10" onchange="CheckValidDateOfBirth(this,'txtBirthDate');" />
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>Person EmiratesID Number</label>
+                                <input type="text" name="txtEmiratesNationalId" id="txtEmiratesNationalId" class="large pull-left EmiratesMask Atleast" maxlength="20" />
+                            </div>
+                        </div>
+                        <div class="clear"></div>
+                        <div class="btn-group">
+                            <input type="submit" onclick="return SearchClaimPatient();" value="Search" class="blue-btn btn btn-primary" id="btnSearch" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse" id="divPatientSearch" style="display: none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapsepatientSerach">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Patient Search
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapsepatientSerach" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form" id="PatientSearchResultDiv">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse" id="divAddEditOrder" style="display: none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick=" $.validationEngine.closePrompt('.formError', true);">
+            <h4 class=" panel-title collapsetitle">
+            <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Orders
+            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </a>
+            </h4>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form" id="OpenOrderDiv">
+                        @{Html.RenderPartial("~/Views/UploadCharges/UserControls/_OpenOrderAddEdit.cshtml", Model.EncounterOrder);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable" id="divOrdersList" style="display: none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h4 class="panel-title collapseTitle">
+                <span><img src="~/images/list.png" /></span>&nbsp;Orders List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseTwo" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="OpenOrderListDiv">
+                    @{Html.RenderPartial("~/Views/UploadCharges/UserControls/_OpenOrderList.cshtml", Model.OpenOrdersList);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div id="diagnosisDiv">
+        @{Html.RenderPartial("~/Views/UploadCharges/UserControls/_UpdateDiagnosis.cshtml", Model.DiagnosisViewCustom);}
+    </div>
+    <div class="clear"></div>
+    <div id="RoomChargesDiv" style="display: none;">
+        @{Html.RenderPartial("~/Views/UploadCharges/UserControls/_RoomChargesMain.cshtml", Model.RoomChargesViewCustom);}
+    </div>
+    <div class="clear"></div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable" id="divBillActivitesList" style="display: none;">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseBillActivitesTwo">
+            <h4 class="panel-title collapseTitle">
+                <span><img src="~/images/list.png" /></span>&nbsp;Bill Activites List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseBillActivitesTwo" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="BillActivitesListDiv">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/UploadCharges/UploadCharges.js?@Helpers.CurrentAssemblyTicks"></script>

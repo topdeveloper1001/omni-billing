@@ -1,0 +1,74 @@
+﻿@using BillingSystem.Model.CustomModel
+@model BillingSystem.Models.XMLBillingView
+
+@{
+    ViewBag.Title = "XFileHeader";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var sendXmlFiles = new List<XFileHeaderCustomModel>();
+    var receivedXmlFiles = new List<XFileHeaderCustomModel>();
+}
+
+<script src="~/Scripts/XFileHeader/XFileHeader.js"></script>
+<div class="white-bg">
+     @if (Model.XFileHeaderList != null && Model.XFileHeaderList.Count > 0)
+    {
+        //Passed / No Bill Edit Errors or Warnings
+        sendXmlFiles = Model.XFileHeaderList.Where(a => a.FileType.Equals("REQ")).ToList();
+        receivedXmlFiles = Model.XFileHeaderList.Where(a => a.FileType.Equals("IN")).ToList();
+    }
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" /></span>&nbsp;XML Billing List (Sent)
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseTwo" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="XFileHeaderListSendDiv">
+                    @{Html.RenderPartial("~/Views/XMLBilling/UserControls/_XMLBillingListSend.cshtml", sendXmlFiles);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseone">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" /></span>&nbsp;XML Billing List (Received)
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseone" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="XFileHeaderListReceivedDiv">
+                    @{Html.RenderPartial("~/Views/XMLBilling/UserControls/_XMLBillingList.cshtml", receivedXmlFiles);}
+                </div>
+            </div>
+        </div>
+    </div>
+    @* User role selection pop up *@
+    <div id="divhidepopup" style="display: none;">
+        <div class="popup-coverbg"></div>
+        <div class="popup-frame">
+            <div class="popup-main">
+                <div class="popup-content">
+                    <div>
+                        <div class="popup-close" onclick="$('#divhidepopup').hide();">X</div>
+                        <div id="xmlBillingView">
+                            <textarea id="txtXmlBillingView" cols="105" rows="30" readonly="readonly" class="minHeight1" ></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

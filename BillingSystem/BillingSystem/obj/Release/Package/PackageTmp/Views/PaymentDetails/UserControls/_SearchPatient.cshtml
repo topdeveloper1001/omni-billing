@@ -1,0 +1,67 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Model.PatientInfo
+
+@*@model BillingSystem.Model.PatientInfoCustomModel*@
+
+@{
+    ViewBag.Title = "PatientSearch";
+    //Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    .btn-group {
+        margin: 0 0 10px 15px;
+    }
+</style>
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div id="collapseTwo" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    @*<p class="mandatoryText">By entering more than one piece of information, you will receive a more accurate search result.:</p>*@
+                    <p class="mandatoryText">@ResourceKeyValues.GetKeyValue("patientsearchmandatorytext")</p>
+                    <div class="form" id="ValidatePatientSearch">
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                @Html.Hidden("Role", (string)ViewBag.Role, new { id = "hidRole" })
+                                @*@Html.Hidden("FirstTimeLogin", (bool)ViewBag.FirstTimeLogin, new { id = "hidFirstTimeLogin" })*@
+                                <label>@ResourceKeyValues.GetKeyValue("personlastname")</label>
+                                @Html.TextBoxFor(m => m.PersonLastName, new { @maxlength = "20", @class = "large pull-left Atleast", @ID = "txtLastName" })
+                            </div>
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("passportnumber")</label>
+                                @Html.TextBoxFor(m => m.PersonPassportNumber, new { @maxlength = "20", @class = "large pull-left Atleast", @ID = "txtPassportnumber" })
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("contactmobilephone")</label>
+                                @* @Html.DropDownListFor(m => m.CountryList, new SelectList(Model.CountryList, "CodeValue", "CountryWithCode"), "Select One", new { id = "MobileCode", @style = "float: left;", @onchange = "$('#txtMobileNumber').focus();" })*@
+                                <div class="telephoneCol1">
+                                    <select id="ddlCountries" name="ddlCountries" class="marginBottomNone" onchange="OnCountryDropdownChange('#lblCountryCode','#ddlCountries'); $('#txtMobileNumber').focus();"></select>
+                                </div>
+                                <span id="lblCountryCode" class="marginTopPhoneNo" style="margin-left: 2px;"></span>
+                                @Html.HiddenFor(m => m.PersonCountry, new { @id = "hdCountry" })
+                                @Html.TextBoxFor(m => m.PersonContactNumber, new { ID = "txtMobileNumber", @maxlength = "11", @class = "telephoneCol2 large PhoneMask" })
+                            </div>
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("personbirthdate")</label>
+                                @Html.TextBoxFor(m => m.PersonBirthDate, new { @maxlength = "10", @class = "dtLessThanCurrent large pull-left", @ID = "txtBirthDate", @onchange = "CheckValidDateOfBirth(this,'txtBirthDate');" })
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4 col-lg-4">
+                            <div class="rowTable">
+                                <label>@ResourceKeyValues.GetKeyValue("socialsecuritynumber")</label>
+                                @Html.TextBoxFor(m => m.PersonEmiratesIDNumber, new { @maxlength = "20", @class = "large pull-left EmiratesMask Atleast", @ID = "txtEmiratesNationalId" })
+                            </div>
+                        </div>
+                        <div class="clear"></div>
+                        <div class="btn-group">
+                            <input type="submit" onclick="return SearchPatientInPaymentDetail();" value="@ResourceKeyValues.GetKeyValue("search")" class="blue-btn btn btn-primary" id="btnSearch" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

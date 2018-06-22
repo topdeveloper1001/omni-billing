@@ -1,0 +1,307 @@
+﻿@using Kendo.Mvc.UI
+@model BillingSystem.Model.MCContract
+
+<style>
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form">
+    <div class="container-fluid greyBox" style="border-radius: 5px; margin: 10px;">
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                @Html.HiddenFor(m => m.MCContractID, new { @id = "hdMCContractID" })
+                <label><span class="mandatoryStar"></span>Managed Care Code Name:</label>
+                @Html.TextBoxFor(m => m.ModelName, new {@maxlength = "50", @id = "txtModelName",@class = "validate[required]"})
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Managed Care Code:</label>
+                @Html.TextBoxFor(m => m.MCCode, new {@maxlength = "10", @id = "txtMCCode",@class = "validate[optional[number]]"})
+            </div>
+            @**@
+             <div class="rowTable">
+            <label>Penalty for Re-submission (%):</label>
+            @Html.TextBoxFor(m => m.MCPenaltyRateResubmission, new { @maxlength = "3", @id = "txtMCPenaltyRateResubmission", @class = "validate[optional[number]]" })
+        </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Initial days to submit the bill:</label>
+                @Html.TextBoxFor(m => m.InitialSubmitDay, new {@maxlength = "3", @id = "txtInitialSubmitDay",@class = "validate[optional[number]]"})
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Days to resubmit 1st denial:</label>
+                @Html.TextBoxFor(m => m.ResubmitDays1, new {@maxlength = "3", @id = "txtResubmitDays1"})
+            </div>
+           @* <div class="rowTable">
+                <label>Patient Type:</label>
+                <select id="ddlMcEncounterType">
+                </select>
+                @Html.HiddenFor(m => m.MCEncounterType, new {id = "hdMCEncounterType"})
+            </div>*@
+            <div class="rowTable">
+            <label>
+                InPatient Type:
+                @{
+                    bool InPatientApplicable = Model.MCInPatientType != null && bool.Parse(Convert.ToString(Model.MCInPatientType));
+                }
+                @Html.CheckBoxFor(m => InPatientApplicable, new { @id = "chkMCInPatientType" })
+            </label>
+        </div>
+           @* <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Order Type:</label>
+            <select id="ddlMCOrderType" class="validate[required]">
+                <option value="0">--Select--</option>  
+                <option value="3">CPT</option>  
+                <option value="5">DRUG</option>  
+                <option value="8">Bed Charges</option> 
+            </select>
+                @Html.HiddenFor(m => m.MCOrderType, new {id = "hdMCOrderType"})
+            </div>*@
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Days to resubmit 2nd denial:</label>
+                @Html.TextBoxFor(m => m.ResubmitDays2, new {@maxlength = "3", @id = "txtResubmitDays2",@class = "validate[optional[number]]"})
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Penalty for late submission (%):</label>
+                @Html.TextBoxFor(m => m.PenaltyLateSubmission, new {@maxlength = "3", @id = "txtPenaltyLateSubmission",@class = "validate[optional[number]]"})
+            </div>
+             <div class="rowTable">
+                 <label>
+                     OutPatient Type:
+                     @{
+                         bool OutPatientApplicable = Model.MCOPPatientType != null && bool.Parse(Convert.ToString(Model.MCOPPatientType));
+                     }
+                     @Html.CheckBoxFor(m => OutPatientApplicable, new { @id = "chkMCOPPatientType" })
+                 </label>
+                 </div>
+           @* <div class="rowTable">
+                <label>Order Code:</label>
+                @Html.TextBoxFor(m => m.MCOrderCode, new { @maxlength = "10", @id = "txtMCOrderCode", @class = "validate[optional[number]]" })
+         </div>*@
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Bill Scrubber Set:</label>
+                 @Html.TextBoxFor(m => m.BillScrubberRule, new {@maxlength = "8", @id = "txtBillScrubberRule",@class = "validate[optional[number]]"})
+            </div>
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Expected Days for Payment:</label>
+                @Html.TextBoxFor(m => m.ExpectedPaymentDays, new {@maxlength = "3", @id = "txtExpectedPaymentDays",@class = "validate[optional[number]]"})
+            </div>
+            <div class="rowTable">
+                 <label>
+                     ERPatient Type:
+                     @{
+                         bool ERPatientApplicable = Model.MCERPatientType != null && bool.Parse(Convert.ToString(Model.MCERPatientType));
+                     }
+                     @Html.CheckBoxFor(m => ERPatientApplicable, new { @id = "chkMCERPatientType" })
+                 </label>
+                 </div>
+        </div>
+    </div>
+    @*<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 mainClass">
+        
+        <div class="rowTable">
+            <label>Encounter Type:</label>
+            <select id="ddlMcEncounterType" class="validate[required]" onchange="OnChangeEncounterLevel('#ddlMcEncounterType');"></select>
+        </div>
+        <div class="rowTable">
+            <label>Contract Level:</label>
+            <select id="ddlMcLevel" class="validate[required]" onchange="ShowOrderPanel('#ddlMcLevel');"></select>
+        </div>
+        <div class="rowTable">
+            <label>Weightage:</label>
+            <select id="ddlMCApplyWeightAge" class="validate[required]">
+                <option value="0">--Select--</option>
+                <option value="1" selected="selected">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 mainClass" id="divOrdersInMcContract" style="display: none;">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Order Type Category</label>
+            <select id="ddlOrderTypeCategory" name="ddlOrderTypeCategory" onchange="OnChangeCategory('#ddlOrderTypeCategory', '#ddlOrderTypeSubCategory');"></select>
+            @Html.HiddenFor(m => m.MCOrderType, new { @id = "hdMCOrderType" })
+        </div>
+        <div class="rowTable">
+            <label id="lblSubcategory"><span class="mandatoryStar"></span>Order Type Sub-Category</label>
+            <select id="ddlOrderTypeSubCategory" name="ddlOrderTypeSubCategory" onchange="OnChangeSubCatgory('#ddlOrderTypeSubCategory')"></select>
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Activity Type:</label>
+            <label id="CodeTypeValue"></label>
+        </div>
+        <div class="rowTable yellowBox2">
+            <label><span class="mandatoryStar"></span>Order Codes (You can Select from the dropdown or search the Codes / Description through Smart TextBox):</label>
+            <select name="select_this" id="ddlOrderCodes" class="testselectset" onchange="SetSelectedField()"></select>
+            @Html.HiddenFor(m => m.MCOrderCode, new { @id = "hdMCOrderCode" })
+            <div class="rowTable ">
+                @(Html.Kendo().AutoComplete()
+                      .Name("txtOrderCode")
+                      .DataTextField("CodeDescription")
+                      .Placeholder("Enter Code / Description...")
+                      .Filter("contains")
+                      .MinLength(3)
+                      .Events(e => e.Select("SelectMcContractOrderingCode"))
+                      .HtmlAttributes(new
+                      {
+                          id = "txtOrderCode",
+                          onfocus = "ajaxStartActive = false;",
+                          onblur = "ajaxStartActive = true;",
+                          style = "width:100%",
+                          maxlength = "20",
+                      })
+                      .DataSource(source => source.Read(read => read.Action("GetOrderingCodes", "Home")
+                          .Data("OnMCContractCodeSelection"))
+                          .ServerFiltering(true))
+                      )
+            </div>
+        </div>
+    </div>*@
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 mainClass">
+        <div class="rowTable">
+            <label>In-Patient Base Rate:</label>
+            @Html.TextBoxFor(m => m.MCInPatientBaseRate, new { @maxlength = "7", @id = "txtMCInPatientBaseRate", @class = "validate[optional[number]]" })
+        </div>
+        @*<div class="rowTable">
+            <label>Min. Patient Deduct (Per Encounter):</label>
+            @Html.TextBoxFor(m => m.MCPatientFixed, new { @maxlength = "5", @id = "txtMCPatientFixed", @class = "validate[optional[number]]", @disabled = "disabled" })
+        </div>*@
+        @*<div class="rowTable">
+            <label>Multiplier:</label>
+            @Html.TextBoxFor(m => m.MCMultiplier, new { @maxlength = "2", @id = "txtMCMultiplier", @class = "validate[optional[number]]" })
+        </div>*@
+        <div class="rowTable">
+            <label>Patient Percent:</label>
+            @Html.TextBoxFor(m => m.MCPatientPercent, new { @maxlength = "3", @id = "txtMCPatientPercent", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Outpatient Multiplier:</label>
+            @Html.TextBoxFor(m => m.MCMultiplierOutpatient, new { @maxlength = "4", @id = "txtMCMultiplierOutpatient", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Outpatient Deduct (per visit):</label>
+            @Html.TextBoxFor(m => m.MCOutpatientDeduct, new { @maxlength = "5", @id = "txtMCOutpatientDeduct", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>General Ledger Account:</label>
+            @Html.TextBoxFor(m => m.MCGeneralLedgerAccount, new { @maxlength = "15", @id = "txtMCGeneralLedgerAccount", @class = "validate[optional[number]]" })
+        </div>
+        
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 mainClass">
+        
+        <div class="rowTable">
+            <label>Max Limit (Per Policy):</label>
+            @Html.TextBoxFor(m => m.MCPatientCapping, new { @maxlength = "7", @id = "txtMCPatientCapping", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Annual Out Of Pocket:</label>
+            @Html.TextBoxFor(m => m.MCAnnualOutOfPocket, new { @maxlength = "7", @id = "txtMCAnnualOutOfPocket", @class = "validate[optional[number]]" })
+        </div>
+        @*<div class="rowTable">
+            <label>Waiting Days:</label>
+            @Html.TextBoxFor(m => m.MCWaitingDays, new { @maxlength = "3", @id = "txtMCWaitingDays", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Expire After Days:</label>
+            @Html.TextBoxFor(m => m.MCExpireAfterDays, new { @maxlength = "3", @id = "txtMCExpireAfterDays", @class = "validate[optional[number]]" })
+        </div>*@
+        <div class="rowTable">
+            <label>Emergency Room Multiplier:</label>
+            @Html.TextBoxFor(m => m.MCMultiplierEmergencyRoom, new { @maxlength = "4", @id = "txtMCMultiplierEmergencyRoom", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Inpatient Deduct (per visit):</label>
+            @Html.TextBoxFor(m => m.MCPatientFixed, new { @maxlength = "15", @id = "txtMCPatientFixed", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>A/R Account:</label>
+            @Html.TextBoxFor(m => m.ARGeneralLedgerAccount, new { @maxlength = "15", @id = "txtARGeneralLedgerAccount", @class = "validate[optional[number]]" })
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 mainClass">
+        <div class="rowTable">
+            <label>DRG Table Number:</label>
+            @Html.TextBoxFor(m => m.MCDRGTableNumber, new { @maxlength = "10", @id = "txtMCDRGTableNumber", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>CPT Table Number:</label>
+            @Html.TextBoxFor(m => m.MCCPTTableNumber, new { @maxlength = "10", @id = "txtMCCPTTableNumber", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Inpatient Multiplier:</label>
+            @Html.TextBoxFor(m => m.MCMultiplierOther, new { @maxlength = "4", @id = "txtMCMultiplierOther", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Rule Set Number:</label>
+            @Html.TextBoxFor(m => m.MCRuleSetNumber, new { @maxlength = "5", @id = "txtMCRuleSetNumber", @class = "validate[optional[number]]" })
+        </div>
+        
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 mainClass">
+        <div class="rowTable">
+            <label>
+                Per Diems Applicable:
+                @{
+                    bool chPerDiemsApplicable = Model.MCPerDiemsApplicable != null && bool.Parse(Convert.ToString(Model.MCPerDiemsApplicable));
+                }
+                @Html.CheckBoxFor(m => chPerDiemsApplicable, new { @id = "chkMCPerDiemsApplicable" })
+            </label>
+        </div>
+        <div class="rowTable">
+            <label>
+                Carveouts Applicable:
+                @{
+                    bool chkMcCarveoutsApplicable = Model.MCCarveoutsApplicable != null && bool.Parse(Convert.ToString(Model.MCCarveoutsApplicable));
+                }
+                @Html.CheckBoxFor(m => chkMcCarveoutsApplicable, new { @id = "chkMCCarveoutsApplicable" })
+            </label>
+        </div>
+        <div class="rowTable">
+            <label>
+                Is Active:
+                @{
+                    bool BCIsActive = Model.BCIsActive != null && bool.Parse(Convert.ToString(Model.BCIsActive));
+                }
+                @Html.CheckBoxFor(m => BCIsActive, new { @id = "chkBCIsActive" })
+            </label>
+        </div>
+        <div class="rowTable">
+            <label>
+                Managed Care Hospital E & M Certified:
+                @{
+                    bool mcemCertified = Model.MCEMCertified != null && bool.Parse(Convert.ToString(Model.MCEMCertified));
+                }
+                @Html.CheckBoxFor(m => mcemCertified, new { @id = "chkMCEMCertified" })
+            </label>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 mainClass yellowBox2" id="divOrdersInMcContract" >
+        <label class="colorCodeTitle">Expected Payment Section:</label>
+        @*<div class="rowTable">
+            <label>Add/Reduce on:</label>
+            @Html.TextBoxFor(m => m.MCAddon, new { @maxlength = "7", @id = "txtMCAddon", @class = "validate[optional[number]]" })
+        </div>*@
+        <div class="rowTable">
+            <label>Expected Rate:</label>
+            @Html.TextBoxFor(m => m.MCExpectedFixedrate, new { @maxlength = "7", @id = "txtMCExpectedFixedrate", @class = "validate[optional[number]]" })
+        </div>
+        <div class="rowTable">
+            <label>Expected Rate percent of Original rate:</label>
+            @Html.TextBoxFor(m => m.MCExpectedPercentage, new { @maxlength = "5", @id = "txtMCExpectedPercentage", @class = "validate[optional[number]]" })
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <div style="float: left;">
+            <input type="submit" id="BtnSaveMcContract" class="btn btn-primary edit-btn marginBtn" value="Save" onclick="return SaveMcContract();" />
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearMcContractForm();">Cancel</button>
+        </div>
+    </div>
+</div>

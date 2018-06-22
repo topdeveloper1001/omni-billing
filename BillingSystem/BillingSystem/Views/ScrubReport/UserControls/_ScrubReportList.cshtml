@@ -1,0 +1,110 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model List<ScrubReportCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentScrubReport", canPage: false);
+            <div id="gridContentScrubReport">
+                @grid.GetHtml(htmlAttributes: new { id = "ScrubReportBillEdit" }, tableStyle: "table table_scroll_Report", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow",
+                    columns:
+                        grid.Columns(
+                            grid.Column("ScrubReportID", "Scrub Report ID", style: "Col1", canSort: true, format: @<text>
+                @if (item.RuleMasterID != null)
+                {
+                    <input type="hidden" name="hdMasterId" value="@item.RuleStepsValue" />
+                }
+                @item.ScrubReportID
+                </text>),
+                            grid.Column("RuleMasterDesc", "Rule Master", canSort: true, style: "Col10", format: @<text>
+                @if (item.RuleMasterID != null)
+                {
+                    <input type="hidden" name="hdRuleGroup" value="@item.RuleGroup" />
+                }
+                @item.RuleMasterDesc
+                </text>),
+                         grid.Column("RuleStepDesc", "Rule Step", canSort: true, style: "Col10"),
+                //grid.Column("ErrorText", "Error", canSort: true),
+                                                                                                                                            grid.Column("ConStartDesc", "Condition Start", canSort: true, style: "Col10"),
+
+                                                                                                                                            grid.Column("System Value", canSort: true, style: "Col10", format: @<text>
+                @if (!string.IsNullOrEmpty(item.LhsTooltip))
+                {
+                    <span title="@item.LhsTooltip">@item.LHSV</span>
+                }
+                else
+                {
+                    <span title="Direct Value Entered by User">@item.LHSV</span>
+                }
+                </text>),
+                                                                                                                                            grid.Column("CompareTypeText", "Compare Type", canSort: true, style: "Col10"),
+                            grid.Column("Original Value", canSort: true, style: "Col10", format: @<text>
+                @if (!string.IsNullOrEmpty(item.RhsTooltip))
+                {
+                    <span title="@item.RhsTooltip">@item.RHSV</span>
+                }
+                else
+                {
+                    <span title="Direct Value Entered by User">@item.RHSV</span>
+                }
+                </text>),
+                                                                                                                                            grid.Column("ConEndDesc", "Condition End", canSort: true, style: "Col10"),
+                            grid.Column("Status", "Status", canSort: true, style: "colAlignCenter", format: @<text>
+                @if (item.Status != null)
+                {
+                    if (item.Status == 0)
+                    {
+                    <img src="@Url.Content("~/images/passed16x16.png")" title="Passed" />
+                    }
+                    else if (item.Status == 1)
+                    {
+                    <img src="@Url.Content("~/images/warning16x16.png")" title="Warning" />
+                    }
+                    else if (item.Status == 2)
+                    {
+                    <img src="@Url.Content("~/images/stop16x16.png")" title="Error" />
+                    }
+                    else if (item.Status == 99)
+                    {
+                    <img src="@Url.Content("~/images/notApplicable16x16.png")" title="Not Applicable" />
+                    }
+                }
+                </text>),
+                            grid.Column(header: "Corrections", canSort: true, style: "colAlignCenter", format: @<text>
+                @if (item.Status == 1 || item.Status == 3)
+                {
+                    <a href="#collapseScrubReport" title="Correction View" onclick=" LoadCorrectionViewData('@item.ScrubReportID'); ">
+                        <img src="@Url.Content("~/images/eraser.png")" />
+                    </a>
+                }
+                </text>)
+                //grid.Column("AssignedBy", header: "Assigned By", canSort: true)
+                //grid.Column("ErrorCode", header: "ErrorCode", canSort: true),
+                //grid.Column("ErrorDescription", header: "ErrorDescription", canSort: true),
+                //grid.Column("ExtValue1", header: "Other Values", canSort: true),
+                //grid.Column("ExtValue2", header: "ExtValue2", canSort: true),
+                //grid.Column("ExtValue3", header: "ExtValue3", canSort: true),
+                //grid.Column("ExtValue4", header: "ExtValue4", canSort: true),
+                //grid.Column("ModifiedBy", header: "ModifiedBy", canSort: true),
+                //grid.Column("ModifiedDate", header: "ModifiedDate", canSort: true),
+                //grid.Column("IsActive", header: "IsActive", canSort: true),
+                //grid.Column("CreatedBy", header: "CreatedBy", canSort: true),
+                //grid.Column("CreatedDate", header: "CreatedDate", canSort: true)
+                            ))
+            </div>
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+<script>
+    $(function () {
+        $('.table_scroll_Report').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        SetGridSorting(SortScrubReport, "#gridContentScrubReport");
+    });
+</script>

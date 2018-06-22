@@ -1,0 +1,35 @@
+﻿@model BillingSystem.Models.ChargesReportViews
+
+<div class="panel-body">
+    <div class="greyBox">IP Charges</div>
+    <div class="base-color">
+        <div class="form">
+            <div class="table-responsive" id="InPatientActiveEncounterList">
+                @{Html.RenderPartial("~/Views/Reporting/UserControls/_IPChargesReport.cshtml", Model.IPChargesList);}
+            </div>
+        </div>
+    </div>
+</div>
+<hr/>   
+<div class="panel-body">
+    <div class="greyBox">OP Charges</div>
+    <div class="base-color">
+        <div class="form">
+            <div class="table-responsive" id="OpPatientActiveEncounterList">
+                  @{Html.RenderPartial("~/Views/Reporting/UserControls/_OPChargesReport.cshtml", Model.OPChargesList);}
+            </div>
+        </div>
+    </div>
+</div>
+<hr/>   
+<div class="panel-body">
+    <div class="greyBox">ER Charges</div>
+    <div class="base-color">
+        <div class="form">
+            <div class="table-responsive" id="ERPatientActiveEncounterList">
+                @{Html.RenderPartial("~/Views/Reporting/UserControls/_ERChargesReport.cshtml", Model.ERChargesList);}
+                
+            </div>
+        </div>
+    </div>
+</div>

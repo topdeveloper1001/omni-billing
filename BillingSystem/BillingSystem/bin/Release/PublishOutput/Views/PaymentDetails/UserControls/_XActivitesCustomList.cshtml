@@ -1,0 +1,29 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model List<XActivityCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "PaymentsGridContent",canPage:false);
+    <div id="PaymentsGridContent">
+        @grid.GetHtml(htmlAttributes: new { id = "PaymentsGrid" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                                        rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+                                        columns: grid.Columns(
+                                        grid.Column("ActivityType", header: "Activity Type", canSort: true, style: "col1"),
+                                        grid.Column("ACode", header: "Activity Code", canSort: true, style: "col2"),
+                                        grid.Column("Net", header: "Net Payment", canSort: true, style: "col3"),
+                                        grid.Column("Gross", header: "Gross", canSort: true, style: "col6"),
+                                        grid.Column("PatientShare", header: "Patient Share", canSort: true, style: "col7"),
+                                        grid.Column("DenialCode", header: "DenialCode", canSort: true, style: "col8"),
+                                        grid.Column("AppliedAmount", header: "Applied", canSort: true),
+                                        grid.Column("UnAppliedAmount", header: "UnApplied", canSort: true)
+                            ))
+        <h6>* Click on any column heading to sort</h6>
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+

@@ -1,0 +1,359 @@
+﻿@using BillingSystem.Common
+
+@model BillingSystem.Models.PatientInfoView
+@{
+    ViewBag.Title = "PatientInfo";
+
+    int patientId = 0;
+    if (Model != null && Model.PatientId > 0)
+    {
+        patientId = Model.PatientId;
+    }
+}
+<div class="form">
+    <div class="white-bg">
+        <div class="panel panel-default collapsecss ourcollapse" id="divPatientInfo">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="Div1OpenClose();">
+                <h4 class="panel-title collapseTitle">
+                    <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Patient Information
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseOne" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <form id="myForm" action='@Url.Action("AjaxSubmit", "ImagePreview")' method="post" enctype="multipart/form-data">
+                        <div class="base-color patientInfoBg">
+                            <div class="form patientTable">
+                                <input id="hfPatientId" name="PatientId" value="@patientId" type="hidden" />
+                                <div class="clear"></div>
+                                <div class="col-sm-6 col-md-3 col-lg-3">
+                                    <div>
+                                        <div class="rowTable">
+                                            <label><span class="mandatoryStar"></span>First Name:</label>
+                                            @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonFirstName, new { @maxlength = "25", @class = "validate[required]" })
+                                        </div>
+                                        <div class="rowTable">
+                                            <label><span class="mandatoryStar"></span>Last Name:</label>
+                                            @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonLastName, new { @maxlength = "25", @class = "validate[required]" })
+                                        </div>
+                                        <div class="rowTable">
+                                            <div class="telephoneCol4">
+                                                <label><span class="mandatoryStar"></span>Birth Date:</label>
+                                                @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonBirthDate, "{0:MM/dd/yyyy}", new { @onchange = "CalculateAge(this),CheckValidDateOfBirth(this,'CurrentPatient_PatientInfo_PersonBirthDate');", @maxlength = "10", @class = "dtLessThanCurrent validate[required]" })
+                                            </div>
+                                            <div class="telephoneCol2">
+                                                <label>Age:</label>
+                                                @Html.TextBoxFor(m => m.CurrentPatient.PersonAge, new { @readonly = "true", @maxlength = "2" })
+                                            </div>
+                                        </div>
+                                        <div class="rowTable">
+                                            <label><span class="mandatoryStar"></span>Passport Number:</label>
+                                            @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonPassportNumber, new { @maxlength = "15", @Id = "txtPersonPassportNumber", @class = "validate[required]", @onchange = "CheckIfPassportAlreadyExists();" })
+                                        </div>
+                                        <div class="rowTable">
+                                            <label><span class="mandatoryStar"></span>Passport Expire Date:</label>
+                                            @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonPassportExpirtyDate, "{0:MM/dd/yyyy}", new { @maxlength = "20", @class = "dtGeneral validate[required]", @onchange = "CheckValidDateNotLessThanTodayDate(this,'CurrentPatient_PatientInfo_PersonPassportExpirtyDate')" })
+                                        </div>
+                                        <div class="rowTable">
+                                            <label><span class="mandatoryStar"></span>@ResourceKeyValues.GetKeyValue("socialsecuritynumber"):</label>
+                                            @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonEmiratesIDNumber, new { @maxlength = "18", @class = "EmiratesMask validate[required, custom[validEmirates]]", @placeholder = "111-1111-1111111-1", })@*@onchange = "CheckIfEmiratesIDExists();"*@
+                                            <span id="spPersonEmiratesIDNumber" style="color: red;"></span>
+                                        </div>
+                                        <div class="rowTable">
+                                            <label><span class="mandatoryStar"></span>Email:</label>
+                                            @Html.HiddenFor(m => m.PatientLoginDetail.ExternalValue1)
+                                            @Html.HiddenFor(m => m.PatientLoginDetail.CodeValue)
+                                            @Html.HiddenFor(m => m.PatientLoginDetail.TokenId)
+                                            @Html.TextBoxFor(m => m.PatientLoginDetail.Email, new { maxlength = "50", @class = "validate[required,custom[email]]" })
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3 col-lg-3">
+                                    <div class="rowTable">
+                                        <label>Member ID:</label>
+                                        @Html.TextBoxFor(m => m.Insurance.PersonHealthCareNumber, new { @maxlength = "15", @class = "validate[optional[integer]]" })
+                                    </div>
+                                    <div class="rowTable">
+                                        <label><span class="mandatoryStar"></span>Insurance Company:</label>
+                                        <select id="ddlPersonInsuranceCompany" name="ddlPersonInsuranceCompany" class="validate[required]"
+                                                onchange="BindInsuranceCompanyName();"></select>
+                                        @Html.HiddenFor(m => m.Insurance.InsuranceCompanyId)
+                                    </div>
+                                    <div class="rowTable">
+                                        <label><span class="mandatoryStar"></span>Insurance Plan:</label>
+                                        <select id="ddlInsurancePlan" class="validate[required]" onchange="BindInsurancePolicies($('#Insurance_InsurancePolicyId').val());"></select>
+                                        @Html.HiddenFor(m => m.Insurance.InsurancePlanId)
+                                    </div>
+                                    <div class="rowTable">
+                                        <label><span class="mandatoryStar"></span>Insurance Policy :</label>
+                                        <select id="ddlInsurancePolicy" class="validate[required]"></select>
+                                        @Html.HiddenFor(m => m.Insurance.InsurancePolicyId)
+                                    </div>
+                                    <div class="rowTable">
+                                        <div class="telephoneCol4">
+                                            <label><span class="mandatoryStar"></span>Ins Start Date :</label>
+                                            @Html.TextBoxFor(m => m.Insurance.Startdate, "{0:MM/dd/yyyy}",
+                                                 new { @maxlength = "50", @class = "dtGeneral", @ClearTextBox = "True", @onchange = "CheckTwoDates($('#Insurance_Startdate'),$('#Insurance_Expirydate'),'Insurance_Startdate')" })
+                                        </div>
+                                        <div class="telephoneCol2">
+                                            <label><span class="mandatoryStar"></span>Ins End Date :</label>
+                                            @Html.TextBoxFor(m => m.Insurance.Expirydate, "{0:MM/dd/yyyy}",
+                                                 new { @maxlength = "50", @class = "dtGeneral", @ClearTextBox = "True", @onchange = "CheckTwoDates($('#Insurance_Startdate'),$('#Insurance_Expirydate'),'Insurance_Expirydate')" })
+                                        </div>
+                                    </div>
+                                    <div class="rowTable">
+                                        <label><span class="mandatoryStar"></span>Mobile Number:</label>
+                                        <select id="ddlPersonContactNumber" class="marginBottomNone telephoneCol1 phoneddl" onchange="return OnCountryDropdownChange('#lblPersonContactNumber', '#ddlPersonContactNumber');"></select>
+                                        <span id="lblPersonContactNumber" class="marginTopPhoneNo phnspan"></span>
+                                        @Html.HiddenFor(m => m.CurrentPatient.PatientInfo.PersonContactNumber)
+                                        <input type="text" class="PhoneMask telephoneCol2 validate[required,custom[phone]]" id="txtContactNumber" />
+                                    </div>
+                                    <div class="rowTable smallLabel">
+                                        <label></label>
+                                        <label style="float: left;"><span></span>Patient Portal Access: </label>
+                                        @Html.CheckBoxFor(m => m.PatientLoginDetail.PatientPortalAccess)
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3 col-lg-3">
+                                    <div class="rowTable smallLabel" id="divIsVIP">
+                                        <label>Is VIP:</label>
+                                        <div style="cursor: pointer; float: left; width: 80%;" title="For VIP Patient, please check the checkbox.">
+                                            <div style="width: 10%; float: left;">
+                                                @Html.CheckBox("PatientIsVIP", Model.CurrentPatient.PatientIsVIP ?? false, new { @id = "PatientIsVIP" })
+                                            </div>
+                                            <div style="width: 80%; float: left; display: none;" id="divCheckIsVip">
+                                                @Html.TextAreaFor(m => m.CurrentPatient.PatientInfo.PersonVIP, new { @maxlength = "40", @style = "height: 44px;" })
+                                                <img src="@Url.Content("~/images/vip2.png")" width="25">
+                                                <div><span style="color: red;" id="spVIP"></span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="rowTable">
+                                        <label><span class="mandatoryStar"></span>Nationality:</label>
+                                        <select id="ddlPersonNationality" class="validate[required]"></select>
+                                        @Html.HiddenFor(m => m.CurrentPatient.PatientInfo.PersonNationality)
+                                    </div>
+                                    <div class="rowTable">
+                                        <label>National ID Expiration:</label>
+                                        @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonEmiratesIDExpiration, "{0:MM/dd/yyyy}",
+                                             new { @maxlength = "10", @class = "dtGeneral", @onchange = "CheckValidDateNotLessThanTodayDate(this,'CurrentPatient_PatientInfo_PersonEmiratesIDExpiration')" })
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <label>Patient Financial Number:</label>
+                                        @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonFinancialNumber, new { @maxlength = "20" })
+                                    </div>
+                                    <div class="rowTable">
+                                        <label>Master Patient Index Number:</label>
+                                        @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonMasterPatientNumber, new { @maxlength = "20" })
+                                    </div>
+
+                                    <div class="rowTable">
+                                        <label>Medical Record No:</label>
+                                        <div class="generateMedical">
+                                            @{
+                                                var isShown = string.IsNullOrEmpty(Model.CurrentPatient.PatientInfo.PersonMedicalRecordNumber);
+                                            }
+                                            @if (isShown)
+                                            {
+                                                <a href="javascript:void(0);" title="Generate Medical Number" class="pull-right" id="labelAutoGenereteMedicalNumber" onclick="GetAutoGeneratedMedicalNumber();">
+                                                    <img src="@Url.Content("~/images/generateNo.png")" title="User can add a Medical Record Number manually or can click here to get the system-generated Medical Record Number." />
+                                                </a>
+                                            }
+                                            @Html.TextBoxFor(m => m.CurrentPatient.PatientInfo.PersonMedicalRecordNumber, new { @maxlength = "10", @onblur = "CheckMedicalNumberExist(this);", @class = "validate[optional[integer]]" })
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3 col-lg-3">
+                                    <div style="width: 100%; margin: 0 auto;">
+                                        <div class="rowTable">
+                                            <h1 class="profilePic">Profile Photo:</h1>
+                                            <div class="userPicDiv">
+                                                <div class="processingbar" id="imageProcessBar" style="display: none">
+                                                    <img src="@Url.Content("~/images/loading.gif")" />
+                                                </div>
+                                                @if (@Model.CurrentPatient != null)
+                                                {
+                                                    if (!string.IsNullOrEmpty(@Model.CurrentPatient.ProfilePicImagePath) && @Model.CurrentPatient.DocumentTemplateId > 0)
+                                                    {
+                                                        <img id="pfimg" src="@Model.CurrentPatient.ProfilePicImagePath" class="user-img" style="width: 185px; height: 200px;" />
+                                                        @Html.HiddenFor(m => m.CurrentPatient.DocumentTemplateId, new { @id = "hidDocumentTemplateId" })
+                                                    }
+                                                    else
+                                                    {
+                                                        <img id="pfimg" src="@Url.Content("~/images/Noimage.jpg")" class="user-img" style="width: 185px; height: 200px;" />
+                                                    }
+                                                }
+
+                                                <div id="fupload">
+                                                    <input type="hidden" name="pid" id="pid" value="@Model.CurrentPatient.PatientInfo.PatientID" />
+                                                    <input type="file" onchange="ChangeImage('imageLoadPhoto', '#imgAddSettingLogo', '#div_ImageError', '#imageLoadPhoto', '#imgsub')" name="file" id="imageLoadPhoto" />
+                                                    <input type="submit" value="submit" style="display: none;" />
+                                                    <a onclick="SetSubmit()" id="imgsub" style="display: none;">ForceSubmit</a>
+                                                </div>
+                                            </div>
+                                            <!-- start Cropping section -->
+                                            <div id="divhidepopup1" style="display: none;">
+                                                <div class="popup-coverbg"></div>
+                                                <div class="popup-frame">
+                                                    <div class="popup-main1" style="margin: 50px auto">
+                                                        <div class="popup-content" style="min-height: 500px;">
+                                                            <div class="popup-close" onclick="$('#divhidepopup1').hide(); $.validationEngine.closePrompt('.formError', true);">X</div>
+                                                            <div class="minHeight" style="min-height: 530px">
+                                                                <div id="CropImage" class="croppopup">
+                                                                    <h3>crop</h3>
+                                                                    <table border="0" cellpadding="0" cellspacing="0" height="400">
+                                                                        <tr>
+                                                                            <td valign="middle" align="center">
+                                                                                <img id="ImgCropImage" style="cursor: pointer; vertical-align: middle; text-align: center; flex-align: center;" />
+                                                                                <input type="hidden" id="X" />
+                                                                                <input type="hidden" id="Y" />
+                                                                                <input type="hidden" id="W" />
+                                                                                <input type="hidden" id="H" />
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+
+                                                                    <div class="cropbtn-bar" id="div3">
+                                                                        <input type="button" class="cropbtn blue-btn btn btn-primary edit-btn marginBtn" value="crop" onclick="cropImage(); $('#divhidepopup1').hide();" />
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- end Cropping section -->
+                                            <span id="spPersonPhoto" style="color: red;"></span>
+                                            <div id="div_ImageError" style="color: red"></div>
+                                        </div>
+                                        <div class="rowTable smallLabel">
+                                            <label>Sex:</label>
+                                            <div class="">
+                                                @Html.RadioButtonFor(model => model.CurrentPatient.PatientInfo.PersonGender, "Male", new { id = "male" })
+                                                @Html.Label("male", "Male")
+                                                @Html.RadioButtonFor(model => model.CurrentPatient.PatientInfo.PersonGender, "female", new { id = "female" })
+                                                @Html.Label("female", "Female")
+                                            </div>
+                                        </div>
+                                        <div class="rowTable smallLabel">
+                                            <label>Marital Status:</label>
+                                            <div>
+                                                @Html.RadioButtonFor(model => model.CurrentPatient.PatientInfo.PersonMaritalStatus, "Married", new { id = "Married" })
+                                                @Html.Label("married", "Married")
+                                                @Html.RadioButtonFor(model => model.CurrentPatient.PatientInfo.PersonMaritalStatus, "Single", new { id = "Single" })
+                                                @Html.Label("Single", "Single")
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--form end-->
+                        </div>
+                        <div class="btn-group">
+                            <div id="overlay" class="web_dialog_overlay">
+                            </div>
+                            <img id="loading" src="~/images/gif-load (2).GIF" alt="Updating ..." style="display: none; position: fixed; left: 48%; top: 20%;" />
+                            <button id="btnUpdatePatientInfo" class="blue-btn btn btn-primary edit-btn marginBtn">Update</button>
+                            <button id="btnCancelRegisterNewPatient" class="blue-btn btn btn-primary edit-btn marginBtn" onclick="ClearInfoForm();">Cancel</button>
+                            @*<input type="submit" onclick="IsValid($('.patientId').val());" class="blue-btn btn btn-primary edit-btn marginBtn" value="Save" id="btnSavePatient" />
+                                <input type="submit" class="blue-btn btn btn-primary edit-btn marginBtn" value="Cancel" onclick="ClearInfoForm();" />*@
+                            <br />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="partialContents" data-url="@Url.Action("GetEncountersListView", "PatientInfo", new {patientId})">
+        </div>
+
+        <div id="divhidepopup" style="display: none;">
+            <div class="popup-coverbg"></div>
+            <div class="popup-frame">
+                <div class="popup-main" style="margin: 50px auto">
+                    <div class="popup-content" style="min-height: 500px;">
+                        <div class="popup-close" onclick=" $('#divhidepopup').hide(); $.validationEngine.closePrompt('.formError', true); ">X</div>
+                        <div class="minHeight" style="min-height: 500px">
+                            <div id="authorizationdiv"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default collapsecss ourcollapse moreinfo" id="divMoreInfo">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick=" DivClose(); ">
+                <h4 class="panel-title collapseTitle">
+                    <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Additional Info
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseTwo" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <div class="base-color">
+                        <div id="tabs">
+                            <ul>
+                                <li><a href="#AddressesTab" class="PatientAddressInfo">Address & Contacts</a></li>
+                                <li><a href="#InsuranceTab" class="PatientAddressInfo">Insurance Info</a></li>
+                                <li><a href="#AttachmentTab" class="PatientAddressInfo">Attachment</a></li>
+                                <li><a href="#PhonelistTab" class="PatientAddressInfo">Phone List</a></li>
+                            </ul>
+                            @* <div class="partialContents" id="SecurityTab" data-url="@Url.Action("GetPatientLoginDetailPartialView", "PatientInfo", new { patientId })">
+                                </div>
+                                <div class="partialContents"  id="AddressesTab" data-url="@Url.Action("GetAddressPartialView", "PatientInfo", new { patientId })">
+                                </div>*@
+                            <div id="AddressesTab">
+                                @{ Html.RenderPartial("~/Views/PatientInfo/UserControls/_Addresses.cshtml", Model); }
+                            </div>
+                            <div id="InsuranceTab">
+                                @{ Html.RenderPartial("~/Views/PatientInfo/UserControls/_InsuranceCoverage.cshtml", Model.Insurance); }
+                            </div>
+                            @*<div class="partialContents" id="AttachmentTab" data-url="@Url.Action("GetPatientAttachmentsPartialView", "PatientInfo", new { patientId })">
+                                </div>
+                                <div class="partialContents" id="PhonelistTab" data-url="@Url.Action("GetPatientPhonesPartialView", "PatientInfo", new { patientId })">
+                                </div>*@
+                            <div class="partialContents" id="AttachmentTab">
+                                @{ Html.RenderPartial("~/Views/PatientInfo/UserControls/_attachments.cshtml", Model.PatientDocumentsView); }
+                            </div>
+                            <div class="partialContents" id="PhonelistTab">
+                                @{ Html.RenderPartial("~/Views/PatientInfo/UserControls/_phonelist.cshtml", Model.PatientPhoneView); }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <link href="~/Content/JqueryCalendar.css" rel="stylesheet" />
+    <script src="~/Scripts/jqueryCalendar.js"></script>
+    <link href="~/Content/JqueryStyle.css" rel="stylesheet" />
+</div>
+<script src="~/Scripts/PatientInfo/PatientInfo.js" type="text/javascript"></script>
+<script src="~/Scripts/Crop/jquery.Jcrop.min.js"></script>
+<link href="~/Content/Crop/jcrop.css" rel="stylesheet" />
+<script src="~/Scripts/PatientInfo/ImageUpload.js"></script>
+<link rel="stylesheet" href="~/css/RegisterPatient/RegisterPatient.css">
+<script>
+    $(function () {
+        $("#tabs").tabs();
+        $('#divAddessAddEditDisabled :input').attr('disabled', 'disabled');
+        $('#divSaveAddressButtons').hide();
+        $('#divPatientInsurance :input').attr('disabled', 'disabled');
+        $('#divInsurnaceCoverageSaveButton').hide();
+        $('#divDocumentUpload :input').attr('disabled', 'disabled');
+        $('#divUploadDocuments').hide();
+        $('#divPhoneAddEdit :input').attr('disabled', 'disabled');
+        $('#divPhoneAddEditButtons').hide();
+        $('.clsEdit').hide();
+        $('#divMoreInfo :input').removeClass('validate[required]');
+        if ($('#divMoreInfo :input').hasClass('validate[required,custom[integer]]')) {
+            $('#divMoreInfo :input').removeClass('validate[required,custom[integer]]');
+        }
+    });
+</script>

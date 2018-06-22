@@ -1,0 +1,83 @@
+﻿@model List<BillingSystem.Model.CustomModel.LabTestOrderSetCustomModel>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent", canPage: false);
+            <div id="gridContent">
+                @grid.GetHtml(htmlAttributes: new { id = "LabTest" }, tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+                columns: grid.Columns(
+                grid.Column("OrderSetTableNumber", "Table Set Number"),
+                grid.Column("OrderSetTableName", "Table Set Name"),
+                grid.Column("OrderSetValue", "OrderSet Code"),
+                grid.Column("Description", "Description", style: "width500"),
+                grid.Column("CodeValue1", "Code1"),
+                grid.Column("CodeTime1", "Code1Time"),
+                grid.Column("CodeValue2", "Code2"),
+                grid.Column("CodeTime2", "Code2Time"),
+                grid.Column("CodeValue3", "Code3"),
+                grid.Column("CodeTime3", "Code3Time"),
+                grid.Column("CodeValue4", "Code4"),
+                grid.Column("CodeTime4", "Code4Time"),
+                grid.Column("CodeValue5", "Code5"),
+                grid.Column("CodeTime5", "Code5Time"),
+                grid.Column("CodeValue6", "Code6"),
+                grid.Column("CodeTime6", "Code6Time"),
+                grid.Column("CodeValue7", "Code7"),
+                grid.Column("CodeTime7", "Code7Time"),
+                grid.Column("CodeValue8", "Code8"),
+                grid.Column("CodeTime8", "Code8Time"),
+                grid.Column("CodeValue9", "Code9"),
+                grid.Column("CodeTime9", "Code9Time"),
+                grid.Column("CodeValue10", "Code10"),
+                grid.Column("CodeTime10", "Code10Time"),
+                grid.Column("CodeValue11", "Code11"),
+                grid.Column("CodeTime11", "Code11Time"),
+                grid.Column("CodeValue12", "Code12"),
+                grid.Column("CodeTime12", "Code12Time"),
+                grid.Column("CodeValue13", "Code13"),
+                grid.Column("CodeTime13", "Code13Time"),
+                grid.Column("CodeValue14", "Code14"),
+                grid.Column("CodeTime14", "Code14Time"),
+                grid.Column("CodeValue15", "Code15"),
+                grid.Column("CodeTime15", "Code1Time"),
+                grid.Column(header: "Action", format: @<text>
+                <a href="#" onclick="EditCurrentLabTestOrderSet('@item.Id')" style="float: left; margin-right: 7px; width: 15px;">
+                    <img src="@Url.Content("~/images/edit.png")" /></a>
+                                                           @*<a href="#" title="Delete" onclick="return DeleteCurrentLabTestOrderSet('@item.Id');" style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" /></a>*@
+                
+                <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.Id','Delete Lab Test Order Set','',DeleteCurrentLabTestOrderSet,null); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>
+                                                       </text>)
+                ))
+            </div>            
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+@*<script>
+    $(function () {
+        $('#LabTest').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        
+    });
+</script>*@
+
+<script>
+    $(function () {
+      $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+    });
+</script>
+
+
+<script>
+    $(function () {
+        SetGridSorting(SortLabTestOrderList, "#gridContent");
+    });
+</script>

@@ -1,0 +1,124 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<ClinicianAppTypesCustomModel>
+
+
+
+<style>
+    #AppointmentTypesRoomsView .colStatus {
+        text-align: center;
+    }
+
+    .remove_hover:hover {
+        background: #317cb3 !important;
+    }
+</style>
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Any())
+        {
+            <table class="table table_scroll12" id="AppointmentTypesRoomsView" data-swhgcallback="" data-swhgcontainer="gridProjectDashboardContent" data-swhgajax="true">
+                <thead>
+                    <tr class="gridHead">
+                        <th></th>
+                        <th scope="col">Clinician</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td title="click for show/hide" class="hoverEff collapseCustom"></td>
+                            <td>@item.ClinicianName</td>
+                            <td>
+                                <input type="submit" id="btnEdit" class="btn btn-primary edit-btn" value="Edit" onclick="EditClinicianAppointmentTypesData('@item.ClinicianId');" />
+                            </td>
+                        </tr>
+                        if (item.AppointmentTypes != null && item.AppointmentTypes.Any())
+                        {
+                            <tr style="display: table-row;">
+
+                                <td style="margin: 0px; padding: 0px;" colspan="6">
+                                    <table id="subT1" style="width: 100%; margin: 10px 0;">
+
+                                        <tr class="gridHead remove_hover">
+                                            <th width="25"></th>
+                                            <th scope="col" width="100">Appointment Type ID</th>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+
+                                        @foreach (var app in item.AppointmentTypes)
+                                        {
+                                            <tr>
+                                                <td></td>
+                                                <td>@app.Value</td>
+                                                <td>@app.Text</td>
+                                                <td>
+                                                    <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@app.Id','Delete Appointment Type for this Clinician','',DeleteClinicianAppointmentTypeAssigned,null); " style="float: left; width: 15px;">
+                                                        <img src="@Url.Content("~/images/delete.png")" />
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+
+                                    </table>
+
+                                </td>
+                            </tr>
+
+                        }
+                        else
+                        {
+                            <tr></tr>
+                        }
+
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+
+
+<script>
+    $(function () {
+        ShowCustomGrid();
+    });
+    function ShowCustomGrid() {
+        $('.hitTitle').click(function () {
+            $('.showGrid').toggleClass('shown');
+        });
+        var size = $("#AppointmentTypesRoomsView > thead > tr >th").size(); // get total column
+
+        $("#AppointmentTypesRoomsView > tbody > tr").each(function (i, el) {
+            //Now get sub table from last column and add this to the next new added row
+            //var table = $("table", this).parent().html();
+            ////add new row with this subtable
+            //$(this).after("<tr><td></td><td style='padding:0; margin:0px;' colspan='" + (6) + "'>" + table + "</td></tr>");
+            //$("table", this).parent().remove();
+            // ADD CLICK EVENT FOR MAKE COLLAPSIBLE
+            $(".hoverEff", this).on("click", function () {
+                $(this).parent().closest("tr").next().slideToggle(100);
+                $(this).toggleClass("expandCustom collapseCustom");
+            });
+        });
+
+        //by default make all subgrid in collapse mode
+        $("#AppointmentTypesRoomsView > tbody > tr td.collapseCustom").each(function (i, el) {
+            $(this).toggleClass("expandCustom collapseCustom");
+            $(this).parent().closest("tr").next().slideToggle(100);
+        });
+    }
+
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('.table_scroll12').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+    });
+</script>

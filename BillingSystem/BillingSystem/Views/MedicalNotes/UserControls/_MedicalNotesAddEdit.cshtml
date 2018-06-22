@@ -1,0 +1,62 @@
+﻿@using System.Web.Mvc.Html
+
+@model BillingSystem.Model.MedicalNotes
+
+@{
+    ViewBag.Title = "MedicalNotes";
+}
+<style>
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form scrollable-panel" id="MedicalNotesFormDiv">
+    <div class="col-sm-4">
+        <div class="rowTable">
+            <label id="divNotesTypesCaption">Note Types:</label>
+            <select id="ddlNotesTypes" class="validate[required]"></select>
+            @Html.HiddenFor(m => m.MedicalNotesType, new { @id = "hdMedicalNotesType" })
+        </div>
+        @Html.HiddenFor(m => m.NotesUserType, new { @id = "hdNotesUserType" })
+    </div>
+    <div class="col-sm-4">
+        <div class="rowTable" id="divPhyNotes">
+            <label id="divNotesCaption">Notes:</label>
+            @Html.TextAreaFor(m => m.Notes, new { @maxlength = "500", @id = "txtPhyNotes", @class = "validate[required]" })
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="rowTable">
+            <label>Marked as Complications:</label>
+            @Html.CheckBoxFor(m => m.MarkedComplication, new { @id = "chkMarkedComplication" })
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="col-sm-12">
+        <div class="button-block">
+            @if (Model.MedicalNotesID != 0)
+            { 
+                <input type="submit" class="btn btn-primary edit-btn marginrightBtn" value="Update" id="btnUpdateNotes" onclick="return SaveMedicalNotes('@Model.MedicalNotesID');" />
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveMedicalNotes('@Model.MedicalNotesID');" class="btn btn-primary edit-btn marginrightBtn" value="Save" />
+            }
+            <input type="submit" class="btn btn-primary edit-btn marginrightBtn" onclick="return ClearNotesAll();" value="Cancel" />
+            <input type="submit" class="btn btn-primary edit-btn marginrightBtn" onclick="ClickVital();" value="Add Vitals" />
+            <br />
+            <span id="lblMessage" style="display: none; font-weight: bold; margin-top: 5px;">Fields marked with <span style="color: red;">* </span>are mendatory.</span>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        if (medicalNotesid == '1') {
+            $('#divnotesCaptionAddEdit').val('Physician Notes');
+            $('#divnotesCaptionAddEdit').val('Physician Notes List');
+        } else if (medicalNotesid == '2') {
+            $('#divnotesCaptionAddEdit').val('Nurse Notes');
+            $('#divnotesCaptionAddEdit').val('Nurse Notes List');
+        }
+    });
+</script>

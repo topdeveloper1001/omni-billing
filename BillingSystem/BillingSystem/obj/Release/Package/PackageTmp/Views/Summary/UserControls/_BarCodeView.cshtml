@@ -1,0 +1,19 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model.CustomModel
+
+@model GenerateBarCode
+
+<div id="printMainDiv" class="barcoder" style="width: 150px;">
+    <span style="margin-bottom: 2px; font-size: 7px;">@Model.PatientName </span>
+    <br />
+    <span style="margin-bottom: 2px; font-size: 7px;">@Model.PatientId <span style="margin-left: 50px;">@Model.DateOfBirth @Model.Age @Model.Gender</span></span>
+
+    <div class="barCodeImg">
+        @{ var compleUrl = Helpers.ResolveUrl2(Model.BarCode);}
+        <img width="130" src="@compleUrl" />
+        @*<img width="130" src="http://localhost:60488/Codes/BarCode/1095_1112_10951112_410952481657880_8258_2016-01-24_03-43-21-PM.png" />*@
+        <span class="barcode_num" style="font-size: 7px; float: left; width: 100%;">@Model.BarCodeNumbering</span>
+    </div>
+    <span style="margin-bottom: 2px; font-size: 7px;">Col: @Model.CollectionDateTime &nbsp; Site: @Model.Site &nbsp; User ID: @Model.UserId</span><br />
+    <span style="margin-bottom: 2px; font-size: 7px;">CPT</span>
+</div>

@@ -1,0 +1,51 @@
+﻿@model IEnumerable<BillingSystem.Model.CustomModel.FacilityBedStructureCustomModel>
+
+<div class="base-color">
+    @if (Model != null && Model.Any())
+    {
+        var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridAvailableBedContent", canPage: false);
+        @grid.GetHtml(htmlAttributes: new { id = "GridAvailableBedList" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+            columns: grid.Columns(
+                grid.Column("Floor", "Floor Name", canSort: false, style: "col1"),
+                grid.Column("Department", "Dept Name", canSort: false, style: "col2"),
+                grid.Column("Room", "Room Name", canSort: false, style: "col3"),
+                grid.Column("BedName", "Bed Name", canSort: false, style: "col4"),
+                grid.Column("FacilityName", "Facility Name", canSort: false, style: "col5"),
+                grid.Column("BedTypeName", "Bed Type", canSort: false, style: "col6"),
+                grid.Column("BedOverrideTypeList", "Override Bed Charges", @<text>
+                    @if (item != null && item.CanOverRide)
+                    {
+                        @(item.RoomNonChargeAble
+                                                                                    ? Html.DropDownList("BedOverRideSelector", new SelectList(item.BedOverrideTypeList, "Value", "Text"), "-- Select --", new { style = "width:250px", @disabled = "disabled", @class = "dropdown1", @id = "ddlOverrideBedService" })
+                                                                                    : Html.DropDownList("BedOverRideSelector", new SelectList(item.BedOverrideTypeList, "Value", "Text"), "-- Select --", new { style = "width:250px", @class = "dropdown1", @id = "ddlOverrideBedService" }))
+                    }
+                </text>, "col4", false),
+                grid.Column(header: "Action", style: "col7", format: @<text>
+                                                                          @*<a href="javascript:void(0);" onclick="selectBed('@item.bedid', '@item.BedName' , this.id) " id='@item.BedId' style="float: left; margin-right: 7px; width: 15px;">
+                                                                              <img src="@Url.Content("~/images/edit.png")" />
+                                                                          </a>*@
+    <a href="javascript:void(0);" onclick="return OpenConfirmPopupWithThreeId('@item.bedid','@item.BedName',this.id,'Select Bed','Do you want to select this Bed?',selectBed,null); " id='@item.BedId' style="float: left; margin-right: 7px; width: 15px;">
+        <img src="@Url.Content("~/images/edit.png")" />
+    </a>
+
+                </text>),
+                  grid.Column(format: item =>
+                  {
+                      var subGrid = new WebGrid(source: item.MedRateCardlist);
+                      return subGrid.GetHtml(
+                          htmlAttributes: new { id = "subT" },
+                          columns: subGrid.Columns(
+                              subGrid.Column("BedRateCard.Rates", "Rate", canSort: false),
+                              subGrid.Column("UnitTypeName", "Unit", canSort: false),
+                              subGrid.Column("BedRateCard.DayStart", "Frequency Start", canSort: false),
+                              subGrid.Column("BedRateCard.DayEnd", "Frequency End", canSort: false)
+                              )
+                          );
+                  })
+                  ))
+    }
+    else
+    {
+        <h2>No Record found</h2>
+    }
+</div>

@@ -1,0 +1,33 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<OpenOrderCustomModel>
+
+@if (Model != null)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentOpenOrder", canPage: false);
+    <div id="gridContentOpenOrder">
+        @grid.GetHtml(htmlAttributes: new {id = "OrdersGridInSearch"}, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+            columns:
+                grid.Columns(
+                    grid.Column("OrderCode", "Order Code", canSort: true, style: "col3"),
+                    grid.Column("OrderDescription", "Order Description", canSort: false, style: "col4"),
+                    grid.Column("CategoryName", "Order Category", canSort: false, style: "col6"),
+                    grid.Column("SubCategoryName", "Order Sub-Category", canSort: false, style: "col7"),
+                    grid.Column("Status", "Status", canSort: false, style: "col5"),
+                    grid.Column("FrequencyText", "Frequency", canSort: false, style: "col5"),
+                    grid.Column("Quantity", "Quantity", canSort: false, style: "col2"),
+                    grid.Column("PeriodDays", "Duration", canSort: false, style: "col8"),
+                    grid.Column("OrderNotes", "Comments", canSort: false, style: "col9"),
+                    grid.Column(header: "Action", style: "col9", format: @<text>
+                                                                              <a href="javascript:void(0);" title="Add as Favorite" onclick=" AddAsFav('@item.OpenOrderID') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px;">
+                                                                                  <img src="~/images/edit_small.png" />
+                                                                              </a>
+                                                                             @*<a href="javascript:void(0);" title="Add as Order" onclick=" AddAsOrder('@item.OpenOrderID') " style="float: left; margin-right: 7px; margin-left: 5px; width: 15px;">
+                                                                                  <img src="~/images/edit_small.png" />
+                                                                              </a>*@
+        </text>)))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}

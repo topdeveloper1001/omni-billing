@@ -1,0 +1,99 @@
+﻿@using BillingSystem.Model
+@model Projects
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+
+@{
+    var btnSaveText = "Save";
+    if (Model != null && Model.ProjectId != 0)
+    {
+        btnSaveText = "Update";
+    }
+}
+<div class="form" id="ProjectsFormDiv">
+    <div class="col-sm-3">
+        <div class="rowTable">
+            @Html.HiddenFor(m => m.ProjectId, new { @id = "hfProjectId" })
+            <label>Project Number:</label>
+            @Html.TextBoxFor(m => m.ProjectNumber, new { @maxlength = "5", @id = "txtProjectNumber", @class = "validate[required]" })
+        </div>
+        <div class="rowTable">
+            <label>Type:</label>
+            @* ExternalValue2 is being used for Project Type *@
+            <select id="ddlDashboardProjectType" class="validate[required]"></select>
+        </div>
+        <div class="rowTable">
+            <label>Status:</label>
+            @* ExternalValue3 is being used for Color Code *@
+            <select id="ddlProjectStatusColor" class="validate[required]"></select>
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Project Name:</label>
+            @Html.TextBoxFor(m => m.Name, new { @maxlength = "200", @id = "txtName", @class = "validate[required]" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Project Description:</label>
+            @Html.TextBoxFor(m => m.ProjectDescription, new { @maxlength = "500", @id = "txtProjectDescription", @class = "validate[required]" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Project Start Date:</label>
+            @Html.TextBoxFor(m => m.StartDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtStartDate", @class = "large pull-left" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Project Estimated Completion Date:</label>
+            @Html.TextBoxFor(m => m.EstCompletionDate, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtEstCompletionDate", @class = "large pull-left" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Responsible Person:</label>
+            <select id="ddlUsersInProject" class="validate[required]"></select>
+            @*@Html.TextBoxFor(m => m.UserResponsible, new { @maxlength = "30", @id = "txtUserResponsible", @class = "validate[required]" })*@
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label>Revised Completion Date:</label>
+            @Html.TextBoxFor(m => m.ExternalValue1, "{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtRevisedCompletionDate", @class = "large pull-left" })
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="rowTable">
+                    <label>IsActive:</label>
+                    @Html.CheckBoxFor(m => m.IsActive, new { @id = "ProjectsIsActive" })
+                </div>
+            </div>
+            <div class="col-sm-8">
+                <div class="rowTable">
+                    <label class="col-lg-12">&nbsp;</label>
+                    <input type="submit" id="btnSave" class="btn btn-primary edit-btn marginBtn" value="@btnSaveText" onclick="return SaveProjects();" />
+                    <button name="ClientCancel" id="btnCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearProjectsForm();">Cancel</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

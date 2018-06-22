@@ -1,0 +1,26 @@
+﻿@model IEnumerable<BillingSystem.Model.CustomModel.TPXMLParsedDataCustomModel>
+
+@if (Model != null && Model.Count() > 0)
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentXmlParsedData", canPage: false);
+    <div id="gridContentXmlParsedData">
+        @grid.GetHtml(htmlAttributes: new { id = "XmlParsedDataGrid" }, tableStyle: "table table-grid", headerStyle: "gridHead", footerStyle: "gridFooter",
+                            rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                            grid.Column("TPXMLParsedDataID", header: "ID", canSort: false, style: "col1"),
+                                 grid.Column("TPFileID", header: "File Header ID", canSort: false, style: "col2"),
+                                 grid.Column("CCLaimID", header: "Claim ID", canSort: false, style: "col3"),
+                                 grid.Column("CMemberID", header: "Member ID", canSort: false, style: "col4"),
+                                 grid.Column("CPayerID", header: "Payer ID", canSort: false, style: "col5"),
+                                 grid.Column("CProviderID", header: "Claim Provider ID", canSort: false, style: "col6"),
+                                 grid.Column("CEmiratesIDNumber", header: "Emirates ID", canSort: false, style: "col7"),
+                                 grid.Column("CGross", header: "Gross Amount", canSort: false, style: "col8"),
+                                 grid.Column("CPatientShare", header: "Patient Share", canSort: false, style: "col9"),
+                                 grid.Column("CNet", header: "Net Amount", canSort: false, style: "col10")
+                                 ))
+    </div>
+
+}
+else
+{
+    <h2>No Record found</h2>
+}

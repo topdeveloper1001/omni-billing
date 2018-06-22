@@ -1,0 +1,71 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Models.FileUploaderView
+@{
+    ViewBag.Title = "Online Help";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="white-bg">
+    <input id="hdMessage" type="hidden" value="@ViewBag.Message" />
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseFileUploaderAddEdit">
+            <h4 class="panel-title collapseTitle">  
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;
+                Upload Online Help Documents
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFileUploaderAddEdit" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form" id="divDocumentUpload">
+                        @{Html.RenderPartial("~/Views/FileUploader/UserControls/_OnlineHelpFilesAddEdit.cshtml", Model.Model);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-parent="#accordion" data-toggle="collapse" href="#collapseList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="@Url.Content("~/images/list.png")">
+                </span>Online Help Documents List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseList" class="panel-collapse tableImg collapse in">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="table-responsive scrollable-panel" id="OnlineHelpsDocumentsList">
+                        @{Html.RenderPartial("~/Views/FileUploader/UserControls/_OnlineHelpFilesListView.cshtml", Model.Attachments);}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="divhidefile" style="display: none;">
+        <div class="popup-coverbg"></div>
+        <div class="popup-frame">
+            <div class="popup-main1" style="margin: 50px auto">
+                <div class="popup-content" style="min-height: 500px;">
+                    <div class="popup-close" onclick="$('#divhidefile').hide(); $.validationEngine.closePrompt('.formError', true);">X</div>
+                    <div class="minHeight" style="min-height: 500px">
+                        <div id="Documentdiv">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/Scripts/FileUploader/OnlineHelp.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.js"></script>

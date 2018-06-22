@@ -1,0 +1,254 @@
+﻿@using BillingSystem.Model.CustomModel
+@using BillingSystem.Common
+@using BillingSystem.Common.Common
+@using System.Reflection
+
+@model dynamic
+
+@{
+    Layout = "~/Views/Shared/_PdfLayout.cshtml";
+}
+<image url="@Context.Server.MapPath("~/images/logo.png")" align="center" width="200px"/>
+<paragraph style="font-family: Helvetica; font-size: 18; font-style: italic;">
+	<chunk red="255" green="0" blue="0">@ViewBag.Title</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Date: @Helpers.GetInvariantCultureDateTime().ToString("MM/dd/yyyy")</chunk>
+</paragraph>
+<paragraph>
+    <chunk style="font-family:Times;font-weight:bold;">Report Time: @Helpers.GetInvariantCultureDateTime().ToString("HH:mm:ss")</chunk>
+</paragraph>
+
+@if (!string.IsNullOrEmpty(ViewBag.ReportingID))
+{
+    var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), ViewBag.ReportingID);
+    switch (reportingType)
+    {
+        case ReportingType.UserLoginActivity: 
+    <table width="100%" cellpadding="1.0" cellspacing="1.0" widths="3;4;4;4;4;4;4;">
+        <row>
+            <cell><chunk style="font-size: 8px; color: #317cb3;font-weight:bold;">User</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;font-weight:bold;">Assigned Roles</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;font-weight:bold;">Assigned Facilities</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;font-weight:bold;">LogIn Time</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;font-weight:bold;">Logout Time</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;font-weight:bold;">IP Address</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;font-weight:bold;">Added On</chunk></cell>
+        </row>
+        @foreach (var item in Model)
+        {
+            <row> 
+                <cell><chunk style="font-size: 8px;">@item.UserName</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.AssignedRoles</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.AssignedFacilities</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.LoginTime</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.LogoutTime</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.CreatedDate</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.IPAddress</chunk></cell>
+            </row>
+        }
+    </table>
+        break;
+        case ReportingType.PasswordDisablesLog:
+        <table width="100%" cellpadding="1.0" cellspacing="1.0" widths="6;5;5;5;5;5">
+        <row>
+                            <cell><chunk style="font-size: 10; color: #317cb3;">Table</chunk></cell>
+                            <cell><chunk style="font-size: 10; color: #317cb3;">Field</chunk></cell>
+            <cell><chunk style="font-size: 10; color: #317cb3;">Concerned</chunk></cell>
+            <cell><chunk style="font-size: 10; color: #317cb3;">Assigned Roles</chunk></cell>
+            <cell><chunk style="font-size: 10; color: #317cb3;">Assigned Facilities</chunk></cell>
+                            <cell><chunk style="font-size: 10; color: #317cb3;">Logged On</chunk></cell>
+                        </row>
+        @foreach (var item in Model)
+        {
+            <row> 
+                <cell>@item.TableName</cell>
+                <cell>@item.FieldName</cell>
+                <cell>@item.UserName</cell>
+                <cell>@item.AssignedRoles</cell>
+                <cell>@item.AssignedFacilities</cell>
+                <cell>@item.CreatedDate</cell>
+            </row>
+        }
+    </table>
+        break;
+        case ReportingType.PasswordChangeLog:
+        <table width="100%" cellpadding="1.0" cellspacing="1.0" widths="6;5;5;5;5;5">
+            <row>
+                <cell><chunk style="font-size: 10; color: #317cb3;">Changed By</chunk></cell>
+                <cell><chunk style="font-size: 10; color: #317cb3;">Assigned Roles</chunk></cell>
+                <cell><chunk style="font-size: 10; color: #317cb3;">Assigned Facilities</chunk></cell>
+                 <cell><chunk style="font-size: 10; color: #317cb3;">Table</chunk></cell>
+                            <cell><chunk style="font-size: 10; color: #317cb3;">Field</chunk></cell>
+                            <cell><chunk style="font-size: 10; color: #317cb3;">Logged On</chunk></cell>
+            </row>
+        @foreach (var item in Model)
+        {
+            <row>
+                <cell>@item.UserName</cell>
+                <cell>@item.AssignedRoles</cell>
+                <cell>@item.AssignedFacilities</cell>
+                <cell>@item.TableName</cell>
+                <cell>@item.FieldName</cell>
+                <cell>@item.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss" )</cell>
+            </row>
+        }
+    </table>
+        break;
+        case ReportingType.DailyChargeReport:
+        break;
+        case ReportingType.ChargesByPayorReport:
+        break;
+        case ReportingType.PayorWiseAgeingReport:
+        case ReportingType.PatientWiseAgeingReport:
+        case ReportingType.DepartmentWiseAgeingReport:
+    <table width="100%" cellpadding="0.5" cellspacing="0.5" widths="3;5;2;2;2;2;2;2;2">
+        @if (ViewBag.ReportingID == Convert.ToInt32(ReportingType.PayorWiseAgeingReport).ToString())
+        {
+            <cell><chunk style="font-size: 10; color: #317cb3;"> ID</chunk></cell>
+        }
+        else if (ViewBag.ReportingID == Convert.ToInt32(ReportingType.PatientWiseAgeingReport).ToString())
+        {
+            <cell><chunk style="font-size: 10; color: #317cb3;"> ID</chunk></cell>
+        }
+        else
+        {
+            <cell><chunk style="font-size: 10; color: #317cb3;">Department Number</chunk></cell>
+        }
+        <row>
+
+            <cell><chunk style="font-size: 10; color: #317cb3;">Name</chunk></cell>
+            <cell><chunk style="font-size: 10; color: #317cb3;">OnTime</chunk></cell>
+                        <cell><chunk style="font-size: 10; color: #317cb3;">Days 1-30</chunk></cell>
+                        <cell><chunk style="font-size: 10; color: #317cb3;">Days 31 - 60</chunk></cell>
+                        <cell><chunk style="font-size: 10; color: #317cb3;">Days 61 - 90</chunk></cell>
+                        <cell><chunk style="font-size: 10; color: #317cb3;">Days 91 - 120</chunk></cell>
+                        <cell><chunk style="font-size: 10; color: #317cb3;">Days 121 - 150</chunk></cell>
+                        <cell><chunk style="font-size: 10; color: #317cb3;">Days 151 - 180</chunk></cell>
+                        <cell><chunk style="font-size: 10; color: #317cb3;">Days 181+</chunk></cell>
+                        </row>
+        @foreach (var item in Model)
+        {
+            <row>
+                @if (ViewBag.ReportingID == Convert.ToInt32(ReportingType.PayorWiseAgeingReport).ToString())
+                {
+            <cell>@item.ID</cell>
+            <cell>@item.Name</cell>
+                }
+                else if (ViewBag.ReportingID == Convert.ToInt32(ReportingType.PatientWiseAgeingReport).ToString())
+                {
+            <cell>@item.ID</cell>
+            <cell>@item.Name</cell>
+                }
+                else
+                {
+            <cell>@item.DepartmentNumber</cell>
+            <cell>@item.DepartmentName</cell>
+                }
+                        <cell>@item.OnTime</cell>
+                        <cell>@item.Days1To30</cell>
+                        <cell>@item.Days31To60</cell>
+                        <cell>@item.Days61To90</cell>
+                        <cell>@item.Days91To120</cell>
+                        <cell>@item.Days121To150</cell>
+                        <cell>@item.Days151To180</cell>
+                        <cell>@item.Days181More</cell>
+                    </row>
+        }
+    </table>
+        break;
+        case ReportingType.PayorWiseReconciliationReport:
+        case ReportingType.PatientWiseReconciliationReport:
+        case ReportingType.DepartmentWiseReconciliationReport:
+        break;
+        case ReportingType.PhysicianUtilization:
+        <table width="100%" cellpadding="1.0" cellspacing="1.0" widths="3;4;4;4;4;4;4;4">
+        <row>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Physician</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Available</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Confirmed</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Done</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Cancelled/No Shows</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Overall Confirmed Utilization</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Overall Done Utilization</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Overall Cancelled Utilization</chunk></cell>
+        </row>
+        @foreach (var item in Model)
+        {
+            <row> 
+                <cell><chunk style="font-size: 8px;">@item.Name</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSTotal</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSConfirmed</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSDone</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSCancelled</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PreConfirmed</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PreDone</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PreCancelled</chunk></cell>
+            </row>
+        }
+            </table>
+            break;
+             case ReportingType.DepartmentUtilization:
+        <table width="100%" cellpadding="1.0" cellspacing="1.0" widths="3;4;4;4;4;4;4;4">
+        <row>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Department</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Available</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Confirmed</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Done</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Total of Appointment Slots Cancelled/No Shows</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Overall Confirmed Utilization</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Overall Done Utilization</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3;">Overall Cancelled Utilization</chunk></cell>
+        </row>
+        @foreach (var item in Model)
+        {
+            <row> 
+                <cell><chunk style="font-size: 8px;">@item.Name</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSTotal</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSConfirmed</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSDone</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.TSCancelled</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PreConfirmed</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PreDone</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PreCancelled</chunk></cell>
+            </row>
+        }
+            </table>
+            break;
+        case ReportingType.ClaimTransactionDetailReport:
+        <table width="100%" cellpadding="1.0" cellspacing="1.0" widths="5;3;3;4;5;4;4;4;4;3">
+        <row>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Transaction Date</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">First Name</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Last Name</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">@ResourceKeyValues.GetKeyValue("socialsecuritynumber")</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Encounter Number</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Insurance Company Name</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Bill Number</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Gross</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Patient Share</chunk></cell>
+            <cell><chunk style="font-size: 8px; color: #317cb3; border: 1px solid black">Net</chunk></cell>
+        </row>
+        @foreach (var item in Model)
+        {
+            <row> 
+                <cell><chunk style="font-size: 8px;">@item.TransactionDate</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PersonFirstName</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PersonLastName</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PersonEmiratesIDNumber</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.EncounterNumber</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.InsuranceCompanyName</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.BillNumber</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.Gross</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.PatientShare</chunk></cell>
+                <cell><chunk style="font-size: 8px;">@item.Net</chunk></cell>
+            </row>
+        }
+            </table>
+            break;
+        default:
+        break;
+    }
+}
+
+@*@{Html.RenderPartial("~/Views/Reporting/UserControls/_UserLoginActivityView.cshtml", Model);}*@

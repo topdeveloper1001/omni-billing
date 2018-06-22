@@ -1,0 +1,434 @@
+﻿@using BillingSystem.Common
+@model BillingSystem.Model.CustomModel.BillingModifierCustomModel
+@{
+    ViewBag.Title = "Billing Modifier";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://silviomoreto.github.io/bootstrap-select/dist/css/bootstrap-select.min.css" type="text/css">
+
+<style>
+    .bootstrap-select {
+        z-index: 999 !important;
+    }
+
+    .btn-group {
+        padding: 10px;
+    }
+
+    .open {
+        background: transparent;
+    }
+
+    .rowTable {
+        overflow: visible;
+    }
+
+    .btn-group {
+        padding: 0px;
+    }
+
+    .dropdown-menu > li > a {
+        color: #000;
+        padding: 6px 13px;
+    }
+
+    .dropdown-menu {
+        font-size: 12px;
+        background: #fff;
+        padding: 0;
+    }
+
+    .bootstrap-select {
+        width: 100% !important;
+    }
+
+        .bootstrap-select > button {
+            background-image: none;
+            padding: 2px 8px;
+            border-radius: 2px;
+        }
+</style>
+
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" id="AddEditForm" data-parent="#accordion" href="#collapseOne">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Billing Modifier
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div class="Jqvalidate" id="BillingModifierInfo">
+            <div id="collapseOne" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <div class="base-color">
+                        <div class="form patientTable" id="validate">
+                            <div class="col-xs-12 col-sm-4 col-lg-3">
+                                <input type="hidden" value="@Model.Id" id="hfID" />
+                                <div class="rowTable">
+                                    <label class="control-label"><span class="mandatoryStar"></span>@ResourceKeyValues.GetKeyValue("code"):</label>
+                                    @Html.TextBoxFor(m => m.Code, new { @ID = "txtCode", @maxlength = "20", @class = "validate[required,custom[nameFormat]]" })
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-4 col-lg-3">
+                                <div class="rowTable">
+                                    <label class="control-label"><span class="mandatoryStar"></span>@ResourceKeyValues.GetKeyValue("name"):</label>
+                                    @Html.TextBoxFor(m => m.Name, new { @ID = "txtName", @maxlength = "50", @class = "validate[required]" })
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-4 col-lg-3">
+                                <div class="rowTable">
+                                    <label class="control-label"><span class="mandatoryStar"></span>@ResourceKeyValues.GetKeyValue("type"):</label>
+                                    @Html.TextBoxFor(m => m.Type, new { @ID = "txtType", @maxlength = "50", @class = "validate[required],custom[nameFormat]]" })
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-12 col-lg-12">
+                                <div class="rowTable">
+                                    <label class="control-label">@ResourceKeyValues.GetKeyValue("description"):</label>
+                                    @Html.TextAreaFor(m => m.Description, new { @ID = "txtDescription", @maxlength = "500" })
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-4 col-lg-3">
+                                <div class="rowTable">
+                                    <label class="control-label"><span class="mandatoryStar"></span>@ResourceKeyValues.GetKeyValue("startdate"):</label>
+                                    @Html.TextBoxFor(m => m.EffectiveStartDate, "{0:MM/dd/yyyy}", new { @ID = "txtStartDate", @maxlength = "30", @class = "validate[required] DateTime" })
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-4 col-lg-3">
+                                <div class="rowTable">
+                                    <label class="control-label">@ResourceKeyValues.GetKeyValue("enddate"):</label>
+                                    @Html.TextBoxFor(m => m.EffectiveEndDate, "{0:MM/dd/yyyy}", new { @ID = "txtEndDate", @maxlength = "30", @class = "DateTime" })
+                                </div>
+                            </div>
+
+                            <div class="col-xs-12 col-sm-4 col-lg-1 pull-right">
+                                <div class="rowTable">
+                                    <label class="control-label">&nbsp;</label>
+                                    <button type="button" class="blue-btn btn btn-primary edit-btn marginrightBtn" id="btnImportCodes"
+                                            onclick="ImportBillingCodes('bm');">
+                                        Import Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-4 col-lg-3 p-0 pull-right">
+                                <div class="rowTable">
+                                    <label class="control-label">Import:</label>
+                                    <div class="input-group image-preview">
+                                        <input type="text" class="form-control image-preview-filename" disabled="disabled"> <!-- don't give a name === doesn't send on POST/GET -->
+                                        <span class="input-group-btn">
+                                            <!-- image-preview-clear button -->
+                                            <button type="button" class="btn btn-default image-preview-clear" style="display:none;">
+                                                <span class="glyphicon glyphicon-remove"></span> Clear
+                                            </button>
+                                            <!-- image-preview-input -->
+                                            <div class="btn btn-primary import-btn image-preview-input">
+                                                <span class="glyphicon glyphicon-folder-open"></span>
+                                                <span class="image-preview-input-title">Browse</span>
+                                                <input type="file" id="ImportFile" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" name="ImportFile" /> <!-- rename it -->
+                                            </div>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            @*<div class="col-xs-12 col-sm-4 col-lg-3">
+                                    <div class="rowTable">
+                                        <label>@ResourceKeyValues.GetKeyValue("isfirst"):</label>
+                                        @Html.CheckBoxFor(m => m.IsFirst, new { @id = "chkIsFirst" })
+                                    </div>
+                                </div>*@
+
+
+                            <div class="col-sm-12">
+                                <div class="button-block">
+                                    <input type="hidden" id="btnSaveTxt" value="@ResourceKeyValues.GetKeyValue("save")" />
+                                    <input type="hidden" id="btnupdateTxt" value="@ResourceKeyValues.GetKeyValue("update")" />
+                                    <button id="btnSave" onclick="SaveBillingModifier()" class="blue-btn btn btn-primary edit-btn marginrightBtn">@ResourceKeyValues.GetKeyValue("save")</button>
+                                    <button id="btnCancel" onclick="ResetBillingModifierForm()" name="Cancel" class="blue-btn btn btn-primary edit-btn marginrightBtn" type="button">@ResourceKeyValues.GetKeyValue("cancel")</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="BillingModifierList">
+        <div class="panel panel-default collapsecss ourcollapse bordertable">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+                <h4 class="panel-title collapseTitle">
+                    <span class="glyphicon glyphicon-align-justify"></span>&nbsp;Billing Modifier
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseTwo" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <div class="base-color">
+                        <div class="form">
+                            <div class="table-responsive">
+                                <div class="exportExcel-cont">
+                                    <a href="@Url.Action("ExportCodesToExcel","Home",new { searchText=string.Empty,codeType="BM",tn="" })"
+                                       id="btnExportBillingModifier" class="btn btn-primary">
+                                        <i class="fa fa-file-excel-o"></i> Export
+                                    </a>
+                                </div>
+                                <table id="dtBillingModifier" class="display table table_scroll" cellspacing="0">
+                                    <thead class="gridHead">
+                                        <tr class="gridRow">
+                                            <th scope="col">ID</th>
+                                            <th scope="col">Code</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Description</th>
+                                            <th scope="col">Start Date</th>
+                                            <th scope="col">End Date</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Is First</th>
+                                            <th scope="col">Added On</th>
+                                            <th class="center" scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/Search.js?@Helpers.CurrentAssemblyTicks"></script>
+
+<script>
+    var controller = "/BillingModifier/";
+
+    $(function () {
+        GetBillingModifierList();
+    });
+
+    var GetBillingModifierList = function () {
+        if (controller == null || controller == undefined)
+            controller = "/BillingModifier/";
+
+        $.ajax({
+            type: "POST",
+            url: controller + 'GetListByFacility',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: {},
+            success: function (data) {
+                if (data != null) {
+                    BindBillingModifierList(data);
+                }
+            },
+            error: function (msg) {
+            }
+        });
+    }
+
+    var BindBillingModifierList = function (data) {
+        var cColumns = [{ "targets": 0, "visible": false }, {
+            "targets": 7,
+            "visible": false,
+            "mRender": function (data, type, full) {
+                var IsFirst = full[7];
+                if (!IsFirst) {
+                    return "False";
+                } else {
+                    return "True";
+                }
+            }
+        },
+        {
+            "targets": 9,
+            "mRender": function (data, type, full) {
+                var Id = full[0];
+
+                var anchortags = '<div style="display: flex">';
+                var editBillingModifier = "EditBillingModifierRecord('" + Id + "') ";
+                var deleteR = "return OpenConfirmPopup('" + Id + "','Delete Record','',DeleteRecord,null); ";
+                anchortags += '<a class="editOpenOrderActivity" href="javascript:void(0);" title="Administer Order Activity" onclick="' + editBillingModifier + '" style="float: left; margin-right: 7px; width: 15px;"><img src="../images/edit_small.png" /></a>';
+
+                anchortags += '<a href="javascript:void(0);" title="Cancel Activity" onclick="' + deleteR + '" style="float: left; margin-right: 7px; width: 15px;"><img src="../images/delete_small.png" /></a>';
+
+
+                return anchortags + "</div>";
+            }
+        }];
+        $('#dtBillingModifier').dataTable({
+            destroy: true,
+            aaData: data,
+            bProcessing: true,
+            scrollY: "200px",
+            scrollCollapse: true,
+            paging: false,
+            aoColumnDefs: cColumns
+        });
+    }
+
+    var ResetBillingModifierForm = function () {
+        $("#hfID").val(0);
+        $("#BillingModifierInfo").clearForm();
+        $("#btnSave").text($("#btnSaveTxt").val());
+
+        $("#AddEditForm").addClass("collapsed");
+        $('#collapseOne').removeClass('in');
+        $("#chkActive").prop('checked', true);
+    }
+
+    var EditBillingModifierRecord = function (Id) {
+        var jsonData = JSON.stringify({
+            id: Id
+        });
+        $.ajax({
+            type: "POST",
+            url: controller + 'GetCurrentBillingModifier',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: jsonData,
+            success: function (data) {
+                if (data != null) {
+                    $("#hfID").val(data.Id);
+                    $("#txtCode").val(data.Code);
+                    $("#txtName").val(data.Name);
+                    $("#txtType").val(data.Type);
+                    $("#txtDescription").val(data.Description);
+                    $("#txtStartDate").val(data.EffectiveStartDate);
+                    $("#txtEndDate").val(data.EffectiveEndDate);
+                    $("#btnSave").text($("#btnupdateTxt").val());
+
+                    $("#AddEditForm").removeClass("collapsed");
+                    $('#collapseOne').addClass('in');
+
+                    $("#chkActive").prop('checked', data.IsActive);
+                    //$("#chkIsFirst").prop('checked', data.IsFirst);
+                }
+            },
+            error: function (msg) {
+            }
+        });
+    }
+
+    function SaveBillingModifier() {
+        var isValid = jQuery("#BillingModifierInfo").validationEngine({ returnIsValid: true });
+        if (!isValid) {
+            return false;
+        }
+        var id = $("#hfID").val();
+        var Code = $("#txtCode").val();
+        var Name = $("#txtName").val().trim();
+        var Description = $("#txtDescription").val().trim();
+        var EffectiveStartDate = $("#txtStartDate").val().trim();
+        var EffectiveEndDate = $("#txtEndDate").val().trim();
+        var Type = $("#txtType").val().trim();
+        var isActive = false;
+        var isFirst = false;
+
+        if ($('#chkActive').is(':checked'))
+            isActive = true;
+        if ($('#chkIsFirst').is(':checked'))
+            isFirst = true;
+
+        var jsonData = JSON.stringify({
+            Id: id,
+            Code: Code,
+            Name: Name,
+            Description: Description,
+            Type: Type,
+            EffectiveStartDate: EffectiveStartDate,
+            EffectiveEndDate: EffectiveEndDate,
+            IsActive: isActive,
+            IsFirst: isFirst,
+            IsDeleted: false
+        });
+        if (ajaxStartActive) {
+            ajaxStartActive = false;
+        }
+        $('#loader_event').show();
+        var msg = "";
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: controller + "SaveBillingModifier",
+            data: jsonData,
+            dataType: "json",
+            beforeSend: function () { },
+            success: function (data) {
+                //Append Data to grid
+                if (data != null && data.status > 0) {
+                    BindBillingModifierList(data.list);
+                    ResetBillingModifierForm();
+                    msg = "Record Saved successfully !";
+                    if (id > 0)
+                        msg = "Record updated successfully";
+
+                    ShowMessage(msg, "Success", "success", true);
+                }
+                else if (data.status == -1) {
+                    ShowErrorMessage("Code Already Exists. Try again with different Code!", true);
+                }
+                else {
+                    ShowErrorMessage("Unexpected error occurred while saving record. Try again later!", true);
+                }
+            },
+            error: function (msg) {
+
+            }
+        });
+        $('#loader_event').hide();
+
+        return false;
+    }
+
+    function DeleteRecord(Id) {
+        if ($("#hfGlobalConfirmId").val() > 0) {
+            var url = controller + 'DeleteRecord';
+            $.ajax({
+                type: "POST",
+                url: url,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify({
+                    id: $("#hfGlobalConfirmId").val()
+                }),
+                success: function (data) {
+                    if (data != null) {
+
+                    }
+                    else {
+                    }
+
+                    //Append Data to grid
+                    if (data != null && data.status > 0) {
+                        ResetBillingModifierForm();
+                        BindBillingModifierList(data.list);
+                        ShowMessage("Record deleted successfully", "Alert", "info", true);
+                    }
+                    else {
+                        ShowErrorMessage("Unexpected error occurred while deleting record. Try again later!", true);
+                    }
+                },
+                error: function (msg) {
+                }
+            });
+
+        }
+    }
+</script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://silviomoreto.github.io/bootstrap-select/dist/js/bootstrap-select.min.js"></script>

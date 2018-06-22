@@ -1,0 +1,50 @@
+﻿@model BillingSystem.Models.MedicalNecessityView
+
+@{
+    ViewBag.Title = "Medical Necessity";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+
+<script src="~/Scripts/MedicalNecessity/MedicalNecessityChecker.js"></script>
+<div class="white-bg">
+    <div class="panel panel-default collapsecss ourcollapse">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Medical Necessity
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="base-color">
+                    <div class="form">
+                       @{Html.RenderPartial("~/Views/MedicalNecessity/UserControls/_MedicalNecessityCheckerAddEdit.cshtml", new ViewDataDictionary());}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+            <h4 class="panel-title collapseTitle">
+                <span><img src="../images/list.png" /></span>&nbsp;MedicalNecessity List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseTwo" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="MedicalNotesListDiv">
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+            

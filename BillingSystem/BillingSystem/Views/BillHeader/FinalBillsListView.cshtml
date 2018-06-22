@@ -1,0 +1,112 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@model BillDetailsView
+
+
+@{
+    ViewBag.Title = "Billing Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    .btn-group {
+        margin: 5px 0 5px 0;
+    }
+
+    .scrollable-panel {
+        overflow: visible;
+    }
+
+    .colBillHeaderAction {
+        width: 12%;
+    }
+</style>
+@*<input type="hidden" id="hdPayerId"/>*@
+<input type="hidden" id="hdBHeaderId" />
+<input type="hidden" id="hdfacilityId" />
+@*<input type="hidden" id="hfCheckboxId" />*@
+<div class="white-bg">
+    <div class="panel-group">
+        <div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseBillPayerClaimsList">
+                <h4 class="panel-title collapseTitle" id="BillPayerClaimsListHeading">
+                    Payer Claims
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div class="pull-left">
+                <div>
+                    <div class="btn-group">
+                        @if (Model != null)
+                        {
+                            <a class="blue-btn btn btn-primary edit-btn marginBtn" id="BtnSendClaim" onclick="SendClaimsByPayerIds(0,'');">Send E-Claim</a>
+                            <a class="blue-btn btn btn-primary edit-btn marginBtn" id="BtnSelectAllClaim" disabled onclick="SelectAllFinalBills();">Select All</a>
+                            
+                        }
+                    </div>
+                </div>
+            </div>
+            <div id="CollapseBillPayerClaimsList" class="panel-collapse collapse in">
+                <div class="table-responsive" id="BillPayerClaimListDiv">
+                    @{Html.RenderPartial("~/Views/BillHeader/UserControls/_PayerWiseClaims.cshtml", Model.PayerWiseBillHeaderList);}
+                  </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseBillHeaderList">
+                <h4 class="panel-title collapseTitle" id="BillHeaderListHeading">
+                    Bills Overview (Final Status)
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+
+            @*<div class="pull-left">
+                    <div>
+                        <div class="btn-group">
+                            @if (Model != null && Model.BillHeaderList.Count > 0)
+                            {
+                                <a class="blue-btn btn btn-primary edit-btn marginBtn" id="BtnSendClaim" onclick="SendClaims(@Model.BillHeaderList.Count);">Send E-Claim</a>
+                            }
+                        </div>
+                    </div>
+                </div>*@
+            <div id="CollapseBillHeaderList" class="panel-collapse collapse in">
+                <div id="FinalBillsListDiv">
+                    <div class="table-responsive">
+                        <div id="IpPatientFinalList">
+                            @{Html.RenderPartial("~/Views/BillHeader/UserControls/_InPatientFinalBillHeadersListView.cshtml", Model.InPatientListView);}
+                        </div>
+                        <div class="clear"></div>
+                        <div id="OutPatientFinalList">
+                            @{ Html.RenderPartial("~/Views/BillHeader/UserControls/_OutPatientFinalBillHeadersListView.cshtml", Model.OutPatientListView);}
+                        </div>
+                        <div class="clear"></div>
+                        <div id="ErPatientFinalList">
+                            @{ Html.RenderPartial("~/Views/BillHeader/UserControls/_ErPatientFinalBillHeadersListView.cshtml", Model.ErPatientListView);}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default collapsecss ourcollapse">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#CollapseBillActivitiesList">
+                <h4 class="panel-title collapseTitle" id="BillActivityListHeading">
+                    Bill Activities <span id="billnumberSpn"></span>
+                    <a class="btn btn-default btn-sm pull-right collapse-btn">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+            <div id="CollapseBillActivitiesList" class="panel-collapse collapse in">
+                <div class="table-responsive" id="BillActivityListDiv">
+                    @{Html.RenderPartial("~/Views/BillHeader/UserControls/_BillActivityList.cshtml", Model.BillActivityList);}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/Scripts/BillHeader/FinalBillsView.js?@Helpers.CurrentAssemblyTicks"></script>

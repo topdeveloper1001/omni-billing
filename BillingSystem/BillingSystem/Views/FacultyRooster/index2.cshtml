@@ -1,0 +1,229 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@using System.Web.Optimization
+
+@model ClinicianRosterView
+
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+
+@{
+    ViewBag.Title = "Clinician's Off Times";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var model = Model.Current;
+}
+<style type="text/css">
+    .home {
+        -webkit-box-shadow: 10px 10px 1px 0px;
+        margin: 4px 31px 62px 41px;
+        border: 6px solid #E6E6FA;
+        box-shadow: 10px 10px 1px 0px;
+        width: 150px;
+        height: 65px;
+        float: left;
+        text-align: center;
+        background-color: #5c7499;
+    }
+
+    .weekDays-selector input {
+        display: none !important;
+    }
+
+        .weekDays-selector input[type=checkbox] + label {
+            display: inline-block;
+            border-radius: 6px;
+            background: #dddddd;
+            height: 40px;
+            width: 30px;
+            margin-right: 3px;
+            line-height: 40px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .weekDays-selector input[type=checkbox]:checked + label {
+            background: #2AD705;
+            color: #ffffff;
+        }
+
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+
+    .k-timepicker {
+        width: 100%;
+        height: 22px;
+        padding: 0px;
+    }
+
+    .k-picker-wrap {
+        height: 20px;
+    }
+
+        .k-picker-wrap .k-input {
+            height: 15px;
+            line-height: 15px;
+        }
+
+        .k-picker-wrap .k-select {
+            height: 20px;
+            line-height: 20px !important;
+            min-height: 20px !important;
+        }
+</style>
+
+<div class="white-bg">
+    <div class="panel panel-default ourcollapse custom_panel">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>To Request Time off
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseRAddEdit" class="panel-collapse collapse">
+            <div id="divClinicianRosterForm">
+                @Html.HiddenFor(m => m.Current.Id)
+                <div class="">
+                    <div class="col-md-3">
+                        <div class="rowTable">
+                            <label><span class="mandatoryStar"></span>Corporate:</label>
+                            <select class="form-control validate[required]" id="ddlCorporate"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="rowTable">
+                            <label><span class="mandatoryStar"></span>Facility:</label>
+                            <select class="form-control validate[required]" id="ddlFacility"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="rowTable">
+                            <label>Clinician <span class="mandatoryStar"></span></label>
+                            <select class="form-control validate[required]" id="ddlFaculty"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="rowTable">
+                            <label>Date From <span class="mandatoryStar"></span></label>
+                            @Html.TextBoxFor(m => m.Current.DateFrom, "{0:MM/dd/yyyy}", new { @class = "form-control validate[required]" })
+                        </div>
+                    </div>
+                </div>
+                <div class="clear">
+                    <div class="col-md-3">
+                        <div class="rowTable">
+                            <label>Date To <span class="mandatoryStar"></span></label>
+                            @Html.TextBoxFor(m => m.Current.DateTo, "{0:MM/dd/yyyy}", new { @class = "form-control" })
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="rowTable">
+                            <label>Reason<span class="mandatoryStar"></span></label>
+                            <select class="form-control validate[required]" id="ddlReason"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="rowTable">
+                            <label>Time From<span id="spanTimeFrom"></span></label>
+                            @Html.TextBoxFor(m => m.Current.TimeFrom, new { @class = "form-control validate[required]" })
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="rowTable">
+                            <label>Time To</label>
+                            @Html.TextBoxFor(m => m.Current.TimeTo, new { @class = "form-control" })
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="rowTable">
+                            @{
+                                var fullDay = !string.IsNullOrEmpty(model.ExtValue1) ? true : false;
+                            }
+                            <label>Full Day</label>
+                            @Html.CheckBoxFor(m => fullDay, new { @id = "chkFullDay", @style = "width:auto;" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="clear">
+                    @*<div class="col-md-3">
+                            <label class="control-label" for="Week_Days" value="Select Days">Week Days</label>
+                            <div class="weekDays-selector">
+                                <input type="checkbox" id="Monday" value="1" class="weekday" />
+                                <label for="Monday">M</label>
+                                <input type="checkbox" id="Tuesday" value="2" class="weekday" />
+                                <label for="Tuesday">T</label>
+                                <input type="checkbox" id="Wednesday" value="3" class="weekday" />
+                                <label for="Wednesday">W</label>
+                                <input type="checkbox" id="Thursday" value="4" class="weekday" />
+                                <label for="Thursday">T</label>
+                                <input type="checkbox" id="Friday" value="5" class="weekday" />
+                                <label for="Friday">F</label>
+                                <input type="checkbox" id="Saturday" value="6" class="weekday" />
+                                <label for="Saturday">S</label>
+                                <input type="checkbox" id="Sunday" value="7" class="weekday" />
+                                <label for="Sunday">S</label>
+                            </div>
+                            <input data-val="true" data-val-required="The Mon field is required." id="Monday" name="Monday" type="hidden" value="" />
+                            <input data-val="true" data-val-required="The Tue field is required." id="Tuesday" name="Tuesday" type="hidden" value="" />
+                            <input data-val="true" data-val-required="The Wed field is required." id="Wednesday" name="Wednesday" type="hidden" value="" />
+                            <input data-val="true" data-val-required="The Thur field is required." id="Thursday" name="Thursday" type="hidden" value="" />
+                            <input data-val="true" data-val-required="The Fri field is required." id="Friday" name="Friday" type="hidden" value="" />
+                            <input data-val="true" data-val-required="The Sat field is required." id="Saturday" name="Saturday" type="hidden" value="" />
+                            <input data-val="true" data-val-required="The Sun field is required." id="Sunday" name="Sunday" type="hidden" value="" />
+                        </div>*@
+
+
+                </div>
+                <div class="col-lg-12">
+                    <div class="loader_event" id="loader_event" style="display: none;">
+                        <div class="loader_body">
+                            <p id="pLoadingText">Saving...</p>
+                            <img src="@Url.Content("~/images/ajax-loader-bar.gif")" />
+                        </div>
+                    </div>
+                    <div class="btn-group" style="margin-left: 0; margin-top: 10px;">
+                        <input type="submit" value="Save" class="blue-btn btn btn-primary edit-btn marginBtn" id="btnSave" />
+                        <input type="submit" value="Cancel" class="blue-btn btn btn-primary edit-btn marginBtn" id="btnCancel" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default collapsecss ourcollapse bordertable">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseRList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="~/images/list.png" />
+                </span> Clinicians' Off Times
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseRList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div class="base-color" id="divClinicianRosterList">
+                    @{Html.RenderPartial("~/Views/FacultyRooster/UserControls/_ClinicianRosterList.cshtml", Model.List);}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="clear"></div>
+<script src="~/Scripts/FacultyRooster/ClinicianRoster.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

@@ -1,0 +1,41 @@
+﻿@using BillingSystem.Model.CustomModel
+@model IEnumerable<PatientPhoneCustomModel>
+
+@if (Model != null && Model.Any())
+{
+    var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridPatientPhoneContent", canPage: true, rowsPerPage: 5);
+    <div id="gridPatientPhoneContent">
+        @grid.GetHtml(htmlAttributes: new { id = "PhoneGrid" }, tableStyle: "table table_scroll", headerStyle: "gridHead", footerStyle: "gridFooter",
+                rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", columns: grid.Columns(
+                    grid.Column("PatientPhoneTypeName", "Phone Type", canSort: true, style: "col1"),
+                    grid.Column("PatientPhone.PhoneNo", "Phone Number", canSort: true, style: "col2"),
+                    grid.Column("PatientPhone.IsPrimary", "Is Primary", canSort: true, style: "col3"),
+                    grid.Column("PatientPhone.IsdontContact", "Do-Not-Contact Service", canSort: true, style: "col4"),
+                    grid.Column(header: "Action", style: "col5", format: @<text>
+        <a href="javascript:void(0);" title="Edit Record" class="clsEdit" onclick="EditPatientPhone('@item.PatientPhone.PatientPhoneId') " style="float: left; margin-right: 7px; width: 15px;">
+            <img src="@Url.Content("~/images/edit.png")" />
+        </a>
+                                                                              &nbsp;
+           @*<a href="javascript:void(0);" class="clsEdit" title="Delete Record" onclick="return DeletePatientPhone('@item.PatientPhone.PatientPhoneId'); " style="float: left; width: 15px;">
+              <img src="@Url.Content("~/images/delete.png")" />
+          </a>*@
+        <a href="javascript:void(0);" title="Delete" onclick="return OpenConfirmPopup('@item.PatientPhone.PatientPhoneId','Delete Patient Phone','',DeletePatientPhone,null); " style="float: left; width: 15px;">
+            <img src="@Url.Content("~/images/delete.png")" />
+        </a>
+        </text>)
+                    ))
+    </div>
+}
+else
+{
+    <h2>No Record found</h2>
+}
+
+<script>
+    $(function () {
+        if ($('#PhoneGrid tr').length > 6) {
+            $('.table_scroll').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        }
+        SetGridSorting(GetPatientPhonesBySort, "#PhoneGrid");
+    });
+</script>

@@ -1,0 +1,255 @@
+﻿@using CaptchaMvc.HtmlHelpers
+@using BillingSystem.Common.Common
+
+@model DTO.LoginDTO
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="~/css/reset.css">
+    <link href="~/css/style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/jquery-ui.css">
+    <script src="~/Scripts/jquery-1.7.2.js"></script>
+    <script src="~/Scripts/jquery-1.7.2.min.js"></script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+
+    @*<script src="~/js/jquery-1.10.2.js"></script>*@
+    <script src="~/js/jquery-ui.js"></script>
+    <script src="~/Scripts/json2.js"></script>
+    <script src="~/Scripts/Main.js"></script>
+    @* <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>*@
+
+    <script src="~/Scripts/jquery.maskedinput-1.2.2.js"></script>
+    <script type="text/javascript">
+        function ChangePassword() {
+
+            var flag = false;
+            if ($("#txtNewPassword").val() == "") {
+                flag = true;
+                $("#sptxtNewPassword").text("Please Enter New password");
+            }
+            else {
+                flag = false;
+                $("#sptxtNewPassword").text("");
+            }
+
+            if ($("#txtConfirm").val() == "") {
+                flag = true;
+                $("#sptxtConfirm").text("Please enter confirm password");
+            }
+            else {
+                flag = false;
+                $("#sptxtConfirm").text("");
+            }
+
+
+            if (flag == true) {
+                return false;
+            }
+            else {
+
+
+                if ($("#txtNewPassword").val() != $("#txtConfirm").val()) {
+                    $("#spErrorMsg1").text('Password and confirm password should match.');
+                    return false;
+                }
+
+
+                var model = {
+                    Password: $("#txtNewPassword").val()
+                };
+
+                var chek = false;
+                var title = "";
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    url: '/Home/ChangePassword',
+                    data: JSON.stringify(model),
+                    dataType: "json",
+                    beforeSend: function () { },
+                    success: function (data) {
+
+                        if (data) {
+                            alert('Password Changed Successfully.');
+                            window.location.href = "/Home/PatientLogin";
+                        }
+                        else {
+                            alert('failed');
+                        }
+
+                    },
+                    error: function (msg) {
+                    }
+                });
+
+
+            }
+        }
+
+    </script>
+    <style>
+        .login {
+            margin: 7% 45% 0% 9%;
+            border: 1px solid grey;
+            padding: 26px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+
+
+    @using (Html.BeginForm("UserLogin", "Home", FormMethod.Post))
+    {
+        if (ViewBag.check == null || (ViewBag.check != LoginResponseTypes.Success.ToString() && ViewBag.check != LoginResponseTypes.InActive.ToString()))
+        {
+        <fieldset class="login">
+            <legend><b>Login</b></legend>
+            <div>
+                <table>
+                    <tr>
+                        <td colspan="3">
+                            @if (ViewBag.check == LoginResponseTypes.Failed.ToString())
+                            {
+                                <span style="color: red;" id="spErrorMsg">Please enter correct username and password</span>
+                            }
+                            @if (ViewBag.check == LoginResponseTypes.CaptchaFailed.ToString())
+                            {
+                                <span style="color: red;" id="spErrorMsg2">Verification code does not matched.</span>
+                            }
+                            @if (ViewBag.check == LoginResponseTypes.IsDeleted.ToString())
+                            {
+                                <span style="color: red;" id="spErrorMsg3">User has been deleted. Please contact System Administrator !</span>
+                            }
+                            @if (ViewBag.check == LoginResponseTypes.FailedAttemptsOver.ToString())
+                            {
+                                <span style="color: red;" id="spErrorMsg4">User is Blocked. kindly login after 30 minutes !</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>User Name : 
+                        </td>
+                        <td>
+                            @Html.TextBoxFor(m => m.UserName, new { @style = "width:300px", @maxlength = "25" })
+                            <span style="color: red;" id="spUserName"></span>@Html.ValidationMessageFor(m => m.UserName)
+
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Password : 
+                        </td>
+                        <td>
+                            @Html.PasswordFor(m => m.Password, new { @style = "width:300px", @maxlength = "25" })
+                            <span style="color: red;" id="spPassword"></span>
+                            @Html.ValidationMessageFor(m => m.Password)
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;
+                
+                        </td>
+                        <td>
+                            @Html.Captcha("Try another", "Enter the text you see above:", 6, "Required", true)
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td></td>
+                        <td>
+                            <input type="submit" id="btnLogin" style="width: 132px; margin-top: 20px;" class="blue-btn" value="Login" />
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+        </fieldset>  
+        }
+    }
+
+    @if (ViewBag.check == LoginResponseTypes.InActive.ToString())
+    {
+        <fieldset class="login">
+            <legend><b>Change Password:</b></legend>
+            <div>
+
+                <div id="changepassdiv">
+
+                    <table>
+                        <tr>
+                            <td colspan="3">
+                                <span style="color: red;" id="spErrorMsg1"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>New Password : 
+                            </td>
+                            <td>
+                                @Html.Password("txtNewPassword", null, new { @style = "width:300px", @maxlength = "25" })
+                                <br />
+                                <span style="color: red;" id="sptxtNewPassword"></span>
+
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Confirm Password : 
+                            </td>
+                            <td>
+                                @Html.Password("txtConfirm", null, new { @style = "width:300px", @maxlength = "25" })
+                                <br />
+                                <span style="color: red;" id="sptxtConfirm"></span>
+
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td></td>
+                            <td>
+                                <input type="button" id="btnChangePassword" onclick="return ChangePassword();" style="width: 162px; margin-top: 20px;" class="blue-btn" value="Change Password" />
+                            </td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </fieldset>  
+    }
+
+
+</body>
+</html>

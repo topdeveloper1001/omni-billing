@@ -1,0 +1,71 @@
+﻿@using BillingSystem.Model
+@model HolidayPlannerDetails
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+    select {
+    margin-bottom: 10px;}
+</style>
+<div class="form" id="HolidayPlannerDetailsFormDiv">
+    @*// BBCOLUMNSHERE*@
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>Id:</label>
+        @Html.TextBoxFor(m => m.Id, new { @maxlength = "10", @id = "txtId" })
+      </div>
+      <div class="rowTable">
+        <label>HolidayPlannerId:</label>
+        @Html.TextBoxFor(m => m.HolidayPlannerId, new { @maxlength = "10", @id = "txtHolidayPlannerId" })
+      </div>
+      <div class="rowTable">
+        <label>HolidayDate:</label>
+        @Html.TextBoxFor(m => m.HolidayDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtHolidayDate" })
+      </div>
+      <div class="rowTable">
+        <label>IsActive:</label>
+        @Html.TextBoxFor(m => m.IsActive, new { @maxlength = "10", @id = "txtIsActive" })
+      </div>
+      <div class="rowTable">
+        <label>CreatedBy:</label>
+        @Html.TextBoxFor(m => m.CreatedBy, new { @maxlength = "10", @id = "txtCreatedBy" })
+      </div>
+   </div>
+   <div class="col-sm-3">
+      <div class="rowTable">
+        <label>CreatedDate:</label>
+        @Html.TextBoxFor(m => m.CreatedDate,"{0:MM/dd/yyyy}", new { @maxlength = "10", @id = "dtCreatedDate" })
+      </div>
+      <div class="rowTable">
+        <label>Description:</label>
+        @Html.TextBoxFor(m => m.Description, new { @maxlength = "500", @id = "txtDescription" })
+      </div>
+      <div class="rowTable">
+        <label>IsActive:</label>
+        @Html.TextBoxFor(m => m.IsActive, new { @maxlength = "10", @id = "txtIsActive" })
+      </div>
+    <div class="clear"></div>
+
+    <div class="btn-group">
+        <div style="float: left;">
+            @if (Model.HolidayPlannerDetailsID != null && Model.HolidayPlannerDetailsID != 0)
+            {  
+                <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return SaveHolidayPlannerDetails();" />                
+            }
+            else
+            {
+                <input type="submit" onclick="return SaveHolidayPlannerDetails();" class="btn btn-primary edit-btn marginBtn" value="Save" />                
+            }
+            <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearAll();">Cancel</button>            
+        </div>
+    </div>
+
+
+
+</div>

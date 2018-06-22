@@ -1,0 +1,55 @@
+﻿@using BillingSystem.Model.CustomModel
+
+@model PatientLoginDetailCustomModel
+
+@{
+    ViewBag.Title = "Realtion address";
+    var id = Model != null ? Model.Id : 0;
+    var btnSaveText = id == 0 ? "Save" : "Update";
+}
+<style>
+    .forms li {
+        position: relative;
+    }
+
+    .show-password-link {
+        display: block;
+        position: absolute;
+        z-index: 11;
+    }
+
+    .password-showing {
+        position: absolute;
+        z-index: 10;
+    }
+</style>
+<div id="PatientLoginDetailForm">
+    <div class="col-xs-12 col-sm-4 col-md-4 col-lg-4">
+        @Html.HiddenFor(m => m.Id)
+        @Html.HiddenFor(m => m.ExternalValue1)
+        @Html.HiddenFor(m => m.CodeValue)
+        @Html.HiddenFor(m => m.TokenId)
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Email:</label>
+            @Html.TextBoxFor(m => m.Email, new { maxlength = "50", @class = "validate[required,custom[email]]" })
+        </div>
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Patient Portal Access: @Html.CheckBoxFor(m => m.PatientPortalAccess)</label>
+            @*@Html.PasswordFor(m => m.Password, new { @maxlength = "50", @class = "validate[required] passwordmatch emptyTxt" })*@
+        </div>
+        @*@if (id == 0)
+        {
+            <div class="rowTable">
+                <label><span class="mandatoryStar"></span>Confirm Password:</label>
+                @Html.PasswordFor(m => m.ConfirmPassword, new { @maxlength = "50", @class = "validate[required] validate[passwordmatch] emptyTxt" })
+            </div>
+        }*@
+    </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <button id="btnLoginDetailSave" class="blue-btn btn btn-primary edit-btn marginBtn" style="margin-left: 2px;">@btnSaveText</button>
+        <button id="btnLoginDetailCancel" class="blue-btn btn btn-primary edit-btn marginBtn">Cancel</button>
+    </div>
+</div>
+
+<script src="~/Scripts/PatientInfo/PatientLoginDetail.js"></script>

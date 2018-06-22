@@ -1,0 +1,245 @@
+﻿<style>
+    .searchSlide2 {
+        width: 492px;
+        bottom: 93px;
+    }
+</style>
+<div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" id="btnOVCancel" onclick="OnClickOverViewCancel();">&times;</button>
+        <h4 class="modal-title pull-left">Over View</h4>
+    </div>
+    <div class="clear"></div>
+    <div class="modal-body">
+        <!--Main content section - start-->
+        <div class="main_content" style="height: 539px;">
+            <input type="hidden" id="hfRoomId" value="0" />
+            <div class="panel panel-default collapsecss ourcollapse">
+                <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                    <h1 class="panel-title collapseTitle">
+                        <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Selection Criteria
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h1>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse in">
+                    <div class="panel-body" id="divFacilityOverview">
+
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label><span class="mandatoryStar"></span>Facility</label>
+                                <select class="form-control validate[required]" id="selOVFacility" onchange="OnChangeFacilityDropdownInAppointmentsOverview('#selOVFacility','');">
+                                    <option value="0">--Select--</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label><span class="mandatoryStar"></span>Department</label>
+                                <select class="form-control validate[required]" id="selOVDepartment" onchange="ValidateDepartmentRooms(this)">
+                                    <option value="0">--Select--</option>
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Physician</label>
+                                <select class="form-control " id="selOVPhysician">
+                                    <option value="0">--Select--</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Patient</label>
+                                <select class="form-control " id="selOVPatient">
+                                    <option value="0">--Select--</option>
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label><span class="mandatoryStar"></span>Date From</label>
+                                        <input type="text" class="form-control validate[required]" id="txtOVDateFrom" />
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-6" style="display: none;">
+                                    <div class="form-group">
+                                        <label><span class="mandatoryStar"></span>Date To</label>
+                                        <input type="text" class="form-control" id="txtOVDateTo" />
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="row">
+                                <div class="col-sm-6 col-md-6">
+                                    <div class="form-group">
+                                        <label style="width: 100%;"><span class="mandatoryStar"></span>Time From</label>
+                                        <input type="text" id="txtOVTimeFrom" class="validate[required]" />
+                                    </div>
+
+                                </div>
+
+                                <div class="col-sm-6 col-md-6">
+                                    <div class="form-group">
+                                        <label style="width: 100%;"><span class="mandatoryStar"></span>Time To</label>
+                                        <input type="text" id="txtOVTimeTo" class="validate[required]" />
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label><span class="mandatoryStar"></span>Appointment Types</label>
+                                <select class="form-control validate[required]" id="selOVApptTypes" onchange="OnChangeOVAppointTypes(this);"></select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group minuts_field">
+                                        <input type="text" class="form-control validate[required]" id="txtOVApptTypesFrequency" />
+                                        <input id="hfOVApptTypesFrequency" type="hidden" value="" />
+                                        <label>mins</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="col-sm-12">&nbsp;</label>
+                                        <input type="button" class="btn btn-primary btn-sm pull-right" value="Search" id="btnSreachOverview" onclick="ShowOverViewData();" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            @*<div class="panel panel-default collapsecss ourcollapse">
+                    <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseThree1">
+                        <h1 class="panel-title collapseTitle">
+                            <span class="glyphicon glyphicon-info-sign"></span>&nbsp;
+                            <a class="btn btn-default btn-sm pull-right collapse-btn">
+                                <span class="glyphicon glyphicon-chevron-down"></span>
+                            </a>
+                        </h1>
+                    </div>
+                    <div id="collapseThree1" class="panel-collapse collapse">
+                        <div class="panel-body">
+
+                        </div>
+
+                    </div>
+                </div>*@
+
+            <div class="panel panel-default collapsecss ourcollapse">
+                <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+                    <h1 class="panel-title collapseTitle">
+                        <span class="glyphicon glyphicon-info-sign"></span>&nbsp;Over View
+                        <a class="btn btn-default btn-sm pull-right collapse-btn">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    </h1>
+                </div>
+                <div id="collapseTwo" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <div class="col-sm-12">
+                            <h2 class="form_heading">Percentage Booked Colors</h2>
+                            <ul class="colorcode_column">
+                                <li>
+                                    <span class="green"></span>0%
+                                </li>
+                                <li>
+                                    <span class="light_green"></span>Between 0.1% to 25%
+                                </li>
+                                <li>
+                                    <span class="yellow"></span>Between 25.01% to 50%
+                                </li>
+
+                                <li>
+                                    <span class="pink"></span>Between 50.01% to 75%
+                                </li>
+                                <li>
+                                    <span class="red"></span>100%
+                                </li>
+                                <li>
+                                    <span class="expired"></span>Expired
+                                </li>
+
+                            </ul>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="table-responsive">
+                                <table id="tblOVGrid" class="table table-hover table-striped table-border display nowrap" cellspacing="0" style="border: solid 1px #ccc;">
+                                    <thead>
+                                        <tr class="gridHead">
+                                            <th>Physician Name</th>
+                                            <th>Room</th>
+                                            <th>Start Time</th>
+                                            <th>End Time</th>
+                                            <th>1</th>
+                                            <th>2</th>
+                                            <th>3</th>
+                                            <th>4</th>
+                                            <th>5</th>
+                                            <th>6</th>
+                                            <th>7</th>
+                                            <th>8</th>
+                                            <th>9</th>
+                                            <th>10</th>
+                                            <th>11</th>
+                                            <th>12</th>
+                                            <th>13</th>
+                                            <th>14</th>
+                                            <th>15</th>
+                                            <th>16</th>
+                                            <th>17</th>
+                                            <th>18</th>
+                                            <th>19</th>
+                                            <th>20</th>
+                                            <th>21</th>
+                                            <th>22</th>
+                                            <th>23</th>
+                                            <th>24</th>
+                                            <th>25</th>
+                                            <th>26</th>
+                                            <th>27</th>
+                                            <th>28</th>
+                                            <th>29</th>
+                                            <th>30</th>
+                                            <th>31</th>
+                                            <th>&nbsp;</th>
+                                            <th>&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbltbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="divOVAvailableTimeSlots" class="searchSlide2 timingslots sliderpopup">
+                            <h2>Available Time Slots <span class="glyphicon glyphicon-remove" aria-hidden="true" id="spnOVAvailTimeSlots" onclick="OnClickOVHide();"></span></h2>
+                            <div class="popup_body" id="divAvailTimeSlots">
+                                <ul id="ulOVTimeSlots"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

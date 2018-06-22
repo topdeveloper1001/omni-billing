@@ -1,0 +1,52 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Models
+@model CarePlanTaskView
+
+@{
+    ViewBag.Title = "CarePlanTask View";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="white-bg">
+    <div class="panel panel-default ourcollapse custom_panel">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseCarePlanTaskAddEdit">
+            <h4 class="panel-title collapseTitle">
+                <span class="glyphicon glyphicon-plus-sign"></span>&nbsp;Add Care Plan Task
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseCarePlanTaskAddEdit" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="row">
+                    @{Html.RenderPartial("~/Views/CarePlanTask/UserControls/_CarePlanTaskAddEdit.cshtml", Model.CurrentCarePlanTask);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default ourcollapse bordertable collapsecss ">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapseCarePlanTaskList">
+            <h4 class="panel-title collapseTitle">
+                <span>
+                    <img src="../images/list.png" /></span>&nbsp;Care Plan Task List
+                <a class="btn btn-default btn-sm pull-right collapse-btn">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseCarePlanTaskList" class="panel-collapse collapse in tableImg">
+            <div class="panel-body">
+                <div id="CarePlanTaskListDiv" class="base-color" id="CarePlanTaskListDiv">
+                    @{Html.RenderPartial("~/Views/CarePlanTask/UserControls/_CarePlanTaskList.cshtml", Model.CarePlanTaskList);}
+                </div>
+                 <span class="inactive">View In active records
+                    <input id="chkShowInActive" type="checkbox" />
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+<script src="~/Scripts/CarePlanTask/CarePlanTaskScript.js?@Helpers.CurrentAssemblyTicks"></script>
+<script src="~/Scripts/Common/confirmEvents.js?@Helpers.CurrentAssemblyTicks"></script>

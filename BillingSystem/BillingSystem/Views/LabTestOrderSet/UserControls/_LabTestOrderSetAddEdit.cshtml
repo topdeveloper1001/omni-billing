@@ -1,0 +1,278 @@
+﻿@using System.Web.Optimization
+@using BillingSystem.Model
+@using Kendo.Mvc.UI
+@model LabTestOrderSet
+
+@{
+    var btnSaveText = "Save";
+    if (Model != null && Model.Id > 0)
+    {
+        btnSaveText = "Update";
+    }
+}
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+@Scripts.Render("~/bundles/kendo")
+@Styles.Render("~/Content/kendo/css")
+@Styles.Render("~/Content/bootstrap/css")
+<div class="form" id="LabTestOrderSetFormDiv">
+    <div class="form patientTable">
+        @Html.HiddenFor(m => m.Id, new { @id = "hfId" })
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            <div class="rowTable">
+                <label class="control-label"><span class="mandatoryStar"></span>Order Set Table Number:</label>
+                @Html.TextBoxFor(m => m.OrderSetTableNumber, new { @ID = "txtOrderSetTableNumber", @maxlength = "20", @class = "validate[required,custom[onlyNumberSp]]" })
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            <div class="rowTable">
+                <label class="control-label"><span class="mandatoryStar"></span>Order Set Table Name:</label>
+                @Html.TextBoxFor(m => m.OrderSetTableName, new { @ID = "txtOrderSetTableName", @maxlength = "20", @class = "validate[required]" })
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            <div class="rowTable">
+                <label class="control-label"><span class="mandatoryStar"></span>Order Set  Code:</label>
+                @Html.HiddenFor(m => m.OrderSetValue, new { id = "hfCodeValue" })
+
+                @(Html.Kendo().AutoComplete()
+                      .Name("txtOrderSetValue")
+                      .DataTextField("Name")
+                      .Placeholder("Search Order Set Value / Description...")
+                      .Filter("contains")
+                      .MinLength(3)
+                      .Events(e => e.Select("OnGCodeCategorySelection"))
+                      .HtmlAttributes(new
+                      {
+                          id = "txtOrderSetValue",
+                          onfocus = "ajaxStartActive = false;",
+                          onblur = "ajaxStartActive = true;",
+                          style = "width:100%",
+                          maxlength = "6",
+                          @class = "validate[required]",
+                          onchange = "SetCodeValue('#hfCodeValue');"
+                      })
+                      .DataSource(source => source.Read(read => read.Action("SearchGlobalCodeCategories", "GlobalCode")
+                          .Data("SelectGCodeCategory"))
+                          .ServerFiltering(true))
+                      )
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="rowTable">
+                <label class="control-label"><span class="mandatoryStar"></span>Description:</label>
+                @Html.TextAreaFor(m => m.Description, new { @ID = "txtDescription", @maxlength = "1000", @class = "validate[required]", @Style = "height:48px; line-height: 20px; overflow-y:scroll;" })
+            </div>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable blueBox1" id="divCodeValue1">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 1:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue1, new { @ID = "txtCodeValue1", @maxlength = "10", @class = "validate[required,custom[integer]] cptCodeValue", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue1');" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 1 Type:</label>
+                <select id="ddlOrderedType1" name="ddlOrderedType1" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue2">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 2:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue2, new { @ID = "txtCodeValue2", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue2');" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 2 Type:</label>
+                <select id="ddlOrderedType2" name="ddlOrderedType2" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue3">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 3:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue3, new { @ID = "txtCodeValue3", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue3');" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 3 Type:</label>
+                <select id="ddlOrderedType3" name="ddlOrderedType3" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue4">
+            <div class="col-sm-5">
+
+                <label class="control-label">
+                    Value 4:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue4, new { @ID = "txtCodeValue4", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue4');" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 4 Type:</label>
+                <select id="ddlOrderedType4" name="ddlOrderedType4" class="ddlVal"></select>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable blueBox1" id="divCodeValue5">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 5:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue5, new { @ID = "txtCodeValue5", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue5');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 5 Type:</label>
+                <select id="ddlOrderedType5" name="ddlOrderedType5" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue6">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 6:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue6, new { @ID = "txtCodeValue6", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue6');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 6 Type:</label>
+                <select id="ddlOrderedType6" name="ddlOrderedType6" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue7">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 7:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue7, new { @ID = "txtCodeValue7", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue7');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 7 Type:</label>
+                <select id="ddlOrderedType7" name="ddlOrderedType7" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue8">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 8:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue8, new { @ID = "txtCodeValue8", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue8');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 8 Type:</label>
+                <select id="ddlOrderedType8" name="ddlOrderedType8" class="ddlVal"></select>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable blueBox1" id="divCodeValue9">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 9:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue9, new { @ID = "txtCodeValue9", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue9');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 9 Type:</label>
+                <select id="ddlOrderedType9" name="ddlOrderedType9" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue10">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 10:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue10, new { @ID = "txtCodeValue10", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue10');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 10 Type:</label>
+                <select id="ddlOrderedType10" name="ddlOrderedType10" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue11">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 11:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue11, new { @ID = "txtCodeValue11", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue11');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 11 Type:</label>
+                <select id="ddlOrderedType11" name="ddlOrderedType11" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue12">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 12:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue12, new { @ID = "txtCodeValue12", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue12');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 12 Type:</label>
+                <select id="ddlOrderedType12" name="ddlOrderedType12" class="ddlVal"></select>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="rowTable blueBox1" id="divCodeValue13">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 13:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue13, new { @ID = "txtCodeValue13", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue13');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 13 Type:</label>
+                <select id="ddlOrderedType13" name="ddlOrderedType13" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue14">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 14:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue14, new { @ID = "txtCodeValue14", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue14');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 14 Type:</label>
+                <select id="ddlOrderedType14" name="ddlOrderedType14" class="ddlVal"></select>
+            </div>
+        </div>
+        <div class="rowTable blueBox1" id="divCodeValue15">
+            <div class="col-sm-5">
+                <label class="control-label">
+                    Value 15:
+                </label>
+                @Html.TextBoxFor(m => m.CodeValue15, new { @ID = "txtCodeValue15", @onchange = "return CheckIfCptCodeExistsInRange('#txtCodeValue15');", @maxlength = "10", @class = "validate[optional[integer]] cptCodeValue" })
+            </div>
+            <div class="col-sm-7">
+                <label class="control-label">Time 15 Type:</label>
+                <select id="ddlOrderedType15" name="ddlOrderedType15" class="ddlVal"></select>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div class="btn-group">
+        <input type="submit" id="BtnSave" class="btn btn-primary edit-btn marginBtn" value="@btnSaveText" onclick="return SaveLabTestOrderSet();" />
+        <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearLabTestOrderSetForm();">Cancel</button>
+    </div>
+</div>

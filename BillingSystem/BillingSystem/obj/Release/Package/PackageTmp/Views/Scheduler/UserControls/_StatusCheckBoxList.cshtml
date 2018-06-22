@@ -1,0 +1,24 @@
+﻿@using BillingSystem.Model
+@model IEnumerable<GlobalCodes>
+
+@*@(Html.Kendo().TreeView().Name("treeviewStatusCheck").Checkboxes(checkboxes => checkboxes.Name("checkedFiles").CheckChildren(false)).Events(iten => iten.Check("onCheckFilters")).HtmlAttributes(new { }).HighlightPath(false).Items(menu =>
+      {
+          var list = Model;
+          foreach (var item in list)
+          {
+              menu.Add().Text(item.GlobalCodeName).HasChildren(false).Id(item.GlobalCodeValue.ToString()).SpriteCssClasses(item.ExternalValue2).Expanded(false).Checked(true);
+          }
+      })
+      )
+@Html.Kendo().DeferredScripts()*@
+<ul id="treeviewStatusCheck" class="tree_viewlist overflow_tree">
+    @foreach (var item in Model)
+    {
+        @*<li id="liStatusCheckBox_@item.GlobalCodeValue" onclick="CheckStatus('@item.GlobalCodeValue')">*@
+        <li id="liStatusCheckBox_@item.GlobalCodeValue" >
+            <input type="checkbox" id="ChkStatus_@item.GlobalCodeValue" checked="checked" onchange="CheckUnCheckBox(this, 'treeviewStatusCheck', 'status')"/>
+            <span class="color_box @item.ExternalValue2"></span>
+            <a id="Status_@item.GlobalCodeValue">@item.GlobalCodeName</a>
+        </li>
+    }
+</ul>
