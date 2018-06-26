@@ -7,29 +7,33 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-using BillingSystem.Common.Common;
 using BillingSystem.Model.Model;
-using iTextSharp.text;
-using NPOI.HSSF.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc;
 
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models;
 
     /// <summary>
     ///     The payment controller.
     /// </summary>
     public class PaymentController : BaseController
     {
+        private readonly IPatientInfoService _piService;
+
+        public PaymentController(IPatientInfoService piService)
+        {
+            _piService = piService;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -228,9 +232,8 @@ namespace BillingSystem.Controllers
             var corporateid = Helpers.GetSysAdminCorporateID();
             common.FacilityId = facilityid;
             common.CorporateId = corporateid;
-            var bal = new PatientInfoBal();
-            //var objPatientInfoData = bal.GetPatientSearchResult(common);
-            var objPatientInfoData = bal.GetPatientSearchResultInPayment(common);
+
+            var objPatientInfoData = _piService.GetPatientSearchResultInPayment(common);
 
             //ViewBag.Message = null;
 

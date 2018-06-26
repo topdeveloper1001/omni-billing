@@ -1,12 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PhysicianController.cs" company="Spadez">
-//   Omni Health care
-// </copyright>
-// <summary>
-//   Defines the PhysicianController type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿
 using Microsoft.Ajax.Utilities;
 
 namespace BillingSystem.Controllers
@@ -22,12 +14,21 @@ namespace BillingSystem.Controllers
     using BillingSystem.Model.CustomModel;
     using BillingSystem.Models;
     using System.Threading.Tasks;
+    using BillingSystem.Bal.Interfaces;
 
     /// <summary>
     /// The physician controller.
     /// </summary>
     public class PhysicianController : BaseController
     {
+
+        private readonly IFacilityStructureService _fsService;
+        private readonly IUsersService _uService;
+        private readonly IClinicianAppointmentTypesService _caService;
+        public PhysicianController(IFacilityStructureService fsService)
+        {
+            _fsService = fsService;
+        }
 
         /// <summary>
         /// Indexes this instance.
@@ -303,23 +304,15 @@ namespace BillingSystem.Controllers
                 var viewpath = string.Format("../Physician/{0}", PartialViews.FacilityListViewInPhysicianView);
                 facilityListView = RenderPartialViewToStringBase(viewpath, fList);
             }
-
-
-
-
-
-            //Get Users and UserRole data
-            using (var uBal = new UsersBal())
+            uList = _uService.GetUsersByRole(fId, cId);
+            if (uList.Count > 0)
             {
-                uList = uBal.GetUsersByRole(fId, cId);
-                if (uList.Count > 0)
+                urList.AddRange(uList.DistinctBy(k => k.RoleId).Select(item => new DropdownListData
                 {
-                    urList.AddRange(uList.DistinctBy(k => k.RoleId).Select(item => new DropdownListData
-                    {
-                        Text = item.RoleName,
-                        Value = Convert.ToString(item.RoleId)
-                    }));
-                }
+                    Text = item.RoleName,
+                    Value = Convert.ToString(item.RoleId)
+                }));
+
             }
 
             //Get License Types and Specialties Data
@@ -334,18 +327,17 @@ namespace BillingSystem.Controllers
             }
 
             //Get Departments Data
-            using (var bal = new FacilityStructureBal())
+
+            var deps = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), Convert.ToString(fId));
+            if (deps.Any())
             {
-                var deps = bal.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), Convert.ToString(fId));
-                if (deps.Any())
+                dList.AddRange(deps.Select(item => new DropdownListData
                 {
-                    dList.AddRange(deps.Select(item => new DropdownListData
-                    {
-                        Text = string.Format(" {0} ", item.FacilityStructureName),
-                        Value = Convert.ToString(item.FacilityStructureId)
-                    }));
-                }
+                    Text = string.Format(" {0} ", item.FacilityStructureName),
+                    Value = Convert.ToString(item.FacilityStructureId)
+                }));
             }
+
 
 
             var jsonData = new
@@ -379,21 +371,16 @@ namespace BillingSystem.Controllers
         #region Clinician AppointmentTypes View
         public ViewResult ClinicianAppTypes()
         {
-            using (var bal = new ClinicianAppointmentTypesBal())
-            {
                 return View(new ClinicianAppointmentTypesView
                 {
-                    List = bal.GetList(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0),
+                    List = _caService.GetList(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0),
                     CurrentClinician = new ClinicianAppTypesCustomModel()
                 });
-            }
         }
 
         public JsonResult BindClinicianAppointmentDataOnLoad()
         {
-            using (var bal = new ClinicianAppointmentTypesBal())
-            {
-                var vm = bal.GetDataOnViewLoad(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId());
+                var vm = _caService.GetDataOnViewLoad(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId());
 
                 //Bind the physicians list to div #divPhysicianList
                 var viewpath = string.Format("../Physician/{0}", PartialViews.FacilityListViewInPhysicianView);
@@ -407,35 +394,25 @@ namespace BillingSystem.Controllers
 
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
-            }
         }
 
         public PartialViewResult BindClinicianAppointmentTypesData()
         {
-            using (var bal = new ClinicianAppointmentTypesBal())
-            {
-                var list = bal.GetList(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0);
+                var list = _caService.GetList(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0);
                 return PartialView(PartialViews.CAppointmentTypesPartial, list);
-            }
         }
 
         public JsonResult SaveClinicianAppTypeData(ClinicianAppTypesCustomModel vm)
         {
-            using (var bal = new ClinicianAppointmentTypesBal())
-            {
                 vm.CreatedBy = Helpers.GetLoggedInUserId();
-                var result = bal.Save(vm);
+                var result = _caService.Save(vm);
                 return Json(result, JsonRequestBehavior.AllowGet);
-            }
         }
 
         public JsonResult EditClinicianAppointmentTypesData(long clinicianId)
         {
-            using (var bal = new ClinicianAppointmentTypesBal())
-            {
-                var current = bal.GetList(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), clinicianId).FirstOrDefault();
+                var current = _caService.GetList(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), clinicianId).FirstOrDefault();
                 return Json(current, JsonRequestBehavior.AllowGet);
-            }
         }
 
         #endregion

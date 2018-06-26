@@ -1,32 +1,32 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PreSchedulingQueueController.cs" company="Spadez">
-//   Omnihealthcare
-// </copyright>
-// <Screen owner>
-// Shashank (Created On : Feb 04 2016)
-// </Screen owner>
-// <summary>
-//   The patient scheduler portal controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc;
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Model.CustomModel;
-    using Models;
+
 
     /// <summary>
     /// The pre scheduling queue controller.
     /// </summary>
     public class PreSchedulingQueueController : BaseController
     {
+        private readonly IPatientInfoService _piService;
+        private readonly IAppointmentTypesService _atService;
+
+        public PreSchedulingQueueController(IPatientInfoService piService, IAppointmentTypesService atService)
+        {
+            _piService = piService;
+            _atService = atService;
+        }
+
         // GET: /PreSchedulingQueue/
         #region Public Methods and Operators
 
@@ -86,7 +86,7 @@ namespace BillingSystem.Controllers
                         physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
                     }
 
-                    var patientinfo = model[0].AssociatedId != 0 ? new PatientInfoBal().GetPatientInfoById(model[0].AssociatedId) :
+                    var patientinfo = model[0].AssociatedId != 0 ? _piService.GetPatientInfoById(model[0].AssociatedId) :
                             new PatientInfo
                             {
                                 CorporateId = corporateId,
@@ -102,7 +102,7 @@ namespace BillingSystem.Controllers
                     patientinfo.PersonEmailAddress = model[0].PatientEmailId;
                     patientinfo.PersonEmiratesIDNumber = model[0].PatientEmirateIdNumber;
 
-                    patientid = new PatientInfoBal().AddUpdatePatientInfo(patientinfo);
+                    patientid = _piService.AddUpdatePatientInfo(patientinfo);
 
                     // Add the patient phone number
                     if (patientid > 0)
@@ -145,8 +145,7 @@ namespace BillingSystem.Controllers
                         item.EventId = Helpers.GenerateCustomRandomNumber();
                         item.ExtValue4 = token;
                         var appointmentType = string.Empty;
-                        var app =
-                            new AppointmentTypesBal().GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                        var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
                         appointmentType = app != null ? app.Name : string.Empty;
                         item.AppointmentType = appointmentType;
 

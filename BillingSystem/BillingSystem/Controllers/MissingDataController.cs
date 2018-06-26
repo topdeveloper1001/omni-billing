@@ -1,5 +1,6 @@
 ﻿using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Models;
 
@@ -7,6 +8,13 @@ namespace BillingSystem.Controllers
 {
     public class MissingDataController : BaseController
     {
+        private readonly IEncounterService _eService;
+
+        public MissingDataController(IEncounterService eService)
+        {
+            _eService = eService;
+        }
+
         /// <summary>
         /// Indexes this instance.
         /// </summary>
@@ -16,7 +24,7 @@ namespace BillingSystem.Controllers
             var bal = new MissingDataBal();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var missingDatalist = bal.GetXMLMissingData(corporateid,facilityId);
+            var missingDatalist = bal.GetXMLMissingData(corporateid, facilityId);
             var billHeaderList = bal.GetAllXMLBillHeaderList(corporateid, facilityId);
             //Intialize the View Model i.e. BedMaster which is binded to PhysicianView
             var missingDataView = new MissingDataView()
@@ -36,15 +44,13 @@ namespace BillingSystem.Controllers
         public ActionResult ScrubXMLBill(int encounterId)
         {
             var userId = Helpers.GetLoggedInUserId();
-            using (var encounterBal = new EncounterBal())
-            {
-                var billheaderObj = encounterBal.GetEncounterEndCheck(encounterId, userId);
-                var bal = new MissingDataBal();
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var billHeaderList = bal.GetAllXMLBillHeaderList(corporateid, facilityId);
-                return PartialView(PartialViews.XMLBillHeaderList, billHeaderList);
-            }
+            var billheaderObj = _eService.GetEncounterEndCheck(encounterId, userId);
+            var bal = new MissingDataBal();
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var billHeaderList = bal.GetAllXMLBillHeaderList(corporateid, facilityId);
+            return PartialView(PartialViews.XMLBillHeaderList, billHeaderList);
+
         }
-	}
+    }
 }

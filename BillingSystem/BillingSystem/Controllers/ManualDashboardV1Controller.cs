@@ -14,11 +14,15 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using System.Threading.Tasks;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ManualDashboardV1Controller : BaseController
     {
+        private readonly IPatientInfoService _piService;
+        private readonly IUsersService _uService;
+
         /// <summary>
         /// Get the details of the ManualDashboard View in the Model ManualDashboard such as ManualDashboardList, list of countries etc.
         /// </summary>
@@ -481,11 +485,9 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("usertokentoaccess");
             Users userCm = null;
-            using (var bal = new UsersBal())
-            {
-                var currentDate = Helpers.GetInvariantCultureDateTime();
-                userCm = bal.GetUserById(Convert.ToInt32(Helpers.GetLoggedInUserId()));
-                var facilityname = bal.GetFacilityNameByFacilityId(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
+                 var currentDate = Helpers.GetInvariantCultureDateTime();
+                userCm = _uService.GetUserById(Convert.ToInt32(Helpers.GetLoggedInUserId()));
+                var facilityname = _piService.GetFacilityNameByFacilityId(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
                 if (!string.IsNullOrEmpty(msgBody) && userCm != null)
                 {
                     userCm.UserToken = usertoken;
@@ -493,8 +495,7 @@ namespace BillingSystem.Controllers
                        .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
                        Replace("{TokenExpireOn}", expiryDate.Value.ToShortDateString());
                 }
-            }
-            var emailInfo = new EmailInfo
+             var emailInfo = new EmailInfo
             {
                 VerificationTokenId = "",
                 PatientId = 0,

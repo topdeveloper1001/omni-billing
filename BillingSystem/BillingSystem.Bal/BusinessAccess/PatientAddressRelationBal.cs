@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
     public class PatientAddressRelationBal : BaseBal
     {
+        private readonly IRepository<Country> _cRepository;
         /// <summary>
         /// Get the PatientAddress
         /// </summary>
@@ -24,8 +26,8 @@ namespace BillingSystem.Bal.BusinessAccess
                             patientAddressRelationRep.Where(x => x.PatientID == patientId && (!x.IsDeleted)).ToList();
                         var globalcodecategoryAddressRealtion =
                             Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.PatientRelationTypes).ToString();
-                        var countrybal = new CountryBal();
-                        var countriesdata = countrybal.GetCountries();
+
+                        var countriesdata = _cRepository.GetAll().OrderBy(c => c.CountryName).ToList();
                         var globalrelationType =
                             globalCodeRepository.Where(
                                 x => x.GlobalCodeCategoryValue == globalcodecategoryAddressRealtion);

@@ -5,17 +5,17 @@ using BillingSystem.Model.CustomModel;
 using System.Web.Mvc;
 using System.Linq;
 using System;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class BillingModifierController : BaseController
     {
-        private readonly BillingModifierBal _bal;
+        private readonly IBillingModifierService _service;
 
-        public BillingModifierController()
+        public BillingModifierController(IBillingModifierService service)
         {
-            if (_bal == null)
-                _bal = new BillingModifierBal();
+            _service = service;
         }
 
         public ActionResult Index()
@@ -35,7 +35,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetListByFacility()
         {
-            var vm = _bal.GetListByEntity(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
+            var vm = _service.GetListByEntity(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
             var list = vm.Select(x => new[] { Convert.ToString(x.Id), x.Code, x.Name, x.Description, x.EffectiveStartDate.HasValue ? x.EffectiveStartDate.Value.ToString("d") : string.Empty,
                 x.EffectiveEndDate.HasValue ? x.EffectiveEndDate.Value.ToString("d") : string.Empty,x.Type,x.IsFirst.ToString() ,x.CreatedDate.ToString("d"), });
 
@@ -44,7 +44,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetCurrentBillingModifier(long id)
         {
-            var vm = _bal.GetById(id);
+            var vm = _service.GetById(id);
             var jsonResult = new
             {
                 vm.Id,
@@ -79,10 +79,10 @@ namespace BillingSystem.Controllers
             vm.FacilityId = Helpers.GetDefaultFacilityId();
             vm.CorporateId = Helpers.GetDefaultCorporateId();
             vm.IsActive = true;
-            var result = _bal.SaveRecord(vm);
+            var result = _service.SaveRecord(vm);
             if (result > 0)
             {
-                var vmList = _bal.GetListByEntity(vm.FacilityId, vm.CorporateId);
+                var vmList = _service.GetListByEntity(vm.FacilityId, vm.CorporateId);
                 var list = vmList.Select(x => new[] { Convert.ToString(x.Id), x.Code, x.Name, x.Description, x.EffectiveStartDate.HasValue ? x.EffectiveStartDate.Value.ToString("d") : string.Empty,
                 x.EffectiveEndDate.HasValue?x.EffectiveEndDate.Value.ToString("d"):string.Empty,x.Type,x.IsFirst.ToString() ,x.CreatedDate.ToString("d"), });
                 var jsonData = new { list, status = result };
@@ -96,10 +96,10 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteRecord(long id)
         {
-            var m = _bal.DeleteRecord(id, Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
+            var m = _service.DeleteRecord(id, Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
             if (m > 0)
             {
-                var vm = _bal.GetListByEntity(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
+                var vm = _service.GetListByEntity(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
                 var list = vm.Select(x => new[] {
                     Convert.ToString(x.Id), x.Code, x.Name, x.Description, x.EffectiveStartDate.HasValue ? x.EffectiveStartDate.Value.ToString("d") : string.Empty,
                 x.EffectiveEndDate.HasValue ? x.EffectiveEndDate.Value.ToString("d"):string.Empty

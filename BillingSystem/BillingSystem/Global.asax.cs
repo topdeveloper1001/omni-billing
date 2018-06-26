@@ -30,6 +30,8 @@ namespace BillingSystem
             BundleConfig.RegisterBundles(BundleTable.Bundles);
 
             GlobalFilters.Filters.Add(new GlobalExceptionHandler());
+
+            UnityConfig.RegisterComponents();
             //Helpers.EncryptConnString();
             //Helpers.EncryptMailSettings();
         }

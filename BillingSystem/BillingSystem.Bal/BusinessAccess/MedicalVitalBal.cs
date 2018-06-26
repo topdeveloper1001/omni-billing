@@ -5,6 +5,7 @@ using BillingSystem.Common.Common;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
 using System.Transactions;
+using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -13,6 +14,7 @@ namespace BillingSystem.Bal.BusinessAccess
     /// </summary>
     public class MedicalVitalBal : BaseBal
     {
+        private readonly IRepository<Users> _uRepository;
         /// <summary>
         /// Get the Entity
         /// </summary>
@@ -110,26 +112,24 @@ namespace BillingSystem.Bal.BusinessAccess
                         && a.PatientID == patientId && a.MedicalVitalType == type).OrderByDescending(x => x.CreatedDate).ToList();
                     foreach (var item in lstMedicalvital)
                     {
-                        using (var userbal = new UsersBal())
+                        var medicalvitalCustomModel = new MedicalVitalCustomModel()
                         {
-                            var medicalvitalCustomModel = new MedicalVitalCustomModel()
-                            {
-                                MedicalVital = item,
-                                PressureCustom = item.AnswerValueMin.Value.ToString("F"),
-                                // item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? item.AnswerValueMin.Value.ToString("F") + "/" + item.AnswerValueMax.Value.ToString("F") : ,
-                                VitalAddedBy = userbal.GetNameByUserId(item.CommentBy),
-                                VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
-                                MedicalVitalName =
-                                    GetNameByGlobalCodeValue(Convert.ToInt32(item.GlobalCode).ToString(),
-                                        Convert.ToInt32(GlobalCodeCategoryValue.Vitals).ToString()),
-                                UnitOfMeasureName =
-                                    GetNameByGlobalCodeValue(Convert.ToInt32(item.AnswerUOM).ToString(),
-                                        Convert.ToInt32(GlobalCodeCategoryValue.UnitOfMeasure).ToString()),
-                                //    MedicalVitalName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
-                                //    UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(UOMGlobalCategory, Convert.ToInt32(item.AnswerUOM))
-                            };
-                            medicalVitalList.Add(medicalvitalCustomModel);
-                        }
+                            MedicalVital = item,
+                            PressureCustom = item.AnswerValueMin.Value.ToString("F"),
+                            // item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? item.AnswerValueMin.Value.ToString("F") + "/" + item.AnswerValueMax.Value.ToString("F") : ,
+                            VitalAddedBy = GetNameByUserId1(item.CommentBy),
+                            VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
+                            MedicalVitalName =
+                                GetNameByGlobalCodeValue(Convert.ToInt32(item.GlobalCode).ToString(),
+                                    Convert.ToInt32(GlobalCodeCategoryValue.Vitals).ToString()),
+                            UnitOfMeasureName =
+                                GetNameByGlobalCodeValue(Convert.ToInt32(item.AnswerUOM).ToString(),
+                                    Convert.ToInt32(GlobalCodeCategoryValue.UnitOfMeasure).ToString()),
+                            //    MedicalVitalName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
+                            //    UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(UOMGlobalCategory, Convert.ToInt32(item.AnswerUOM))
+                        };
+                        medicalVitalList.Add(medicalvitalCustomModel);
+
                     }
                 }
                 return medicalVitalList.OrderByDescending(x => x.MedicalVital.CreatedDate).ThenBy(x => x.MedicalVitalName).ToList();
@@ -139,7 +139,11 @@ namespace BillingSystem.Bal.BusinessAccess
                 throw ex;
             }
         }
-
+        public string GetNameByUserId1(int? UserID)
+        {
+            var usersModel = _uRepository.Where(x => x.UserID == UserID && x.IsDeleted == false).FirstOrDefault();
+            return usersModel != null ? usersModel.FirstName + " " + usersModel.LastName : string.Empty;
+        }
         /// <summary>
         /// Gets the custom medical vitals.
         /// </summary>
@@ -147,7 +151,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="type">The type.</param>
         /// <param name="encounterid">The encounterid.</param>
         /// <returns></returns>
-        public List<MedicalVitalCustomModel> GetCustomMedicalVitals(int patientId, int type,int encounterid)
+        public List<MedicalVitalCustomModel> GetCustomMedicalVitals(int patientId, int type, int encounterid)
         {
             try
             {
@@ -158,24 +162,21 @@ namespace BillingSystem.Bal.BusinessAccess
                         && a.PatientID == patientId && a.MedicalVitalType == type && a.EncounterID == encounterid).OrderByDescending(x => x.CreatedDate).ToList();
                     foreach (var item in lstMedicalvital)
                     {
-                        using (var userbal = new UsersBal())
+                        using (var globalBal = new GlobalCodeBal())
                         {
-                            using (var globalBal = new GlobalCodeBal())
+                            var vitalGlobalCategory = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.LabTest).ToString();
+                            //var UOMGlobalCategory = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.UnitOfMeasure).ToString();
+                            var medicalvitalCustomModel = new MedicalVitalCustomModel()
                             {
-                                var vitalGlobalCategory = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.LabTest).ToString();
-                                //var UOMGlobalCategory = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.UnitOfMeasure).ToString();
-                                var medicalvitalCustomModel = new MedicalVitalCustomModel()
-                                {
-                                    MedicalVital = item,
-                                    VitalAddedBy = userbal.GetNameByUserId(item.CommentBy),
-                                    VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
-                                    LabTestName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
-                                    LabTestValues = item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? string.Format("{0} - {1}",item.AnswerValueMax ,item.AnswerValueMin):string.Empty,
-                                    LabTestRange = globalBal.GetExternalVal1Val2ByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
-                                    //UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(UOMGlobalCategory, Convert.ToInt32(item.AnswerUOM))
-                                };
-                                medicalVitalList.Add(medicalvitalCustomModel);
-                            }
+                                MedicalVital = item,
+                                VitalAddedBy = GetNameByUserId1(item.CommentBy),
+                                VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
+                                LabTestName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
+                                LabTestValues = item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? string.Format("{0} - {1}", item.AnswerValueMax, item.AnswerValueMin) : string.Empty,
+                                LabTestRange = globalBal.GetExternalVal1Val2ByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
+                                //UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(UOMGlobalCategory, Convert.ToInt32(item.AnswerUOM))
+                            };
+                            medicalVitalList.Add(medicalvitalCustomModel);
                         }
                     }
                 }
@@ -244,23 +245,20 @@ namespace BillingSystem.Bal.BusinessAccess
                         && a.PatientID == patientId && a.MedicalVitalType == type && a.EncounterID == currentEncounterId).OrderByDescending(x => x.CreatedDate).ToList();
                     foreach (var item in lstMedicalvital)
                     {
-                        using (var userbal = new UsersBal())
+                        using (var globalBal = new GlobalCodeBal())
                         {
-                            using (var globalBal = new GlobalCodeBal())
+                            var medicalvitalCustomModel = new MedicalVitalCustomModel()
                             {
-                                var medicalvitalCustomModel = new MedicalVitalCustomModel()
-                                {
-                                    MedicalVital = item,
-                                    PressureCustom = item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? item.AnswerValueMin.Value.ToString("F") + "/" + item.AnswerValueMax.Value.ToString("F") : item.AnswerValueMin.Value.ToString("F"),
-                                    VitalAddedBy = userbal.GetNameByUserId(item.CommentBy),
-                                    VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
-                                    MedicalVitalName = GetNameByGlobalCodeValue(Convert.ToInt32(item.GlobalCode).ToString(), Convert.ToInt32(GlobalCodeCategoryValue.Vitals).ToString()),
-                                    UnitOfMeasureName = GetNameByGlobalCodeValue(Convert.ToInt32(item.AnswerUOM).ToString(), Convert.ToInt32(GlobalCodeCategoryValue.UnitOfMeasure).ToString()),
-                                    //MedicalVitalName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
-                                    //UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(uomGlobalCategory, Convert.ToInt32(item.AnswerUOM))
-                                };
-                                medicalVitalList.Add(medicalvitalCustomModel);
-                            }
+                                MedicalVital = item,
+                                PressureCustom = item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? item.AnswerValueMin.Value.ToString("F") + "/" + item.AnswerValueMax.Value.ToString("F") : item.AnswerValueMin.Value.ToString("F"),
+                                VitalAddedBy = GetNameByUserId(item.CommentBy),
+                                VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
+                                MedicalVitalName = GetNameByGlobalCodeValue(Convert.ToInt32(item.GlobalCode).ToString(), Convert.ToInt32(GlobalCodeCategoryValue.Vitals).ToString()),
+                                UnitOfMeasureName = GetNameByGlobalCodeValue(Convert.ToInt32(item.AnswerUOM).ToString(), Convert.ToInt32(GlobalCodeCategoryValue.UnitOfMeasure).ToString()),
+                                //MedicalVitalName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
+                                //UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(uomGlobalCategory, Convert.ToInt32(item.AnswerUOM))
+                            };
+                            medicalVitalList.Add(medicalvitalCustomModel);
                         }
                     }
                 }
@@ -290,23 +288,20 @@ namespace BillingSystem.Bal.BusinessAccess
                         && a.PatientID == patientId && a.MedicalVitalType == type && a.EncounterID == encounterid).OrderByDescending(x => x.CreatedDate).ToList();
                     foreach (var item in lstMedicalvital)
                     {
-                        using (var userbal = new UsersBal())
+                        using (var globalBal = new GlobalCodeBal())
                         {
-                            using (var globalBal = new GlobalCodeBal())
+                            var vitalGlobalCategory = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.LabTest).ToString();
+                            var medicalvitalCustomModel = new MedicalVitalCustomModel()
                             {
-                                var vitalGlobalCategory = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.LabTest).ToString();
-                                var medicalvitalCustomModel = new MedicalVitalCustomModel()
-                                {
-                                    MedicalVital = item,
-                                    VitalAddedBy = userbal.GetNameByUserId(item.CommentBy),
-                                    VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
-                                    LabTestName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
-                                    LabTestValues = item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? string.Format("{0} - {1}",  item.AnswerValueMin.Value.ToString("#.##"),item.AnswerValueMax.Value.ToString("#.##")) : string.Empty,
-                                    LabTestRange = globalBal.GetExternalVal1Val2ByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
-                                    //UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(UOMGlobalCategory, Convert.ToInt32(item.AnswerUOM))
-                                };
-                                medicalVitalList.Add(medicalvitalCustomModel);
-                            }
+                                MedicalVital = item,
+                                VitalAddedBy = GetNameByUserId(item.CommentBy),
+                                VitalAddedOn = Convert.ToDateTime(item.CreatedDate),
+                                LabTestName = globalBal.GetGlobalCodeNameByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
+                                LabTestValues = item.AnswerValueMax != null && item.AnswerValueMax != Convert.ToDecimal(0.0000) ? string.Format("{0} - {1}", item.AnswerValueMin.Value.ToString("#.##"), item.AnswerValueMax.Value.ToString("#.##")) : string.Empty,
+                                LabTestRange = globalBal.GetExternalVal1Val2ByIdAndCategoryId(vitalGlobalCategory, Convert.ToInt32(item.GlobalCode)),
+                                //UnitOfMeasureName = globalBal.GetGlobalCodeNameByIdAndCategoryId(UOMGlobalCategory, Convert.ToInt32(item.AnswerUOM))
+                            };
+                            medicalVitalList.Add(medicalvitalCustomModel);
                         }
                     }
                 }

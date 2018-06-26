@@ -21,12 +21,12 @@ namespace BillingSystem.Bal.Mapper
                     vm.PatientName = bal.GetPatientNameById(Convert.ToInt32(vm.PatientId));
                     vm.FirstTimeUser = string.IsNullOrEmpty(model.Password);
                     vm.CorporateId = facility.CorporateID.HasValue ? facility.CorporateID.Value : 0;
-                    using (var pinfobal = new PatientInfoBal())
-                    {
-                        var patientinfoObj = pinfobal.GetPatientInfoById(Convert.ToInt32(vm.PatientId));
-                        vm.BirthDate = patientinfoObj.PersonBirthDate;
-                        vm.EmriateId = patientinfoObj.PersonEmiratesIDNumber;
-                    }
+                    //using (var pinfobal = new PatientInfoBal())
+                    //{
+                    //    var patientinfoObj = pinfobal.GetPatientInfoById(Convert.ToInt32(vm.PatientId));
+                    //    vm.BirthDate = patientinfoObj.PersonBirthDate;
+                    //    vm.EmriateId = patientinfoObj.PersonEmiratesIDNumber;
+                    //}
                 }
             }
             return vm;

@@ -9,6 +9,7 @@ using BillingSystem.Common.Common;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
@@ -17,6 +18,16 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class SecurityController : BaseController
     {
+        private readonly IAuditLogService _adService;
+        private readonly IUsersService _uService;
+
+        public SecurityController(IAuditLogService adService, IUsersService uService)
+        {
+            _adService = adService;
+            _uService = uService;
+        }
+
+
         //
         // GET: /Security/
 
@@ -30,7 +41,6 @@ namespace BillingSystem.Controllers
         [HttpGet]
         public ActionResult User(int? cId, int? fId)
         {
-            var objUserBal = new UsersBal();
             var corporateId = Convert.ToInt32(cId) > 0 ? Convert.ToInt32(cId) : Helpers.GetSysAdminCorporateID();
             var facilityId = Convert.ToInt32(fId) > 0 ? Convert.ToInt32(fId) : Helpers.GetDefaultFacilityId();
 
@@ -44,7 +54,7 @@ namespace BillingSystem.Controllers
                     {
                         CurrentUser = new Users { IsActive = true, CorporateId = corporateId, FacilityId = facilityId }
                     },
-                UsersList = objUserBal.GetUsersByCorporateIdFacilityId(corporateId, facilityId),
+                UsersList = _uService.GetUsersByCorporateIdFacilityId(corporateId, facilityId),
             };
             return View(objUsersView);
         }
@@ -142,8 +152,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EditUser(int UserID)
         {
-            var objUserBal = new UsersBal();
-            var user = objUserBal.GetUserById(UserID);
+            var user = _uService.GetUserById(UserID);
             var currentUser = new UsersCustomModel
             {
                 CurrentUser = user,
@@ -185,52 +194,48 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUser(Users objUser, int roleId, int cId, int fId)
         {
-            using (var objUserBal = new UsersBal())
+            if (fId == 0 && !Helpers.GetLoggedInUserIsAdmin())
+                fId = Helpers.GetDefaultFacilityId();
+
+            cId = cId == 0 ? Helpers.GetSysAdminCorporateID() : cId;
+
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+
+            if (objUser.UserID > 0)
             {
-
-                if (fId == 0 && !Helpers.GetLoggedInUserIsAdmin())
-                    fId = Helpers.GetDefaultFacilityId();
-
-                cId = cId == 0 ? Helpers.GetSysAdminCorporateID() : cId;
-
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-
-                if (objUser.UserID > 0)
-                {
-                    objUser.ModifiedBy = userId;
-                    objUser.ModifiedDate = currentDateTime;
-                }
-                else
-                {
-                    objUser.CreatedBy = userId;
-                    objUser.CreatedDate = currentDateTime;
-                }
-
-                objUserBal.AddUpdateUser(objUser, roleId);
-
-                //start
-
-                var auditlogbal = new AuditLogBal();
-                var auditlogObj = new AuditLog
-                {
-                    AuditLogID = 0,
-                    UserId = userId,
-                    CreatedDate = Helpers.GetInvariantCultureDateTime(),
-                    TableName = "Users",
-                    FieldName = "Password",
-                    PrimaryKey = 0,
-                    OldValue = string.Empty,
-                    NewValue = string.Empty,
-                    CorporateId = cId,
-                    FacilityId = fId
-                };
-                auditlogbal.AddUptdateAuditLog(auditlogObj);
-
-                var list = objUserBal.GetUsersByCorporateIdFacilityId(cId, fId);
-                return PartialView(PartialViews.UsersList, list);
+                objUser.ModifiedBy = userId;
+                objUser.ModifiedDate = currentDateTime;
             }
+            else
+            {
+                objUser.CreatedBy = userId;
+                objUser.CreatedDate = currentDateTime;
+            }
+
+            _uService.AddUpdateUser(objUser, roleId);
+
+            //start
+
+            var auditlogObj = new AuditLog
+            {
+                AuditLogID = 0,
+                UserId = userId,
+                CreatedDate = Helpers.GetInvariantCultureDateTime(),
+                TableName = "Users",
+                FieldName = "Password",
+                PrimaryKey = 0,
+                OldValue = string.Empty,
+                NewValue = string.Empty,
+                CorporateId = cId,
+                FacilityId = fId
+            };
+            _adService.AddUptdateAuditLog(auditlogObj);
+
+            var list = _uService.GetUsersByCorporateIdFacilityId(cId, fId);
+            return PartialView(PartialViews.UsersList, list);
         }
+
 
         //public ActionResult AddRoleWithUser(int userID, int roleID)
         //{
@@ -267,21 +272,20 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteUser(int userId, int cId, int fId)
         {
-            var objUserBal = new UsersBal();
-            var objUser = objUserBal.GetUserById(userId);
+            var objUser = _uService.GetUserById(userId);
             objUser.IsDeleted = true;
             objUser.DeletedBy = Helpers.GetLoggedInUserId();
             objUser.DeletedDate = Helpers.GetInvariantCultureDateTime(); //To Do change it to server datetime
             objUser.TokenExpiryDate = null;
             objUser.UserToken = null;
-            objUserBal.AddUpdateUser(objUser, 0);
+            _uService.AddUpdateUser(objUser, 0);
 
             cId = cId == 0 ? Helpers.GetSysAdminCorporateID() : cId;
 
             if (fId == 0 && !Helpers.GetLoggedInUserIsAdmin())
                 fId = Helpers.GetDefaultFacilityId();
 
-            var list = objUserBal.GetUsersByCorporateIdFacilityId(cId, fId);
+            var list = _uService.GetUsersByCorporateIdFacilityId(cId, fId);
             return PartialView("UserControls/_UsersList", list);
         }
 
@@ -306,14 +310,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult CheckDuplicateUser(string username, string email, int userId)
         {
-            var objUsersBal = new UsersBal();
-            var isExist = objUsersBal.CheckForDuplicateEmail(userId, email);
+            var isExist = _uService.CheckForDuplicateEmail(userId, email);
             if (isExist)
             {
                 return Json("-1");
             }
 
-            return Json(objUsersBal.CheckDuplicateUser(username, email, userId));
+            return Json(_uService.CheckDuplicateUser(username, email, userId));
         }
 
         /// <summary>
@@ -322,23 +325,20 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetLoggedInUserDetails()
         {
-            var objUserBal = new UsersBal();
             var userid = Helpers.GetLoggedInUserId();
-            var user = objUserBal.GetUserById(userid);
+            var user = _uService.GetUserById(userid);
             var viewpath = string.Format("../PatientSearch/{0}", PartialViews.ChangePassword);
             return PartialView(viewpath, user);
         }
 
         public PartialViewResult RebindUsersList(int cId, int fId)
         {
-            using (var objUserBal = new UsersBal())
-            {
-                if (fId == 0 && !Helpers.GetLoggedInUserIsAdmin())
-                    fId = Helpers.GetDefaultFacilityId();
+            if (fId == 0 && !Helpers.GetLoggedInUserIsAdmin())
+                fId = Helpers.GetDefaultFacilityId();
 
-                var list = objUserBal.GetUsersByCorporateIdFacilityId(cId, fId);
-                return PartialView("UserControls/_UsersList", list);
-            }
+            var list = _uService.GetUsersByCorporateIdFacilityId(cId, fId);
+            return PartialView("UserControls/_UsersList", list);
+
         }
 
         #endregion
@@ -1227,7 +1227,7 @@ namespace BillingSystem.Controllers
             using (var bal = new RoleTabsBal())
             {
                 var dt = Helpers.ToDataTable(objRoleTabsPermissionList);
-                bal.AddUpdateRolePermissionSP(dt, Helpers.GetLoggedInUserId(),Helpers.GetSysAdminCorporateID(),Helpers.GetDefaultFacilityId());
+                bal.AddUpdateRolePermissionSP(dt, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
                 return Json(true);
             }
         }

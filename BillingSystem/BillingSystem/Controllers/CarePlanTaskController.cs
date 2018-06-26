@@ -1,38 +1,27 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CarePlanTaskController.cs" company="Spadez">
-//   Omniheakthcare
-// </copyright>
-// </Screen Owner>
-// Shashank Modified on : Feb 09 2016
-// </Screen Owner>
-// <summary>
-//   The holiday planner controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
 {
-    #region System Referneces
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc; 
-    #endregion
-
-    #region Project Referneces
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models; 
-    #endregion
-
     /// <summary>
     /// CarePlanTask controller.
     /// </summary>
     public class CarePlanTaskController : BaseController
     {
+        private readonly ICarePlanTaskService _service;
+
+        public CarePlanTaskController(ICarePlanTaskService service)
+        {
+            _service = service;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -45,19 +34,16 @@ namespace BillingSystem.Controllers
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
-            // Initialize the CarePlanTask BAL object
-            using (var carePlanTaskBal = new CarePlanTaskBal())
+            // Get the facilities list
+            // var carePlanTaskList = carePlanTaskBal.GetCarePlanTask();
+            var carePlanTaskList = _service.GetActiveCarePlanTask(corporateId, facilityId, Convert.ToBoolean(val));
+            if (carePlanTaskList.Count > 0)
             {
-                // Get the facilities list
-                // var carePlanTaskList = carePlanTaskBal.GetCarePlanTask();
-                var carePlanTaskList = carePlanTaskBal.GetActiveCarePlanTask(corporateId, facilityId, Convert.ToBoolean(val));
-                if (carePlanTaskList.Count > 0)
-                {
-                    carePlanTaskList = carePlanTaskList.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
-                }
-                // Pass the ActionResult with List of CarePlanTaskViewModel object to Partial View CarePlanTaskList
-                return this.PartialView(PartialViews.CarePlanTaskList, carePlanTaskList);
+                carePlanTaskList = carePlanTaskList.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
             }
+            // Pass the ActionResult with List of CarePlanTaskViewModel object to Partial View CarePlanTaskList
+            return this.PartialView(PartialViews.CarePlanTaskList, carePlanTaskList);
+
         }
 
         /// <summary>
@@ -72,29 +58,27 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteCarePlanTask(int id, bool inActive)
         {
-            using (var bal = new CarePlanTaskBal())
+            // Get CarePlanTask model object by current CarePlanTask ID
+            var currentCarePlanTask = _service.GetCarePlanTaskById(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            // Check If CarePlanTask model is not null
+            if (currentCarePlanTask != null)
             {
-                // Get CarePlanTask model object by current CarePlanTask ID
-                var currentCarePlanTask = bal.GetCarePlanTaskById(id);
-                var userId = Helpers.GetLoggedInUserId();
+                currentCarePlanTask.IsActive = false;
 
-                // Check If CarePlanTask model is not null
-                if (currentCarePlanTask != null)
-                {
-                    currentCarePlanTask.IsActive = false;
+                currentCarePlanTask.ModifiedBy = userId;
+                currentCarePlanTask.ModifiedDate = Helpers.GetInvariantCultureDateTime();
 
-                    currentCarePlanTask.ModifiedBy = userId;
-                    currentCarePlanTask.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                // Update Operation of current CarePlanTask
+                int result = inActive
+                    ? _service.SaveCarePlanTask(currentCarePlanTask, inActive ? 1 : 0)
+                    : _service.DeleteCarePlanTask(currentCarePlanTask);
 
-                    // Update Operation of current CarePlanTask
-                    int result = inActive
-                        ? bal.SaveCarePlanTask(currentCarePlanTask, inActive ? 1 : 0)
-                        : bal.DeleteCarePlanTask(currentCarePlanTask);
-
-                    // return deleted ID of current CarePlanTask as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                // return deleted ID of current CarePlanTask as Json Result to the Ajax Call.
+                return Json(result);
             }
+
 
             // Return the Json result as Action Result back JSON Call Success
             return this.Json(null);
@@ -113,19 +97,16 @@ namespace BillingSystem.Controllers
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
-            // Initialize the CarePlanTask BAL object
-            var carePlanTaskBal = new CarePlanTaskBal();
-
             // Get the Entity list
             // var carePlanTaskList = carePlanTaskBal.GetCarePlanTask();
-            var carePlanTaskList = carePlanTaskBal.GetActiveCarePlanTask(corporateId, facilityId,true);
+            var carePlanTaskList = _service.GetActiveCarePlanTask(corporateId, facilityId, true);
 
             // Intialize the View Model i.e. CarePlanTaskView which is binded to Main View Index.cshtml under CarePlanTask
             var carePlanTaskView = new CarePlanTaskView
-                                       {
-                                           CarePlanTaskList = carePlanTaskList, 
-                                           CurrentCarePlanTask = new CarePlanTask()
-                                       };
+            {
+                CarePlanTaskList = carePlanTaskList,
+                CurrentCarePlanTask = new CarePlanTask()
+            };
 
             // Pass the View Model in ActionResult to View CarePlanTask
             return View(carePlanTaskView);
@@ -164,35 +145,32 @@ namespace BillingSystem.Controllers
             var dateTime = Helpers.GetInvariantCultureDateTime();
             int newId = -1;
             int userId = Helpers.GetLoggedInUserId();
-            var tBal = new CarePlanTaskBal();
-            var check = tBal.CheckDuplicateTaskNumber(model.Id, model.TaskNumber, facilityId, corporateId);
+            var check = _service.CheckDuplicateTaskNumber(model.Id, model.TaskNumber, facilityId, corporateId);
             if (check)
             {
                 return Json("-1");
             }
             else
             {
-                using (var bal = new CarePlanTaskBal())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = dateTime;
-                        model.FacilityId = facilityId;
-                        model.CorporateId = corporateId;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = dateTime;
-                        model.FacilityId = facilityId;
-                        model.CorporateId = corporateId;
-                        model.CreatedDate = dateTime;
-                    }
-
-                    // Call the AddCarePlanTask Method to Add / Update current CarePlanTask
-                    newId = bal.SaveCarePlanTask(model,2);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = dateTime;
+                    model.FacilityId = facilityId;
+                    model.CorporateId = corporateId;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = dateTime;
+                    model.FacilityId = facilityId;
+                    model.CorporateId = corporateId;
+                    model.CreatedDate = dateTime;
+                }
+
+                // Call the AddCarePlanTask Method to Add / Update current CarePlanTask
+                newId = _service.SaveCarePlanTask(model, 2);
+
             }
 
             // Check if Model is not null 
@@ -210,35 +188,33 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetCarePlanTaskData(int id)
         {
-            using (var bal = new CarePlanTaskBal())
-            {
-                var currentCarePlanTask = bal.GetCarePlanTaskById(id);
-                var jsonResult =
-                    new
-                        {
-                            currentCarePlanTask.Id, 
-                            currentCarePlanTask.CorporateId, 
-                            currentCarePlanTask.FacilityId, 
-                            currentCarePlanTask.ActivityType, 
-                            currentCarePlanTask.EndTime, 
-                            currentCarePlanTask.StartTime, 
-                            currentCarePlanTask.IsRecurring, 
-                            currentCarePlanTask.RecTImeIntervalType, 
-                            currentCarePlanTask.RecTimeInterval, 
-                            currentCarePlanTask.ResponsibleUserType, 
-                            currentCarePlanTask.TaskDescription, 
-                            currentCarePlanTask.TaskNumber, 
-                            currentCarePlanTask.IsActive, 
-                            currentCarePlanTask.RecurranceType, 
-                            currentCarePlanTask.CarePlanId, 
-                            currentCarePlanTask.TaskName, 
-                            currentCarePlanTask.ExtValue1, 
-                            currentCarePlanTask.ExtValue2
-                        };
+            var currentCarePlanTask = _service.GetCarePlanTaskById(id);
+            var jsonResult =
+                new
+                {
+                    currentCarePlanTask.Id,
+                    currentCarePlanTask.CorporateId,
+                    currentCarePlanTask.FacilityId,
+                    currentCarePlanTask.ActivityType,
+                    currentCarePlanTask.EndTime,
+                    currentCarePlanTask.StartTime,
+                    currentCarePlanTask.IsRecurring,
+                    currentCarePlanTask.RecTImeIntervalType,
+                    currentCarePlanTask.RecTimeInterval,
+                    currentCarePlanTask.ResponsibleUserType,
+                    currentCarePlanTask.TaskDescription,
+                    currentCarePlanTask.TaskNumber,
+                    currentCarePlanTask.IsActive,
+                    currentCarePlanTask.RecurranceType,
+                    currentCarePlanTask.CarePlanId,
+                    currentCarePlanTask.TaskName,
+                    currentCarePlanTask.ExtValue1,
+                    currentCarePlanTask.ExtValue2
+                };
 
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
+
 
         /// <summary>
         /// Gets the maximum task number.
@@ -250,11 +226,10 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            using (var cBal = new CarePlanTaskBal())
-            {
-                var list = cBal.GetMaxTaskNumber(corporateId, facilityId);
-                return Json(list);
-            }
+
+            var list = _service.GetMaxTaskNumber(corporateId, facilityId);
+            return Json(list);
+
         }
 
         /// <summary>
@@ -278,10 +253,10 @@ namespace BillingSystem.Controllers
                         roleList.Select(
                             item =>
                             new DropdownListData
-                                {
-                                    Text = string.Format("{0}", item.RoleName), 
-                                    Value = Convert.ToString(item.RoleId)
-                                }));
+                            {
+                                Text = string.Format("{0}", item.RoleName),
+                                Value = Convert.ToString(item.RoleId)
+                            }));
                 }
 
                 return Json(list, JsonRequestBehavior.AllowGet);
@@ -301,7 +276,7 @@ namespace BillingSystem.Controllers
             using (var roleBal = new RoleBal())
             {
                 var roles = roleBal.GetRolesByCorporateIdFacilityId(
-                    Convert.ToInt32(corporateId), 
+                    Convert.ToInt32(corporateId),
                     Convert.ToInt32(facilityId));
                 if (roles.Count > 0)
                 {
@@ -327,24 +302,23 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            using (var cBal = new CarePlanTaskBal())
-            {
-                var carePaln = cBal.BindCarePlan(corporateId, facilityId);
 
-                if (carePaln.Count > 0)
-                {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(
-                        carePaln.Select(
-                            item =>
-                            new SelectListItem
-                                {
-                                    Text = string.Format("{0} - {1}", item.PlanNumber, item.Name), 
-                                    Value = item.Id.ToString()
-                                }));
-                    return Json(list);
-                }
+            var carePaln = _service.BindCarePlan(corporateId, facilityId);
+
+            if (carePaln.Count > 0)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(
+                    carePaln.Select(
+                        item =>
+                        new SelectListItem
+                        {
+                            Text = string.Format("{0} - {1}", item.PlanNumber, item.Name),
+                            Value = item.Id.ToString()
+                        }));
+                return Json(list);
             }
+
 
             return Json(0);
         }

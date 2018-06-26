@@ -1,33 +1,35 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AuthorizationController.cs" company="Spadez Solutions PVT. LTD.">
-//    ServicesDotCom
-// </copyright>
-// <summary>
-//   Defines the AuthorizationController type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using System;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Common;
+using BillingSystem.Common.Common;
+using BillingSystem.Model;
+using BillingSystem.Models;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using BillingSystem.Model.CustomModel;
+
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Linq;
-    using System.Web.Mvc;
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Common.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Models;
-    using Newtonsoft.Json;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using System.Web;
-    using BillingSystem.Model.CustomModel;
 
     /// <summary>
     /// The authorization controller.
     /// </summary>
     public class AuthorizationController : BaseController
     {
+        private readonly IAuthorizationService _service;
+        private readonly IEncounterService _eService;
+
+        public AuthorizationController(IAuthorizationService service, IEncounterService eService)
+        {
+            _service = service;
+            _eService = eService;
+        }
+
         /// <summary>
         /// Get the details of the Authorization View in the Model Authorization such as AuthorizationList, list of countries etc.
         /// </summary>
@@ -43,11 +45,10 @@ namespace BillingSystem.Controllers
             }
 
             // Initialize the Authorization BAL object
-            var bal = new AuthorizationBal();
 
             // Get the Entity list
-            var authorizationList = bal.GetAuthorization();
-            var memberId = bal.GetInsuranceMemberIdByPatientId(Convert.ToInt32(pId));
+            var authorizationList = _service.GetAuthorization();
+            var memberId = _eService.GetInsuranceMemberIdByPatientId(Convert.ToInt32(pId));
 
             // Intialize the View Model i.e. AuthorizationView which is binded to Main View Index.cshtml under Authorization
             var authorizationView = new AuthorizationView
@@ -69,15 +70,12 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindAuthorizationList()
         {
-            // Initialize the Authorization BAL object
-            using (var authorizationBal = new AuthorizationBal())
-            {
-                // Get the facilities list
-                var authorizationList = authorizationBal.GetAuthorization();
+            // Get the facilities list
+            var authorizationList = _service.GetAuthorization();
 
-                // Pass the ActionResult with List of AuthorizationViewModel object to Partial View AuthorizationList
-                return PartialView(PartialViews.AuthorizationList, authorizationList);
-            }
+            // Pass the ActionResult with List of AuthorizationViewModel object to Partial View AuthorizationList
+            return PartialView(PartialViews.AuthorizationList, authorizationList);
+
         }
 
         /// <summary>
@@ -87,17 +85,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAuthorization(Authorization authorizationModel)
         {
-            using (var authorizationBal = new AuthorizationBal())
-            {
-                // Call the AddAuthorization Method to Add / Update current Authorization
-                var currentAuthorization = authorizationBal.GetAuthorizationById(Convert.ToInt32(authorizationModel.AuthorizationID));
+            var currentAuthorization = _service.GetAuthorizationById(Convert.ToInt32(authorizationModel.AuthorizationID));
+            return PartialView(PartialViews.AuthorizationAddEdit, currentAuthorization);
 
-                // If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
-                // ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
-
-                // Pass the ActionResult with the current AuthorizationViewModel object as model to PartialView AuthorizationAddEdit
-                return PartialView(PartialViews.AuthorizationAddEdit, currentAuthorization);
-            }
         }
 
         /// <summary>
@@ -107,24 +97,21 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteAuthorization(Authorization authorizationModel)
         {
-            using (var authorizationBal = new AuthorizationBal())
+            var currentAuthorization = _service.GetAuthorizationById(Convert.ToInt32(authorizationModel.AuthorizationID));
+
+            // Check If Authorization model is not null
+            if (currentAuthorization != null)
             {
-                // Get Authorization model object by current Authorization ID
-                var currentAuthorization = authorizationBal.GetAuthorizationById(Convert.ToInt32(authorizationModel.AuthorizationID));
+                currentAuthorization.IsDeleted = true;
+                currentAuthorization.DeletedBy = Helpers.GetLoggedInUserId();
+                currentAuthorization.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                // Check If Authorization model is not null
-                if (currentAuthorization != null)
-                {
-                    currentAuthorization.IsDeleted = true;
-                    currentAuthorization.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentAuthorization.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                // Update Operation of current Authorization
+                var result = _service.AddUptdateAuthorization(currentAuthorization);
 
-                    // Update Operation of current Authorization
-                    var result = authorizationBal.AddUptdateAuthorization(currentAuthorization);
+                // return deleted ID of current Authorization as Json Result to the Ajax Call.
+                return Json(result);
 
-                    // return deleted ID of current Authorization as Json Result to the Ajax Call.
-                    return Json(result);
-                }
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -152,14 +139,13 @@ namespace BillingSystem.Controllers
         public ActionResult GenerateAuthXml(int authId)
         {
             var result = string.Empty;
-            using (var bal = new AuthorizationBal())
+
+            if (authId > 0)
             {
-                if (authId > 0)
-                {
-                    var list = bal.GenerateEAuthorizationFile(Helpers.GetDefaultFacilityId(), "Test");
-                    result = "success";
-                }
+                _service.GenerateEAuthorizationFile(Helpers.GetDefaultFacilityId(), "Test");
+                result = "success";
             }
+
 
             return Json(result);
         }
@@ -167,39 +153,36 @@ namespace BillingSystem.Controllers
 
         public ActionResult SaveAuthorizationAsync(AuthorizationCustomModel vm)
         {
-            var newId = 0;
+            int newId;
             vm.CreatedBy = Helpers.GetLoggedInUserId();
             vm.CreatedDate = Helpers.GetInvariantCultureDateTime();
             vm.CorporateID = Helpers.GetSysAdminCorporateID();
             vm.FacilityID = Helpers.GetDefaultFacilityId();
 
-            using (var bal = new AuthorizationBal())
+            var jsonData = string.Empty;
+            var listOfDocs = Upload1(vm.PatientID.Value, "1");
+            if (listOfDocs.Any())
+                jsonData = JsonConvert.SerializeObject(listOfDocs, new JsonSerializerSettings { ContractResolver = new DynamicContractResolver("filename,filepath") });
+
+
+            var result = _service.SaveAuthorizationAsync1(vm, jsonData, true, true);
+            newId = result.AuthorizationId;
+
+            var jsonAuthlistString = ViewRenderer.RenderPartialView(PartialViews.AuthorizationList, result.AuthList, ControllerContext, out _); //RenderPartialViewToStringBase(PartialViews.AuthorizationList, result.AuthList);
+            var jsonDocslistString = ViewRenderer.RenderPartialView(PartialViews.PatientDocumentsList, result.Docs, ControllerContext, out _);   //RenderPartialViewToStringBase(PartialViews.PatientDocumentsList, result.Docs);
+
+            var jsonResult = new
             {
-                var jsonData = string.Empty;
-                var listOfDocs = Upload1(vm.PatientID.Value, "1");
-                if (listOfDocs.Any())
-                    jsonData = JsonConvert.SerializeObject(listOfDocs, new JsonSerializerSettings { ContractResolver = new DynamicContractResolver("filename,filepath") });
+                Id = newId,
+                authListView = jsonAuthlistString,
+                docsView = jsonDocslistString
+            };
 
+            if (newId <= 0)
+                Delete(listOfDocs);
 
-                var result = bal.SaveAuthorizationAsync1(vm, jsonData, true, true);
-                newId = result.AuthorizationId;
-                string errorMessage = string.Empty;
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
 
-                var jsonAuthlistString = ViewRenderer.RenderPartialView(PartialViews.AuthorizationList, result.AuthList, ControllerContext, out errorMessage); //RenderPartialViewToStringBase(PartialViews.AuthorizationList, result.AuthList);
-                var jsonDocslistString = ViewRenderer.RenderPartialView(PartialViews.PatientDocumentsList, result.Docs, ControllerContext, out errorMessage);   //RenderPartialViewToStringBase(PartialViews.PatientDocumentsList, result.Docs);
-
-                var jsonResult = new
-                {
-                    Id = newId,
-                    authListView = jsonAuthlistString,
-                    docsView = jsonDocslistString
-                };
-
-                if (newId <= 0)
-                    Delete(listOfDocs);
-
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
         }
 
         public async Task<ActionResult> SaveDocumentsAsync(long patientId)
@@ -240,57 +223,53 @@ namespace BillingSystem.Controllers
             // Check if AuthorizationViewModel 
             if (m != null)
             {
-                using (var authorizationBal = new AuthorizationBal())
+                var getAuthorizationList = _service.GetAuthorizationsByEncounterId(m.EncounterID);
+                if (getAuthorizationList.Any())
                 {
-                    var getAuthorizationList =
-                        authorizationBal.GetAuthorizationsByEncounterId(m.EncounterID);
-                    if (getAuthorizationList.Any())
+                    if (m.AuthorizationID == 0)
                     {
-                        if (m.AuthorizationID == 0)
+                        if (getAuthorizationList.Any(x =>
+                            m.AuthorizationEnd != null && (m.AuthorizationStart != null &&
+                                                           ((x.AuthorizationStart.HasValue &&
+                                                             x.AuthorizationStart.Value >= m.AuthorizationStart.Value
+                                                            ) && (x.AuthorizationEnd.HasValue &&
+                                                                  x.AuthorizationEnd.Value <=
+                                                                  m.AuthorizationEnd.Value)))))
                         {
-                            if (
-                                getAuthorizationList.Any(
-                                    x =>
-                                        m.AuthorizationEnd != null && (m.AuthorizationStart != null && ((x.AuthorizationStart.HasValue &&
-                                                                                                                                           x.AuthorizationStart.Value >= m.AuthorizationStart.Value) &&
-                                                                                                                                          (x.AuthorizationEnd.HasValue &&
-                                                                                                                                           x.AuthorizationEnd.Value <= m.AuthorizationEnd.Value)))))
-                            {
-                                return Json(-1);
-                            }
+                            return Json(-1);
                         }
                     }
-
-                    var loggedinUserid = Helpers.GetLoggedInUserId();
-                    m.FacilityID = Helpers.GetDefaultFacilityId();
-                    m.CorporateID = Helpers.GetSysAdminCorporateID();
-
-                    // Code added by Shashank TO provide the AuthOrder date  as the Encounter start date.
-                    // Code changed on 14 March 2016
-                    //var encounterStartTime =
-                    //    new EncounterBal().GetEncounterStartDateByEncounterId(Convert.ToInt32(authorizationModel.EncounterID));
-                    //authorizationModel.AuthorizationDateOrdered = encounterStartTime;
-                    if (m.AuthorizationID > 0)
-                    {
-                        m.ModifiedBy = loggedinUserid;
-                        m.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                        var authrizationObj = authorizationBal.GetAuthorizationById(m.AuthorizationID);
-
-                        // -- Commented the code line now the Autorization Order date will be equal to Encounter start date
-                        m.AuthorizationDateOrdered = authrizationObj.AuthorizationDateOrdered;
-                        m.CreatedBy = authrizationObj.CreatedBy;
-                        m.CreatedDate = authrizationObj.CreatedDate;
-                    }
-                    else
-                    {
-                        m.AuthorizationDateOrdered = Helpers.GetInvariantCultureDateTime();
-                        m.CreatedBy = loggedinUserid;
-                        m.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-                    // Call the AddAuthorization Method to Add / Update current Authorization
-                    newId = authorizationBal.AddUptdateAuthorization(m);
                 }
+
+                var loggedinUserid = Helpers.GetLoggedInUserId();
+                m.FacilityID = Helpers.GetDefaultFacilityId();
+                m.CorporateID = Helpers.GetSysAdminCorporateID();
+
+                // Code added by Shashank TO provide the AuthOrder date  as the Encounter start date.
+                // Code changed on 14 March 2016
+                //var encounterStartTime =
+                //    new EncounterBal().GetEncounterStartDateByEncounterId(Convert.ToInt32(authorizationModel.EncounterID));
+                //authorizationModel.AuthorizationDateOrdered = encounterStartTime;
+                if (m.AuthorizationID > 0)
+                {
+                    m.ModifiedBy = loggedinUserid;
+                    m.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                    var authrizationObj = _service.GetAuthorizationById(m.AuthorizationID);
+
+                    // -- Commented the code line now the Autorization Order date will be equal to Encounter start date
+                    m.AuthorizationDateOrdered = authrizationObj.AuthorizationDateOrdered;
+                    m.CreatedBy = authrizationObj.CreatedBy;
+                    m.CreatedDate = authrizationObj.CreatedDate;
+                }
+                else
+                {
+                    m.AuthorizationDateOrdered = Helpers.GetInvariantCultureDateTime();
+                    m.CreatedBy = loggedinUserid;
+                    m.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+
+                // Call the AddAuthorization Method to Add / Update current Authorization
+                newId = _service.AddUptdateAuthorization(m);
             }
 
             return Json(newId);

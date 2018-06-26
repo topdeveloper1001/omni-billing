@@ -1,33 +1,40 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="UploadChargesController.cs" company="Spadez">
-//   Omni Health care
-// </copyright>
-// <summary>
-//   The upload charges controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Common;
+using BillingSystem.Common.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Globalization;
-    using System.Linq;
-    using System.Runtime.Remoting.Messaging;
-    using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Common.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models;
-
     /// <summary>
     /// The upload charges controller.
     /// </summary>
     public class UploadChargesController : BaseController
     {
+        private readonly IBedMasterService _bedService;
+        private readonly IEncounterService _eService;
+        private readonly IBillActivityService _baService;
+        private readonly IBedChargesService _bcService;
+        private readonly IBillHeaderService _bhService;
+
+        public UploadChargesController(IBedMasterService bedService, IEncounterService eService, IBillActivityService baService, IBedChargesService bcService, IBillHeaderService bhService)
+        {
+            _bedService = bedService;
+            _eService = eService;
+            _baService = baService;
+            _bcService = bcService;
+            _bhService = bhService;
+        }
+
+
         //
         // GET: /UploadCharges/
         /// <summary>
@@ -36,29 +43,6 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index(int? pId, int? eId, int? bhId)
         {
-            //using (var encounterBal = new EncounterBal())
-            //{
-            //    var facilitId = Helpers.GetDefaultFacilityId();
-            //    var uploadCharges = new UploadChargesView()
-            //    {
-            //        EncounterOrder = new OpenOrder(),
-            //        OpenOrdersList = new List<OpenOrderCustomModel>(),
-            //        //EncounterList =
-            //        //    encounterBal.GetEncounterByFacilityId(facilitId.ToString()),
-            //        CurrentDiagnosis = new DiagnosisCustomModel(),
-            //        DiagnosisViewCustom = new DiagnosisView()
-            //        {
-            //            CurrentDiagnosis = new DiagnosisCustomModel(),
-            //            DiagnosisList = new List<DiagnosisCustomModel>()
-            //        },
-            //        RoomChargesViewCustom = new RoomChargesView()
-            //        {
-            //            CurrentRoomCharge = new OpenOrder(),
-            //            RoomChargesList = new List<BillDetailCustomModel>()
-            //        }
-            //    };
-            //    return View(uploadCharges);
-            //}
             var uploadCharges = new UploadChargesView
             {
                 EncounterOrder = new OpenOrder(),
@@ -144,8 +128,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ResetPhysicianOrderForm(int EncId)
         {
-            var encounterbal = new EncounterBal();
-            var encObj = encounterbal.GetEncounterByEncounterId(EncId);
+            var encObj = _eService.GetEncounterByEncounterId(EncId);
             //Intialize the new object of Facility ViewModel
             var encounterOrder = new OpenOrder { StartDate = encObj.EncounterStartTime, EndDate = encObj.EncounterEndTime, OrderStatus = Convert.ToInt32(OrderStatus.Closed).ToString() };
 
@@ -181,33 +164,31 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckDiagnosisDateRange(int encounterId, string orderStartDate)
         {
-            using (var encounterBal = new EncounterBal())
+            var diagnosisDateValid = false;
+            var encounterObj = _eService.GetEncounterByEncounterId(encounterId);
+            if (encounterObj != null)
             {
-                var diagnosisDateValid = false;
-                var encounterObj = encounterBal.GetEncounterByEncounterId(encounterId);
-                if (encounterObj != null)
+                var encStartTime = encounterObj.EncounterStartTime;
+                var encEndTime = encounterObj.EncounterEndTime;
+                var pattern = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern;
+                //var orderStartDate1 = DateTime.ParseExact(orderStartDate, pattern + " HH:mm", new CultureInfo("en-US"));
+                var orderStartDate1 = Convert.ToDateTime(orderStartDate);
+                var currentDateTime = Helpers.GetInvariantCultureDateTime();
+                if (encStartTime != null)
                 {
-                    var encStartTime = encounterObj.EncounterStartTime;
-                    var encEndTime = encounterObj.EncounterEndTime;
-                    var pattern = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern;
-                    //var orderStartDate1 = DateTime.ParseExact(orderStartDate, pattern + " HH:mm", new CultureInfo("en-US"));
-                    var orderStartDate1 = Convert.ToDateTime(orderStartDate);
-                    var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                    if (encStartTime != null)
-                    {
-                        diagnosisDateValid = (Convert.ToDateTime(orderStartDate1) >= encStartTime &&
-                                              ((encEndTime == null &&
-                                                Convert.ToDateTime(orderStartDate1) <= currentDateTime) ||
-                                               Convert.ToDateTime(orderStartDate1) <= encEndTime));
+                    diagnosisDateValid = (Convert.ToDateTime(orderStartDate1) >= encStartTime &&
+                                          ((encEndTime == null &&
+                                            Convert.ToDateTime(orderStartDate1) <= currentDateTime) ||
+                                           Convert.ToDateTime(orderStartDate1) <= encEndTime));
 
-                    }
-                    else
-                    {
-                        return Json(diagnosisDateValid);
-                    }
                 }
-                return Json(diagnosisDateValid);
+                else
+                {
+                    return Json(diagnosisDateValid);
+                }
             }
+            return Json(diagnosisDateValid);
+
         }
 
         /// <summary>
@@ -219,54 +200,52 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckOrderDateRange(int encounterId, string orderStartDate, string orderEndDate)
         {
-            using (var encounterbal = new EncounterBal())
+            var orderDateValid = false;
+            var encounterObj = _eService.GetEncounterByEncounterId(encounterId);
+            if (encounterObj != null)
             {
-                var orderDateValid = false;
-                var encounterObj = encounterbal.GetEncounterByEncounterId(encounterId);
-                if (encounterObj != null)
+                var encStartTime = encounterObj.EncounterStartTime;
+                var encEndTime = encounterObj.EncounterEndTime ?? (!string.IsNullOrEmpty(encounterObj.EncounterDischargeLocation)
+                                                                       ? Convert.ToDateTime(encounterObj.EncounterDischargeLocation)
+                                                                       : CurrentDateTime);
+                var pattern = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern;
+                //var orderStartDate1 = DateTime.ParseExact(orderStartDate, pattern + " HH:mm", new CultureInfo("en-US"));
+                //var orderEndDate1 = DateTime.ParseExact(orderEndDate, pattern + " HH:mm", new CultureInfo("en-US"));
+
+                var orderStartDate1 = orderStartDate;
+
+                var orderEndDate1 = orderEndDate;
+                //var orderStartDate1 = DateTime.Parse(orderStartDate);
+                //var orderEndDate1 = DateTime.Parse(orderEndDate);
+                //DateTime orderEndDate1;
+                //DateTime.TryParseExact(orderEndDate, "mm/dd/yyyy HH:mm tt", null, System.Globalization.DateTimeStyles.None,out orderEndDate1);
+                if (encStartTime != null)
                 {
-                    var encStartTime = encounterObj.EncounterStartTime;
-                    var encEndTime = encounterObj.EncounterEndTime ?? (!string.IsNullOrEmpty(encounterObj.EncounterDischargeLocation)
-                                                                           ? Convert.ToDateTime(encounterObj.EncounterDischargeLocation)
-                                                                           : CurrentDateTime);
-                    var pattern = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern;
-                    //var orderStartDate1 = DateTime.ParseExact(orderStartDate, pattern + " HH:mm", new CultureInfo("en-US"));
-                    //var orderEndDate1 = DateTime.ParseExact(orderEndDate, pattern + " HH:mm", new CultureInfo("en-US"));
-
-                    var orderStartDate1 = orderStartDate;
-
-                    var orderEndDate1 = orderEndDate;
-                    //var orderStartDate1 = DateTime.Parse(orderStartDate);
-                    //var orderEndDate1 = DateTime.Parse(orderEndDate);
-                    //DateTime orderEndDate1;
-                    //DateTime.TryParseExact(orderEndDate, "mm/dd/yyyy HH:mm tt", null, System.Globalization.DateTimeStyles.None,out orderEndDate1);
-                    if (encStartTime != null)
+                    if (encEndTime != null)
                     {
-                        if (encEndTime != null)
+                        if ((Convert.ToDateTime(orderStartDate1) == encStartTime))
                         {
-                            if ((Convert.ToDateTime(orderStartDate1) == encStartTime))
-                            {
-                                orderDateValid = (Convert.ToDateTime(orderStartDate1) == encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate1) <= encEndTime) &&
-                                                 (Convert.ToDateTime(orderEndDate1) >= encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate1) <= encEndTime);
-                            }
-                            else
-                            {
-                                orderDateValid = (Convert.ToDateTime(orderStartDate1) >= encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate1) <= encEndTime) &&
-                                                 (Convert.ToDateTime(orderEndDate1) >= encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate1) <= encEndTime);
-                            }
+                            orderDateValid = (Convert.ToDateTime(orderStartDate1) == encStartTime &&
+                                              Convert.ToDateTime(orderEndDate1) <= encEndTime) &&
+                                             (Convert.ToDateTime(orderEndDate1) >= encStartTime &&
+                                              Convert.ToDateTime(orderEndDate1) <= encEndTime);
                         }
                         else
                         {
-                            orderDateValid = (Convert.ToDateTime(orderStartDate1) >= encStartTime);
+                            orderDateValid = (Convert.ToDateTime(orderStartDate1) >= encStartTime &&
+                                              Convert.ToDateTime(orderEndDate1) <= encEndTime) &&
+                                             (Convert.ToDateTime(orderEndDate1) >= encStartTime &&
+                                              Convert.ToDateTime(orderEndDate1) <= encEndTime);
                         }
                     }
+                    else
+                    {
+                        orderDateValid = (Convert.ToDateTime(orderStartDate1) >= encStartTime);
+                    }
                 }
-                return Json(orderDateValid);
             }
+            return Json(orderDateValid);
+
         }
 
         /// <summary>
@@ -334,8 +313,8 @@ namespace BillingSystem.Controllers
         /// <returns>HTML STRING</returns>
         public ActionResult GetBillDetailsByBillHeaderId(int billHeaderId)
         {
-            var bal = new BillActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-            var list = bal.GetBillActivitiesByBillHeaderId(billHeaderId);
+            //var bal = new BillActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var list = _baService.GetBillActivitiesByBillHeaderId(billHeaderId);
 
             // var objBillHeaderDetails = bal.GetBillDetailsByBillHeaderId(billHeaderId);
             return PartialView(PartialViews.UploadChargesBillActivitiesList, list);
@@ -490,29 +469,29 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRoomChargesByEncounterId(int encounterId, int? claimId)
         {
-            using (var billactivityBal = new BillActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            //using (var billactivityBal = new BillActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            //{
+            var orderactvities = new List<BillDetailCustomModel>();
+            var bal = new UploadChargesBal();
+            if (claimId != null)
             {
-                var orderactvities = new List<BillDetailCustomModel>();
-                var bal = new UploadChargesBal();
-                if (claimId != null)
-                {
-                    orderactvities = bal.GetBillDetailsByBillHeaderId(Convert.ToInt32(claimId)).Where(x => x.ActivityType == "8").ToList();
-                }
-                else
-                {
-                    orderactvities =
-                        billactivityBal.GetBillActivitiesByEncounterId(encounterId)
-                            .Where(x => x.ActivityType == "8")
-                            .ToList();
-                }
-                //var a = abc();
-                var roomChargesViewCustom = new RoomChargesView
-                {
-                    CurrentRoomCharge = new OpenOrder(),
-                    RoomChargesList = orderactvities
-                };
-                return PartialView("UserControls/_RoomChargesMain", roomChargesViewCustom);
+                orderactvities = bal.GetBillDetailsByBillHeaderId(Convert.ToInt32(claimId)).Where(x => x.ActivityType == "8").ToList();
             }
+            else
+            {
+                orderactvities =
+                    _baService.GetBillActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                        .Where(x => x.ActivityType == "8")
+                        .ToList();
+            }
+            //var a = abc();
+            var roomChargesViewCustom = new RoomChargesView
+            {
+                CurrentRoomCharge = new OpenOrder(),
+                RoomChargesList = orderactvities
+            };
+            return PartialView("UserControls/_RoomChargesMain", roomChargesViewCustom);
+
         }
 
 
@@ -553,24 +532,22 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRoomCharges(int encounterid, int? claimId)
         {
-            using (var billactivityBal = new BillActivityBal())
+            //var orderactvities = billactivityBal.GetBillActivitiesByEncounterId(encounterid).Where(x => x.ActivityType == "8").ToList();
+            var orderactvities = new List<BillDetailCustomModel>();
+            var bal = new UploadChargesBal();
+            if (claimId != null)
             {
-                //var orderactvities = billactivityBal.GetBillActivitiesByEncounterId(encounterid).Where(x => x.ActivityType == "8").ToList();
-                var orderactvities = new List<BillDetailCustomModel>();
-                var bal = new UploadChargesBal();
-                if (claimId != null)
-                {
-                    orderactvities = bal.GetBillDetailsByBillHeaderId(Convert.ToInt32(claimId)).Where(x => x.ActivityType == "8").ToList();
-                }
-                else
-                {
-                    orderactvities =
-                        billactivityBal.GetBillActivitiesByEncounterId(encounterid)
-                            .Where(x => x.ActivityType == "8")
-                            .ToList();
-                }
-                return PartialView("UserControls/_RoomChargesList", orderactvities);
+                orderactvities = bal.GetBillDetailsByBillHeaderId(Convert.ToInt32(claimId)).Where(x => x.ActivityType == "8").ToList();
             }
+            else
+            {
+                orderactvities =
+                    _baService.GetBillActivitiesByEncounterId(encounterid, Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                        .Where(x => x.ActivityType == "8")
+                        .ToList();
+            }
+            return PartialView("UserControls/_RoomChargesList", orderactvities);
+
         }
 
         /// <summary>
@@ -582,41 +559,39 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckRoomChargesDateRange(int encounterId, string orderStartDate, string orderEndDate)
         {
-            using (var encounterbal = new EncounterBal())
+            var orderDateValid = false;
+            var encounterObj = _eService.GetEncounterByEncounterId(encounterId);
+            if (encounterObj != null)
             {
-                var orderDateValid = false;
-                var encounterObj = encounterbal.GetEncounterByEncounterId(encounterId);
-                if (encounterObj != null)
+                var encStartTime = encounterObj.EncounterStartTime;
+                var encEndTime = encounterObj.EncounterEndTime;
+                if (encStartTime != null)
                 {
-                    var encStartTime = encounterObj.EncounterStartTime;
-                    var encEndTime = encounterObj.EncounterEndTime;
-                    if (encStartTime != null)
+                    if (encEndTime != null)
                     {
-                        if (encEndTime != null)
+                        if ((Convert.ToDateTime(orderStartDate) == encStartTime))
                         {
-                            if ((Convert.ToDateTime(orderStartDate) == encStartTime))
-                            {
-                                orderDateValid = (Convert.ToDateTime(orderStartDate) == encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate) <= encEndTime) &&
-                                                 (Convert.ToDateTime(orderEndDate) >= encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate) <= encEndTime);
-                            }
-                            else
-                            {
-                                orderDateValid = (Convert.ToDateTime(orderStartDate) >= encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate) <= encEndTime) &&
-                                                 (Convert.ToDateTime(orderEndDate) >= encStartTime &&
-                                                  Convert.ToDateTime(orderEndDate) <= encEndTime);
-                            }
+                            orderDateValid = (Convert.ToDateTime(orderStartDate) == encStartTime &&
+                                              Convert.ToDateTime(orderEndDate) <= encEndTime) &&
+                                             (Convert.ToDateTime(orderEndDate) >= encStartTime &&
+                                              Convert.ToDateTime(orderEndDate) <= encEndTime);
                         }
                         else
                         {
-                            orderDateValid = (Convert.ToDateTime(orderStartDate) >= encStartTime);
+                            orderDateValid = (Convert.ToDateTime(orderStartDate) >= encStartTime &&
+                                              Convert.ToDateTime(orderEndDate) <= encEndTime) &&
+                                             (Convert.ToDateTime(orderEndDate) >= encStartTime &&
+                                              Convert.ToDateTime(orderEndDate) <= encEndTime);
                         }
                     }
+                    else
+                    {
+                        orderDateValid = (Convert.ToDateTime(orderStartDate) >= encStartTime);
+                    }
                 }
-                return Json(orderDateValid);
             }
+            return Json(orderDateValid);
+
         }
 
         /// <summary>
@@ -673,88 +648,6 @@ namespace BillingSystem.Controllers
         }
 
         #region Room Charges...
-        ///// <summary>
-        ///// Adds the manual room charges.
-        ///// </summary>
-        ///// <param name="order">The order.</param>
-        ///// <returns></returns>
-        //public ActionResult AddManualRoomCharges(List<OpenOrderCustomModel> order)
-        //{
-        //    using (var bedChargesBal = new BedChargesBal())
-        //    {
-        //        var userId = Helpers.GetLoggedInUserId();
-        //        var corporateId = Helpers.GetDefaultCorporateId();
-        //        if (corporateId == 0 && userId > 0)
-        //            corporateId = Helpers.GetSysAdminCorporateID();
-        //        var facilityId = Helpers.GetDefaultFacilityId();
-        //        var currentDateTime = Helpers.GetInvariantCultureDateTime();
-        //        try
-        //        {
-        //            var serviceCodebal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber);
-        //            var objListBedChargesOrders = order.Select(item => new BedCharges()
-        //            {
-        //                BedChargesID = item.OpenOrderID,
-        //                BCCorporateID = corporateId,
-        //                BCFacilityID = facilityId,
-        //                BCPatientID = item.PatientID,
-        //                BCEncounterID = item.EncounterID,
-        //                BCBedID = 0,
-        //                BCMappingBedPatientID = 0,
-        //                BCRangeStart = 1,
-        //                BCRangeEnd = 1,
-        //                BCBedRateTypeID = 1,
-        //                BCTransactionDate = item.StartDate,
-        //                BCRangeEffectiveDays = 1,
-        //                BCUnitRate = 0,
-        //                BCGross = serviceCodebal.GetServiceCodePriceByCodeValue(item.OrderCode),
-        //                BCActivityStartDate = item.StartDate,
-        //                BCActivityEndDate = item.EndDate,
-        //                BCTotalEffectiveDays = 1,
-        //                BCStatus = "0",
-        //                BCCreatedBy = userId,
-        //                BCCreatedDate = currentDateTime,
-        //                BCModifiedBy = null,
-        //                BCModifiedDate = null,
-        //                BCIsActive = true,
-        //                ServiceCodeValue = item.OrderCode
-        //            }).ToList();
-        //            foreach (var itemObj in objListBedChargesOrders)
-        //            {
-        //                var isexist = false;
-        //                if (itemObj != null)
-        //                {
-        //                    isexist = bedChargesBal.CheckBedChargeExist(Convert.ToInt32(itemObj.BCEncounterID),
-        //                        Convert.ToInt32(itemObj.BCPatientID), itemObj.BCTransactionDate);
-        //                }
-        //                if (!isexist)
-        //                {
-        //                    var savedActivities = bedChargesBal.SaveBedChargesList(objListBedChargesOrders);
-        //                    //Added the functionality to apply bed charges of current encounter 
-        //                    //On 15062015
-        //                    if (itemObj != null)
-        //                    {
-        //                        //if (Convert.ToInt32(itemObj.BCEncounterID) > 0)
-        //                        //    ApplyBedChargesByEncounterId(Convert.ToInt32(itemObj.BCEncounterID));
-
-        //                        RoomChargesAdditionAuditLogInsertion(itemObj);
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    if (objListBedChargesOrders.Count == 1)
-        //                        return Json(false);
-        //                }
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            return Json(false);
-        //        }
-        //        return Json(true);
-        //    }
-        //}
-
-
 
         /// <summary>
         /// Adds the manual room charges.
@@ -763,68 +656,66 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddManualRoomCharges(List<OpenOrderCustomModel> order)
         {
-            using (var bedChargesBal = new BedChargesBal())
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            try
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
+                var list = new List<BedCharges>();
 
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                try
+                foreach (var item in order)
                 {
-                    var list = new List<BedCharges>();
+                    DateTime? startDate = null;
+                    if (item.StartDate.HasValue)
+                        startDate = item.StartDate.Value;
 
-                    foreach (var item in order)
+                    var sBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber, startDate);
+                    var itemGross = sBal.GetServiceCodePriceByCodeValue(item.OrderCode);
+                    var itemObj = new BedCharges
                     {
-                        DateTime? startDate = null;
-                        if (item.StartDate.HasValue)
-                            startDate = item.StartDate.Value;
+                        BedChargesID = item.OpenOrderID,
+                        BCCorporateID = corporateId,
+                        BCFacilityID = facilityId,
+                        BCPatientID = item.PatientID,
+                        BCEncounterID = item.EncounterID,
+                        BCBedID = 0,
+                        BCMappingBedPatientID = 0,
+                        BCRangeStart = 1,
+                        BCRangeEnd = 1,
+                        BCBedRateTypeID = 1,
+                        BCTransactionDate = item.StartDate,
+                        BCRangeEffectiveDays = 1,
+                        BCUnitRate = 0,
+                        BCGross = itemGross,
+                        BCActivityStartDate = item.StartDate,
+                        BCActivityEndDate = item.EndDate,
+                        BCTotalEffectiveDays = 1,
+                        BCStatus = "0",
+                        BCCreatedBy = userId,
+                        BCCreatedDate = currentDateTime,
+                        BCModifiedBy = null,
+                        BCModifiedDate = null,
+                        BCIsActive = true,
+                        ServiceCodeValue = item.OrderCode
+                    };
 
-                        var sBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber, startDate);
-                        var itemGross = sBal.GetServiceCodePriceByCodeValue(item.OrderCode);
-                        var itemObj = new BedCharges
-                        {
-                            BedChargesID = item.OpenOrderID,
-                            BCCorporateID = corporateId,
-                            BCFacilityID = facilityId,
-                            BCPatientID = item.PatientID,
-                            BCEncounterID = item.EncounterID,
-                            BCBedID = 0,
-                            BCMappingBedPatientID = 0,
-                            BCRangeStart = 1,
-                            BCRangeEnd = 1,
-                            BCBedRateTypeID = 1,
-                            BCTransactionDate = item.StartDate,
-                            BCRangeEffectiveDays = 1,
-                            BCUnitRate = 0,
-                            BCGross = itemGross,
-                            BCActivityStartDate = item.StartDate,
-                            BCActivityEndDate = item.EndDate,
-                            BCTotalEffectiveDays = 1,
-                            BCStatus = "0",
-                            BCCreatedBy = userId,
-                            BCCreatedDate = currentDateTime,
-                            BCModifiedBy = null,
-                            BCModifiedDate = null,
-                            BCIsActive = true,
-                            ServiceCodeValue = item.OrderCode
-                        };
+                    var isexist = _bcService.CheckBedChargeExist(Convert.ToInt32(itemObj.BCEncounterID),
+                        Convert.ToInt32(itemObj.BCPatientID), itemObj.BCTransactionDate);
 
-                        var isexist = bedChargesBal.CheckBedChargeExist(Convert.ToInt32(itemObj.BCEncounterID),
-                            Convert.ToInt32(itemObj.BCPatientID), itemObj.BCTransactionDate);
+                    if (!isexist)
+                        RoomChargesAdditionAuditLogInsertion(itemObj);
 
-                        if (!isexist)
-                            RoomChargesAdditionAuditLogInsertion(itemObj);
-
-                        list.Add(itemObj);
-                    }
-                    var savedActivities = bedChargesBal.SaveBedChargesList(list);
-                    return Json(savedActivities);
+                    list.Add(itemObj);
                 }
-                catch (Exception)
-                {
-                    return Json(false);
-                }
+                var savedActivities = _bcService.SaveBedChargesList(list);
+                return Json(savedActivities);
+            }
+            catch (Exception)
+            {
+                return Json(false);
+
             }
         }
         #endregion
@@ -927,162 +818,7 @@ namespace BillingSystem.Controllers
             return 0;
         }
 
-        /// <summary>
-        /// Applies the bed charges by encounter identifier.
-        /// </summary>
-        /// <param name="encounterId">The encounter identifier.</param>
-        /// <returns></returns>
-        private int ApplyBedChargesByEncounterId(int encounterId)
-        {
-            using (var bal = new BillHeaderBal())
-            {
-                bal.ApplyBedChargesOnly(encounterId);
-                return encounterId;
-            }
-        }
-
-
-
         #endregion
-
-        /*
-         * Changes By: Amit Jain
-         * On: 03 March, 2016
-         * Purpose: AddManualOrders Method required some changes. Those changes were just to remove the old code which was used to insert order activities 
-         * (which is now used by Stored procedure called in OpenOrder as the Trigger Action). Eveything after open order is created, is being done by that SP now.
-         */
-        /*******************Commented Code starts here************************/
-
-        ///// <summary>
-        ///// Adds the manual orders.
-        ///// </summary>
-        ///// <param name="order">The order.</param>
-        ///// <returns></returns>
-        //public ActionResult AddManualOrders(List<OpenOrderCustomModel> order)
-        //{
-        //    using (var openorderBal = new OpenOrderBal())
-        //    {
-        //        var userId = Helpers.GetLoggedInUserId();
-        //        var corporateId = Helpers.GetDefaultCorporateId();
-        //        if (corporateId == 0 && userId > 0)
-        //            corporateId = Helpers.GetSysAdminCorporateID();
-        //        var facilityId = Helpers.GetDefaultFacilityId();
-        //        var currentDateTime = Helpers.GetInvariantCultureDateTime();
-        //        try
-        //        {
-        //            order = order.Where(item => item != null).ToList();
-        //            var objListOpenOrders = order.Select(item => new OpenOrder()
-        //            {
-        //                OpenOrderID = item.OpenOrderID,
-        //                OpenOrderPrescribedDate = item.StartDate,
-        //                PhysicianID = userId,
-        //                PatientID = item.PatientID,
-        //                EncounterID = item.EncounterID,
-        //                DiagnosisCode = item.DiagnosisCode,
-        //                StartDate = item.StartDate,
-        //                EndDate = item.EndDate,
-        //                CategoryId = item.CategoryId,
-        //                SubCategoryId = item.SubCategoryId,
-        //                OrderType = item.OrderType,
-        //                OrderCode = item.OrderCode,
-        //                Quantity = item.Quantity,
-        //                FrequencyCode = item.FrequencyCode,
-        //                PeriodDays = "1",
-        //                OrderNotes = item.OrderNotes,
-        //                OrderStatus = item.OrderStatus,
-        //                IsActivitySchecduled = true,
-        //                ActivitySchecduledOn = item.StartDate,
-        //                ItemName = item.ItemName,
-        //                ItemStrength = item.ItemStrength,
-        //                ItemDosage = item.ItemDosage,
-        //                IsActive = item.IsActive,
-        //                CreatedBy = userId,
-        //                CreatedDate = currentDateTime,
-        //                ModifiedBy = item.ModifiedBy,
-        //                ModifiedDate = item.ModifiedDate,
-        //                IsDeleted = item.IsDeleted,
-        //                DeletedBy = item.DeletedBy,
-        //                DeletedDate = item.DeletedDate,
-        //                CorporateID = corporateId,
-        //                FacilityID = facilityId,
-        //            }).ToList();
-        //            var orderIds = openorderBal.AddUpdatePhysicianMultipleOpenOrder(objListOpenOrders);
-        //            var orderactivitybal = new OrderActivityBal();
-        //            var orderActivitylist = order.Select((openOrderCustomModel, index) => new OrderActivity()
-        //            {
-        //                OrderActivityID = 0,
-        //                OrderType = Convert.ToInt32(openOrderCustomModel.OrderType),
-        //                OrderCode = openOrderCustomModel.OrderCode,
-        //                OrderCategoryID = openOrderCustomModel.CategoryId,
-        //                OrderSubCategoryID = openOrderCustomModel.SubCategoryId,
-        //                OrderActivityStatus = 3,
-        //                CorporateID = corporateId,
-        //                FacilityID = facilityId,
-        //                PatientID = openOrderCustomModel.PatientID,
-        //                EncounterID = openOrderCustomModel.EncounterID,
-        //                MedicalRecordNumber = null,
-        //                OrderID = orderIds[index],
-        //                OrderBy = userId,
-        //                OrderActivityQuantity = openOrderCustomModel.Quantity,
-        //                OrderScheduleDate = openOrderCustomModel.StartDate,
-        //                PlannedBy = userId,
-        //                PlannedDate = openOrderCustomModel.StartDate,
-        //                PlannedFor = userId,
-        //                ExecutedBy = userId,
-        //                ExecutedDate = openOrderCustomModel.StartDate,
-        //                ExecutedQuantity = openOrderCustomModel.Quantity,
-        //                ResultValueMin = null,
-        //                ResultValueMax = null,
-        //                ResultUOM = null,
-        //                Comments = null,
-        //                IsActive = openOrderCustomModel.IsActive,
-        //                ModifiedBy = null,
-        //                ModifiedDate = null,
-        //                CreatedBy = userId,
-        //                CreatedDate = currentDateTime,
-        //            }).ToList();
-        //            var savedActivities = orderactivitybal.AddUptdateOrderActivity(orderActivitylist);
-        //            var orderCustomModel = order.FirstOrDefault();
-        //            if (orderCustomModel != null)
-        //            {
-        //                var encounterid = orderCustomModel.EncounterID;
-        //                var claimid = orderCustomModel.ClaimId;
-        //                using (var billheaderBal = new BillHeaderBal())
-        //                {
-        //                    var billheaderObj = billheaderBal.GetBillHeaderById(Convert.ToInt32(claimid));
-        //                    if (billheaderObj.Status == (BillHeaderStatus.RD1).ToString() ||
-        //                        billheaderObj.Status == (BillHeaderStatus.RD2).ToString() ||
-        //                        billheaderObj.Status == (BillHeaderStatus.RD3).ToString())
-        //                    {
-        //                        var billheaderNewStatus = SetBillheaderStatus(billheaderObj.Status);
-        //                        if (!string.IsNullOrEmpty(billheaderNewStatus))
-        //                        {
-        //                            var globalCodeBal = new GlobalCodeBal();
-        //                            var globalcodeObj =
-        //                                globalCodeBal.GetGCodesListByCategoryValue(
-        //                                    Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString());
-        //                            var newstatusval =
-        //                                globalcodeObj.FirstOrDefault(
-        //                                    x => x.GlobalCodeName.Trim().Equals(billheaderObj.Status));
-        //                            var newids = new List<int> { billheaderObj.BillHeaderID };
-        //                            if (newstatusval != null)
-        //                                billheaderBal.SetBillHeaderStatus(newids, billheaderNewStatus,
-        //                                    newstatusval.GlobalCodeValue);
-        //                        }
-        //                    }
-        //                }
-        //                orderactivitybal.ApplyOrderActivityToBill(corporateId, facilityId, Convert.ToInt32(encounterid), "1", claimid);
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            return Json(false);
-        //        }
-        //        return Json(true);
-        //    }
-        //}
-
-        /*******************Commented Code End here************************/
 
         /// <summary>
         /// Gets the bill virtual discharge details.

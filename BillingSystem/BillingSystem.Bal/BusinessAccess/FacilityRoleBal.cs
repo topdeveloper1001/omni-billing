@@ -4,11 +4,14 @@ using System.Linq;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Bal.Mapper;
 using System;
+using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
     public class FacilityRoleBal : BaseBal
     {
+        private readonly IRepository<Corporate> _cRepository;
+
         private FacilityRoleMapper FacilityRoleMapper { get; set; }
 
         public FacilityRoleBal()
@@ -262,36 +265,38 @@ namespace BillingSystem.Bal.BusinessAccess
 
                 using (var facBal = new FacilityBal())
                 {
-                    using (var corpBal = new CorporateBal())
+                    using (var roleBal = new RoleBal())
                     {
-                        using (var roleBal = new RoleBal())
+                        list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
                         {
-                            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-                            {
-                                FacilityRoleId = item.FacilityRoleId,
-                                FacilityId = item.FacilityId,
-                                RoleId = item.RoleId,
-                                CorporateId = item.CorporateId,
-                                CreatedBy = item.CreatedBy,
-                                CreatedDate = item.CreatedDate,
-                                ModifiedBy = item.ModifiedBy,
-                                ModifiedDate = item.ModifiedDate,
-                                IsDeleted = item.IsDeleted,
-                                DeletedBy = item.DeletedBy,
-                                DeletedDate = item.DeletedDate,
-                                IsActive = item.IsActive,
-                                FacilityName = facBal.GetFacilityNameById(item.FacilityId),
-                                CorporateName = corpBal.GetCorporateNameById(item.CorporateId),
-                                RoleName = roleBal.GetRoleNameById(item.RoleId)
-                            }));
-                        }
+                            FacilityRoleId = item.FacilityRoleId,
+                            FacilityId = item.FacilityId,
+                            RoleId = item.RoleId,
+                            CorporateId = item.CorporateId,
+                            CreatedBy = item.CreatedBy,
+                            CreatedDate = item.CreatedDate,
+                            ModifiedBy = item.ModifiedBy,
+                            ModifiedDate = item.ModifiedDate,
+                            IsDeleted = item.IsDeleted,
+                            DeletedBy = item.DeletedBy,
+                            DeletedDate = item.DeletedDate,
+                            IsActive = item.IsActive,
+                            FacilityName = facBal.GetFacilityNameById(item.FacilityId),
+                            CorporateName = GetCorporateNameById(item.CorporateId),
+                            RoleName = roleBal.GetRoleNameById(item.RoleId)
+                        }));
                     }
+
                 }
                 list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
                 return list.OrderBy(x => x.RoleName).ToList();
             }
         }
-
+        private string GetCorporateNameById(int? corporateId)
+        {
+            var q = _cRepository.Where(a => a.CorporateID == corporateId).FirstOrDefault();
+            return (q != null) ? q.CorporateName : string.Empty;
+        }
 
         public List<FacilityRoleCustomModel> GetFacilityRoleListByFacility(int corporateId, int facilityId, int roleId)
         {
@@ -312,29 +317,26 @@ namespace BillingSystem.Bal.BusinessAccess
 
                 using (var facBal = new FacilityBal())
                 {
-                    using (var corpBal = new CorporateBal())
+                    using (var roleBal = new RoleBal())
                     {
-                        using (var roleBal = new RoleBal())
+                        list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
                         {
-                            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-                            {
-                                FacilityRoleId = item.FacilityRoleId,
-                                FacilityId = item.FacilityId,
-                                RoleId = item.RoleId,
-                                CorporateId = item.CorporateId,
-                                CreatedBy = item.CreatedBy,
-                                CreatedDate = item.CreatedDate,
-                                ModifiedBy = item.ModifiedBy,
-                                ModifiedDate = item.ModifiedDate,
-                                IsDeleted = item.IsDeleted,
-                                DeletedBy = item.DeletedBy,
-                                DeletedDate = item.DeletedDate,
-                                IsActive = item.IsActive,
-                                FacilityName = facBal.GetFacilityNameById(item.FacilityId),
-                                CorporateName = corpBal.GetCorporateNameById(item.CorporateId),
-                                RoleName = roleBal.GetRoleNameById(item.RoleId)
-                            }));
-                        }
+                            FacilityRoleId = item.FacilityRoleId,
+                            FacilityId = item.FacilityId,
+                            RoleId = item.RoleId,
+                            CorporateId = item.CorporateId,
+                            CreatedBy = item.CreatedBy,
+                            CreatedDate = item.CreatedDate,
+                            ModifiedBy = item.ModifiedBy,
+                            ModifiedDate = item.ModifiedDate,
+                            IsDeleted = item.IsDeleted,
+                            DeletedBy = item.DeletedBy,
+                            DeletedDate = item.DeletedDate,
+                            IsActive = item.IsActive,
+                            FacilityName = facBal.GetFacilityNameById(item.FacilityId),
+                            CorporateName = GetCorporateNameById(item.CorporateId),
+                            RoleName = roleBal.GetRoleNameById(item.RoleId)
+                        }));
                     }
                 }
                 list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
@@ -404,29 +406,26 @@ namespace BillingSystem.Bal.BusinessAccess
 
                 using (var facBal = new FacilityBal())
                 {
-                    using (var corpBal = new CorporateBal())
+                    using (var roleBal = new RoleBal())
                     {
-                        using (var roleBal = new RoleBal())
+                        list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
                         {
-                            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-                            {
-                                FacilityRoleId = item.FacilityRoleId,
-                                FacilityId = item.FacilityId,
-                                RoleId = item.RoleId,
-                                CorporateId = item.CorporateId,
-                                CreatedBy = item.CreatedBy,
-                                CreatedDate = item.CreatedDate,
-                                ModifiedBy = item.ModifiedBy,
-                                ModifiedDate = item.ModifiedDate,
-                                IsDeleted = item.IsDeleted,
-                                DeletedBy = item.DeletedBy,
-                                DeletedDate = item.DeletedDate,
-                                IsActive = item.IsActive,
-                                FacilityName = facBal.GetFacilityNameById(item.FacilityId),
-                                CorporateName = corpBal.GetCorporateNameById(item.CorporateId),
-                                RoleName = roleBal.GetRoleNameById(item.RoleId)
-                            }));
-                        }
+                            FacilityRoleId = item.FacilityRoleId,
+                            FacilityId = item.FacilityId,
+                            RoleId = item.RoleId,
+                            CorporateId = item.CorporateId,
+                            CreatedBy = item.CreatedBy,
+                            CreatedDate = item.CreatedDate,
+                            ModifiedBy = item.ModifiedBy,
+                            ModifiedDate = item.ModifiedDate,
+                            IsDeleted = item.IsDeleted,
+                            DeletedBy = item.DeletedBy,
+                            DeletedDate = item.DeletedDate,
+                            IsActive = item.IsActive,
+                            FacilityName = facBal.GetFacilityNameById(item.FacilityId),
+                            CorporateName = GetCorporateNameById(item.CorporateId),
+                            RoleName = roleBal.GetRoleNameById(item.RoleId)
+                        }));
                     }
                 }
                 list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
@@ -494,29 +493,26 @@ namespace BillingSystem.Bal.BusinessAccess
 
                 using (var facBal = new FacilityBal())
                 {
-                    using (var corpBal = new CorporateBal())
+                    using (var roleBal = new RoleBal())
                     {
-                        using (var roleBal = new RoleBal())
+                        list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
                         {
-                            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-                            {
-                                FacilityRoleId = item.FacilityRoleId,
-                                FacilityId = item.FacilityId,
-                                RoleId = item.RoleId,
-                                CorporateId = item.CorporateId,
-                                CreatedBy = item.CreatedBy,
-                                CreatedDate = item.CreatedDate,
-                                ModifiedBy = item.ModifiedBy,
-                                ModifiedDate = item.ModifiedDate,
-                                IsDeleted = item.IsDeleted,
-                                DeletedBy = item.DeletedBy,
-                                DeletedDate = item.DeletedDate,
-                                IsActive = item.IsActive,
-                                FacilityName = facBal.GetFacilityNameById(item.FacilityId),
-                                CorporateName = corpBal.GetCorporateNameById(item.CorporateId),
-                                RoleName = roleBal.GetRoleNameById(item.RoleId)
-                            }));
-                        }
+                            FacilityRoleId = item.FacilityRoleId,
+                            FacilityId = item.FacilityId,
+                            RoleId = item.RoleId,
+                            CorporateId = item.CorporateId,
+                            CreatedBy = item.CreatedBy,
+                            CreatedDate = item.CreatedDate,
+                            ModifiedBy = item.ModifiedBy,
+                            ModifiedDate = item.ModifiedDate,
+                            IsDeleted = item.IsDeleted,
+                            DeletedBy = item.DeletedBy,
+                            DeletedDate = item.DeletedDate,
+                            IsActive = item.IsActive,
+                            FacilityName = facBal.GetFacilityNameById(item.FacilityId),
+                            CorporateName = GetCorporateNameById(item.CorporateId),
+                            RoleName = roleBal.GetRoleNameById(item.RoleId)
+                        }));
                     }
                 }
                 list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
@@ -543,29 +539,26 @@ namespace BillingSystem.Bal.BusinessAccess
 
                 using (var facBal = new FacilityBal())
                 {
-                    using (var corpBal = new CorporateBal())
+                    using (var roleBal = new RoleBal())
                     {
-                        using (var roleBal = new RoleBal())
+                        list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
                         {
-                            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-                            {
-                                FacilityRoleId = item.FacilityRoleId,
-                                FacilityId = item.FacilityId,
-                                RoleId = item.RoleId,
-                                CorporateId = item.CorporateId,
-                                CreatedBy = item.CreatedBy,
-                                CreatedDate = item.CreatedDate,
-                                ModifiedBy = item.ModifiedBy,
-                                ModifiedDate = item.ModifiedDate,
-                                IsDeleted = item.IsDeleted,
-                                DeletedBy = item.DeletedBy,
-                                DeletedDate = item.DeletedDate,
-                                IsActive = item.IsActive,
-                                FacilityName = facBal.GetFacilityNameById(item.FacilityId),
-                                CorporateName = corpBal.GetCorporateNameById(item.CorporateId),
-                                RoleName = roleBal.GetRoleNameById(item.RoleId)
-                            }));
-                        }
+                            FacilityRoleId = item.FacilityRoleId,
+                            FacilityId = item.FacilityId,
+                            RoleId = item.RoleId,
+                            CorporateId = item.CorporateId,
+                            CreatedBy = item.CreatedBy,
+                            CreatedDate = item.CreatedDate,
+                            ModifiedBy = item.ModifiedBy,
+                            ModifiedDate = item.ModifiedDate,
+                            IsDeleted = item.IsDeleted,
+                            DeletedBy = item.DeletedBy,
+                            DeletedDate = item.DeletedDate,
+                            IsActive = item.IsActive,
+                            FacilityName = facBal.GetFacilityNameById(item.FacilityId),
+                            CorporateName = GetCorporateNameById(item.CorporateId),
+                            RoleName = roleBal.GetRoleNameById(item.RoleId)
+                        }));
                     }
                 }
                 list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();

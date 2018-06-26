@@ -1,47 +1,33 @@
-﻿// /*  ----------------------------------------------------------------------------------------------------------------- */
-// To Do: SummaryController.cs
-// FileName :SummaryController.cs
-// CreatedDate: 2016-05-11 6:56 PM
-// ModifiedDate: 2016-05-11 7:10 PM
-// CreatedBy: Shashank Awasthy
-// /*  ----------------------------------------------------------------------------------------------------------------- */
+﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
+using System.Linq;
+using System.Web.Hosting;
+using System.Web.Http;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Bal.Mapper;
+using BillingSystem.Common;
+using BillingSystem.Common.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Model.Model;
+using BillingSystem.Models;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Microsoft.Ajax.Utilities;
+using PDFTemplateMaster;
 
 namespace BillingSystem.Controllers
 {
-    #region
-
-    using System;
-    using System.Collections.Generic;
-    using System.Configuration;
-    using System.IO;
-    using System.Linq;
-    using System.Web.Hosting;
-    using System.Web.Http;
-    using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Bal.Mapper;
-    using BillingSystem.Common;
-    using BillingSystem.Common.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Model.Model;
-    using BillingSystem.Models;
-
-    using iTextSharp.text;
-    using iTextSharp.text.pdf;
-
-    using Microsoft.Ajax.Utilities;
-
-    using PDFTemplateMaster;
-
-    #endregion
-
-    /// <summary>
-    ///     The summary controller.
-    /// </summary>
     public class SummaryController : BaseController
     {
+        private readonly IPatientInfoService _piService;
+        private readonly IEncounterService _eService;
+        private readonly ICPTCodesService _cptService;
+        private readonly ICarePlanTaskService _cpService;
         //public static string BarCodePath = "/Codes/BarCode/";
         /// <summary>
         ///     The bar code path
@@ -214,9 +200,8 @@ namespace BillingSystem.Controllers
                         Helpers.DefaultHcPcsTableNumber,
                         Helpers.DefaultDiagnosisTableNumber))
                 {
-                    var enBal = new EncounterBal();
-                    var encounterListData = enBal.GetPreActiveEncounters(encounterid, patientId);
-                    var nurseAssessmentfrom = enBal.GetNurseAssessmentData(encounterid, patientId);
+                    var encounterListData = _eService.GetPreActiveEncounters(encounterid, patientId);
+                    var nurseAssessmentfrom = _eService.GetNurseAssessmentData(encounterid, patientId);
 
                     var notesList = medicalnotesbal.GetCustomMedicalNotes(
                         patientId,
@@ -542,6 +527,15 @@ namespace BillingSystem.Controllers
         private byte[] _bytes;
 
         private readonly bool _print = false;
+
+        public SummaryController(IPatientInfoService piService, IEncounterService eService, ICPTCodesService cptService, ICarePlanTaskService cpService)
+        {
+            _piService = piService;
+            _eService = eService;
+            _cptService = cptService;
+            _cpService = cpService;
+        }
+
 
         #endregion
 
@@ -1192,9 +1186,8 @@ namespace BillingSystem.Controllers
 
 
             //Get Encounters List and Nurse Assessment Data
-            var enBal = new EncounterBal();
-            var encounterListData = enBal.GetPreActiveEncounters(encounterid, patientId);
-            var nurseAssessmentfrom = enBal.GetNurseAssessmentData(encounterid, patientId);
+            var encounterListData = _eService.GetPreActiveEncounters(encounterid, patientId);
+            var nurseAssessmentfrom = _eService.GetNurseAssessmentData(encounterid, patientId);
 
             //Get Medical Notes 
             var medicalnotesbal = new MedicalNotesBal();
@@ -2110,8 +2103,7 @@ namespace BillingSystem.Controllers
             switch (codetypeid)
             {
                 case 1:
-                    var cptCodesBal = new CPTCodesBal(Helpers.DefaultCptTableNumber);
-                    var cptcodeslist = cptCodesBal.GetCPTCodes();
+                    var cptcodeslist = _cptService.GetCPTCodes(Helpers.DefaultCptTableNumber);
                     return Json(cptcodeslist);
                 case 2:
                     var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber);
@@ -2155,37 +2147,31 @@ namespace BillingSystem.Controllers
                 switch (type)
                 {
                     case OrderType.CPT:
-                        using (var cbal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-                        {
-                            var result = cbal.GetCodesByRange(
-                                Convert.ToInt32(subCategory.ExternalValue2),
-                                Convert.ToInt32(subCategory.ExternalValue3));
-                            var filteredList = result.Select(
-                                item => new
-                                {
-                                    Value = item.CodeNumbering,
+                        var result = _cptService.GetCodesByRange(Convert.ToInt32(subCategory.ExternalValue2), Convert.ToInt32(subCategory.ExternalValue3), Helpers.DefaultCptTableNumber);
+                        var filteredList = result.Select(
+                            item => new
+                            {
+                                Value = item.CodeNumbering,
 
-                                    // Text = !string.IsNullOrEmpty(item.CodeDescription) ? item.CodeDescription:string.Empty
-                                    // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.CodeDescription) && item.CodeDescription.Length > 25 ? item.CodeDescription.Substring(0, 25) + "..." : item.CodeDescription, item.CodeNumbering)
-                                    Text =
-                                            string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription)
-                                })
-                                .ToList();
-                            var jsonResult =
-                                new
-                                {
-                                    codeList = filteredList,
-                                    codeTypeName = codeType.GlobalCodeName,
-                                    codeTypeId = codeType.GlobalCodeValue
-                                };
-                            return Json(jsonResult, JsonRequestBehavior.AllowGet);
-                        }
-
+                                // Text = !string.IsNullOrEmpty(item.CodeDescription) ? item.CodeDescription:string.Empty
+                                // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.CodeDescription) && item.CodeDescription.Length > 25 ? item.CodeDescription.Substring(0, 25) + "..." : item.CodeDescription, item.CodeNumbering)
+                                Text =
+                                        string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription)
+                            })
+                            .ToList();
+                        var jsonResult =
+                            new
+                            {
+                                codeList = filteredList,
+                                codeTypeName = codeType.GlobalCodeName,
+                                codeTypeId = codeType.GlobalCodeValue
+                            };
+                        return Json(jsonResult, JsonRequestBehavior.AllowGet);
                     case OrderType.HCPCS:
                         using (var cbal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
                         {
-                            var result = cbal.GetHCPCSCodes();
-                            var filteredList = result.Select(
+                            var result1 = cbal.GetHCPCSCodes();
+                            var filteredList1 = result1.Select(
                                 item => new
                                 {
                                     Value = item.CodeNumbering,
@@ -2196,14 +2182,14 @@ namespace BillingSystem.Controllers
                                             string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription)
                                 })
                                 .ToList();
-                            var jsonResult =
+                            var jsonResult1 =
                                 new
                                 {
-                                    codeList = filteredList,
+                                    codeList = filteredList1,
                                     codeTypeName = codeType.GlobalCodeName,
                                     codeTypeId = codeType.GlobalCodeValue
                                 };
-                            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                            return Json(jsonResult1, JsonRequestBehavior.AllowGet);
                         }
 
                     case OrderType.DRG:
@@ -2211,8 +2197,8 @@ namespace BillingSystem.Controllers
                     case OrderType.DRUG:
                         using (var dbal = new DrugBal(Helpers.DefaultDrugTableNumber))
                         {
-                            var result = dbal.GetDrugList();
-                            var filteredList = result.Select(
+                            var result2 = dbal.GetDrugList();
+                            var filteredList2 = result2.Select(
                                 item => new
                                 {
                                     Value = item.DrugCode,
@@ -2222,14 +2208,14 @@ namespace BillingSystem.Controllers
                                     Text = string.Format("{0} - {1}", item.DrugCode, item.DrugPackageName)
                                 })
                                 .ToList();
-                            var jsonResult =
+                            var jsonResult2 =
                                 new
                                 {
-                                    codeList = filteredList,
+                                    codeList = filteredList2,
                                     codeTypeName = codeType.GlobalCodeName,
                                     codeTypeId = codeType.GlobalCodeValue
                                 };
-                            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                            return Json(jsonResult2, JsonRequestBehavior.AllowGet);
                         }
 
                     default:
@@ -3110,11 +3096,9 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetPreENcounterList(int ecounterId, int patinetId)
         {
-            using (var bal = new EncounterBal())
-            {
-                var list = bal.GetPreActiveEncounters(ecounterId, patinetId);
-                return PartialView(PartialViews.PreEvaluationList, list);
-            }
+            var list = _eService.GetPreActiveEncounters(ecounterId, patinetId);
+            return PartialView(PartialViews.PreEvaluationList, list);
+
         }
 
         /// <summary>
@@ -4187,8 +4171,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPreEvaluationList(int encounterId, int patientid)
         {
-            var enBal = new EncounterBal();
-            var nurseAssessmentfrom = enBal.GetNurseAssessmentData(encounterId, patientid);
+            var nurseAssessmentfrom = _eService.GetNurseAssessmentData(encounterId, patientid);
             return PartialView(PartialViews.PreEvaluationList, nurseAssessmentfrom);
         }
 
@@ -6113,11 +6096,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetNurseAssessmentList(int ecounterId, int patinetId)
         {
-            using (var bal = new EncounterBal())
-            {
-                var list = bal.GetNurseAssessmentData(ecounterId, patinetId);
-                return PartialView(PartialViews.PreEvaluationList, list);
-            }
+            var list = _eService.GetNurseAssessmentData(ecounterId, patinetId);
+            return PartialView(PartialViews.PreEvaluationList, list);
+
         }
 
         /// <summary>
@@ -6373,50 +6354,47 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new CarePlanTaskBal())
+                model.FacilityId = facilityId;
+                model.CorporateId = corporateId;
+
+                // model.CarePlanId = 9999;// to be get from the table so that the new task will be saved under the single task care plan name.
+                if (model.Id > 0)
                 {
-                    model.FacilityId = facilityId;
-                    model.CorporateId = corporateId;
-
-                    // model.CarePlanId = 9999;// to be get from the table so that the new task will be saved under the single task care plan name.
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = dateTime;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = dateTime;
-                    }
-
-                    // Call the AddCarePlanTask Method to Add / Update current CarePlanTask
-                    newId = bal.SaveCarePlanTaskCustomModel(model);
-
-                    // var cModel = bal.GetCarePlanTaskById(Convert.ToInt32(model.TaskNumber));
-                    var pcBal = new PatientCarePlanBal();
-                    var listoadd = new List<PatientCarePlan>();
-
-                    var patinetCareModel = new PatientCarePlan
-                    {
-                        //TaskId = model.TaskNumber, 
-                        TaskId = Convert.ToString(newId),
-                        CarePlanId = model.CarePlanId.ToString(),
-                        CorporateId = model.CorporateId,
-                        FacilityId = model.FacilityId,
-                        PatientId = Convert.ToString(model.PatientId),
-                        EncounterId = model.EncounterId,
-                        CreatedBy = model.CreatedBy,
-                        CreatedDate = model.CreatedDate,
-                        IsActive = model.IsActive,
-                        FromDate = model.StartDate,
-                        TillDate = model.EndDate
-                    };
-                    listoadd.Add(patinetCareModel);
-
-                    //pcBal.SavePatientCarePlanData(listoadd, false);
-                    pcBal.SavePatientCarePlanData(listoadd, false);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = dateTime;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = dateTime;
+                }
+
+                // Call the AddCarePlanTask Method to Add / Update current CarePlanTask
+                newId = _cpService.SaveCarePlanTaskCustomModel(model);
+
+                // var cModel = bal.GetCarePlanTaskById(Convert.ToInt32(model.TaskNumber));
+                var pcBal = new PatientCarePlanBal();
+                var listoadd = new List<PatientCarePlan>();
+
+                var patinetCareModel = new PatientCarePlan
+                {
+                    //TaskId = model.TaskNumber, 
+                    TaskId = Convert.ToString(newId),
+                    CarePlanId = model.CarePlanId.ToString(),
+                    CorporateId = model.CorporateId,
+                    FacilityId = model.FacilityId,
+                    PatientId = Convert.ToString(model.PatientId),
+                    EncounterId = model.EncounterId,
+                    CreatedBy = model.CreatedBy,
+                    CreatedDate = model.CreatedDate,
+                    IsActive = model.IsActive,
+                    FromDate = model.StartDate,
+                    TillDate = model.EndDate
+                };
+                listoadd.Add(patinetCareModel);
+
+                //pcBal.SavePatientCarePlanData(listoadd, false);
+                pcBal.SavePatientCarePlanData(listoadd, false);
             }
 
             return Json(newId);
@@ -6440,7 +6418,6 @@ namespace BillingSystem.Controllers
             var dateTime = Helpers.GetInvariantCultureDateTime();
             var newId = -1;
             var userId = Helpers.GetLoggedInUserId();
-            var cBal = new CarePlanTaskBal();
 
             // Check if Model is not null 
             if (model != null)
@@ -6449,18 +6426,7 @@ namespace BillingSystem.Controllers
                 {
                     foreach (var patientCarePlan in model)
                     {
-                        //bool check = pBal.CheckDuplicateTaskName(patientCarePlan.Id,
-                        //    Convert.ToInt32(patientCarePlan.EncounterId), patientCarePlan.PatientId,
-                        //    patientCarePlan.TaskId, Convert.ToDateTime(patientCarePlan.FromDate), Convert.ToDateTime(patientCarePlan.TillDate),
-                        //    Convert.ToInt32(patientCarePlan.FacilityId), Convert.ToInt32(patientCarePlan.CorporateId));
-                        //if (check)
-                        //{
-                        //    return Json("-1");
-                        //}
-
-                        //else
-                        //{
-                        var careId = cBal.CarePlanId(corporateId, facilityId, Convert.ToInt32(patientCarePlan.TaskId));
+                        var careId = _cpService.CarePlanId(corporateId, facilityId, Convert.ToInt32(patientCarePlan.TaskId));
                         patientCarePlan.CorporateId = corporateId;
                         patientCarePlan.FacilityId = facilityId;
                         patientCarePlan.IsActive = true;
@@ -6585,68 +6551,13 @@ namespace BillingSystem.Controllers
                 Riskfactors = new RiskFactorViewModel()
             };
 
-            using (var bal = new BillHeaderBal())
-            {
-                vmData.PatientInfo = bal.GetPatientDetailsByPatientId(patientId, 0, true);
-                if (vmData.PatientInfo != null)
-                    vmData.PatientInfo.PersonAge = Convert.ToInt32(vmData.PatientInfo.PatientInfo.PersonAge);
+            vmData.PatientInfo = _piService.GetPatientDetailsByPatientId(patientId, 0, true);
+            if (vmData.PatientInfo != null)
+                vmData.PatientInfo.PersonAge = Convert.ToInt32(vmData.PatientInfo.PatientInfo.PersonAge);
 
-                vmData.CurrentEncounterId = vmData.PatientInfo != null && vmData.PatientInfo.CurrentEncounter != null
-                    ? vmData.PatientInfo.CurrentEncounter.EncounterID : 0;
-            }
+            vmData.CurrentEncounterId = vmData.PatientInfo != null && vmData.PatientInfo.CurrentEncounter != null
+                ? vmData.PatientInfo.CurrentEncounter.EncounterID : 0;
 
-
-            //using (var orderBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
-            //        Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-            //{
-            //    var vm = orderBal.GetPatientSummaryDataOnLoad(0, patientId);
-            //    if (vm != null)
-            //    {
-            //        vmData.CurrentEncounterId = Convert.ToInt32(vm.CurrentEncounterId);
-            //        vmData.PatientInfo = vm.PatientInfo;
-            //        if (vmData.PatientInfo != null)
-            //            vmData.PatientInfo.PersonAge = Convert.ToInt32(vmData.PatientInfo.PatientInfo.PersonAge);
-
-            //        //if (sTab == 0)
-            //        //{
-            //        //    vmData.EncountersList = vm.Encounters;
-            //        //    vmData.PatientId = patientId;
-            //        //    vmData.MedicalRecordList = vm.MedicalRecords;
-            //        //    vmData.MedicalVitalList = vm.Vitals;
-            //        //    vmData.PatientSummaryNotes = vm.MedicalNotes;
-            //        //    vmData.AlergyList = vm.AllergyRecords;
-            //        //    vmData.DiagnosisList = vm.DiagnosisList;
-            //        //    vmData.Riskfactors = vm.RiskFactor;
-
-            //        //    if (vm.OpenOrders.Any())
-            //        //    {
-            //        //        vmData.OpenOrdersList = vm.OpenOrders.Where(a => a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-            //        //        vmData.ClosedOrdersList = vm.OpenOrders.Where(a => !a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-            //        //    }
-            //        //    else
-            //        //    {
-            //        //        vmData.OpenOrdersList = new List<OpenOrderCustomModel>();
-            //        //        vmData.ClosedOrdersList = new List<OpenOrderCustomModel>();
-            //        //    }
-
-            //        //    vmData.DiagnosisId = vm.DiagnosisList.Any(a => a.DiagnosisType == (int)DiagnosisType.Primary) ? vm.DiagnosisList.SingleOrDefault(d => d.DiagnosisType == (int)DiagnosisType.Primary).DiagnosisID : 0;
-            //        //}
-            //        //else
-            //        //{
-            //        //    vmData.OpenOrdersList = new List<OpenOrderCustomModel>();
-            //        //    vmData.EncountersList = new List<EncounterCustomModel>();
-            //        //    vmData.CurrentEncounterId = 0;
-            //        //    vmData.MedicalRecordList = new List<MedicalRecord>();
-            //        //    vmData.DiagnosisId = 0;
-            //        //    vmData.MedicalVitalList = new List<MedicalVitalCustomModel>();
-            //        //    vmData.PatientSummaryNotes = new List<MedicalNotesCustomModel>();
-            //        //    vmData.ClosedOrdersList = new List<OpenOrderCustomModel>();
-            //        //    vmData.AlergyList = new List<AlergyCustomModel>();
-            //        //    vmData.DiagnosisList = new List<DiagnosisCustomModel>();
-            //        //    vmData.Riskfactors = new RiskFactorViewModel();
-            //        //}
-            //    }
-            //}
 
             return vmData;
         }

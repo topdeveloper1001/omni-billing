@@ -1,1 +1,0 @@
-Exec iSprocSavePatientInfo 0,0,null,0,'Amit','Jain','1990-01-01','am@aj.com',null,null,'+971-347234372','27','hm7rDtQ+i1KwBzM2oIPnxg==',0,'Male'

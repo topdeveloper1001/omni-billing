@@ -13,7 +13,7 @@
         #region Constructors and Destructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AppointmentTypesBal"/> class.
+        /// Initializes a new instance of the <see cref="AppointmentTypesService"/> class.
         /// </summary>
         public SchedulingParametersBal()
         {

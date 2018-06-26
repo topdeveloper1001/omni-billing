@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingSystem", "BillingSystem\BillingSystem.csproj", "{BAD924ED-76D8-4553-9717-507365917B63}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -30,8 +30,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingSystem.Resource", "BillingSystem.Resource\BillingSystem.Resource.csproj", "{1E07D2E7-645B-4B42-945D-2A191D849582}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingSystem.WebApi", "BillingSystem.WebApi\BillingSystem.WebApi.csproj", "{66349DBB-A6A6-4622-B411-0AD627569CA2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingSystem.UnitTests", "BillingSystem.UnitTests\BillingSystem.UnitTests.csproj", "{96DDAFBA-FFD7-403C-BA64-F793E6271770}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDFTemplateMaster", "PDFTemplateMaster\PDFTemplateMaster.csproj", "{A54591B6-8C21-49D6-A341-676E076DDACC}"
 EndProject
@@ -69,10 +67,6 @@ Global
 		{66349DBB-A6A6-4622-B411-0AD627569CA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66349DBB-A6A6-4622-B411-0AD627569CA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66349DBB-A6A6-4622-B411-0AD627569CA2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{96DDAFBA-FFD7-403C-BA64-F793E6271770}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{96DDAFBA-FFD7-403C-BA64-F793E6271770}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{96DDAFBA-FFD7-403C-BA64-F793E6271770}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{96DDAFBA-FFD7-403C-BA64-F793E6271770}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A54591B6-8C21-49D6-A341-676E076DDACC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A54591B6-8C21-49D6-A341-676E076DDACC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A54591B6-8C21-49D6-A341-676E076DDACC}.Release|Any CPU.ActiveCfg = Release|Any CPU

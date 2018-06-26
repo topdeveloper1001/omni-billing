@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity.Infrastructure;
 using System.Globalization;
 using System.Linq;
 using System.Web.Mvc;
@@ -10,11 +9,23 @@ using BillingSystem.Common.Common;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class RoleSelectionController : Controller
     {
+        private readonly IBillingSystemParametersService _bspService;
+        private readonly IUsersService _uService;
+        private readonly ICorporateService _cService;
+
+        public RoleSelectionController(IBillingSystemParametersService bspService, IUsersService uService, ICorporateService cService)
+        {
+            _bspService = bspService;
+            _uService = uService;
+            _cService = cService;
+        }
+
         //
         // GET: /RoleSelection/
         /// <summary>
@@ -81,8 +92,8 @@ namespace BillingSystem.Controllers
                 //}
 
                 // Changed by Shashank ON : 5th May 2015 : To add the Module access level Security when user log in via Facility and Corporate 
-                using (var userbal = new UsersBal())
-                    objSession.MenuSessionList = userbal.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
+
+                objSession.MenuSessionList = _uService.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
 
                 using (var rtBal = new RoleTabsBal())
                 {
@@ -122,8 +133,7 @@ namespace BillingSystem.Controllers
                 };
             }
 
-            var userBal = new UsersBal();
-            var userDetails = userBal.GetUserDetails(roleId, facilityId, objSession.UserId);
+            var userDetails = _uService.GetUserDetails(roleId, facilityId, objSession.UserId);
             objSession.RoleName = userDetails.RoleName;
             objSession.FacilityName = userDetails.DefaultFacility;
             objSession.UserName = userDetails.UserName;
@@ -135,8 +145,7 @@ namespace BillingSystem.Controllers
             if (objSession.MenuSessionList != null || !objSession.MenuSessionList.Any())
             {
                 // Changed by Shashank ON : 5th May 2015 : To add the Module access level Security when user log in via Facility and Corporate 
-                using (var userbal = new UsersBal())
-                    objSession.MenuSessionList = userbal.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
+                objSession.MenuSessionList = _uService.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
             }
             using (var facilitybal = new FacilityBal())
             {
@@ -162,64 +171,61 @@ namespace BillingSystem.Controllers
             //----Billing Codes' Table Number additions start here---------------
             if (objSession.CorporateId > 0 && !string.IsNullOrEmpty(objSession.FacilityNumber))
             {
-                using (var bBal = new BillingSystemParametersBal())
+                var currentParameter = _bspService.GetDetailsByCorporateAndFacility(
+                    objSession.CorporateId, objSession.FacilityNumber);
+                var cDetails = new Corporate();
+                cDetails = _cService.GetCorporateById(objSession.CorporateId);
+
+                if (objSession.UserId != 1)
                 {
-                    var currentParameter = bBal.GetDetailsByCorporateAndFacility(
-                        objSession.CorporateId, objSession.FacilityNumber);
-                    var cDetails = new Corporate();
-                    using (var cBal = new CorporateBal())
-                        cDetails = cBal.GetCorporateById(objSession.CorporateId);
+                    objSession.CptTableNumber =
+                        currentParameter != null && !string.IsNullOrEmpty(currentParameter.CPTTableNumber)
+                            ? currentParameter.CPTTableNumber
+                            : cDetails.DefaultCPTTableNumber;
 
-                    if (objSession.UserId != 1)
-                    {
-                        objSession.CptTableNumber =
-                            currentParameter != null && !string.IsNullOrEmpty(currentParameter.CPTTableNumber)
-                                ? currentParameter.CPTTableNumber
-                                : cDetails.DefaultCPTTableNumber;
+                    objSession.ServiceCodeTableNumber =
+                        currentParameter != null && !string.IsNullOrEmpty(currentParameter.ServiceCodeTableNumber)
+                            ? currentParameter.ServiceCodeTableNumber
+                            : cDetails.DefaultServiceCodeTableNumber;
 
-                        objSession.ServiceCodeTableNumber =
-                            currentParameter != null && !string.IsNullOrEmpty(currentParameter.ServiceCodeTableNumber)
-                                ? currentParameter.ServiceCodeTableNumber
-                                : cDetails.DefaultServiceCodeTableNumber;
+                    objSession.DrugTableNumber =
+                        currentParameter != null && !string.IsNullOrEmpty(currentParameter.DrugTableNumber)
+                            ? currentParameter.DrugTableNumber
+                            : cDetails.DefaultDRUGTableNumber;
 
-                        objSession.DrugTableNumber =
-                            currentParameter != null && !string.IsNullOrEmpty(currentParameter.DrugTableNumber)
-                                ? currentParameter.DrugTableNumber
-                                : cDetails.DefaultDRUGTableNumber;
+                    objSession.DrgTableNumber =
+                        currentParameter != null && !string.IsNullOrEmpty(currentParameter.DRGTableNumber)
+                            ? currentParameter.DRGTableNumber
+                            : cDetails.DefaultDRGTableNumber;
 
-                        objSession.DrgTableNumber =
-                            currentParameter != null && !string.IsNullOrEmpty(currentParameter.DRGTableNumber)
-                                ? currentParameter.DRGTableNumber
-                                : cDetails.DefaultDRGTableNumber;
+                    objSession.HcPcsTableNumber =
+                        currentParameter != null && !string.IsNullOrEmpty(currentParameter.HCPCSTableNumber)
+                            ? currentParameter.HCPCSTableNumber
+                            : cDetails.DefaultHCPCSTableNumber;
 
-                        objSession.HcPcsTableNumber =
-                            currentParameter != null && !string.IsNullOrEmpty(currentParameter.HCPCSTableNumber)
-                                ? currentParameter.HCPCSTableNumber
-                                : cDetails.DefaultHCPCSTableNumber;
+                    objSession.DiagnosisCodeTableNumber =
+                        currentParameter != null && !string.IsNullOrEmpty(currentParameter.DiagnosisTableNumber)
+                            ? currentParameter.DiagnosisTableNumber
+                            : cDetails.DefaultDiagnosisTableNumber;
 
-                        objSession.DiagnosisCodeTableNumber =
-                            currentParameter != null && !string.IsNullOrEmpty(currentParameter.DiagnosisTableNumber)
-                                ? currentParameter.DiagnosisTableNumber
-                                : cDetails.DefaultDiagnosisTableNumber;
+                    objSession.BillEditRuleTableNumber =
+                                            currentParameter != null && !string.IsNullOrEmpty(currentParameter.BillEditRuleTableNumber)
+                                                ? currentParameter.BillEditRuleTableNumber
+                                                : cDetails.BillEditRuleTableNumber;
 
-                        objSession.BillEditRuleTableNumber =
-                                                currentParameter != null && !string.IsNullOrEmpty(currentParameter.BillEditRuleTableNumber)
-                                                    ? currentParameter.BillEditRuleTableNumber
-                                                    : cDetails.BillEditRuleTableNumber;
+                    objSession.DefaultCountryId = currentParameter.DefaultCountry > 0
+                        ? currentParameter.DefaultCountry : 45;
+                }
+                else
+                {
+                    objSession.CptTableNumber = "0";
+                    objSession.ServiceCodeTableNumber = "0";
+                    objSession.DrugTableNumber = "0";
+                    objSession.DrgTableNumber = "0";
+                    objSession.HcPcsTableNumber = "0";
+                    objSession.DiagnosisCodeTableNumber = "0";
+                    objSession.BillEditRuleTableNumber = "0";
 
-                        objSession.DefaultCountryId = currentParameter.DefaultCountry > 0
-                            ? currentParameter.DefaultCountry : 45;
-                    }
-                    else
-                    {
-                        objSession.CptTableNumber = "0";
-                        objSession.ServiceCodeTableNumber = "0";
-                        objSession.DrugTableNumber = "0";
-                        objSession.DrgTableNumber = "0";
-                        objSession.HcPcsTableNumber = "0";
-                        objSession.DiagnosisCodeTableNumber = "0";
-                        objSession.BillEditRuleTableNumber = "0";
-                    }
                 }
             }
             //----Billing Codes' Table Number additions end here---------------

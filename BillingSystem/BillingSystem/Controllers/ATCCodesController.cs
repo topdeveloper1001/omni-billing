@@ -12,6 +12,7 @@ namespace BillingSystem.Controllers
     using System.Web.Mvc;
 
     using Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using Common;
     using Model;
     using Models;
@@ -21,6 +22,14 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class ATCCodesController : BaseController
     {
+
+        private readonly IATCCodesService _Service;
+
+        public ATCCodesController(IATCCodesService Service)
+        {
+            _Service = Service;
+        }
+
         /// <summary>
         /// Get the details of the ATCCodes View in the Model ATCCodes such as ATCCodesList, list of countries etc.
         /// </summary>
@@ -29,11 +38,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult ATCCodesMain()
         {
-            // Initialize the ATCCodes BAL object
-            var atcCodesBal = new ATCCodesBal();
-
             // Get the Entity list
-            var atcCodesList = atcCodesBal.GetATCCodes();
+            var atcCodesList = _Service.GetATCCodes();
 
             // Intialize the View Model i.e. ATCCodesView which is binded to Main View Index.cshtml under ATCCodes
             var atcCodesView = new ATCCodesView
@@ -55,15 +61,11 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindATCCodesList()
         {
-            // Initialize the ATCCodes BAL object
-            using (var atcCodesBal = new ATCCodesBal())
-            {
-                // Get the facilities list
-                var atcCodesList = atcCodesBal.GetATCCodes();
+            // Get the facilities list
+            var atcCodesList = _Service.GetATCCodes();
 
-                // Pass the ActionResult with List of ATCCodesViewModel object to Partial View ATCCodesList
-                return PartialView(PartialViews.ATCCodesList, atcCodesList);
-            }
+            // Pass the ActionResult with List of ATCCodesViewModel object to Partial View ATCCodesList
+            return PartialView(PartialViews.ATCCodesList, atcCodesList);
         }
 
         /// <summary>
@@ -81,25 +83,23 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new ATCCodesBal())
+                model.CodeTableNumber = Helpers.DefaultCptTableNumber;
+                model.IsActive = true;
+                if (model.ATCCodeID > 0)
                 {
-                    model.CodeTableNumber = Helpers.DefaultCptTableNumber;
-                    model.IsActive = true;
-                    if (model.ATCCodeID > 0)
-                    {
-                        model.ModifiedBy = Helpers.GetLoggedInUserId();
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        model.CreatedBy = Helpers.GetLoggedInUserId();
-                        model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-
-                    // Call the AddATCCodes Method to Add / Update current ATCCodes
-                    newId = bal.SaveATCCodes(model);
+                    model.ModifiedBy = Helpers.GetLoggedInUserId();
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    model.CreatedBy = Helpers.GetLoggedInUserId();
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+
+
+                // Call the AddATCCodes Method to Add / Update current ATCCodes
+                newId = _Service.SaveATCCodes(model);
+
             }
 
             return Json(newId);
@@ -112,14 +112,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetATCCodes(int id)
         {
-            using (var bal = new ATCCodesBal())
-            {
-                // Call the AddATCCodes Method to Add / Update current ATCCodes
-                var currentAtcCodes = bal.GetATCCodesByID(id);
+            // Call the AddATCCodes Method to Add / Update current ATCCodes
+            var currentAtcCodes = _Service.GetATCCodesByID(id);
 
-                // Pass the ActionResult with the current ATCCodesViewModel object as model to PartialView ATCCodesAddEdit
-                return PartialView(PartialViews.ATCCodesAddEdit, currentAtcCodes);
-            }
+            // Pass the ActionResult with the current ATCCodesViewModel object as model to PartialView ATCCodesAddEdit
+            return PartialView(PartialViews.ATCCodesAddEdit, currentAtcCodes);
+
         }
 
         /// <summary>
@@ -129,23 +127,21 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteATCCodes(int id)
         {
-            using (var bal = new ATCCodesBal())
+            // Get ATCCodes model object by current ATCCodes ID
+            var currentAtcCodes = _Service.GetATCCodesByID(id);
+
+            // Check If ATCCodes model is not null
+            if (currentAtcCodes != null)
             {
-                // Get ATCCodes model object by current ATCCodes ID
-                var currentAtcCodes = bal.GetATCCodesByID(id);
+                // Update Operation of current ATCCodes
+                var deleteAtc = _Service.DeleteATCCode(currentAtcCodes);
 
-                // Check If ATCCodes model is not null
-                if (currentAtcCodes != null)
-                {
-                    // Update Operation of current ATCCodes
-                    var deleteAtc = bal.DeleteATCCode(currentAtcCodes);
+                // var result = bal.SaveATCCodes(currentATCCodes);
 
-                    // var result = bal.SaveATCCodes(currentATCCodes);
-
-                    // return deleted ID of current ATCCodes as Json Result to the Ajax Call.
-                    return Json(deleteAtc);
-                }
+                // return deleted ID of current ATCCodes as Json Result to the Ajax Call.
+                return Json(deleteAtc);
             }
+
 
             // Return the Json result as Action Result back JSON Call Success
             return Json(null);

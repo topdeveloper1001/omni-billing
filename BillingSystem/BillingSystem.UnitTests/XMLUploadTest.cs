@@ -1,23 +1,16 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="XMLUploadTest.cs" company="Spadez">
-//   OmniHealthcare
-// </copyright>
-// <summary>
-//   The xml upload test.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿
+using System;
+using System.Linq;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+
+
 namespace BillingSystem.UnitTests
 {
-    using System;
-    using System.ComponentModel.DataAnnotations;
-    using System.Linq;
-    using System.Runtime;
-
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Model;
-
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>
     ///     The xml upload test.
@@ -25,6 +18,8 @@ namespace BillingSystem.UnitTests
     [TestClass]
     public class XMLUploadTest
     {
+        private readonly IBillHeaderService _blService;
+        private readonly IBillActivityService _baService;
         #region Fields
 
         /// <summary>
@@ -47,14 +42,10 @@ namespace BillingSystem.UnitTests
 
         #region Constructors and Destructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XMLUploadTest"/> class.
-        /// </summary>
-        /// <param name="xmlFilePath">
-        /// The XML file path.
-        /// </param>
-        public XMLUploadTest()
+        public XMLUploadTest(IBillHeaderService blService, IBillActivityService baService, int corporateId, int facilityId, string xmlFilePath)
         {
+            _blService = blService;
+            _baService = baService;
             this.corporateId = this.GetRandomCorporateId();
             this.facilityId = this.GetRandomFacilityId(this.corporateId);
         }
@@ -71,9 +62,10 @@ namespace BillingSystem.UnitTests
         /// </returns>
         public int GetRandomCorporateId()
         {
-            var corporatebal = new CorporateBal();
-            Corporate randomselectedCorporate = corporatebal.GetAllCorporate().PickRandom();
-            return randomselectedCorporate.CorporateID;
+            return 0;
+            //var corporatebal = new CorporateService();
+            //Corporate randomselectedCorporate = corporatebal.GetAllCorporate().PickRandom();
+            //return randomselectedCorporate.CorporateID;
         }
 
         /// <summary>
@@ -104,11 +96,11 @@ namespace BillingSystem.UnitTests
                 using (var bal = new XMLBillingBal())
                 {
                     string result = bal.XMLBillFileParser(
-                        xml, 
-                        this.xmlFilePath, 
-                        true, 
-                        this.corporateId, 
-                        this.facilityId, 
+                        xml,
+                        this.xmlFilePath,
+                        true,
+                        this.corporateId,
+                        this.facilityId,
                         string.Empty); // ..... Parsing of the XMl Data
 
                     // get the parsed File for the CID and FID
@@ -125,20 +117,17 @@ namespace BillingSystem.UnitTests
                         Assert.IsNotNull(item.OMBillID);
 
                         // ...BillHeader Check
-                        using (var billheaderBal = new BillHeaderBal())
-                        {
-                            var getclaimBill = billheaderBal.GetBillHeaderById(Convert.ToInt32(item.OMBillID));
-                            Assert.IsNotNull(getclaimBill.BillHeaderID);
-                            Assert.AreEqual(item.OMBillID, getclaimBill.BillHeaderID);
-                        }
+                        var getclaimBill = _blService.GetBillHeaderById(Convert.ToInt32(item.OMBillID));
+                        Assert.IsNotNull(getclaimBill.BillHeaderID);
+                        Assert.AreEqual(item.OMBillID, getclaimBill.BillHeaderID);
+
 
                         // ... BillActivity Checks
-                        using (var billActivitybal = new BillActivityBal())
-                        {
-                            var getBillAct = billActivitybal.GetBillActivitiesByBillHeaderId(Convert.ToInt32(item.OMBillID));
-                            Assert.IsTrue(getBillAct.Any());
-                            Assert.AreEqual(getBillAct.PickRandom().BillHeaderID, Convert.ToInt32(item.OMBillID));
-                        }
+
+                        var getBillAct = _baService.GetBillActivitiesByBillHeaderId(Convert.ToInt32(item.OMBillID));
+                        Assert.IsTrue(getBillAct.Any());
+                        Assert.AreEqual(getBillAct.PickRandom().BillHeaderID, Convert.ToInt32(item.OMBillID));
+
 
                         // ... OpenOrder Checks
                         Assert.IsNotNull(item.OMEncounterID);

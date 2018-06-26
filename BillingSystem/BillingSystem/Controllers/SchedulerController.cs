@@ -1,29 +1,35 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SchedulerController.cs" company="ServicesDot.Com">
-//   Omnihealthcare
-// </copyright>
-// <summary>
-//   The Scheduler Controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
+using System.Threading.Tasks;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Common;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Model;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc;
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Model.CustomModel;
-    using System.Threading.Tasks;
+
 
     [CheckRolesAuthorize("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")]
     public class SchedulerController : BaseController
     {
+        private readonly ICountryService _cService;
+        private readonly IAppointmentTypesService _atService;
+        private readonly IPatientInfoService _piService;
+        private readonly IFacilityStructureService _fsService;
         private const string partialViewPath = "../Scheduler/{0}";
+
+        public SchedulerController(ICountryService cService, IAppointmentTypesService atService, IPatientInfoService piService, IFacilityStructureService fsService)
+        {
+            _cService = cService;
+            _atService = atService;
+            _piService = piService;
+            _fsService = fsService;
+        }
+
 
         #region Public Methods and Operators
 
@@ -544,8 +550,8 @@ namespace BillingSystem.Controllers
             var corporateid = Helpers.GetSysAdminCorporateID();
             common.FacilityId = facilityid;
             common.CorporateId = corporateid;
-            var bal = new PatientInfoBal();
-            var objPatientInfoData = bal.GetPatientSearchResult(common);
+
+            var objPatientInfoData = _piService.GetPatientSearchResult(common);
             ViewBag.Message = null;
             return PartialView(PartialViews.PatientSearchResultPView, objPatientInfoData);
         }
@@ -783,30 +789,29 @@ namespace BillingSystem.Controllers
 
 
             //######################--"Get Facility Departments and rooms" Code starts Here--#####################
-            using (var fsBal = new FacilityStructureBal())
+
+            // Get the facility Department list and bind to div #divFacilityDepartmentList
+            var facilityDepartmentList = _fsService.GetFacilityDepartments(cId, Convert.ToString(facilityId));
+
+            if (facilityDepartmentList.Count > 0)
             {
-                // Get the facility Department list and bind to div #divFacilityDepartmentList
-                var facilityDepartmentList = fsBal.GetFacilityDepartments(cId, Convert.ToString(facilityId));
-
-                if (facilityDepartmentList.Count > 0)
+                depList.AddRange(facilityDepartmentList.Select(f => new DropdownListData
                 {
-                    depList.AddRange(facilityDepartmentList.Select(f => new DropdownListData
-                    {
-                        Text = f.FacilityStructureName,
-                        Value = Convert.ToString(f.FacilityStructureId)
-                    }));
-                }
-
-
-                viewpath = string.Format(partialViewPath, PartialViews.FacilityDepartmentListView);
-                fDepView = RenderPartialViewToStringBase(viewpath, facilityDepartmentList);
-
-
-                // Get the Facility Rooms list and bind to div #divFacilityRoomList
-                var fRooms = fsBal.GetFacilityRoomsCustomModel(cId, Convert.ToString(facilityId));
-                viewpath = string.Format(partialViewPath, PartialViews.FacilityRoomsListView);
-                fRoomsView = RenderPartialViewToStringBase(viewpath, fRooms);
+                    Text = f.FacilityStructureName,
+                    Value = Convert.ToString(f.FacilityStructureId)
+                }));
             }
+
+
+            viewpath = string.Format(partialViewPath, PartialViews.FacilityDepartmentListView);
+            fDepView = RenderPartialViewToStringBase(viewpath, facilityDepartmentList);
+
+
+            // Get the Facility Rooms list and bind to div #divFacilityRoomList
+            var fRooms = _fsService.GetFacilityRoomsCustomModel(cId, Convert.ToString(facilityId));
+            viewpath = string.Format(partialViewPath, PartialViews.FacilityRoomsListView);
+            fRoomsView = RenderPartialViewToStringBase(viewpath, fRooms);
+
             //######################--"Get Facility Departments and rooms" Code Ends Here--#####################
 
 
@@ -814,15 +819,13 @@ namespace BillingSystem.Controllers
 
             //######################--"Get Appointment Types" Code starts Here--#####################
 
-            using (var aBal = new AppointmentTypesBal())
-                appTypes = aBal.GetAppointmentTypesData(cId, facilityId, true);
+            appTypes = _atService.GetAppointmentTypesData(cId, facilityId, true);
 
 
             //######################--"Get Appointment Types" Code Ends Here--#####################
 
-
-            using (var cBal = new CountryBal())
-                countries = cBal.GetCountryWithCode();
+             
+                countries = _cService.GetCountryWithCode();
 
             SchedulingParametersCustomModel parm = null;
             using (var sBal = new SchedulingParametersBal())
@@ -890,8 +893,8 @@ namespace BillingSystem.Controllers
             //#################--Get Availibility Data Code ends here--##########################
 
             //Appointment Types List
-            using (var aBal = new FacilityStructureBal())
-                appTypes = aBal.GetDepartmentAppointmentTypes(facilityStructureId, Convert.ToString(facilityId));
+
+            appTypes = _fsService.GetDepartmentAppointmentTypes(facilityStructureId, Convert.ToString(facilityId));
 
             var jsonData = new
             {
@@ -925,13 +928,10 @@ namespace BillingSystem.Controllers
 
 
             //######################--"Get Facility Departments and rooms" Code starts Here--#####################
-            using (var fsBal = new FacilityStructureBal())
-            {
-                // Get the facility Department list and bind to div #divFacilityDepartmentList
-                var facilityDepartmentList = fsBal.GetFacilityDepartments(cId, Convert.ToString(facilityId));
-                viewpath = string.Format(partialViewPath, PartialViews.FacilityDepartmentListView);
-                fDepView = RenderPartialViewToStringBase(viewpath, facilityDepartmentList);
-            }
+            // Get the facility Department list and bind to div #divFacilityDepartmentList
+            var facilityDepartmentList = _fsService.GetFacilityDepartments(cId, Convert.ToString(facilityId));
+            viewpath = string.Format(partialViewPath, PartialViews.FacilityDepartmentListView);
+            fDepView = RenderPartialViewToStringBase(viewpath, facilityDepartmentList);
             //######################--"Get Facility Departments and rooms" Code Ends Here--#####################
 
             var jsonData = new { phyView, fDepView };
@@ -954,26 +954,21 @@ namespace BillingSystem.Controllers
             var userid = Helpers.GetLoggedInUserId();
 
             //Patients List
-            using (var pBal = new PatientInfoBal())
-                pInfo = pBal.GetPatientNames(fId, cId);
+            pInfo = _piService.GetPatientNames(fId, cId);
 
             //Appointment Types List
-            using (var aBal = new AppointmentTypesBal())
-                aList = aBal.GetAppointmentTypesData(cId, fId, true);
+            aList = _atService.GetAppointmentTypesData(cId, fId, true);
 
             //Facility Departments 
-            using (var bal = new FacilityStructureBal())
+            var facilityDepartments = _fsService.GetFacilityDepartments(cId, Convert.ToString(fId));
+            if (facilityDepartments.Any())
             {
-                var facilityDepartments = bal.GetFacilityDepartments(cId, Convert.ToString(fId));
-                if (facilityDepartments.Any())
+                deps.AddRange(facilityDepartments.Select(item => new DropdownListData
                 {
-                    deps.AddRange(facilityDepartments.Select(item => new DropdownListData
-                    {
-                        Text = string.Format(" {0} ", item.FacilityStructureName),
-                        Value = Convert.ToString(item.FacilityStructureId),
-                        //ExternalValue1 = bal.Get
-                    }));
-                }
+                    Text = string.Format(" {0} ", item.FacilityStructureName),
+                    Value = Convert.ToString(item.FacilityStructureId),
+                    //ExternalValue1 = bal.Get
+                }));
             }
 
             //Physicians by Facility
@@ -1104,7 +1099,6 @@ namespace BillingSystem.Controllers
                     if (Convert.ToInt32(model[0].PatientId) == 0)
                         model[0].PatientId = pId;
 
-                    var appBal = new AppointmentTypesBal();
                     var randomnumber = Helpers.GenerateCustomRandomNumber();
                     var counter = 1;
 
@@ -1148,7 +1142,7 @@ namespace BillingSystem.Controllers
                         item.CreatedDate = currentDateTime;
                         item.EventId = eventId;
                         item.ExtValue4 = token;
-                        var app = appBal.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                        var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
                         var appointmentType = app != null ? app.Name : string.Empty;
 
                         //Added the type of Appointment Type Name, on 23 June, 2017
@@ -1337,8 +1331,7 @@ namespace BillingSystem.Controllers
             var rList = new List<FacilityStructureRoomsCustomModel>();
             if (!string.IsNullOrEmpty(dep))
             {
-                using (var fsBal = new FacilityStructureBal())
-                    rList = fsBal.GetFacilityRoomsByDepartments(Helpers.GetSysAdminCorporateID(), facilityid, dep, roomsList);
+                rList = _fsService.GetFacilityRoomsByDepartments(Helpers.GetSysAdminCorporateID(), facilityid, dep, roomsList);
             }
 
 
@@ -1461,22 +1454,19 @@ namespace BillingSystem.Controllers
 
 
             //######################--"Get Facility Departments and rooms" Code starts Here--#####################
-            using (var fsBal = new FacilityStructureBal())
+            // Get the facility Department list and bind to div #divFacilityDepartmentList
+            facilityDepartmentList = _fsService.GetFacilityDepartments(cId, Convert.ToString(facilityId));
+
+            if (facilityDepartmentList.Count > 0)
             {
-                // Get the facility Department list and bind to div #divFacilityDepartmentList
-                facilityDepartmentList = fsBal.GetFacilityDepartments(cId, Convert.ToString(facilityId));
-
-                if (facilityDepartmentList.Count > 0)
+                depList.AddRange(facilityDepartmentList.Select(f => new DropdownListData
                 {
-                    depList.AddRange(facilityDepartmentList.Select(f => new DropdownListData
-                    {
-                        Text = f.FacilityStructureName,
-                        Value = Convert.ToString(f.FacilityStructureId),
-                    }));
-                }
-
-                appTypes = fsBal.GetDepartmentAppointmentTypes(deptId, facilityId, cId, true);
+                    Text = f.FacilityStructureName,
+                    Value = Convert.ToString(f.FacilityStructureId),
+                }));
             }
+
+            appTypes = _fsService.GetDepartmentAppointmentTypes(deptId, facilityId, cId, true);
             //######################--"Get Facility Departments and rooms" Code Ends Here--#####################
 
 
@@ -1488,10 +1478,7 @@ namespace BillingSystem.Controllers
             //######################--"Get Appointment Types" Code Ends Here--#####################
 
             //######################--"Get Patients Data" Code starts Here--#####################
-            using (var pBal = new PatientInfoBal())
-            {
-                patients = pBal.GetPatientsByFacilityId(facilityId);
-            }
+            patients = _piService.GetPatientsByFacilityId(facilityId);
             //######################--"Get Patients Data" Code ends Here--#####################
 
 
@@ -1607,7 +1594,7 @@ namespace BillingSystem.Controllers
                     }
 
                     var counter = 1;
-                    var appBal = new AppointmentTypesBal();
+
                     var facilityId = model[0].FacilityId;
                     string eventParentId;
                     if (model.Count > 1 && model.Any(s => s.SchedulingId > 0))
@@ -1618,7 +1605,7 @@ namespace BillingSystem.Controllers
                     foreach (var item in model)
                     {
 
-                        var app = appBal.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                        var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
                         var appointmentType = app != null ? app.Name : string.Empty;
 
                         /*

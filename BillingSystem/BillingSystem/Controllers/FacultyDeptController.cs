@@ -1,27 +1,25 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="FacultyDeptController.cs" company="Spadez">
-//   Omnihealthcare
-// </copyright>
-// <summary>
-//   The faculty dept controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿
+using System.Collections.Generic;
+using System.Web.Mvc;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
 namespace BillingSystem.Controllers
 {
-    using System.Collections.Generic;
-    using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models;
 
     /// <summary>
     /// The faculty dept controller.
     /// </summary>
     public class FacultyDeptController : Controller
     {
+        private readonly IFacilityStructureService _fsService;
+
+        public FacultyDeptController(IFacilityStructureService fsService)
+        {
+            _fsService = fsService;
+        }
+
         // GET: /FacultyDept/
         #region Public Methods and Operators
 
@@ -33,9 +31,6 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            var gcBal = new GlobalCodeBal();
-
-            // var facilityEquipmentList = gcBal.GetRoomEquipmentALLList(Helpers.GetDefaultFacilityId().ToString());
             var viewtoRetrun = new RoomEquipmentView()
             {
                 GCCurrentDataView = new GlobalCodeCustomDModel(),
@@ -52,11 +47,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityDepartments(int coporateId, int facilityId)
         {
-            using (var facilityStructureBal = new FacilityStructureBal())
-            {
-                var facilityDepartmentList = facilityStructureBal.GetFacilityDepartments(coporateId, facilityId.ToString());
-                return PartialView(PartialViews.FacilityDepartmentListView, facilityDepartmentList);
-            }
+            var lst = _fsService.GetFacilityDepartments(coporateId, facilityId.ToString());
+            return PartialView(PartialViews.FacilityDepartmentListView, lst);
+
         }
 
         #endregion
