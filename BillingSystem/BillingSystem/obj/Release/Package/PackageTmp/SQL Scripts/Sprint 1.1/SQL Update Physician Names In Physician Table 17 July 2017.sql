@@ -1,3 +1,0 @@
---Update Physician SET PhysicianName = (Case WHEN ISNULL(U.LastName,'')='' OR U.FirstName=U.LastName THEN U.FirstName ELSE U.FirstName + ' - ' + U.LastName END)
---From Physician P 
---INNER JOIN Users U ON P.UserId = U.UserId

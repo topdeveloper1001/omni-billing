@@ -1,1 +1,0 @@
-Update GlobalCodeCategory Set GlobalCodeCategoryName='Clinician Specialty' Where GlobalCodeCategoryValue='1121'
