@@ -5,13 +5,14 @@ using BillingSystem.Models;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using BillingSystem.Common;
-using BillingSystem.Common.Common;
 using System.Linq;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class GlobalCodeCategoryController : BaseController
     {
+        private readonly ICPTCodesService _cptService;
         //
         // GET: /GlobalCodeCategory/
         /// <summary>
@@ -231,27 +232,24 @@ namespace BillingSystem.Controllers
         public ActionResult BindCptCodesForLabOrderSet()
         {
             var list = new List<DropdownListData>();
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+
+            var cptCodesList = _cptService.GetCodesByRange(80047, 89356, Helpers.DefaultCptTableNumber);
+            list.AddRange(cptCodesList.Select(item => new DropdownListData
             {
-                var cptCodesList = bal.GetCodesByRange(80047, 89356);
-                list.AddRange(cptCodesList.Select(item => new DropdownListData
-                {
-                    Text = string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription),
-                    Value = item.CodeNumbering,
-                    ExternalValue1 = item.CodeDescription,
-                    SortOrder = int.Parse(item.CodeNumbering)
-                }));
-            }
+                Text = string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription),
+                Value = item.CodeNumbering,
+                ExternalValue1 = item.CodeDescription,
+                SortOrder = int.Parse(item.CodeNumbering)
+            }));
+
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult CheckIfCptCodeExistsInRange(string value)
         {
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-            {
-                var status = bal.CheckIfCptCodeExistsInRange(value, 80047, 89356);
-                return Json(status);
-            }
+            var status = _cptService.CheckIfCptCodeExistsInRange(value, 80047, 89356, Helpers.DefaultCptTableNumber);
+            return Json(status);
+
         }
 
 

@@ -1,16 +1,14 @@
-﻿using System;
-using BillingSystem.Common.Common;
-using BillingSystem.Models;
+﻿using BillingSystem.Models;
 using BillingSystem.Common;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
-using NPOI.SS.Formula.Functions;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class BillingSystemParametersController : BaseController
     {
+        private readonly IBillingSystemParametersService _service;
         /// <summary>
         /// Get the details of the BillingSystemParameters View in the Model BillingSystemParameters such as BillingSystemParametersList, list of countries etc.
         /// </summary>
@@ -49,36 +47,24 @@ namespace BillingSystem.Controllers
             //Check if Model is not null
             if (model != null)
             {
-                using (var bal = new BillingSystemParametersBal())
+
+
+                if (model.Id > 0)
                 {
-                    ///*
-                    // * in case table number of logged-in user's Facility and Corporate is updated, it updates the same in the session. 
-                    // */
-                    //if (model.FacilityNumber.Trim().Equals(Helpers.GetDefaultFacilityNumber()) && model.CorporateId == Helpers.GetSysAdminCorporateID())
-                    //{
-                    //    var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                    //    if (objSession != null)
-                    //        objSession.TableNumber = !string.IsNullOrEmpty(model.TableNumber)
-                    //            ? model.TableNumber
-                    //            : "1001";
-                    //}
-
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                        //model.CorporateId = model.CorporateId;
-                        model.IsActive = true;
-                    }
-
-                    //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
-                    id = bal.SaveBillingSystemParameters(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                    //model.CorporateId = model.CorporateId;
+                    model.IsActive = true;
+                }
+
+                //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
+                id = _service.SaveBillingSystemParameters(model);
+
             }
             return Json(id);
         }
@@ -89,45 +75,43 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetBillingSystemParametersDetails(string facilityNumber, int corporateId)
         {
-            using (var bal = new BillingSystemParametersBal())
+            //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
+            var data = _service.GetDetailsByCorporateAndFacility(corporateId, facilityNumber);
+
+            var jsonResult = new
             {
-                //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
-                var data = bal.GetDetailsByCorporateAndFacility(corporateId, facilityNumber);
+                data.Id,
+                EffectiveDate = data.EffectiveDate.GetShortDateString1(),
+                EndDate = data.EndDate.GetShortDateString1(),
+                OupatientCloseBillsTime = data.OupatientCloseBillsTime.GetTimeStringFromDateTime(),
+                data.FacilityNumber,
+                data.BillHoldDays,
+                data.ARGLacct,
+                data.MgdCareGLacct,
+                data.BadDebtGLacct,
+                data.SmallBalanceGLacct,
+                data.SmallBalanceAmount,
+                data.SmallBalanceWriteoffDays,
+                data.ERCloseBillsHours,
+                data.IsActive,
+                data.ExternalValue1,
+                data.ExternalValue2,
+                data.ExternalValue3,
+                data.ExternalValue4,
+                data.CorporateId,
+                data.CPTTableNumber,
+                data.ServiceCodeTableNumber,
+                data.DrugTableNumber,
+                data.DRGTableNumber,
+                data.DiagnosisTableNumber,
+                data.HCPCSTableNumber,
+                data.BillEditRuleTableNumber,
+                data.DefaultCountry
+            };
 
-                var jsonResult = new
-                {
-                    data.Id,
-                    EffectiveDate = data.EffectiveDate.GetShortDateString1(),
-                    EndDate = data.EndDate.GetShortDateString1(),
-                    OupatientCloseBillsTime = data.OupatientCloseBillsTime.GetTimeStringFromDateTime(),
-                    data.FacilityNumber,
-                    data.BillHoldDays,
-                    data.ARGLacct,
-                    data.MgdCareGLacct,
-                    data.BadDebtGLacct,
-                    data.SmallBalanceGLacct,
-                    data.SmallBalanceAmount,
-                    data.SmallBalanceWriteoffDays,
-                    data.ERCloseBillsHours,
-                    data.IsActive,
-                    data.ExternalValue1,
-                    data.ExternalValue2,
-                    data.ExternalValue3,
-                    data.ExternalValue4,
-                    data.CorporateId,
-                    data.CPTTableNumber,
-                    data.ServiceCodeTableNumber,
-                    data.DrugTableNumber,
-                    data.DRGTableNumber,
-                    data.DiagnosisTableNumber,
-                    data.HCPCSTableNumber,
-                    data.BillEditRuleTableNumber,
-                    data.DefaultCountry
-                };
+            //Pass the ActionResult with the current BillingSystemParametersViewModel object as model to PartialView BillingSystemParametersAddEdit
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
 
-                //Pass the ActionResult with the current BillingSystemParametersViewModel object as model to PartialView BillingSystemParametersAddEdit
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
         }
     }
 }

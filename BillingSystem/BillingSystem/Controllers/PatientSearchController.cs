@@ -10,10 +10,17 @@ using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
 {
+    using BillingSystem.Bal.Interfaces;
     using System.Linq;
 
     public class PatientSearchController : BaseController
     {
+        private readonly IPatientInfoService _piService;
+
+        public PatientSearchController(IPatientInfoService piService)
+        {
+            _piService = piService;
+        }
 
         #region Patient search main
         /// <summary>
@@ -52,17 +59,16 @@ namespace BillingSystem.Controllers
             ViewBag.Message = null;
 
             var list = new List<PatientInfoCustomModel>();
-            using (var bal = new PatientInfoBal())
-            {
-                list = bal.GetPatientSearchResultAndOtherData(common);
 
-                if (list != null && list.Any())
-                {
-                    var first = list[0];
-                    if (Session[SessionNames.SessionClass.ToString()] is SessionClass objSession)
-                        first.SchedularViewAccessible = objSession.SchedularAccessible;
-                }
+            list = _piService.GetPatientSearchResultAndOtherData(common);
+
+            if (list != null && list.Any())
+            {
+                var first = list[0];
+                if (Session[SessionNames.SessionClass.ToString()] is SessionClass objSession)
+                    first.SchedularViewAccessible = objSession.SchedularAccessible;
             }
+
 
             return PartialView(PartialViews.PatientSearchList, list);
         }
@@ -96,8 +102,7 @@ namespace BillingSystem.Controllers
                 common.CorporateId = session.CorporateId;
             }
 
-            var bal = new PatientInfoBal();
-            var objPatientInfoData = bal.GetPatientSearchResult(common);
+            var objPatientInfoData = _piService.GetPatientSearchResult(common);
             ViewBag.Message = null;
 
             if (objPatientInfoData.Count > 0)
@@ -215,8 +220,8 @@ namespace BillingSystem.Controllers
             var corporateid = Helpers.GetSysAdminCorporateID();
             common.FacilityId = facilityid;
             common.CorporateId = corporateid;
-            var bal = new PatientInfoBal();
-            var objPatientInfoData = bal.GetPatientSearchResultByCId(common);
+
+            var objPatientInfoData = _piService.GetPatientSearchResultByCId(common);
             ViewBag.Message = null;
 
             if (objPatientInfoData.Count > 0)
@@ -278,8 +283,7 @@ namespace BillingSystem.Controllers
                 common.CorporateId = session.CorporateId;
             }
 
-            var bal = new PatientInfoBal();
-            var objPatientInfoData = bal.GetPatientSearchResult(common);
+            var objPatientInfoData = _piService.GetPatientSearchResult(common);
             ViewBag.Message = null;
 
             if (objPatientInfoData.Count > 0)

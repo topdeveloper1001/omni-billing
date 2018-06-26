@@ -1,19 +1,18 @@
 ﻿using System.Linq;
-using System.Transactions;
-using System.Web.Configuration;
 using BillingSystem.Model;
 using System.Collections.Generic;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Common.Common;
 using System;
+using BillingSystem.Bal.Mapper;
+using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
-    using BillingSystem.Bal.Mapper;
-    using BillingSystem.Model.EntityDto;
-
     public class OpenOrderBal : BaseBal
     {
+        private readonly IRepository<Encounter> _eRepository;
+        private readonly IRepository<GlobalCodes> _gRepository;
         private OpenOrderMapper OpenOrderMapper { get; set; }
 
         public OpenOrderBal()
@@ -262,13 +261,40 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public IEnumerable<EncounterCustomModel> GetEncountersListByPatientId(int patientId)
         {
-            using (var bal = new EncounterBal())
-            {
-                var list = bal.GetEncounterListByPatientId(patientId);
-                return list;
-            }
-        }
+            var list = new List<EncounterCustomModel>();
 
+            var lstEncounter = _eRepository.Where(_ => _.PatientID == patientId).OrderByDescending(x => x.EncounterStartTime).ToList();
+            var encountertypeCat = Convert.ToInt32(GlobalCodeCategoryValue.EncounterType);
+            var encounterPatienttypeCat = Convert.ToInt32(GlobalCodeCategoryValue.EncounterPatientType);
+            list.AddRange(lstEncounter.Select(item => new EncounterCustomModel
+            {
+                EncounterID = item.EncounterID,
+                EncounterNumber = item.EncounterNumber,
+                EncounterStartTime = item.EncounterStartTime,
+                EncounterEndTime = item.EncounterEndTime,
+                Charges = item.Charges,
+                Payment = item.Payment,
+                PatientID = item.PatientID,
+                EncounterTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString(encountertypeCat),
+                    item.EncounterType.ToString()),
+                EncounterPatientTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString(encounterPatienttypeCat),
+                    item.EncounterPatientType.ToString()),
+            }));
+
+            return list;
+        }
+        private string GetNameByGlobalCodeValueAndCategoryValue(string categoryValue, string globalCodeValue)
+        {
+            if (!string.IsNullOrEmpty(categoryValue) && !string.IsNullOrEmpty(globalCodeValue))
+            {
+                var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
+                && c.GlobalCodeValue.Equals(globalCodeValue)).FirstOrDefault();
+
+                if (globalCode != null)
+                    return globalCode.GlobalCodeName;
+            }
+            return string.Empty;
+        }
         /// <summary>
         /// Gets the favorite orders.
         /// </summary>

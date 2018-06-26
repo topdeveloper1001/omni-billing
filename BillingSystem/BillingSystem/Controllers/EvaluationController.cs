@@ -3,18 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
-using Microsoft.Ajax.Utilities;
 
 namespace BillingSystem.Controllers
 {
     public class EvaluationController : BaseController
     {
+        private readonly IEncounterService _eService;
+
+
         const string partialViewPath = "../Evaluation/";
+
+        public EvaluationController(IEncounterService eService)
+        {
+            _eService = eService;
+        }
+
         //
         // GET: /Evaluation/
         public ActionResult Index(int? pId)
@@ -307,8 +316,7 @@ namespace BillingSystem.Controllers
             {
                 if (encounterId == 0 && rowExists == "0" && patientId > 0)
                 {
-                    var eBal = new EncounterBal();
-                    var currentEncounter = eBal.GetActiveEncounterByPateintId(Convert.ToInt32(patientId));
+                    var currentEncounter = _eService.GetActiveEncounterByPateintId(Convert.ToInt32(patientId));
                     if (currentEncounter != null)
                         encounterId = currentEncounter.EncounterID;
                     else

@@ -38,3 +38,5 @@ D:\Omni\V1\BillingSystem\BillingSystem.UnitTests\obj\Debug\BillingSystem.UnitTes
 D:\Omni\V1\BillingSystem\BillingSystem.UnitTests\obj\Debug\BillingSystem.UnitTests.csproj.CopyComplete
 D:\Omni\V1\BillingSystem\BillingSystem.UnitTests\obj\Debug\BillingSystem.UnitTests.dll
 D:\Omni\V1\BillingSystem\BillingSystem.UnitTests\obj\Debug\BillingSystem.UnitTests.pdb
+D:\Office\OmniBilling\Code\V3\BillingSystem\BillingSystem.UnitTests\obj\Debug\BillingSystem.UnitTests.csprojResolveAssemblyReference.cache
+D:\Office\OmniBilling\Code\V3\BillingSystem\BillingSystem.UnitTests\obj\Debug\BillingSystem.UnitTests.csproj.CoreCompileInputs.cache

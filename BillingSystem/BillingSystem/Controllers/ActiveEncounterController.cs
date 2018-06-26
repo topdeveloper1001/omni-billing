@@ -25,12 +25,22 @@ namespace BillingSystem.Controllers
 
     using Kendo.Mvc.Extensions;
     using Kendo.Mvc.UI;
+    using BillingSystem.Bal.Interfaces;
 
     /// <summary>
     /// The active encounter controller.
     /// </summary>
     public class ActiveEncounterController : BaseController
     {
+        private readonly IEncounterService _service;
+        private readonly IPatientInfoService _piService;
+
+        public ActiveEncounterController(IEncounterService service, IPatientInfoService piService)
+        {
+            _service = service;
+            _piService = piService;
+        }
+
         /// <summary>
         /// Actives the encounter.
         /// </summary>
@@ -44,86 +54,25 @@ namespace BillingSystem.Controllers
                 ViewBag.MessageId = message;
             }
 
-            using (var encounterBal = new EncounterBal(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrugTableNumber))
+            var allEncounters = _service.GetAllActiveEncounters(
+                Convert.ToString(Helpers.GetDefaultFacilityId()), new List<int> { 1, 2, 3 });
+
+            var m = new ActiveEncounter
             {
-                //var facilitId = Helpers.GetDefaultFacilityId();
-                //var activeEncounter = new ActiveEncounter
-                //{ // In Patients List Where EncounterPatientType is In Patient
-                //    ActiveInPatientEncounterList =
-                //        encounterBal.GetActiveEncounters(new CommonModel
-                //        {
-                //            EncounterPatientType = Convert.ToInt32(EncounterPatientType.InPatient),
-                //            FacilityNumber = facilitId.ToString()
-                //        }),
+                ActiveInPatientEncounterList =
+                    allEncounters.Where(f => f.EncounterPatientType == (int)EncounterPatientType.InPatient)
+                        .ToList(),
+                ActiveOutPatientEncounterList =
+                    allEncounters.Where(f => f.EncounterPatientType == (int)EncounterPatientType.OutPatient)
+                        .ToList(),
+                ActiveEmergencyEncounterList =
+                    allEncounters.Where(f => f.EncounterPatientType == (int)EncounterPatientType.ERPatient)
+                        .ToList(),
+            };
 
-                //    // In Patients List Where EncounterPatientType is Out Patient
-                //    ActiveOutPatientEncounterList =
-                //        encounterBal.GetActiveEncounters(new CommonModel
-                //        {
-                //            EncounterPatientType = Convert.ToInt32(EncounterPatientType.OutPatient),
-                //            FacilityNumber = facilitId.ToString()
-                //        }),
+            SetAccessOfActions(m);
+            return View(m);
 
-
-
-                //    // In Patients List Where EncounterPatientType is ER Patient
-                //    ActiveEmergencyEncounterList =
-                //        encounterBal.GetActiveEncounters(new CommonModel
-                //        {
-                //            EncounterPatientType = Convert.ToInt32(EncounterPatientType.ERPatient),
-                //            FacilityNumber = facilitId.ToString()
-                //        })
-                //};
-
-                // ......Section is written for the Role Based Icon view
-                //using (var bal = new RoleTabsBal())
-                //{
-                //    var roleId = Helpers.GetDefaultRoleId();
-                //    activeEncounter.EncounterViewAccessible =
-                //        (bal.CheckIfTabNameAccessibleToGivenRole("Admit Patient",
-                //            ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
-                //            Convert.ToInt32(roleId)) &&
-                //         bal.CheckIfTabNameAccessibleToGivenRole("Start Outpatient visit",
-                //             ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
-                //             Convert.ToInt32(roleId)));
-                //    activeEncounter.EndEncounterViewAccessible =
-                //        (bal.CheckIfTabNameAccessibleToGivenRole("Discharge patient",
-                //            ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
-                //            Convert.ToInt32(roleId)) &&
-                //         bal.CheckIfTabNameAccessibleToGivenRole("Close Outpatient visit",
-                //             ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
-                //             Convert.ToInt32(roleId)));
-
-
-
-                //    activeEncounter.EhrViewAccessible = bal.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
-                //    activeEncounter.TransactionsViewAccessible = bal.CheckIfTabNameAccessibleToGivenRole("Bed Transactions", ControllerAccess.PreliminaryBill.ToString(), ActionNameAccess.Index.ToString(), Convert.ToInt32(roleId));
-                //    activeEncounter.DiagnosisViewAccessible = bal.CheckIfTabNameAccessibleToGivenRole("Code Bill", ControllerAccess.ActiveEncounter.ToString(), ActionNameAccess.ActiveEncounter.ToString(), Convert.ToInt32(roleId));
-                //    activeEncounter.BillHeaderViewAccessible = bal.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill", ControllerAccess.BillHeader.ToString(), ActionNameAccess.Index.ToString(), Convert.ToInt32(roleId));
-                //    activeEncounter.AuthorizationViewAccessible = bal.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization", ControllerAccess.Authorization.ToString(), ActionNameAccess.AuthorizationMain.ToString(), Convert.ToInt32(roleId));
-
-                //    activeEncounter.PatientInfoViewAccessible = bal.CheckIfTabNameAccessibleToGivenRole("Patient Lookup", ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(), Convert.ToInt32(roleId));
-                //}
-
-                var allEncounters = encounterBal.GetAllActiveEncounters(
-                    Convert.ToString(Helpers.GetDefaultFacilityId()), new List<int> { 1, 2, 3 });
-
-                var m = new ActiveEncounter
-                {
-                    ActiveInPatientEncounterList =
-                        allEncounters.Where(f => f.EncounterPatientType == (int)EncounterPatientType.InPatient)
-                            .ToList(),
-                    ActiveOutPatientEncounterList =
-                        allEncounters.Where(f => f.EncounterPatientType == (int)EncounterPatientType.OutPatient)
-                            .ToList(),
-                    ActiveEmergencyEncounterList =
-                        allEncounters.Where(f => f.EncounterPatientType == (int)EncounterPatientType.ERPatient)
-                            .ToList(),
-                };
-
-                SetAccessOfActions(m);
-                return View(m);
-            }
         }
 
         /// <summary>
@@ -133,18 +82,14 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetEncounterDetailById(string encounterId)
         {
-            using (var encounterBal = new EncounterBal())
+            var encounterData = _service.GetEncounterDetailById(Convert.ToInt32(encounterId));
+            if (encounterData != null)
             {
-                var encounterData = encounterBal.GetEncounterDetailById(Convert.ToInt32(encounterId));
-                if (encounterData != null)
-                {
-                    var redirectUrl = Request.RawUrl + "?patientId=" + encounterData.PatientID + "&encounterId=" +
-                                      encounterId;
-                    return Json(redirectUrl);
-                }
-                return Json(null);
+                var redirectUrl = Request.RawUrl + "?patientId=" + encounterData.PatientID + "&encounterId=" +
+                                  encounterId;
+                return Json(redirectUrl);
             }
-
+            return Json(null);
         }
 
         /// <summary>
@@ -180,11 +125,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public IEnumerable<EncounterExtension> GetChartData(int facilityId, int displayTypeId, string fromDate, string toDate)
         {
-            using (var encounterBal = new EncounterBal())
-            {
-                IEnumerable<EncounterExtension> objData = encounterBal.GetEncounterChartData(facilityId, displayTypeId, new DateTime(DateTime.Today.Year, 1, 1), DateTime.Today);
-                return objData;
-            }
+            IEnumerable<EncounterExtension> objData = _service.GetEncounterChartData(facilityId, displayTypeId, new DateTime(DateTime.Today.Year, 1, 1), DateTime.Today);
+            return objData;
+
         }
 
         /// <summary>
@@ -193,12 +136,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetActiveEncountersChartData()
         {
-            using (var encounterBal = new EncounterBal())
-            {
-                var facilityid = Helpers.GetDefaultFacilityId();
-                var objData = encounterBal.GetActiveEncounterChartData(facilityid, 0, new DateTime(DateTime.Today.Year, 1, 1), DateTime.Today);
-                return Json(objData, JsonRequestBehavior.AllowGet);
-            }
+            var facilityid = Helpers.GetDefaultFacilityId();
+            var objData = _service.GetActiveEncounterChartData(facilityid, 0, new DateTime(DateTime.Today.Year, 1, 1), DateTime.Today);
+            return Json(objData, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -213,24 +154,23 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            using (var bal = new EncounterBal())
-            {
-                var list = bal.GetUnclosedEncounters(facilityId, corporateId);
 
-                var jsonResult = new
-                {
-                    unclosedEncounters = list.OrderBy(x => x.ErrorStatus).Where(x => !x.ErrorStatus.Equals("E")).Select(f => new[] { Convert.ToString(f.EncounterID), f.PatientIsVIP, f.FirstName, f.LastName,
+            var list = _service.GetUnclosedEncounters(facilityId, corporateId);
+
+            var jsonResult = new
+            {
+                unclosedEncounters = list.OrderBy(x => x.ErrorStatus).Where(x => !x.ErrorStatus.Equals("E")).Select(f => new[] { Convert.ToString(f.EncounterID), f.PatientIsVIP, f.FirstName, f.LastName,
                         f.BirthDate.HasValue ? f.BirthDate.Value.ToString("d") : string.Empty, f.EncounterNumber, f.PersonEmiratesIDNumber,
                         f.EncounterStartTime.HasValue ? f.EncounterStartTime.Value.ToString("d") : string.Empty,
                         f.EncounterEndTime.HasValue ? f.EncounterEndTime.Value.ToString("d") : string.Empty, f.EncounterPatientTypeName,
                         f.ErrorStatus, Convert.ToString(f.PatientID) })
-                };
+            };
 
-                var s = Json(jsonResult, JsonRequestBehavior.AllowGet);
-                s.MaxJsonLength = int.MaxValue;
-                s.RecursionLimit = int.MaxValue;
-                return s;
-            }
+            var s = Json(jsonResult, JsonRequestBehavior.AllowGet);
+            s.MaxJsonLength = int.MaxValue;
+            s.RecursionLimit = int.MaxValue;
+            return s;
+
         }
 
         /// <summary>
@@ -338,20 +278,18 @@ namespace BillingSystem.Controllers
 
             return message;
         }
-        
+
         public ActionResult UpdateTriageInEncounter(int encounterId, string triageLevel)
         {
             var latestTriageLevel = string.Empty;
-            using (var ebal = new EncounterBal())
-                latestTriageLevel = ebal.UpdateTriageLevelInEncounter(encounterId, triageLevel);
+            latestTriageLevel = _service.UpdateTriageLevelInEncounter(encounterId, triageLevel);
 
             return Json(triageLevel);
         }
-        
+
         public JsonResult GetTriageData(int encounterId)
         {
-            var eBal = new EncounterBal();
-            var triValue = eBal.GetTriageData(encounterId);
+            var triValue = _service.GetTriageData(encounterId);
             using (var ebal = new GlobalCodeBal())
             {
                 var list = new List<DropdownListData>();
@@ -374,11 +312,10 @@ namespace BillingSystem.Controllers
             }
 
         }
-        
+
         public JsonResult GetPatientStageData(int encounterId)
         {
-            var enbal = new EncounterBal();
-            var stateValue = enbal.GetPatientStateData(encounterId);
+            var stateValue = _service.GetPatientStateData(encounterId);
             using (var ebal = new GlobalCodeBal())
             {
                 var list = new List<DropdownListData>();
@@ -402,12 +339,11 @@ namespace BillingSystem.Controllers
             }
 
         }
-        
+
         public ActionResult UpdatePatientStageInEncounter(int encounterId, string patientState)
         {
             var latestPatientStage = string.Empty;
-            using (var ebal = new EncounterBal())
-                latestPatientStage = ebal.UpdatePatitentStageInEncounter(encounterId, patientState);
+            latestPatientStage = _service.UpdatePatitentStageInEncounter(encounterId, patientState);
 
             return Json(latestPatientStage);
         }
@@ -417,29 +353,23 @@ namespace BillingSystem.Controllers
             var list = new List<PatientInfoCustomModel>();
             var newList = new List<DropdownListData>();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            using (var pInfo = new PatientInfoBal())
+            var mList = _service.GetActiveMotherDropdownData(corporateId);
+
+            foreach (var listData in mList)
             {
-                using (var eBal = new EncounterBal())
+                var list1 = _piService.PatientDetailsByPatientIdForDropdown(Convert.ToInt32(listData.PatientID));
+                if (list1.PatientInfo != null)
+                    list.Add(list1);
+            }
+
+            if (list.Count > 0)
+            {
+                newList.AddRange(list.Select(item => new DropdownListData
                 {
-                    var mList = eBal.GetActiveMotherDropdownData(corporateId);
-
-                    foreach (var listData in mList)
-                    {
-                        var list1 = pInfo.PatientDetailsByPatientIdForDropdown(Convert.ToInt32(listData.PatientID));
-                        if (list1.PatientInfo != null)
-                            list.Add(list1);
-                    }
-
-                    if (list.Count > 0)
-                    {
-                        newList.AddRange(list.Select(item => new DropdownListData
-                        {
-                            Text = string.Format("{0} - {1}", item.PatientInfo.PersonFirstName, item.PatientInfo.PersonLastName),
-                            Value = item.PatientInfo.PatientID.ToString()
-                        }));
-                        return Json(newList);
-                    }
-                }
+                    Text = string.Format("{0} - {1}", item.PatientInfo.PersonFirstName, item.PatientInfo.PersonLastName),
+                    Value = item.PatientInfo.PatientID.ToString()
+                }));
+                return Json(newList);
             }
 
             return Json(0);
@@ -449,29 +379,27 @@ namespace BillingSystem.Controllers
         public JsonResult UpdateEncounterEndCheck(int encounterId)
         {
             var userId = Helpers.GetLoggedInUserId();
-            using (var bal = new EncounterBal())
-            {
-                int encounterEndStatus = bal.GetEncounterEndCheck(encounterId, userId);
-                return Json(encounterEndStatus, JsonRequestBehavior.AllowGet);
-            }
+
+            int encounterEndStatus = _service.GetEncounterEndCheck(encounterId, userId);
+            return Json(encounterEndStatus, JsonRequestBehavior.AllowGet);
+
         }
 
         public JsonResult CheckEncounterEndStatus(int encounterid)
         {
             var userId = Helpers.GetLoggedInUserId();
-            using (var encounterbal = new EncounterBal())
-            {
-                int encounterEndStatus = encounterbal.GetEncounterEndCheck(encounterid, userId);
-                switch (encounterEndStatus)
-                {
-                    case 1:
-                        return this.Json("Success");
-                    case 99:
-                        return this.Json("AuthError");
 
-                }
-                return this.Json("Error");
+            int encounterEndStatus = _service.GetEncounterEndCheck(encounterid, userId);
+            switch (encounterEndStatus)
+            {
+                case 1:
+                    return this.Json("Success");
+                case 99:
+                    return this.Json("AuthError");
+
             }
+            return this.Json("Error");
+
         }
 
 

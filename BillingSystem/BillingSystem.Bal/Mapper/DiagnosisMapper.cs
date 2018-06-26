@@ -36,11 +36,11 @@ namespace BillingSystem.Bal.Mapper
                     }
                 }
 
-                using (var enBal = new EncounterBal())
-                {
-                    vm.EncounterNumber = enBal.GetEncounterNumberByEncounterId(Convert.ToInt32(model.EncounterID));
-                    vm.EnteredBy = enBal.GetNameByUserId(Convert.ToInt32(model.CreatedBy));
-                }
+                //using (var enBal = new EncounterBal())
+                //{
+                //    vm.EncounterNumber = enBal.GetEncounterNumberByEncounterId(Convert.ToInt32(model.EncounterID));
+                //    vm.EnteredBy = enBal.GetNameByUserId(Convert.ToInt32(model.CreatedBy));
+                //}
 
                 using (var dBal = new DiagnosisBal(DiagnosisTableNumber, DrgTableNumber))
                     vm.DiagnosisTypeName = dBal.GetDiagnosisTypeById(model.DiagnosisType);

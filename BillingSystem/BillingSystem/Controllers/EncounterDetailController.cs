@@ -1,4 +1,5 @@
 ﻿using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using System;
 using System.Web.Mvc;
@@ -7,6 +8,17 @@ namespace BillingSystem.Controllers
 {
     public class EncounterDetailController : BaseController
     {
+        private readonly IEncounterService _eService;
+        private readonly IBillActivityService _blService;
+        private readonly IPreliminaryBillService _plService;
+
+        public EncounterDetailController(IEncounterService eService, IBillActivityService blService, IPreliminaryBillService plService)
+        {
+            _eService = eService;
+            _blService = blService;
+            _plService = plService;
+        }
+
         //
         // GET: /EncounterDetail/
         /// <summary>
@@ -16,23 +28,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index(string encId)
         {
-            using (var bal = new EncounterBal())
+            if (!string.IsNullOrEmpty(encId))
             {
-                using (var preliminaryBillBal = new PreliminaryBillBal())
-                {
-                    if (!string.IsNullOrEmpty(encId))
-                    {
-                        var encounterCustomModel = bal.GetEncounterDetailByEncounterID(Convert.ToInt32(encId));
-                        var encounterTransactionBal = new BillActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-                        var encounterTransactionLst = encounterTransactionBal.GetBillActivitiesByEncounterId(Convert.ToInt32(encId));
-                        encounterCustomModel.EncounterBedTransaction = encounterTransactionLst;
-                        //encounterCustomModel.EncounterBedTransaction =
-                        //    preliminaryBillBal.GetBedTransactionByEncounterID(Convert.ToInt32(encId));
-                        return View(encounterCustomModel);
-                    }
-                }
+                var encounterCustomModel = _eService.GetEncounterDetailByEncounterID(Convert.ToInt32(encId));
+                var encounterTransactionLst = _blService.GetBillActivitiesByEncounterId(Convert.ToInt32(encId), Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+                encounterCustomModel.EncounterBedTransaction = encounterTransactionLst;
+                return View(encounterCustomModel);
             }
+
+
             return RedirectToAction(ActionResults.patientSearch, ControllerNames.patientSearch);
         }
-	}
+    }
 }

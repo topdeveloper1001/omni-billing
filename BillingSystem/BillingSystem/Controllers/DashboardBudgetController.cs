@@ -4,11 +4,19 @@ using System.Linq;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DashboardBudgetController : BaseController
     {
+        private readonly IDashboardBudgetService _service;
+
+        public DashboardBudgetController(IDashboardBudgetService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the DashboardBudget View in the Model DashboardBudget such as DashboardBudgetList, list of countries etc.
         /// </summary>
@@ -17,18 +25,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DashboardBudgetMain()
         {
-            //Initialize the DashboardBudget BAL object
-            var dashboardBudgetBal = new DashboardBudgetBal();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
             //Get the Entity list
-            var dashboardBudgetList = dashboardBudgetBal.GetDashboardBudget(corporateid, facilityid).Where(x => x.BudgetType == 1).ToList();
+            var dashboardBudgetList = _service.GetDashboardBudget(corporateid, facilityid).Where(x => x.BudgetType == 1).ToList();
 
             //Intialize the View Model i.e. DashboardBudgetView which is binded to Main View Index.cshtml under DashboardBudget
             var dashboardBudgetView = new DashboardBudgetView
             {
-               DashboardBudgetList = dashboardBudgetList,
-               CurrentDashboardBudget = new Model.DashboardBudget()
+                DashboardBudgetList = dashboardBudgetList,
+                CurrentDashboardBudget = new Model.DashboardBudget()
             };
 
             //Pass the View Model in ActionResult to View DashboardBudget
@@ -42,17 +48,14 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindDashboardBudgetList()
         {
-            //Initialize the DashboardBudget BAL object
-            using (var dashboardBudgetBal = new DashboardBudgetBal())
-            {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var facilityid = Helpers.GetDefaultFacilityId();
-                //Get the facilities list
-                var dashboardBudgetList = dashboardBudgetBal.GetDashboardBudget(corporateid, facilityid).Where(x => x.BudgetType == 1).ToList();
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var facilityid = Helpers.GetDefaultFacilityId();
+            //Get the facilities list
+            var dashboardBudgetList = _service.GetDashboardBudget(corporateid, facilityid).Where(x => x.BudgetType == 1).ToList();
 
-                //Pass the ActionResult with List of DashboardBudgetViewModel object to Partial View DashboardBudgetList
-                return PartialView(PartialViews.DashboardBudgetList, dashboardBudgetList);
-            }
+            //Pass the ActionResult with List of DashboardBudgetViewModel object to Partial View DashboardBudgetList
+            return PartialView(PartialViews.DashboardBudgetList, dashboardBudgetList);
+
         }
 
         /// <summary>
@@ -66,31 +69,29 @@ namespace BillingSystem.Controllers
         {
             //Initialize the newId variable 
             var newId = -1;
-			var userId = Helpers.GetLoggedInUserId();
+            var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
             var currentDatetime = Helpers.GetInvariantCultureDateTime();
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DashboardBudgetBal())
+                if (model.BudgetId > 0)
                 {
-                    if (model.BudgetId > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDatetime;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDatetime;
-                    }
-                    model.CorporateId = corporateid;
-                    model.FacilityId = facilityid;
-                    //Call the AddDashboardBudget Method to Add / Update current DashboardBudget
-                    newId = bal.SaveDashboardBudget(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDatetime;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDatetime;
+                }
+                model.CorporateId = corporateid;
+                model.FacilityId = facilityid;
+                //Call the AddDashboardBudget Method to Add / Update current DashboardBudget
+                newId = _service.SaveDashboardBudget(model);
             }
+
             return Json(newId);
         }
 
@@ -101,14 +102,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDashboardBudget(int id)
         {
-            using (var bal = new DashboardBudgetBal())
-            {
-                //Call the AddDashboardBudget Method to Add / Update current DashboardBudget
-                var currentDashboardBudget = bal.GetDashboardBudgetById(id);
+            var currentDashboardBudget = _service.GetDashboardBudgetById(id);
 
-                //Pass the ActionResult with the current DashboardBudgetViewModel object as model to PartialView DashboardBudgetAddEdit
-                return PartialView(PartialViews.DashboardBudgetAddEdit, currentDashboardBudget);
-            }
+            //Pass the ActionResult with the current DashboardBudgetViewModel object as model to PartialView DashboardBudgetAddEdit
+            return PartialView(PartialViews.DashboardBudgetAddEdit, currentDashboardBudget);
         }
 
         /// <summary>
@@ -118,17 +115,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDashboardBudget(int id)
         {
-            using (var bal = new DashboardBudgetBal())
-            {
-                //Get DashboardBudget model object by current DashboardBudget ID
-                var currentDashboardBudget = bal.GetDashboardBudgetById(id);
-				var userId = Helpers.GetLoggedInUserId();
-                var result = bal.DeleteDashBoradBudget(currentDashboardBudget);
-                //return deleted ID of current DashboardBudget as Json Result to the Ajax Call.
-                return Json(result);
-                //Check If DashboardBudget model is not null
-            }
-            //Return the Json result as Action Result back JSON Call Success
+            var currentDashboardBudget = _service.GetDashboardBudgetById(id);
+            var userId = Helpers.GetLoggedInUserId();
+            var result = _service.DeleteDashBoradBudget(currentDashboardBudget);
+            //return deleted ID of current DashboardBudget as Json Result to the Ajax Call.
+            return Json(result);
         }
 
         /// <summary>
@@ -146,36 +137,33 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetDashBoardBudgetData(int id)
         {
-            using (var bal=new DashboardBudgetBal())
+            var current = _service.GetDashboardBudgetById(id);
+            var jsonData = new
             {
-                var current = bal.GetDashboardBudgetById(id);
-                var jsonData = new
-                {
-                    current.AprilBudget,
-                    current.AugustBudget,
-                    current.BudgetDescription,
-                    current.BudgetFor,
-                    current.BudgetId,
-                    current.BudgetType,
-                    current.CorporateId,
-                    current.DecemberBudget,
-                    current.DepartmentNumber,
-                    current.FacilityId,
-                    current.FebruaryBudget,
-                    current.FiscalYear,
-                    current.IsActive,
-                    current.JanuaryBudget,
-                    current.JulyBudget,
-                    current.JuneBudget,
-                    current.MarchBudget,
-                    current.MayBudget,
-                    current.NovemberBudget,
-                    current.OctoberBudget,
-                    current.SeptemberBudget,
-                    
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-            }
+                current.AprilBudget,
+                current.AugustBudget,
+                current.BudgetDescription,
+                current.BudgetFor,
+                current.BudgetId,
+                current.BudgetType,
+                current.CorporateId,
+                current.DecemberBudget,
+                current.DepartmentNumber,
+                current.FacilityId,
+                current.FebruaryBudget,
+                current.FiscalYear,
+                current.IsActive,
+                current.JanuaryBudget,
+                current.JulyBudget,
+                current.JuneBudget,
+                current.MarchBudget,
+                current.MayBudget,
+                current.NovemberBudget,
+                current.OctoberBudget,
+                current.SeptemberBudget,
+
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
     }
 }

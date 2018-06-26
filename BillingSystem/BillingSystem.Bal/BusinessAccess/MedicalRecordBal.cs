@@ -6,11 +6,13 @@ using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using System.Transactions;
 using BillingSystem.Repository.Common;
+using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
     public class MedicalRecordBal : BaseBal
     {
+        private readonly IRepository<Users> _uRepository;
         /// <summary>
         /// Get the Entity
         /// </summary>
@@ -66,7 +68,6 @@ namespace BillingSystem.Bal.BusinessAccess
                     && a.MedicalRecordType == MedicalRecordType).OrderByDescending(x => x.MedicalRecordID);
 
                     AlergyCustomModel allergy = null;
-                    var uBal = new UsersBal();
                     var gcBal = new GlobalCodeBal();
                     var gccBal = new GlobalCodeCategoryBal();
 
@@ -77,7 +78,7 @@ namespace BillingSystem.Bal.BusinessAccess
                             CurrentAlergy = item,
                             AlergyName = gcBal.GetNameByGlobalCodeId(Convert.ToInt32(item.GlobalCode)),
                             AlergyType = gccBal.GetGlobalCategoryNameById(Convert.ToString(item.GlobalCodeCategoryID)),
-                            AddedBy = uBal.GetNameByUserId(item.CreatedBy)
+                            AddedBy = GetNameByUserId1(item.CreatedBy)
                         };
 
                         if ((item.GlobalCode != null && (int)item.GlobalCode == 0) && (item.GlobalCodeCategoryID != null
@@ -98,6 +99,11 @@ namespace BillingSystem.Bal.BusinessAccess
             }
         }
 
+        public string GetNameByUserId1(int? UserID)
+        {
+            var usersModel = _uRepository.Where(x => x.UserID == UserID && x.IsDeleted == false).FirstOrDefault();
+            return usersModel != null ? usersModel.FirstName + " " + usersModel.LastName : string.Empty;
+        }
         /// <summary>
         /// Get Entity Name By Id
         /// </summary>

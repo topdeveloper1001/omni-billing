@@ -33,21 +33,21 @@ namespace BillingSystem.Bal.Mapper
         /// </returns>
         public override CarePlanTaskCustomModel MapModelToViewModel(CarePlanTask model)
         {
-            CarePlanTaskCustomModel vm = base.MapModelToViewModel(model);
-            var cBal = new CarePlanTaskBal();
-            var rBal = new RoleBal();
-            var gBal = new GlobalCodeBal();
-            vm.Activity = gBal.GetNameByGlobalCodeValueAndCategoryValue("1201", Convert.ToString(model.ActivityType));
-            vm.Occurrence = gBal.GetNameByGlobalCodeValueAndCategoryValue(
-                "4906",
-                Convert.ToString(model.RecurranceType));
-            vm.RecurranceTimeIntervalType = gBal.GetNameByGlobalCodeValueAndCategoryValue(
-                "4907",
-                Convert.ToString(model.RecTImeIntervalType));
-            vm.ResponsibleUser = rBal.GetRoleNameById(Convert.ToInt32(model.ResponsibleUserType));
-            vm.CarePlan = (model.CarePlanId != null) && (model.CarePlanId != 9999)
-                              ? cBal.GetCarePlanNameById(Convert.ToInt32(model.CarePlanId))
-                              : "Single Task";
+            var vm = base.MapModelToViewModel(model);
+            //var cBal = new CarePlanTaskService();
+            //var rBal = new RoleBal();
+            //var gBal = new GlobalCodeBal();
+            //vm.Activity = gBal.GetNameByGlobalCodeValueAndCategoryValue("1201", Convert.ToString(model.ActivityType));
+            //vm.Occurrence = gBal.GetNameByGlobalCodeValueAndCategoryValue(
+            //    "4906",
+            //    Convert.ToString(model.RecurranceType));
+            //vm.RecurranceTimeIntervalType = gBal.GetNameByGlobalCodeValueAndCategoryValue(
+            //    "4907",
+            //    Convert.ToString(model.RecTImeIntervalType));
+            //vm.ResponsibleUser = rBal.GetRoleNameById(Convert.ToInt32(model.ResponsibleUserType));
+            //vm.CarePlan = (model.CarePlanId != null) && (model.CarePlanId != 9999)
+            //                  ? cBal.GetCarePlanNameById(Convert.ToInt32(model.CarePlanId))
+            //                  : "Single Task";
             return vm;
         }
 

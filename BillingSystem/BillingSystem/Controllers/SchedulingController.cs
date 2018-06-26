@@ -15,6 +15,7 @@ namespace BillingSystem.Controllers
     using System.Web.Mvc;
 
     using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
@@ -24,6 +25,17 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class SchedulingController : Controller
     {
+        private readonly IFacilityStructureService _fsService;
+        private readonly IPatientInfoService _piService;
+        private readonly IAppointmentTypesService _aService;
+
+        public SchedulingController(IFacilityStructureService fsService, IPatientInfoService piService, IAppointmentTypesService aService)
+        {
+            _fsService = fsService;
+            _piService = piService;
+            _aService = aService;
+        }
+
         // GET: /Schedular/
         #region Public Methods and Operators
 
@@ -67,14 +79,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult LoadFacilityDepartmentData(string facilityid)
         {
-            using (var facilityBal = new FacilityStructureBal())
-            {
+            
                 // Get the facilities list
                 var cId = Helpers.GetSysAdminCorporateID();
-                var facilityDepartmentList = facilityBal.GetFacilityDepartments(cId, facilityid);
+                var facilityDepartmentList = _fsService.GetFacilityDepartments(cId, facilityid);
                 var viewpath = string.Format("../Scheduling/{0}", PartialViews.FacilityDepartmentListView);
                 return PartialView(viewpath, facilityDepartmentList);
-            }
+             
         }
 
         /// <summary>
@@ -323,7 +334,7 @@ namespace BillingSystem.Controllers
                     // {
                     // save Patient Info
 
-                    var patientinfo = model[0].AssociatedId != 0 ? new PatientInfoBal().GetPatientInfoById(model[0].AssociatedId) :
+                    var patientinfo = model[0].AssociatedId != 0 ? _piService.GetPatientInfoById(model[0].AssociatedId) :
                             new PatientInfo
                             {
                                 CorporateId = corporateId,
@@ -339,7 +350,7 @@ namespace BillingSystem.Controllers
                     patientinfo.PersonEmailAddress = model[0].PatientEmailId;
                     patientinfo.PersonEmiratesIDNumber = model[0].PatientEmirateIdNumber;
 
-                    patientid = new PatientInfoBal().AddUpdatePatientInfo(patientinfo);
+                    patientid = _piService.AddUpdatePatientInfo(patientinfo);
 
                     // Add the patient phone number
                     if (patientid > 0)
@@ -400,8 +411,7 @@ namespace BillingSystem.Controllers
 
                         item.ExtValue4 = token;
                         var appointmentType = string.Empty;
-                        var app =
-                            new AppointmentTypesBal().GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                        var app = _aService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
                         appointmentType = app != null ? app.Name : string.Empty;
                         item.AppointmentType = appointmentType;
 

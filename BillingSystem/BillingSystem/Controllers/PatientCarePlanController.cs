@@ -15,6 +15,7 @@ namespace BillingSystem.Controllers
     using System.Web.Mvc;
 
     using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
@@ -25,6 +26,7 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class PatientCarePlanController : Controller
     {
+        private readonly ICarePlanTaskService _cpService;
         #region Public Methods and Operators
 
         /// <summary>
@@ -121,11 +123,11 @@ namespace BillingSystem.Controllers
 
             // Intialize the View Model i.e. PatientCarePlanView which is binded to Main View Index.cshtml under PatientCarePlan
             var patientCarePlanView = new PatientCarePlanView
-                                         {
-                                             PatientCarePlanList = patientCarePlanList,
-                                             CurrentPatientCarePlan = new PatientCarePlan(),
-                                             CurrentCarePlanTask = new CarePlanTask()
-                                         };
+            {
+                PatientCarePlanList = patientCarePlanList,
+                CurrentPatientCarePlan = new PatientCarePlan(),
+                CurrentCarePlanTask = new CarePlanTask()
+            };
 
             // Pass the View Model in ActionResult to View PatientCarePlan
             return View(patientCarePlanView);
@@ -201,8 +203,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindCarePlanTask(int careId, List<string> code)
         {
-            var cBal = new CarePlanTaskBal();
-            var careTaskList = code == null ? cBal.BindCarePlanTask(careId) : cBal.BindCarePlanTask(careId).Where(e => !code.Contains(e.Id.ToString())).ToList();
+            var careTaskList = code == null ? _cpService.BindCarePlanTask(careId) : _cpService.BindCarePlanTask(careId).Where(e => !code.Contains(e.Id.ToString())).ToList();
             if (careTaskList.Count > 0)
             {
                 var list = new List<SelectListItem>();

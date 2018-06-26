@@ -1,29 +1,28 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="BedRateCardController.cs" company="Spadez Solutions PVT. LTD.">
-//  ServicesDotCom 
-// </copyright>
-// <summary>
-//   The bed rate card controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc;
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Model.CustomModel;
-    using Models;
-
     /// <summary>
     /// The bed rate card controller.
     /// </summary>
     public class BedRateCardController : BaseController
     {
+        private readonly IBedRateCardService _service;
+
+        public BedRateCardController(IBedRateCardService service)
+        {
+            _service = service;
+        }
+
         // GET: /BedRateCard/
 
         /// <summary>
@@ -32,63 +31,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BedRateCard()
         {
-            //var bedRateCardList = new List<BedRateCardCustomModel>();
-            //using (var bal = new BedRateCardBal())
-            //{
-            //    //var list = bal.GetBedRateCardsList();
-            //    //List<ServiceCodeCustomModel> serviceCodes;
-            //    //using (var serviceBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
-            //    //{
-            //    //    serviceCodes = serviceBal.GetServiceCodesCustomModel();
-            //    //}
 
-            //    //var list = GetBedRateCardCustom();
-
-            //    //using (var globalBal = new GlobalCodeBal())
-            //    //{
-            //    //    //var bedTypeList =
-            //    //    //    globalBal.GetGlobalCodesByCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.Bedtypes));
-            //    //    //var unitTypesList =
-            //    //    //    globalBal.GetGlobalCodesByCategoryValue(
-            //    //    //        Convert.ToString((int)GlobalCodeCategoryValue.BedUnitType));
-
-
-
-            //    //    //if (list.Count > 0 && bedTypeList.Count > 0 && unitTypesList.Count > 0 && serviceCodes.Count > 0)
-            //    //    //{
-            //    //    //    bedRateCardList.AddRange(from item in list
-            //    //    //                             let sCode =
-            //    //    //                                 serviceCodes.FirstOrDefault(a => a.ServiceCodeValue.Equals(item.ServiceCodeValue))
-            //    //    //                             select new BedRateCardViewModel
-            //    //    //                             {
-            //    //    //                                 CurrentBedRateCard = item,
-            //    //    //                                 BedTypeName =
-            //    //    //                                     globalBal.GetGlobalCodeNameByIdAndCategoryId(
-            //    //    //                                         Convert.ToString((int)GlobalCodeCategoryValue.Bedtypes),
-            //    //    //                                         Convert.ToInt32(item.BedTypes)),
-            //    //    //                                 UnitTypeName =
-            //    //    //                                     globalBal.GetGlobalCodeNameByIdAndCategoryId(
-            //    //    //                                         Convert.ToString((int)GlobalCodeCategoryValue.BedUnitType),
-            //    //    //                                         Convert.ToInt32(item.UnitType)),
-            //    //    //                                 ServiceCodeName = sCode != null ? sCode.ServiceCodeDescription : string.Empty
-            //    //    //                             });
-            //    //    //}
-
-
-            //    //}
-
-            //    var bedRateCardView = new BedRateCardView
-            //    {
-            //        BedRateCardsList = list,
-            //        CurrentBedRateCard = new BedRateCardCustomModel
-            //        {
-            //            BedRateCard = new BedRateCard()
-            //        }
-            //    };
-
-            //    return View(bedRateCardView);
-            //}
-            //var fId = Helpers.GetDefaultFacilityId();
             var list = GetBedRateCardCustom();
             var bedRateCardView = new BedRateCardView
             {
@@ -112,37 +55,22 @@ namespace BillingSystem.Controllers
 
             if (model != null)
             {
-                using (var bedRateCardBal = new BedRateCardBal())
+
+                if (model.BedRateCardID > 0)
                 {
-
-                    //if (model.BedRateCardID == 0)
-                    //{
-                    //    var list = bedRateCardBal.GetBedRateCardByServiceCode(model.ServiceCodeValue);
-                    //    foreach (var modelList in list)
-                    //    {
-                    //    if (Convert.ToDateTime(modelList.EffectiveFrom) < Convert.ToDateTime(model.EffectiveFrom) &&
-                    //        Convert.ToDateTime(modelList.EffectiveTill) > Convert.ToDateTime(model.EffectiveTill)) ;
-                    //    return Json("-1");
-                    //    }
-                    //}
-
-
-                    if (model.BedRateCardID > 0)
-                    {
-                        model.ModifiedBy = Helpers.GetLoggedInUserId();
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                        model.CorporateId = Helpers.GetSysAdminCorporateID();
-                    }
-                    else
-                    {
-                        model.CreatedBy = Helpers.GetLoggedInUserId();
-                        model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                        model.CorporateId = Helpers.GetSysAdminCorporateID();
-                    }
-
-                    var newId = bedRateCardBal.AddUpdateBedRateCard(model);
-                    return Json(newId);
+                    model.ModifiedBy = Helpers.GetLoggedInUserId();
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                    model.CorporateId = Helpers.GetSysAdminCorporateID();
                 }
+                else
+                {
+                    model.CreatedBy = Helpers.GetLoggedInUserId();
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                    model.CorporateId = Helpers.GetSysAdminCorporateID();
+                }
+
+                var newId = _service.AddUpdateBedRateCard(model);
+                return Json(newId);
             }
 
             return Json(null);
@@ -155,46 +83,26 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetBedRateCard(int bedRateCardId)
         {
-            using (var bal = new BedRateCardBal())
+            var model = _service.GetBedRateCardById(bedRateCardId);
+            var jsonResult = new
             {
-                var model = bal.GetBedRateCardById(bedRateCardId);
-                var jsonResult = new
-                {
-                    model.BedRateCardID,
-                    model.BedTypes,
-                    model.CreatedBy,
-                    model.CreatedDate,
-                    model.DayStart,
-                    model.DayEnd,
-                    model.IsActive,
-                    model.Rates,
-                    model.ServiceCodeValue,
-                    model.UnitType,
-                    EffectiveFrom = model.EffectiveFrom.GetShortDateString3(),
-                    EffectiveTill = model.EffectiveTill.GetShortDateString3(),
-                    model.FacilityId
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                model.BedRateCardID,
+                model.BedTypes,
+                model.CreatedBy,
+                model.CreatedDate,
+                model.DayStart,
+                model.DayEnd,
+                model.IsActive,
+                model.Rates,
+                model.ServiceCodeValue,
+                model.UnitType,
+                EffectiveFrom = model.EffectiveFrom.GetShortDateString3(),
+                EffectiveTill = model.EffectiveTill.GetShortDateString3(),
+                model.FacilityId
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
 
-                // using (var globalBal = new GlobalCodeBal())
-                // {
-                // using (var serviceBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
-                // {
-                // var bedTypeList = globalBal.GetListByCategoryId(Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.Bedtypes).ToString());
-                // var unitTypesList = globalBal.GetListByCategoryId(Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.BedUnitType).ToString());
-                // var bedRateCardViewModel = new BedRateCardViewModel
-                // {
-                // CurrentBedRateCard = bedRateCard,
-                // LstServiceCodeList = serviceBal.GetServiceCodes(),
-                // LstUnitTypeList = unitTypesList,
-                // LstBedTypesList = bedTypeList
-                // };
-                // return PartialView(PartialViews.BedRateCardAddEdit, bedRateCardViewModel);
-                // }
-                // }
-            }
         }
-
         /// <summary>
         /// Deletes the bed rate card.
         /// </summary>
@@ -203,26 +111,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteBedRateCard(string id)
         {
-            using (var bal = new BedRateCardBal())
+            var currentBedRateCard = _service.GetBedRateCardById(Convert.ToInt32(id));
+            if (currentBedRateCard != null)
             {
-                //facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : facilityId;
-                var currentBedRateCard = bal.GetBedRateCardById(Convert.ToInt32(id));
-                if (currentBedRateCard != null)
+                currentBedRateCard.DeletedBy = Helpers.GetLoggedInUserId();
+                currentBedRateCard.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                currentBedRateCard.IsDeleted = true;
+                currentBedRateCard.IsActive = false;
+                var result = _service.AddUpdateBedRateCard(currentBedRateCard);
+                if (result > 0)
                 {
-                    currentBedRateCard.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentBedRateCard.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    currentBedRateCard.IsDeleted = true;
-                    currentBedRateCard.IsActive = false;
-                    var result = bal.AddUpdateBedRateCard(currentBedRateCard);
-                    if (result > 0)
-                    {
-                        var list = GetBedRateCardCustom();
-                        return PartialView(PartialViews.BedRateCardList, list);
-                    }
+                    var list = GetBedRateCardCustom();
+                    return PartialView(PartialViews.BedRateCardList, list);
                 }
-
-                return Json(null);
             }
+
+            return Json(null);
+
         }
 
         /// <summary>
@@ -231,70 +136,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public List<BedRateCardCustomModel> GetBedRateCardCustom()
         {
-            using (var bal = new BedRateCardBal())
-            {
-                //var corporateId = Helpers.GetSysAdminCorporateID();
-                var list = bal.GetBedRateCardsList(Helpers.DefaultServiceCodeTableNumber);
-                return list;
-                //List<ServiceCode> serviceCodes;
-                //using (var serviceBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
-                //{
-                //    serviceCodes = serviceBal.GetServiceCodes();
-                //}
-
-                //using (var globalBal = new GlobalCodeBal())
-                //{
-                //    var bedTypeList = globalBal.GetGlobalCodesByCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.Bedtypes).ToString());
-                //    var unitTypesList = globalBal.GetGlobalCodesByCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.BedUnitType).ToString());
-                //    //if (list.Count > 0 && bedTypeList.Count > 0 && unitTypesList.Count > 0 && serviceCodes.Count > 0)
-                //    //{
-                //    //    bedRateCardList.AddRange(from item in list
-                //    //                             let sCode = serviceCodes.FirstOrDefault(a => a.ServiceCodeValue.Equals(item.ServiceCodeValue))
-                //    //                             select new BedRateCardViewModel
-                //    //                             {
-                //    //                                 CurrentBedRateCard = item,
-                //    //                                 BedTypeName = globalBal.GetGlobalCodeNameByIdAndCategoryId(Convert.ToInt32(GlobalCodeCategoryValue.Bedtypes).ToString(), Convert.ToInt32(item.BedTypes)),
-                //    //                                 UnitTypeName = globalBal.GetGlobalCodeNameByIdAndCategoryId(Convert.ToInt32(GlobalCodeCategoryValue.BedUnitType).ToString(), Convert.ToInt32(item.UnitType)),
-                //    //                                 ServiceCodeName = sCode != null ? sCode.ServiceCodeDescription : string.Empty
-                //    //                             });
-                //    //}
-                //}
-            }
-
-            // using (var bedRateCardBal = new BedRateCardBal())
-            // {
-            // var list = bedRateCardBal.GetBedRateCardsList();
-            // //return PartialView(PartialViews.BedRateCardList, bedRateCardList);
-            // using (var globalBal = new GlobalCodeBal())
-            // {
-            // var bedTypeList =
-            // globalBal.GetListByCategoryId(
-            // Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.Bedtypes).ToString());
-            // var unitTypesList =
-            // globalBal.GetListByCategoryId(
-            // Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.BedUnitType).ToString());
-            // List<ServiceCode> serviceCodes = null;
-            // using (var serviceBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
-            // serviceCodes = serviceBal.GetServiceCodes();
-
-            // if (list.Count > 0)
-            // {
-            // bedRateCardList.AddRange(from item in list
-            // let bedType = bedTypeList.FirstOrDefault(a => a.GlobalCodeValue.Equals(item.BedTypes))
-            // let unitType = unitTypesList.FirstOrDefault(a => a.GlobalCodeValue.Equals(item.UnitType))
-            // let sCode =
-            // serviceCodes.FirstOrDefault(a => a.ServiceCodeValue.Equals(item.ServiceCodeValue))
-            // select new BedRateCardViewModel
-            // {
-            // CurrentBedRateCard = item,
-            // BedTypeName = bedType != null ? bedType.GlobalCodeName : string.Empty,
-            // UnitTypeName = unitType != null ? unitType.GlobalCodeName : string.Empty,
-            // ServiceCodeName = sCode != null ? sCode.ServiceCodeDescription : string.Empty
-            // });
-            // }
-            // }
-            // }
-            //return list;
+            var list = _service.GetBedRateCardsList(Helpers.DefaultServiceCodeTableNumber);
+            return list;
         }
 
         /// <summary>
@@ -304,45 +147,9 @@ namespace BillingSystem.Controllers
         /// action result with the partial view containing the facility list object
         /// </returns>
         public ActionResult GetBedRateCardList()
-        {
-            //facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : facilityId;
-            // Initialize the BedMaster Bal object
+        { 
             var bedRateCardList = GetBedRateCardCustom();
-
-            // var bedRateCardList = new List<BedRateCardViewModel>();
-            // using (var bedRateCardBal = new BedRateCardBal())
-            // {
-            // var list = bedRateCardBal.GetBedRateCardsList();
-            // //return PartialView(PartialViews.BedRateCardList, bedRateCardList);
-            // using (var globalBal = new GlobalCodeBal())
-            // {
-            // var bedTypeList =
-            // globalBal.GetListByCategoryId(
-            // Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.Bedtypes).ToString());
-            // var unitTypesList =
-            // globalBal.GetListByCategoryId(
-            // Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.BedUnitType).ToString());
-            // List<ServiceCode> serviceCodes = null;
-            // using (var serviceBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
-            // serviceCodes = serviceBal.GetServiceCodes();
-
-            // if (list.Count > 0)
-            // {
-            // bedRateCardList.AddRange(from item in list
-            // let bedType = bedTypeList.FirstOrDefault(a => a.GlobalCodeValue.Equals(item.BedTypes))
-            // let unitType = unitTypesList.FirstOrDefault(a => a.GlobalCodeValue.Equals(item.UnitType))
-            // let sCode =
-            // serviceCodes.FirstOrDefault(a => a.ServiceCodeValue.Equals(item.ServiceCodeValue))
-            // select new BedRateCardViewModel
-            // {
-            // CurrentBedRateCard = item,
-            // BedTypeName = bedType != null ? bedType.GlobalCodeName : string.Empty,
-            // UnitTypeName = unitType != null ? unitType.GlobalCodeName : string.Empty,
-            // ServiceCodeName = sCode != null ? sCode.ServiceCodeDescription : string.Empty
-            // });
-            // }
-            // }
-            // }
+             
             return PartialView(PartialViews.BedRateCardList, bedRateCardList);
         }
 
@@ -454,7 +261,7 @@ namespace BillingSystem.Controllers
             {
                 listBedTypes = list.Where(g => g.ExternalValue1.Equals("1001")).ToList(),
                 listUnitTypes = list.Where(g => g.ExternalValue1.Equals("18")).ToList(),
-                 //listServiceCodes = listData
+                //listServiceCodes = listData
             };
             return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }

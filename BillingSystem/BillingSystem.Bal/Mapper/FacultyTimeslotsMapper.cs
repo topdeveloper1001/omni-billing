@@ -64,56 +64,56 @@ namespace BillingSystem.Bal.Mapper
         public FacultyTimeslotsCustomModel DepartmentOpeningSlotMapModelToViewModel(FacultyTimeslots model)
         {
             var vm = base.MapModelToViewModel(model);
-            using (var bal = new BaseBal())
-            {
-                var facultyObj = bal.GetPhysicianById(model.UserID);
-                var facultyDepartment = facultyObj != null && !string.IsNullOrEmpty(facultyObj.FacultyDepartment)
-                                               ? facultyObj.FacultyDepartment
-                                               : string.Empty;
+            //using (var bal = new BaseBal())
+            //{
+            //    var facultyObj = bal.GetPhysicianById(model.UserID);
+            //    var facultyDepartment = facultyObj != null && !string.IsNullOrEmpty(facultyObj.FacultyDepartment)
+            //                                   ? facultyObj.FacultyDepartment
+            //                                   : string.Empty;
 
-                var facilityStruct = new FacilityStructureBal();
-                var facilityObj = string.IsNullOrEmpty(facultyDepartment)
-                                                    ? null
-                                      : facilityStruct.GetFacilityStructureById(Convert.ToInt32(facultyDepartment));
-                vm.DepartmentName = facilityObj != null ? facilityObj.FacilityStructureName : string.Empty;
-                var departmentid = facilityObj != null ? facilityObj.FacilityStructureId : 0;
+            //    var facilityStruct = new FacilityStructureService();
+            //    var facilityObj = string.IsNullOrEmpty(facultyDepartment)
+            //                                        ? null
+            //                          : facilityStruct.GetFacilityStructureById(Convert.ToInt32(facultyDepartment));
+            //    vm.DepartmentName = facilityObj != null ? facilityObj.FacilityStructureName : string.Empty;
+            //    var departmentid = facilityObj != null ? facilityObj.FacilityStructureId : 0;
 
-                //if (model.AvailableDateFrom != null)
-                //{
-                //    vm.FacultyLunchTimeFrom = facultyObj != null
-                //                              && !string.IsNullOrEmpty(facultyObj.FacultyLunchTimeFrom)
-                //                                  ? model.AvailableDateFrom.Value.ToShortDateString() + " "
-                //                                    + facultyObj.FacultyLunchTimeFrom
-                //                                  : string.Empty;
-                //}
+            //    //if (model.AvailableDateFrom != null)
+            //    //{
+            //    //    vm.FacultyLunchTimeFrom = facultyObj != null
+            //    //                              && !string.IsNullOrEmpty(facultyObj.FacultyLunchTimeFrom)
+            //    //                                  ? model.AvailableDateFrom.Value.ToShortDateString() + " "
+            //    //                                    + facultyObj.FacultyLunchTimeFrom
+            //    //                                  : string.Empty;
+            //    //}
 
-                //if (model.AvailableDateTill != null)
-                //{
-                //    vm.FacultyLunchTimeTill = facultyObj != null
-                //                              && !string.IsNullOrEmpty(facultyObj.FacultyLunchTimeTill)
-                //                                  ? model.AvailableDateTill.Value.ToShortDateString() + " "
-                //                                    + facultyObj.FacultyLunchTimeTill
-                //                                  : string.Empty;
-                //}
+            //    //if (model.AvailableDateTill != null)
+            //    //{
+            //    //    vm.FacultyLunchTimeTill = facultyObj != null
+            //    //                              && !string.IsNullOrEmpty(facultyObj.FacultyLunchTimeTill)
+            //    //                                  ? model.AvailableDateTill.Value.ToShortDateString() + " "
+            //    //                                    + facultyObj.FacultyLunchTimeTill
+            //    //                                  : string.Empty;
+            //    //}
 
-                var departmenttimeslots = new DeptTimmingBal();
-                var departmentTimmings = departmenttimeslots.GetDeptTimmingByDepartmentId(departmentid);
-                if (departmentTimmings != null)
-                {
-                    if (facilityObj != null)
-                    {
-                        var openingday = ((int)(Convert.ToDateTime(model.AvailableDateFrom).DayOfWeek)).ToString();
-                        var departmentFacilityobj = departmentTimmings.FirstOrDefault(x => x.OpeningDayId == openingday);
-                        if (departmentFacilityobj != null)
-                        {
-                            vm.DeptOpeningDays =
-                                ((int)(Convert.ToDateTime(model.AvailableDateFrom).DayOfWeek)).ToString();
-                            vm.DeptOpeningTime = departmentFacilityobj.OpeningTime;
-                            vm.DeptClosingTime = departmentFacilityobj.ClosingTime;
-                        }
-                    }
-                }
-            }
+            //    var departmenttimeslots = new DeptTimmingBal();
+            //    var departmentTimmings = departmenttimeslots.GetDeptTimmingByDepartmentId(departmentid);
+            //    if (departmentTimmings != null)
+            //    {
+            //        if (facilityObj != null)
+            //        {
+            //            var openingday = ((int)(Convert.ToDateTime(model.AvailableDateFrom).DayOfWeek)).ToString();
+            //            var departmentFacilityobj = departmentTimmings.FirstOrDefault(x => x.OpeningDayId == openingday);
+            //            if (departmentFacilityobj != null)
+            //            {
+            //                vm.DeptOpeningDays =
+            //                    ((int)(Convert.ToDateTime(model.AvailableDateFrom).DayOfWeek)).ToString();
+            //                vm.DeptOpeningTime = departmentFacilityobj.OpeningTime;
+            //                vm.DeptClosingTime = departmentFacilityobj.ClosingTime;
+            //            }
+            //        }
+            //    }
+            //}
 
             return vm;
         }

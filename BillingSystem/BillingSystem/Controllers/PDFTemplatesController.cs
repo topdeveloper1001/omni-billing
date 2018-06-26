@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.Model;
@@ -13,6 +13,13 @@ namespace BillingSystem.Controllers
 {
     public class PDFTemplatesController : Controller
     {
+        private readonly IPatientInfoService _piService;
+
+        public PDFTemplatesController(IPatientInfoService piService)
+        {
+            _piService = piService;
+        }
+
         //
         // GET: /PDFTemplates/
         public ActionResult Index(int? pId)
@@ -113,7 +120,7 @@ namespace BillingSystem.Controllers
         {
             var personAge = 0;
             var currentDate = Helpers.GetInvariantCultureDateTime();
-            var pInfoBal = new PatientInfoBal();
+
 
             var pBal = new PDFTemplatesBal();
             var sId = Convert.ToInt32(setId);
@@ -154,7 +161,7 @@ namespace BillingSystem.Controllers
                     var enId = Convert.ToInt32(currentEncounterId);
                     currentPatient = bal.GetPatientInfoByEncounterId(currentEncounterId);
                     var allItems = bal.GetNursingAssessmentFormData(patientId, enId, setId);
-                    personAge = pInfoBal.CalculatePersonAge(currentPatient.PersonBirthDate, currentDate);
+                    personAge = _piService.CalculatePersonAge(currentPatient.PersonBirthDate, currentDate);
                     listVisitDetail = allItems.Where(c => c.CategoryValue == "6100").ToList(); //bal.ListNurseAssessmentForm(patientId, Convert.ToInt32(currentEncounterId), "6100", setId);
                     measurementsList = allItems.Where(c => c.CategoryValue == "6101").ToList(); //bal.ListNurseAssessmentForm(patientId, Convert.ToInt32(currentEncounterId), "6101", setId);
                     allergyList = allItems.Where(c => c.CategoryValue == "6102").ToList(); //bal.ListNurseAssessmentForm(patientId, Convert.ToInt32(currentEncounterId), "6102", setId);

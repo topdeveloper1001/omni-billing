@@ -2,20 +2,21 @@
 using BillingSystem.Models;
 using BillingSystem.Common;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
-using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
 using NPOI.HSSF.UserModel;
 using System.Threading.Tasks;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class LabTestResultController : BaseController
     {
+        private readonly IUsersService _uService;
+        private readonly IPatientInfoService _piService;
+
         /// <summary>
         /// Get the details of the LabTestResult View in the Model LabTestResult such as LabTestResultList, list of countries etc.
         /// </summary>
@@ -182,32 +183,30 @@ namespace BillingSystem.Controllers
             var msgBody = ResourceKeyValues.GetFileText("usertokentoaccess");
             Users userCM = null;
             var tokenExpired = true;
-            using (var bal = new UsersBal())
+            var currentDate = Helpers.GetInvariantCultureDateTime();
+            userCM = _uService.GetUserById(Convert.ToInt32(Helpers.GetLoggedInUserId()));
+            var facilityname = _piService.GetFacilityNameByFacilityId(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
+            if (!string.IsNullOrEmpty(msgBody) && userCM != null)
             {
-                var currentDate = Helpers.GetInvariantCultureDateTime();
-                userCM = bal.GetUserById(Convert.ToInt32(Helpers.GetLoggedInUserId()));
-                var facilityname = bal.GetFacilityNameByFacilityId(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
-                if (!string.IsNullOrEmpty(msgBody) && userCM != null)
+                userCM.UserToken = usertoken;
+                if (userCM.TokenExpiryDate != null)
                 {
-                    userCM.UserToken = usertoken;
-                    if (userCM.TokenExpiryDate != null)
-                    {
-                        tokenExpired = userCM.TokenExpiryDate < currentDate;
-                        userCM.TokenExpiryDate = userCM.TokenExpiryDate > currentDate
-                            ? userCM.TokenExpiryDate
-                            : ((DateTime)userCM.TokenExpiryDate).AddMonths(1);
-                    }
-                    else
-                    {
-                        userCM.TokenExpiryDate = currentDate.AddMonths(1);
-                    }
-                    msgBody = msgBody.Replace("{User}", userCM.UserName)
-                       .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
-                       Replace("{TokenExpireOn}", ((DateTime)userCM.TokenExpiryDate).ToShortDateString())
-                       ;
-                    var userUpdated = tokenExpired ? bal.AddUpdateUser(userCM, 0) : 0;
+                    tokenExpired = userCM.TokenExpiryDate < currentDate;
+                    userCM.TokenExpiryDate = userCM.TokenExpiryDate > currentDate
+                        ? userCM.TokenExpiryDate
+                        : ((DateTime)userCM.TokenExpiryDate).AddMonths(1);
                 }
+                else
+                {
+                    userCM.TokenExpiryDate = currentDate.AddMonths(1);
+                }
+                msgBody = msgBody.Replace("{User}", userCM.UserName)
+                   .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
+                   Replace("{TokenExpireOn}", ((DateTime)userCM.TokenExpiryDate).ToShortDateString())
+                   ;
+                var userUpdated = tokenExpired ? _uService.AddUpdateUser(userCM, 0) : 0;
             }
+
             var emailInfo = new EmailInfo
             {
                 VerificationTokenId = "",

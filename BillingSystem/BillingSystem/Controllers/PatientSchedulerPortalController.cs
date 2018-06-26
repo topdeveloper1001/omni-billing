@@ -1,33 +1,34 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PatientSchedulerPortalController.cs" company="Spadez">
-//   Omnihealthcare
-// </copyright>
-// <Screen owner>
-// Shashank (Created On : Feb 01 2016)
-// </Screen owner>
-// <summary>
-//   The patient scheduler portal controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Model.CustomModel;
-    using Models;
 
     /// <summary>
     /// The patient scheduler portal controller.
     /// </summary>
     public class PatientSchedulerPortalController : Controller
     {
+        private readonly IEncounterService _eService;
+        private readonly IPatientInfoService _piService;
+        private readonly IAppointmentTypesService _atSerice;
+
+        public PatientSchedulerPortalController(IEncounterService eService, IPatientInfoService piService, IAppointmentTypesService atSerice)
+        {
+            _eService = eService;
+            _piService = piService;
+            _atSerice = atSerice;
+        }
+
         // GET: /PatientSchedulerPortal/
         #region Public Methods and Operators
 
@@ -53,28 +54,21 @@ namespace BillingSystem.Controllers
                 patientSchedulerPortalView.CorporateId = Convert.ToInt32(cId);
                 patientSchedulerPortalView.FacilityId = Convert.ToInt32(fId);
                 patientSchedulerPortalView.PatientId = Convert.ToInt32(pId);
-                using (
-                    var encounterBal = new EncounterBal(
-                        Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultDrgTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber,
-                        Helpers.DefaultDrugTableNumber))
+
+                var patientRecentEncounter = _eService.GetEncountersListByPatientId(Convert.ToInt32(pId)).ToList();
+                if (patientRecentEncounter.Any())
                 {
-                    var patientRecentEncounter = encounterBal.GetEncountersListByPatientId(Convert.ToInt32(pId)).ToList();
-                    if (patientRecentEncounter.Any())
-                    {
-                        var recentEncounter =
-                            patientRecentEncounter.OrderByDescending(x => x.EncounterID).FirstOrDefault();
-                        var physicianName = encounterBal.GetPhysicianName(Convert.ToInt32(recentEncounter.EncounterAttendingPhysician));
+                    var recentEncounter =
+                        patientRecentEncounter.OrderByDescending(x => x.EncounterID).FirstOrDefault();
+                    var physicianName = _eService.GetPhysicianName(Convert.ToInt32(recentEncounter.EncounterAttendingPhysician));
 
-                        patientSchedulerPortalView.IsPreviousEncounter = true;
-                        patientSchedulerPortalView.PreviousEncounterPhysicianId =
-                            recentEncounter.EncounterAttendingPhysician.ToString();
-                        patientSchedulerPortalView.PreviousEncounterPhysicianName = physicianName;
+                    patientSchedulerPortalView.IsPreviousEncounter = true;
+                    patientSchedulerPortalView.PreviousEncounterPhysicianId =
+                        recentEncounter.EncounterAttendingPhysician.ToString();
+                    patientSchedulerPortalView.PreviousEncounterPhysicianName = physicianName;
 
-                        return View(patientSchedulerPortalView);
-                    }
+                    return View(patientSchedulerPortalView);
+
                 }
             }
 
@@ -136,11 +130,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientDetails(string patientId)
         {
-            using (var schedularbal = new PatientInfoBal())
-            {
-                var objToReturn = schedularbal.PatientInfoForSchedulingByPatient(Convert.ToInt32(patientId));
-                return Json(objToReturn, JsonRequestBehavior.AllowGet);
-            }
+            var objToReturn = _piService.PatientInfoForSchedulingByPatient(Convert.ToInt32(patientId));
+            return Json(objToReturn, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -151,11 +142,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPhysicianPatientData(string patientId, string phyId)
         {
-            using (var schedularbal = new PatientInfoBal())
-            {
-                var objToReturn = schedularbal.PatientInfoForSchedulingByPatient(Convert.ToInt32(patientId));
-                return Json(objToReturn, JsonRequestBehavior.AllowGet);
-            }
+            var objToReturn = _piService.PatientInfoForSchedulingByPatient(Convert.ToInt32(patientId));
+            return Json(objToReturn, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -187,7 +175,7 @@ namespace BillingSystem.Controllers
                         physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
                     }
 
-                    var patientinfo = model[0].AssociatedId != 0 ? new PatientInfoBal().GetPatientInfoById(model[0].AssociatedId) :
+                    var patientinfo = model[0].AssociatedId != 0 ? _piService.GetPatientInfoById(model[0].AssociatedId) :
                             new PatientInfo
                             {
                                 CorporateId = corporateId,
@@ -203,7 +191,7 @@ namespace BillingSystem.Controllers
                     patientinfo.PersonEmailAddress = model[0].PatientEmailId;
                     patientinfo.PersonEmiratesIDNumber = model[0].PatientEmirateIdNumber;
 
-                    patientid = new PatientInfoBal().AddUpdatePatientInfo(patientinfo);
+                    patientid = _piService.AddUpdatePatientInfo(patientinfo);
 
                     // Add the patient phone number
                     if (patientid > 0)
@@ -246,8 +234,7 @@ namespace BillingSystem.Controllers
                         item.CreatedDate = Helpers.GetInvariantCultureDateTime();
                         item.EventId = Helpers.GenerateCustomRandomNumber();
                         item.ExtValue4 = token;
-                        var app =
-                            new AppointmentTypesBal().GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                        var app = _atSerice.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
                         var appointmentType = app != null ? app.Name : string.Empty;
                         item.AppointmentType = appointmentType;
 

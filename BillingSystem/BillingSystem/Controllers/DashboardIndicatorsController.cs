@@ -12,11 +12,19 @@ using BillingSystem.Model;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DashboardIndicatorsController : BaseController
     {
+        private readonly IFacilityStructureService _fsService;
+
+        public DashboardIndicatorsController(IFacilityStructureService fsService)
+        {
+            _fsService = fsService;
+        }
+
         /// <summary>
         /// Get the details of the DashboardIndicators View in the Model DashboardIndicators such as DashboardIndicatorsList, list of countries etc.
         /// </summary>
@@ -333,31 +341,29 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindDepartmentDropdownData()
         {
-            using (var bal = new FacilityStructureBal())
-            {
-                var facilityid = Helpers.GetDefaultFacilityId();
-                var corporateid = Helpers.GetSysAdminCorporateID();
+            var facilityid = Helpers.GetDefaultFacilityId();
+            var corporateid = Helpers.GetSysAdminCorporateID();
 
-                //Get the Entity list
-                var facilityDepartments = bal.GetFacilityDepartments(corporateid, Convert.ToString(facilityid));
-                var list = new List<SelectListItem>();
-                if (facilityDepartments.Count > 0)
+            //Get the Entity list
+            var facilityDepartments = _fsService.GetFacilityDepartments(corporateid, Convert.ToString(facilityid));
+            var list = new List<SelectListItem>();
+            if (facilityDepartments.Count > 0)
+            {
+                list.Add(new SelectListItem
                 {
-                    list.Add(new SelectListItem
-                    {
-                        Text = @"All",
-                        Value = "0"
-                    });
-                    list.AddRange(facilityDepartments.Where(x => !string.IsNullOrEmpty(x.ExternalValue1)).Select(item => new SelectListItem
-                    {
-                        Value = Convert.ToString(item.ExternalValue1),
-                        Text = Convert.ToString(item.ExternalValue1) + @" (Department Name :" + item.FacilityStructureName + @" )",
-                    }));
-                    return Json(list, JsonRequestBehavior.AllowGet);
-                }
-                return Json(null);
+                    Text = @"All",
+                    Value = "0"
+                });
+                list.AddRange(facilityDepartments.Where(x => !string.IsNullOrEmpty(x.ExternalValue1)).Select(item => new SelectListItem
+                {
+                    Value = Convert.ToString(item.ExternalValue1),
+                    Text = Convert.ToString(item.ExternalValue1) + @" (Department Name :" + item.FacilityStructureName + @" )",
+                }));
+                return Json(list, JsonRequestBehavior.AllowGet);
             }
+            return Json(null);
         }
+
 
         /// <summary>
         /// Exports to excel.

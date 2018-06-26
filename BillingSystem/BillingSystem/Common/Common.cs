@@ -955,12 +955,7 @@ namespace BillingSystem.Common
             if (HttpContext.Current != null && HttpContext.Current.Session[SessionNames.SessionClass.ToString()] != null)
             {
                 var session = HttpContext.Current.Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                var userid = session.UserId;
-                using (var userBal = new UsersBal())
-                {
-                    var username = userBal.GetUserNameByUserId(userid);
-                    return username;
-                }
+                return session.UserName;
             }
 
             return string.Empty;
@@ -1865,44 +1860,7 @@ namespace BillingSystem.Common
             return (int)(age.Days / 365.25);
         }
 
-        public static DataTable GetBillingCodesToExport(string codeType, string sText, string tn, out string columns)
-        {
-            var codeTableNo = string.Empty;
-            List<ExportCodesData> data = null;
-            if (string.IsNullOrEmpty(tn))
-            {
-                switch (codeType.ToLower())
-                {
-                    case "cpt":
-                        codeTableNo = DefaultCptTableNumber;
-                        break;
-                    case "hcpcs":
-                        codeTableNo = DefaultHcPcsTableNumber;
-                        break;
-                    case "drug":
-                        codeTableNo = DefaultDrugTableNumber;
-                        break;
-                    case "drg":
-                        codeTableNo = DefaultDrgTableNumber;
-                        break;
-                    case "diagnosis":
-                        codeTableNo = DefaultDiagnosisTableNumber;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else
-                codeTableNo = tn;
-
-            using (var bal = new CPTCodesBal(DefaultCptTableNumber))
-                data = bal.GetCodesDataToExport(GetSysAdminCorporateID(), GetDefaultFacilityId(), GetLoggedInUserId()
-                    , codeTableNo, codeType, sText, out columns);
-
-            var dt = FillDataTableToExport(data, codeType);
-            return dt;
-        }
-
+        
         public static DataTable FillDataTableToImport(DataTable dt, string codeType, out int status)
         {
             status = (int)ExcelImportResultCodes.Success;

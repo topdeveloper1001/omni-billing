@@ -9,11 +9,21 @@ using BillingSystem.Model;
 using System;
 using BillingSystem.Model.CustomModel;
 using Microsoft.Ajax.Utilities;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class EquipmentController : BaseController
     {
+        private readonly IAppointmentTypesService _atService;
+        private readonly IFacilityStructureService _fsService;
+
+        public EquipmentController(IAppointmentTypesService atService, IFacilityStructureService fsService)
+        {
+            _atService = atService;
+            _fsService = fsService;
+        }
+
         //
         // GET: /Equipment/
         /// <summary>
@@ -149,25 +159,25 @@ namespace BillingSystem.Controllers
                     return Json(1);
                 }
                 if (currentequipment != null)
-                    {
-                        currentequipment.EquipmentModel = currentequipment.EquipmentModel;
-                        currentequipment.IsDeleted = true;
-                        currentequipment.DeletedBy = Helpers.GetLoggedInUserId();
-                        currentequipment.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                        //Update Operation of current equipment
-                        equipmentBal.AddUpdateEquipment(currentequipment);
+                {
+                    currentequipment.EquipmentModel = currentequipment.EquipmentModel;
+                    currentequipment.IsDeleted = true;
+                    currentequipment.DeletedBy = Helpers.GetLoggedInUserId();
+                    currentequipment.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                    //Update Operation of current equipment
+                    equipmentBal.AddUpdateEquipment(currentequipment);
 
-                        //Get the facilities list
-                        var equipmentList = model.ShowDisabled
-                            ? equipmentBal.GetEquipmentList(true, Convert.ToString(currentequipment.FacilityId))
-                            //: equipmentBal.GetEquipmentList();
-                            : equipmentBal.GetEquipmentList(false, Convert.ToString(currentequipment.FacilityId));
-                        //Pass the ActionResult with List of FacilityViewModel object to Partial View FacilityList
-                        return PartialView(PartialViews.EquipmentList, equipmentList);
-                    }
+                    //Get the facilities list
+                    var equipmentList = model.ShowDisabled
+                        ? equipmentBal.GetEquipmentList(true, Convert.ToString(currentequipment.FacilityId))
+                        //: equipmentBal.GetEquipmentList();
+                        : equipmentBal.GetEquipmentList(false, Convert.ToString(currentequipment.FacilityId));
+                    //Pass the ActionResult with List of FacilityViewModel object to Partial View FacilityList
+                    return PartialView(PartialViews.EquipmentList, equipmentList);
                 }
-                //Check If facility model is not null
-           //Return the Json result as Action Result back JSON Call Success
+            }
+            //Check If facility model is not null
+            //Return the Json result as Action Result back JSON Call Success
             return Json(null);
         }
 
@@ -218,27 +228,19 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindAppointmentTypesDropdown(int corporateId, int facilityId)
         {
+            // Get the facilities list
+            //var appointmentTypesList = appointmentTypesBal.GetAppointmentTypes();
+            var appointmentTypesList = _atService.GetAppointmentTypesData(corporateId, facilityId, true);
 
-            // Initialize the AppointmentTypes BAL object
-            using (var appointmentTypesBal = new AppointmentTypesBal())
-            {
-                // Get the facilities list
-                //var appointmentTypesList = appointmentTypesBal.GetAppointmentTypes();
-                var appointmentTypesList = appointmentTypesBal.GetAppointmentTypesData(corporateId, facilityId,true);
+            return Json(appointmentTypesList, JsonRequestBehavior.AllowGet);
 
-                return Json(appointmentTypesList, JsonRequestBehavior.AllowGet);
-
-            }
         }
 
 
         public ActionResult BindRoomsInEquipments(string facilityId)
         {
-            using (var fbal = new FacilityStructureBal())
-            {
-                var list = fbal.GetRoomsByFacilityId(facilityId);
-                return Json(list);
-            }
+            var list = _fsService.GetRoomsByFacilityId(facilityId);
+            return Json(list);
         }
 
         public ActionResult BindDeletedRecords(bool showIsDeleted, string facilityId)
@@ -254,7 +256,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeactivateActivateEquipment(EquipmentCustomModel model)
         {
             int eid = -1;
-           
+
             using (var eBal = new EquipmentBal())
             {
                 var list = eBal.GetEquipmentDataByMasterId(model.EquipmentMasterId);
@@ -286,7 +288,7 @@ namespace BillingSystem.Controllers
 
                 }
                 eid = eBal.UpdateEuipmentCustomModel(model);
-               
+
             }
 
             return Json(eid);

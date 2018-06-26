@@ -1,11 +1,4 @@
-﻿// /*  ----------------------------------------------------------------------------------------------------------------- */
-// To Do: ReportingController.cs
-// FileName :ReportingController.cs
-// CreatedDate: 2016-05-11 6:56 PM
-// ModifiedDate: 2016-05-12 12:23 PM
-// CreatedBy: Shashank Awasthy
-// /*  ----------------------------------------------------------------------------------------------------------------- */
-
+﻿
 namespace BillingSystem.Controllers
 {
     #region
@@ -28,6 +21,7 @@ namespace BillingSystem.Controllers
     using Microsoft.Reporting.WebForms;
 
     using RazorPDF;
+    using BillingSystem.Bal.Interfaces;
 
     #endregion
 
@@ -36,6 +30,23 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class ReportingController : BaseController
     {
+        private readonly IEncounterService _eService;
+        private readonly IBillActivityService _baService;
+        private readonly IBillHeaderService _bhService;
+        private readonly IFacilityStructureService _fsService;
+        private readonly IPatientInfoService _piService;
+        private readonly IUsersService _uService;
+
+        public ReportingController(IEncounterService eService, IBillActivityService baService, IBillHeaderService bhService, IFacilityStructureService fsService, IPatientInfoService piService, IUsersService uService)
+        {
+            _eService = eService;
+            _baService = baService;
+            _bhService = bhService;
+            _fsService = fsService;
+            _piService = piService;
+            _uService = uService;
+        }
+
         /// <summary>
         ///     Indexes the specified reporting identifier.
         /// </summary>
@@ -775,22 +786,19 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetBillWithDetailsFormat(int billHeaderId)
         {
-            var billheader = new BillHeaderBal();
-            BillHeaderCustomModel billheaderObj = billheader.GetBillHeaderById(billHeaderId);
+            BillHeaderCustomModel billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
             int facilityId = billheaderObj.FacilityID ?? Helpers.GetDefaultFacilityId();
             var facilityBal = new FacilityBal();
             Facility facilityObj = facilityBal.GetFacilityById(facilityId);
-            var patientInfoBal = new PatientInfoBal();
-            int patientId = billheaderObj.PatientID ?? 0;
-            PatientInfo patientinfoObj = patientInfoBal.GetPatientInfoById(patientId);
-            var encounterbal = new EncounterBal();
-            int encounterId = billheaderObj.EncounterID ?? 0;
-            Encounter encounterObj = encounterbal.GetEncounterByEncounterId(encounterId);
 
-            var bal = new BillActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber
-                , Helpers.DefaultDiagnosisTableNumber);
-            var billActivtiesList = bal.GetBillActivitiesByBillHeaderId(billHeaderId);
+            int patientId = billheaderObj.PatientID ?? 0;
+            PatientInfo patientinfoObj = _piService.GetPatientInfoById(patientId);
+
+            int encounterId = billheaderObj.EncounterID ?? 0;
+            Encounter encounterObj = _eService.GetEncounterByEncounterId(encounterId);
+
+
+            var billActivtiesList = _baService.GetBillActivitiesByBillHeaderId(billHeaderId);
             var billFormatView = new BillFormatDetailView
             {
                 BillDetails = billActivtiesList.Any() ? billActivtiesList
@@ -815,27 +823,20 @@ namespace BillingSystem.Controllers
         public ActionResult GetBillWithDetailsPdfFormat1(int billHeaderId)
         {
             PdfResult pdf = null;
-            var billheader = new BillHeaderBal();
-            BillHeaderCustomModel billheaderObj = billheader.GetBillHeaderById(billHeaderId);
+
+            BillHeaderCustomModel billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
             int facilityId = billheaderObj.FacilityID ?? Helpers.GetDefaultFacilityId();
             var facilityBal = new FacilityBal();
             Facility facilityObj = facilityBal.GetFacilityById(facilityId);
-            var patientInfoBal = new PatientInfoBal();
-            int patientId = billheaderObj.PatientID ?? 0;
-            PatientInfo patientinfoObj = patientInfoBal.GetPatientInfoById(patientId);
-            var encounterbal = new EncounterBal();
-            int encounterId = billheaderObj.EncounterID ?? 0;
-            Encounter encounterObj = encounterbal.GetEncounterByEncounterId(encounterId);
 
-            var billActivityBal = new BillActivityBal(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            List<BillDetailCustomModel> billActivtiesList = billActivityBal.GetBillActivitiesByBillHeaderId(
-                billHeaderId);
+            int patientId = billheaderObj.PatientID ?? 0;
+            PatientInfo patientinfoObj = _piService.GetPatientInfoById(patientId);
+
+            int encounterId = billheaderObj.EncounterID ?? 0;
+            Encounter encounterObj = _eService.GetEncounterByEncounterId(encounterId);
+
+
+            List<BillDetailCustomModel> billActivtiesList = _baService.GetBillActivitiesByBillHeaderId(billHeaderId);
 
             var billFormatView = new BillFormatDetailView
             {
@@ -1240,20 +1241,17 @@ namespace BillingSystem.Controllers
             var list = new List<DropdownListData>();
             int corporateId = Helpers.GetDefaultCorporateId();
 
-            // var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-            using (var bal = new UsersBal())
-            {
-                // var usersList = bal.GetUsersByCorporateId(corporateId);
-                List<Users> usersList = bal.GetUsersByCorporateandFacilityId(corporateId, facilityId);
-                list.AddRange(
-                    usersList.Select(
-                        item =>
-                        new DropdownListData
-                        {
-                            Text = string.Format("{0} {1}", item.FirstName, item.LastName),
-                            Value = item.UserID.ToString()
-                        }));
-            }
+            // var usersList = bal.GetUsersByCorporateId(corporateId);
+            List<Users> usersList = _uService.GetUsersByCorporateandFacilityId(corporateId, facilityId);
+            list.AddRange(
+                usersList.Select(
+                    item =>
+                    new DropdownListData
+                    {
+                        Text = string.Format("{0} {1}", item.FirstName, item.LastName),
+                        Value = item.UserID.ToString()
+                    }));
+
 
             return Json(list, JsonRequestBehavior.AllowGet);
         }
@@ -1270,14 +1268,10 @@ namespace BillingSystem.Controllers
         public ActionResult GetEncounterByUserId(int userId)
         {
             var list = new List<DropdownListData>();
-            using (var bal = new EncounterBal())
-            {
-                List<Encounter> encounterList = bal.GetEncounterByUserId(userId);
-                list.AddRange(
-                    encounterList.Select(
-                        item =>
-                        new DropdownListData { Text = item.EncounterNumber, Value = item.EncounterID.ToString() }));
-            }
+
+            List<Encounter> encounterList = _eService.GetEncounterByUserId(userId);
+            list.AddRange(encounterList.Select(item => new DropdownListData { Text = item.EncounterNumber, Value = item.EncounterID.ToString() }));
+
 
             return Json(list, JsonRequestBehavior.AllowGet);
         }
@@ -1294,21 +1288,17 @@ namespace BillingSystem.Controllers
         public ActionResult GetFacilityDeapartments(string facilityId)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new FacilityStructureBal())
+            List<FacilityStructure> facilityDepartments = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), facilityId);
+            if (facilityDepartments.Any())
             {
-                List<FacilityStructure> facilityDepartments =
-                    bal.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), facilityId);
-                if (facilityDepartments.Any())
-                {
-                    list.AddRange(
-                        facilityDepartments.Select(
-                            item =>
-                            new SelectListItem
-                            {
-                                Text = string.Format(" {0} ", item.FacilityStructureName),
-                                Value = Convert.ToString(item.FacilityStructureId)
-                            }));
-                }
+                list.AddRange(
+                    facilityDepartments.Select(
+                        item =>
+                        new SelectListItem
+                        {
+                            Text = string.Format(" {0} ", item.FacilityStructureName),
+                            Value = Convert.ToString(item.FacilityStructureId)
+                        }));
             }
 
             return Json(list, JsonRequestBehavior.AllowGet);
@@ -1798,17 +1788,9 @@ namespace BillingSystem.Controllers
 
                 #region Data Detail
 
-                var billheader = new BillHeaderBal();
-                var billActivityBal = new BillActivityBal(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber);
                 List<BillDetailCustomModel> billActivtiesList =
-                    billActivityBal.GetBillActivitiesByBillHeaderId(billHeaderId);
-                List<BillPdfFormatCustomModel> otherBillFormatData = billActivityBal.GetBillPdfFormat(billHeaderId);
+                    _baService.GetBillActivitiesByBillHeaderId(billHeaderId);
+                List<BillPdfFormatCustomModel> otherBillFormatData = _baService.GetBillPdfFormat(billHeaderId);
                 ReportDataSourceOrderDetail = new ReportDataSource("DataSet1", billActivtiesList);
                 var ReportDataSourceOrderDetail2 = new ReportDataSource("DataSet2", otherBillFormatData);
 

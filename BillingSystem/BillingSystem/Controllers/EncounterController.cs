@@ -1,33 +1,41 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="EncounterController.cs" company="SPadez">
-//  Screen Owner: Shashank 
-// </copyright>
-// <summary>
-//   The encounter controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Common.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using System;
+using System.Web.Mvc;
+using System.Linq;
+using BillingSystem.Bal;
+using System.Collections.Generic;
+using BillingSystem.Models;
+using Microsoft.Ajax.Utilities;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc;
-    using Bal;
-    using Bal.BusinessAccess;
-    using Common;
-    using Common.Common;
-    using Model;
-    using Model.CustomModel;
-    using Models;
-
-    using WebGrease.Css.Extensions;
-
-    /// <summary>
-    /// The encounter controller.
-    /// </summary>
     public class EncounterController : BaseController
     {
+        private readonly IEncounterService _service;
+        private readonly IBedChargesService _bcservice;
+        private readonly IBedRateCardService _brcservice;
+        private readonly IBedMasterService _bedservice;
+        private readonly IFacilityStructureService _fsservice;
+        private readonly IBillHeaderService _bhservice;
+        private readonly IUsersService _uService;
+
+        public EncounterController(IEncounterService service, IBedChargesService bcservice, IBedRateCardService brcservice, IBedMasterService bedservice, IFacilityStructureService fsservice, IBillHeaderService bhservice, IUsersService uService)
+        {
+            _service = service;
+            _bcservice = bcservice;
+            _brcservice = brcservice;
+            _bedservice = bedservice;
+            _fsservice = fsservice;
+            _bhservice = bhservice;
+            _uService = uService;
+        }
+
         // GET: /Encounter/
         #region Public Methods and Operators
 
@@ -48,92 +56,90 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index(string patientId, string messageId, string encId)
         {
-            using (var bal = new EncounterBal())
+            if (!string.IsNullOrEmpty(patientId) && _service.IsPatientExist(Convert.ToInt32(patientId)))
             {
-                if (!string.IsNullOrEmpty(patientId) && bal.IsPatientExist(Convert.ToInt32(patientId)))
+                ViewBag.IsEncounterStart = !string.IsNullOrEmpty(messageId)
+                                                && (Convert.ToInt32(messageId)
+                                                    == Convert.ToInt32(EncounterStates.admitpatient)
+                                                    || Convert.ToInt32(messageId)
+                                                    == Convert.ToInt32(EncounterStates.outpatient)
+                                                    || Convert.ToInt32(messageId)
+                                                    == Convert.ToInt32(EncounterStates.transferpatient)
+                                                    || Convert.ToInt32(messageId)
+                                                    == Convert.ToInt32(EncounterStates.editencounter));
+                ViewBag.Heading = GetHeading(!string.IsNullOrEmpty(messageId) ? Convert.ToInt32(messageId) : 1);
+                ViewBag.PatientType = encId;
+                var vm = !string.IsNullOrEmpty(encId) ?
+                    _service.GetEncounterDetailByEncounterID(Convert.ToInt32(encId)) :
+                    _service.GetEncounterDetailByPatientId(Convert.ToInt32(patientId));
+
+
+                vm.EncounterEndTime = Helpers.GetInvariantCultureDateTime();
+
+                /*
+                * Owner: Amit Jain
+                * On: 20102014
+                * Purpose: Add the logged-in user's default facility to the patient info
+                */
+                // Additions start here
+                var facilityId = Helpers.GetDefaultFacilityId();
+                if (facilityId > 0)
                 {
-                    ViewBag.IsEncounterStart = !string.IsNullOrEmpty(messageId)
-                                                    && (Convert.ToInt32(messageId)
-                                                        == Convert.ToInt32(EncounterStates.admitpatient)
-                                                        || Convert.ToInt32(messageId)
-                                                        == Convert.ToInt32(EncounterStates.outpatient)
-                                                        || Convert.ToInt32(messageId)
-                                                        == Convert.ToInt32(EncounterStates.transferpatient)
-                                                        || Convert.ToInt32(messageId)
-                                                        == Convert.ToInt32(EncounterStates.editencounter));
-                    ViewBag.Heading = GetHeading(!string.IsNullOrEmpty(messageId) ? Convert.ToInt32(messageId) : 1);
-                    ViewBag.PatientType = encId;
-                    var vm = !string.IsNullOrEmpty(encId) ?
-                        bal.GetEncounterDetailByEncounterID(Convert.ToInt32(encId)) :
-                        bal.GetEncounterDetailByPatientId(Convert.ToInt32(patientId));
-
-
-                    vm.EncounterEndTime = Helpers.GetInvariantCultureDateTime();
-
-                    /*
-                    * Owner: Amit Jain
-                    * On: 20102014
-                    * Purpose: Add the logged-in user's default facility to the patient info
-                    */
-                    // Additions start here
-                    var facilityId = Helpers.GetDefaultFacilityId();
-                    if (facilityId > 0)
+                    using (var facBal = new FacilityBal())
                     {
-                        using (var facBal = new FacilityBal())
-                        {
-                            var defaultFacility = facBal.GetFacilityById(facilityId);
-                            vm.FacilityName = defaultFacility.FacilityName;
-                            vm.EncounterFacility = Convert.ToString(facilityId);
-                        }
+                        var defaultFacility = facBal.GetFacilityById(facilityId);
+                        vm.FacilityName = defaultFacility.FacilityName;
+                        vm.EncounterFacility = Convert.ToString(facilityId);
                     }
-
-                    // Additions end here
-                    switch (messageId)
-                    {
-                        case "1":
-                            vm.EncounterPatientType = Convert.ToInt32(EncounterPatientType.InPatient);
-                            break;
-                        case "3":
-                        case "5":
-                        case "6":
-                        case "9":
-                            if (!string.IsNullOrEmpty(encId))
-                            {
-                                vm.EncounterPatientType = Convert.ToInt32(EncounterPatientType.InPatient);
-                                var bedInfo = bal.GetPatientBedInformationByPatientId(
-                                        Convert.ToInt32(vm.PatientID));
-                                vm.BedName = bedInfo.BedName;
-                                vm.FloorName = bedInfo.FloorName;
-                                vm.Room = bedInfo.Room;
-                                vm.DepartmentName = bedInfo.DepartmentName;
-                                vm.patientBedService = bedInfo.patientBedService;
-                                vm.BedAssignedOn = bedInfo.BedAssignedOn;
-                                vm.BedRateApplicable = bedInfo.BedRateApplicable;
-                            }
-
-                            break;
-                        case "2":
-                        case "4":
-                            if (vm.EncounterPatientType
-                                != Convert.ToInt32(EncounterPatientType.ERPatient))
-                            {
-                                vm.EncounterPatientType =
-                                    Convert.ToInt32(EncounterPatientType.OutPatient);
-                            }
-
-                            break;
-                    }
-
-                    if (!vm.EncounterStartTime.HasValue)
-                        vm.EncounterStartTime = Helpers.GetInvariantCultureDateTime();
-
-                    if (!vm.EncounterInpatientAdmitDate.HasValue)
-                        vm.EncounterInpatientAdmitDate = Helpers.GetInvariantCultureDateTime();
-
-                    vm.EncounterPatientTypecheck = messageId == "6" ? "1" : messageId;
-                    return View(vm);
                 }
+
+                // Additions end here
+                switch (messageId)
+                {
+                    case "1":
+                        vm.EncounterPatientType = Convert.ToInt32(EncounterPatientType.InPatient);
+                        break;
+                    case "3":
+                    case "5":
+                    case "6":
+                    case "9":
+                        if (!string.IsNullOrEmpty(encId))
+                        {
+                            vm.EncounterPatientType = Convert.ToInt32(EncounterPatientType.InPatient);
+                            var bedInfo = _service.GetPatientBedInformationByPatientId(
+                                    Convert.ToInt32(vm.PatientID));
+                            vm.BedName = bedInfo.BedName;
+                            vm.FloorName = bedInfo.FloorName;
+                            vm.Room = bedInfo.Room;
+                            vm.DepartmentName = bedInfo.DepartmentName;
+                            vm.patientBedService = bedInfo.patientBedService;
+                            vm.BedAssignedOn = bedInfo.BedAssignedOn;
+                            vm.BedRateApplicable = bedInfo.BedRateApplicable;
+                        }
+
+                        break;
+                    case "2":
+                    case "4":
+                        if (vm.EncounterPatientType
+                            != Convert.ToInt32(EncounterPatientType.ERPatient))
+                        {
+                            vm.EncounterPatientType =
+                                Convert.ToInt32(EncounterPatientType.OutPatient);
+                        }
+
+                        break;
+                }
+
+                if (!vm.EncounterStartTime.HasValue)
+                    vm.EncounterStartTime = Helpers.GetInvariantCultureDateTime();
+
+                if (!vm.EncounterInpatientAdmitDate.HasValue)
+                    vm.EncounterInpatientAdmitDate = Helpers.GetInvariantCultureDateTime();
+
+                vm.EncounterPatientTypecheck = messageId == "6" ? "1" : messageId;
+                return View(vm);
             }
+
 
             return RedirectToAction(ActionResults.patientSearch, ControllerNames.patientSearch, new { messageId });
         }
@@ -149,384 +155,372 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult AddUpdateEncounter(EncounterCustomModel model)
         {
-            using (var bal = new EncounterBal())
+            var currentUserId = Helpers.GetLoggedInUserId();
+            var cId = Helpers.GetSysAdminCorporateID();
+            var fId = Helpers.GetDefaultFacilityId();
+            var eEndType = model.EncounterEndType;
+            var currentDatetime = Helpers.GetInvariantCultureDateTime(fId);
+
+            if (model.EncounterID > 0)
             {
-                var currentUserId = Helpers.GetLoggedInUserId();
-                var cId = Helpers.GetSysAdminCorporateID();
-                var fId = Helpers.GetDefaultFacilityId();
-                var eEndType = model.EncounterEndType;
-                var currentDatetime = Helpers.GetInvariantCultureDateTime(fId);
-
-                if (model.EncounterID > 0)
+                model.ModifiedBy = currentUserId;
+                model.ModifiedDate = currentDatetime;
+            }
+            else
+            {
+                if (model.EncounterStartTime.HasValue)
                 {
-                    model.ModifiedBy = currentUserId;
-                    model.ModifiedDate = currentDatetime;
+                    var sd = model.EncounterStartTime.Value;
+                    model.EncounterStartTime = new DateTime(sd.Year, sd.Month, sd.Day, currentDatetime.Hour,
+                        currentDatetime.Minute, currentDatetime.Second, currentDatetime.Millisecond);
                 }
-                else
+                model.CreatedBy = currentUserId;
+                model.CreatedDate = currentDatetime;
+            }
+
+            if (eEndType.HasValue && eEndType.Value > 0)
+            {
+                if (model.EncounterEndType == 5)
                 {
-                    if (model.EncounterStartTime.HasValue)
-                    {
-                        var sd = model.EncounterStartTime.Value;
-                        model.EncounterStartTime = new DateTime(sd.Year, sd.Month, sd.Day, currentDatetime.Hour,
-                            currentDatetime.Minute, currentDatetime.Second, currentDatetime.Millisecond);
-                    }
-                    model.CreatedBy = currentUserId;
-                    model.CreatedDate = currentDatetime;
-                }
+                    model.EncounterDischargePlan = model.EncounterEndType.ToString();
+                    model.EncounterDischargeLocation = model.EncounterEndTime.ToString();
 
-                if (eEndType.HasValue && eEndType.Value > 0)
-                {
-                    if (model.EncounterEndType == 5)
-                    {
-                        model.EncounterDischargePlan = model.EncounterEndType.ToString();
-                        model.EncounterDischargeLocation = model.EncounterEndTime.ToString();
-
-                        // ---- line is missing for the encounter type 6 which means Not discharge.
-                        // ------ This needs to be done here as below we have to create new encounter for the Paitnet
-                        // encounter.EncounterPatientTypecheck = encounter.EncounterEndType.ToString();
-                        model.EncounterEndType = null;
-                        model.EncounterEndTime = null;
-                    }
-
-                    // Added the check as per the new task : 26a Orders open when trying to discharge
-                    // Added on 13 jan 2016 time : 11:54 AM
-                    // Added by Shashank
-                    if (string.IsNullOrEmpty(model.EncounterDischargePlan))
-                    {
-                        if (bal.EncounterOpenOrders(model.EncounterID))
-                            return Json("OrderError");
-                    }
-                    var encounterEndStatus = ChekEncounterEndStatusBeforeUpdate(model.EncounterID);
-                    switch (encounterEndStatus)
-                    {
-                        case 1:
-                            break;
-                        case 99:
-                            return Json("AuthError");
-                        case 0:
-                            break;
-                    }
+                    // ---- line is missing for the encounter type 6 which means Not discharge.
+                    // ------ This needs to be done here as below we have to create new encounter for the Paitnet
+                    // encounter.EncounterPatientTypecheck = encounter.EncounterEndType.ToString();
+                    model.EncounterEndType = null;
+                    model.EncounterEndTime = null;
                 }
 
-
-                Encounter existingEncounter;
-                if (model.EncounterPatientTypecheck == "5")
+                // Added the check as per the new task : 26a Orders open when trying to discharge
+                // Added on 13 jan 2016 time : 11:54 AM
+                // Added by Shashank
+                if (string.IsNullOrEmpty(model.EncounterDischargePlan))
                 {
-                    existingEncounter = bal.GetEncounterByEncounterId(model.EncounterID);
-                    existingEncounter.CreatedBy = model.CreatedBy;
-                    existingEncounter.CreatedDate = model.CreatedDate;
-                    existingEncounter.ModifiedBy = currentUserId;
-                    existingEncounter.ModifiedDate = currentDatetime;
-                    existingEncounter.EncounterEndType = Convert.ToInt32(EncounterEndTypeEnum.Notdischarged);
-                    existingEncounter.CorporateID = cId;
-                    existingEncounter.EncounterEndTime = model.EncounterEndTime;
-
-                    bal.AddUpdateEncounter(existingEncounter);
-                    model.EncounterNumber = existingEncounter.EncounterNumber;
-                    var encId = StartEncounter(model);
-
-                    //if (patientFutureOrders.Any())
-                    //{
-                    //    var objtoreturn = new
-                    //    {
-                    //        IsFutureOpenOrders = true,
-                    //        encId = encId,
-                    //        FutureOpenOrders = patientFutureOrders
-                    //    };
-                    //    return Json(encId);
-                    //}
-                    return Json(encId);
+                    if (_service.EncounterOpenOrders(model.EncounterID))
+                        return Json("OrderError");
                 }
-
-                if (model.EncounterID == 0 && model.EncounterEndTime == null)
+                var encounterEndStatus = ChekEncounterEndStatusBeforeUpdate(model.EncounterID);
+                switch (encounterEndStatus)
                 {
-                    var encId = StartEncounter(model);
-
-                    var fBal = new FutureOpenOrderBal(Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber);
-
-                    var foList = fBal.GetFutureOpenOrderByPatientId(model.PatientID);
-
-                    // Check for the Future Open orders for the patient by the physician
-                    if (foList.Any())
-                    {
-                        var objtoreturn = new
-                        {
-                            IsFutureOpenOrders = true,
-                            encId,
-                            FutureOpenOrders = foList
-                        };
-                        return Json(objtoreturn, JsonRequestBehavior.AllowGet);
-                    }
-                    return Json(encId);
+                    case 1:
+                        break;
+                    case 99:
+                        return Json("AuthError");
+                    case 0:
+                        break;
                 }
+            }
 
-                existingEncounter = bal.GetEncounterByEncounterId(model.EncounterID);
+
+            Encounter existingEncounter;
+            if (model.EncounterPatientTypecheck == "5")
+            {
+                existingEncounter = _service.GetEncounterByEncounterId(model.EncounterID);
                 existingEncounter.CreatedBy = model.CreatedBy;
                 existingEncounter.CreatedDate = model.CreatedDate;
                 existingEncounter.ModifiedBy = currentUserId;
                 existingEncounter.ModifiedDate = currentDatetime;
-                existingEncounter.EncounterPatientType = model.EncounterPatientType;
-                existingEncounter.EncounterConfidentialityLevel = model.EncounterConfidentialityLevel;
-                existingEncounter.EncounterServiceCategory = model.EncounterServiceCategory;
-                existingEncounter.PatientID = model.PatientID;
-                existingEncounter.EncounterTransferHospital = model.EncounterTransferHospital;
-                existingEncounter.EncounterFacility = model.EncounterFacility;
-                existingEncounter.EncounterTransferSource = model.EncounterTransferSource;
-                existingEncounter.EncounterAdmitReason = model.EncounterAdmitReason;
-                existingEncounter.EncounterType = model.EncounterType;
-                existingEncounter.EncounterStartType = model.EncounterStartType;
-                existingEncounter.EncounterSpecialty = model.EncounterSpecialty;
-                existingEncounter.EncounterModeofArrival = model.EncounterModeofArrival;
-                existingEncounter.EncounterAdmitType = model.EncounterAdmitType;
-                existingEncounter.EncounterAccidentRelated = model.EncounterAccidentRelated;
-                existingEncounter.EncounterAccidentType = model.EncounterAccidentType;
-                existingEncounter.EncounterEndType = model.EncounterEndType;
-                existingEncounter.EncounterEndTime = model.EncounterEndTime;
-                existingEncounter.EncounterAttendingPhysician = model.EncounterAttendingPhysician;
-                existingEncounter.EncounterPhysicianType = model.EncounterPhysicianType;
+                existingEncounter.EncounterEndType = Convert.ToInt32(EncounterEndTypeEnum.Notdischarged);
                 existingEncounter.CorporateID = cId;
-                existingEncounter.HomeCareRecurring = model.HomeCareRecurring;
-                existingEncounter.EncounterDischargePlan = model.EncounterDischargePlan;
-                existingEncounter.EncounterDischargeLocation = model.EncounterDischargeLocation;
-                existingEncounter.EncounterStartTime = model.EncounterStartTime;
-                bal.AddUpdateEncounter(existingEncounter);
+                existingEncounter.EncounterEndTime = model.EncounterEndTime;
 
+                _service.AddUpdateEncounter(existingEncounter);
+                model.EncounterNumber = existingEncounter.EncounterNumber;
+                var encId = StartEncounter(model);
 
-                if (model.EncounterPatientType == Convert.ToInt32(EncounterPatientType.InPatient))
+                //if (patientFutureOrders.Any())
+                //{
+                //    var objtoreturn = new
+                //    {
+                //        IsFutureOpenOrders = true,
+                //        encId = encId,
+                //        FutureOpenOrders = patientFutureOrders
+                //    };
+                //    return Json(encId);
+                //}
+                return Json(encId);
+            }
+
+            if (model.EncounterID == 0 && model.EncounterEndTime == null)
+            {
+                var encId = StartEncounter(model);
+
+                var fBal = new FutureOpenOrderBal(Helpers.DefaultCptTableNumber,
+                    Helpers.DefaultServiceCodeTableNumber,
+                    Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber,
+                    Helpers.DefaultDiagnosisTableNumber);
+
+                var foList = fBal.GetFutureOpenOrderByPatientId(model.PatientID);
+
+                // Check for the Future Open orders for the patient by the physician
+                if (foList.Any())
                 {
-                    if (eEndType != 5)
+                    var objtoreturn = new
                     {
-                        using (var patientBed = new MappingPatientBedBal())
+                        IsFutureOpenOrders = true,
+                        encId,
+                        FutureOpenOrders = foList
+                    };
+                    return Json(objtoreturn, JsonRequestBehavior.AllowGet);
+                }
+                return Json(encId);
+            }
+
+            existingEncounter = _service.GetEncounterByEncounterId(model.EncounterID);
+            existingEncounter.CreatedBy = model.CreatedBy;
+            existingEncounter.CreatedDate = model.CreatedDate;
+            existingEncounter.ModifiedBy = currentUserId;
+            existingEncounter.ModifiedDate = currentDatetime;
+            existingEncounter.EncounterPatientType = model.EncounterPatientType;
+            existingEncounter.EncounterConfidentialityLevel = model.EncounterConfidentialityLevel;
+            existingEncounter.EncounterServiceCategory = model.EncounterServiceCategory;
+            existingEncounter.PatientID = model.PatientID;
+            existingEncounter.EncounterTransferHospital = model.EncounterTransferHospital;
+            existingEncounter.EncounterFacility = model.EncounterFacility;
+            existingEncounter.EncounterTransferSource = model.EncounterTransferSource;
+            existingEncounter.EncounterAdmitReason = model.EncounterAdmitReason;
+            existingEncounter.EncounterType = model.EncounterType;
+            existingEncounter.EncounterStartType = model.EncounterStartType;
+            existingEncounter.EncounterSpecialty = model.EncounterSpecialty;
+            existingEncounter.EncounterModeofArrival = model.EncounterModeofArrival;
+            existingEncounter.EncounterAdmitType = model.EncounterAdmitType;
+            existingEncounter.EncounterAccidentRelated = model.EncounterAccidentRelated;
+            existingEncounter.EncounterAccidentType = model.EncounterAccidentType;
+            existingEncounter.EncounterEndType = model.EncounterEndType;
+            existingEncounter.EncounterEndTime = model.EncounterEndTime;
+            existingEncounter.EncounterAttendingPhysician = model.EncounterAttendingPhysician;
+            existingEncounter.EncounterPhysicianType = model.EncounterPhysicianType;
+            existingEncounter.CorporateID = cId;
+            existingEncounter.HomeCareRecurring = model.HomeCareRecurring;
+            existingEncounter.EncounterDischargePlan = model.EncounterDischargePlan;
+            existingEncounter.EncounterDischargeLocation = model.EncounterDischargeLocation;
+            existingEncounter.EncounterStartTime = model.EncounterStartTime;
+            _service.AddUpdateEncounter(existingEncounter);
+
+
+            if (model.EncounterPatientType == Convert.ToInt32(EncounterPatientType.InPatient))
+            {
+                if (eEndType != 5)
+                {
+                    using (var patientBed = new MappingPatientBedBal())
+                    {
+                        var objtoUpdate =
+                            patientBed.GetMappingPatientBedByEncounterId(Convert.ToString(model.EncounterID));
+
+                        // Get Mapping Patient Bed data
+                        if (objtoUpdate != null)
                         {
-                            var objtoUpdate =
-                                patientBed.GetMappingPatientBedByEncounterId(Convert.ToString(model.EncounterID));
-
-                            // Get Mapping Patient Bed data
-                            if (objtoUpdate != null)
+                            // Discharge the patient
+                            if (objtoUpdate.BedNumber == model.patientBedId
+                                && model.patientBedEndDate != null)
                             {
-                                // Discharge the patient
-                                if (objtoUpdate.BedNumber == model.patientBedId
-                                    && model.patientBedEndDate != null)
+                                // ....Discharge patient logic Check
+                                objtoUpdate.PatientID = Convert.ToInt32(existingEncounter.PatientID);
+                                objtoUpdate.EncounterID = Convert.ToString(existingEncounter.EncounterID);
+                                objtoUpdate.EndDate = Helpers.GetInvariantCultureDateTime();
+                                if (!string.IsNullOrEmpty(model.OverrideBedType))
                                 {
-                                    // ....Discharge patient logic Check
-                                    objtoUpdate.PatientID = Convert.ToInt32(existingEncounter.PatientID);
-                                    objtoUpdate.EncounterID = Convert.ToString(existingEncounter.EncounterID);
-                                    objtoUpdate.EndDate = Helpers.GetInvariantCultureDateTime();
-                                    if (!string.IsNullOrEmpty(model.OverrideBedType))
-                                    {
-                                        var bedMasterBal = new BedMasterBal();
-                                        var bedOverrideType =
-                                            bedMasterBal.GetBedTypeByServiceCode(model.OverrideBedType);
-                                        objtoUpdate.OverrideBedType = bedOverrideType;
-                                    }
-                                    else
-                                        objtoUpdate.OverrideBedType = null;
-
-
-                                    // new added column on nov 1 2014
-                                    var isMapped = patientBed.AddUpdateMappingPatientBed(objtoUpdate);
-                                    if (isMapped > 0 && model.patientBedEndDate != null)
-                                    {
-                                        using (var bedMasterBal = new BedMasterBal())
-                                        {
-                                            var patientBedId = Convert.ToInt32(objtoUpdate.BedNumber);
-                                            var patientBedobj = bedMasterBal.GetBedMasterById(patientBedId);
-                                            patientBedobj.IsOccupied = false;
-                                            bedMasterBal.AddUpdateBedMaster(patientBedobj);
-                                        }
-                                    }
+                                    var bedOverrideType = _bedservice.GetBedTypeByServiceCode(model.OverrideBedType);
+                                    objtoUpdate.OverrideBedType = bedOverrideType;
                                 }
+                                else
+                                    objtoUpdate.OverrideBedType = null;
 
-                                // ....Transfer Bed logic
-                                else if (objtoUpdate.BedNumber != model.patientBedId
-                                         && model.patientBedEndDate == null)
+
+                                // new added column on nov 1 2014
+                                var isMapped = patientBed.AddUpdateMappingPatientBed(objtoUpdate);
+                                if (isMapped > 0 && model.patientBedEndDate != null)
                                 {
-                                    // ....Transfer Bed logic
-                                    objtoUpdate.PatientID = Convert.ToInt32(existingEncounter.PatientID);
-                                    objtoUpdate.EncounterID = Convert.ToString(existingEncounter.EncounterID);
-                                    objtoUpdate.EndDate = Helpers.GetInvariantCultureDateTime();
+                                    var patientBedId = Convert.ToInt32(objtoUpdate.BedNumber);
+                                    var patientBedobj = _bedservice.GetBedMasterById(patientBedId);
+                                    patientBedobj.IsOccupied = false;
+                                    _bedservice.AddUpdateBedMaster(patientBedobj);
 
-                                    // Update the previous occupied BEd and Mapping Bed table
-                                    var isMapped = patientBed.AddUpdateMappingPatientBed(objtoUpdate);
-                                    if (isMapped > 0 && model.patientBedEndDate == null)
-                                    {
-                                        using (var bedMasterBal = new BedMasterBal())
-                                        {
-                                            var patientBedId = Convert.ToInt32(objtoUpdate.BedNumber);
-                                            var patientBedobj = bedMasterBal.GetBedMasterById(patientBedId);
-                                            patientBedobj.IsOccupied = false;
-                                            var isUpdated = bedMasterBal.AddUpdateBedMaster(patientBedobj);
-                                            if (isUpdated > 0)
-                                            {
-                                                // Transfer Paitent from one bed to another
-                                                using (var transferPaitent = new MappingPatientBedBal())
-                                                {
-                                                    var newBedToMap =
-                                                        bedMasterBal.GetBedMasterById(
-                                                            Convert.ToInt32(model.patientBedId));
-                                                    var mappingPatientBedTransfer = new MappingPatientBed
-                                                    {
-                                                        MappingPatientBedId = 0,
-                                                        FacilityNumber =
-                                                            Convert.ToInt32(existingEncounter.EncounterFacility),
-                                                        RoomNumber = "0",
-                                                        BedNumber = model.patientBedId,
-                                                        PatientID = Convert.ToInt32(model.PatientID),
-                                                        EncounterID = Convert.ToString(existingEncounter.EncounterID),
-                                                        StartDate = Convert.ToDateTime(model.patientBedStartDate),
-                                                        ServiceCode = Convert.ToInt32(model.patientBedService),
-                                                        ExpectedEndDate =
-                                                            Convert.ToDateTime(model.patientBedExpectedEndDate),
-                                                        OverrideBedType
-                                                            = !string.IsNullOrEmpty(model.OverrideBedType)
-                                                                ? bedMasterBal.GetBedTypeByServiceCode
-                                                                    (model.OverrideBedType)
-                                                                : null,
-                                                        Corporateid = cId,
-                                                        FacilityStructureID = newBedToMap.FacilityStructureId,
-                                                        BedType = newBedToMap.BedType
-                                                    };
-                                                    var isTransferMapped =
-                                                        transferPaitent.AddUpdateMappingPatientBed(
-                                                            mappingPatientBedTransfer);
-                                                    if (isTransferMapped > 0)
-                                                    {
-                                                        using (var bedMasterTransferBal = new BedMasterBal())
-                                                        {
-                                                            var patientBedIdTransfer =
-                                                                Convert.ToInt32(model.patientBedId);
-                                                            var patientBedTransferobj =
-                                                                bedMasterBal.GetBedMasterById(patientBedIdTransfer);
-                                                            patientBedTransferobj.IsOccupied = true;
-                                                            bedMasterTransferBal.AddUpdateBedMaster(
-                                                                patientBedTransferobj);
-                                                        }
-
-                                                        // Logic to calculate the Encounter bed charges when updated bed charges
-                                                        // via calling this SPROC [SPROC_BedChargesNightlyPerEncounter]
-                                                        // New changes Use this Proc Instead of previous [SPROC_ReValuateBedChargesPerEncounter]
-                                                        bal.AddBedChargesForTransferPatient(
-                                                            model.EncounterID,
-                                                            Helpers.GetInvariantCultureDateTime());
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
                                 }
                             }
-                            else
+
+                            // ....Transfer Bed logic
+                            else if (objtoUpdate.BedNumber != model.patientBedId
+                                     && model.patientBedEndDate == null)
                             {
-                                var objEncounterdetais = bal.GetEncounterDetailById(model.EncounterID);
-                                if (objEncounterdetais != null)
+                                // ....Transfer Bed logic
+                                objtoUpdate.PatientID = Convert.ToInt32(existingEncounter.PatientID);
+                                objtoUpdate.EncounterID = Convert.ToString(existingEncounter.EncounterID);
+                                objtoUpdate.EndDate = Helpers.GetInvariantCultureDateTime();
+
+                                // Update the previous occupied BEd and Mapping Bed table
+                                var isMapped = patientBed.AddUpdateMappingPatientBed(objtoUpdate);
+                                if (isMapped > 0 && model.patientBedEndDate == null)
                                 {
-                                    using (var patientNewBed = new MappingPatientBedBal())
+                                    var patientBedId = Convert.ToInt32(objtoUpdate.BedNumber);
+                                    var patientBedobj = _bedservice.GetBedMasterById(patientBedId);
+                                    patientBedobj.IsOccupied = false;
+                                    var isUpdated = _bedservice.AddUpdateBedMaster(patientBedobj);
+                                    if (isUpdated > 0)
                                     {
-                                        using (var bedMasterBal = new BedMasterBal())
+                                        // Transfer Paitent from one bed to another
+                                        using (var transferPaitent = new MappingPatientBedBal())
                                         {
                                             var newBedToMap =
-                                                bedMasterBal.GetBedMasterById(Convert.ToInt32(model.patientBedId));
-                                            var mappingPatientBed = new MappingPatientBed
+                                                _bedservice.GetBedMasterById(
+                                                    Convert.ToInt32(model.patientBedId));
+                                            var mappingPatientBedTransfer = new MappingPatientBed
                                             {
                                                 MappingPatientBedId = 0,
                                                 FacilityNumber =
-                                                                                Convert.ToInt32(
-                                                                                    objEncounterdetais
-                                                                                .EncounterFacility),
+                                                    Convert.ToInt32(existingEncounter.EncounterFacility),
                                                 RoomNumber = "0",
-                                                BedNumber =
-                                                                                model.patientBedId,
-                                                PatientID =
-                                                                                Convert.ToInt32(
-                                                                                    model.PatientID),
-                                                EncounterID =
-                                                                                Convert.ToString(objEncounterdetais.EncounterID),
-                                                StartDate =
-                                                                                Convert.ToDateTime(
-                                                                                    model
-                                                                                .patientBedStartDate),
-                                                ServiceCode =
-                                                                                Convert.ToInt32(
-                                                                                    model
-                                                                                .patientBedService),
+                                                BedNumber = model.patientBedId,
+                                                PatientID = Convert.ToInt32(model.PatientID),
+                                                EncounterID = Convert.ToString(existingEncounter.EncounterID),
+                                                StartDate = Convert.ToDateTime(model.patientBedStartDate),
+                                                ServiceCode = Convert.ToInt32(model.patientBedService),
                                                 ExpectedEndDate =
-                                                                                Convert.ToDateTime(
-                                                                                    model
-                                                                                .patientBedExpectedEndDate),
-                                                OverrideBedType =
-                                                                                !string.IsNullOrEmpty(
-                                                                                    model
-                                                                                     .OverrideBedType)
-                                                                                    ? bedMasterBal
-                                                                                          .GetBedTypeByServiceCode
-                                                                                          (
-                                                                                              model
-                                                                                          .OverrideBedType)
-                                                                                    : null,
+                                                    Convert.ToDateTime(model.patientBedExpectedEndDate),
+                                                OverrideBedType
+                                                    = !string.IsNullOrEmpty(model.OverrideBedType)
+                                                        ? _bedservice.GetBedTypeByServiceCode
+                                                            (model.OverrideBedType)
+                                                        : null,
                                                 Corporateid = cId,
-                                                FacilityStructureID =
-                                                                                newBedToMap
-                                                                                .FacilityStructureId,
-                                                BedType =
-                                                                                newBedToMap.BedType
+                                                FacilityStructureID = newBedToMap.FacilityStructureId,
+                                                BedType = newBedToMap.BedType
                                             };
-                                            var isMapped = patientNewBed.AddUpdateMappingPatientBed(mappingPatientBed);
-                                            if (isMapped > 0)
+                                            var isTransferMapped =
+                                                transferPaitent.AddUpdateMappingPatientBed(
+                                                    mappingPatientBedTransfer);
+                                            if (isTransferMapped > 0)
                                             {
-                                                var patientBedId = Convert.ToInt32(model.patientBedId);
-                                                var patientBedobj = bedMasterBal.GetBedMasterById(patientBedId);
-                                                patientBedobj.IsOccupied = true;
-                                                bedMasterBal.AddUpdateBedMaster(patientBedobj);
+                                                var patientBedIdTransfer =
+                                                    Convert.ToInt32(model.patientBedId);
+                                                var patientBedTransferobj =
+                                                    _bedservice.GetBedMasterById(patientBedIdTransfer);
+                                                patientBedTransferobj.IsOccupied = true;
+                                                _bedservice.AddUpdateBedMaster(
+                                                        patientBedTransferobj);
+
+
+                                                // Logic to calculate the Encounter bed charges when updated bed charges
+                                                // via calling this SPROC [SPROC_BedChargesNightlyPerEncounter]
+                                                // New changes Use this Proc Instead of previous [SPROC_ReValuateBedChargesPerEncounter]
+                                                _service.AddBedChargesForTransferPatient(
+                                                    model.EncounterID,
+                                                    Helpers.GetInvariantCultureDateTime());
                                             }
                                         }
                                     }
                                 }
+
+                            }
+                        }
+                        else
+                        {
+                            var objEncounterdetais = _service.GetEncounterDetailById(model.EncounterID);
+                            if (objEncounterdetais != null)
+                            {
+                                using (var patientNewBed = new MappingPatientBedBal())
+                                {
+                                    var newBedToMap =
+                                        _bedservice.GetBedMasterById(Convert.ToInt32(model.patientBedId));
+                                    var mappingPatientBed = new MappingPatientBed
+                                    {
+                                        MappingPatientBedId = 0,
+                                        FacilityNumber =
+                                                                        Convert.ToInt32(
+                                                                            objEncounterdetais
+                                                                        .EncounterFacility),
+                                        RoomNumber = "0",
+                                        BedNumber =
+                                                                        model.patientBedId,
+                                        PatientID =
+                                                                        Convert.ToInt32(
+                                                                            model.PatientID),
+                                        EncounterID =
+                                                                        Convert.ToString(objEncounterdetais.EncounterID),
+                                        StartDate =
+                                                                        Convert.ToDateTime(
+                                                                            model
+                                                                        .patientBedStartDate),
+                                        ServiceCode =
+                                                                        Convert.ToInt32(
+                                                                            model
+                                                                        .patientBedService),
+                                        ExpectedEndDate =
+                                                                        Convert.ToDateTime(
+                                                                            model
+                                                                        .patientBedExpectedEndDate),
+                                        OverrideBedType =
+                                                                        !string.IsNullOrEmpty(
+                                                                            model
+                                                                             .OverrideBedType)
+                                                                            ? _bedservice
+                                                                                  .GetBedTypeByServiceCode
+                                                                                  (
+                                                                                      model
+                                                                                  .OverrideBedType)
+                                                                            : null,
+                                        Corporateid = cId,
+                                        FacilityStructureID =
+                                                                        newBedToMap
+                                                                        .FacilityStructureId,
+                                        BedType =
+                                                                        newBedToMap.BedType
+                                    };
+                                    var isMapped = patientNewBed.AddUpdateMappingPatientBed(mappingPatientBed);
+                                    if (isMapped > 0)
+                                    {
+                                        var patientBedId = Convert.ToInt32(model.patientBedId);
+                                        var patientBedobj = _bedservice.GetBedMasterById(patientBedId);
+                                        patientBedobj.IsOccupied = true;
+                                        _bedservice.AddUpdateBedMaster(patientBedobj);
+                                    }
+                                }
+
                             }
                         }
                     }
                 }
-
-                // return Json(encounter.EncounterID);
-                if (model.EncounterEndType != null && model.EncounterEndType != 0)
-                {
-                    var encounterEndStatus = CheckEncounterEndStatus(model.EncounterID);
-                    switch (encounterEndStatus)
-                    {
-                        case 1:
-                            return Json("Success");
-                        case 99:
-                            return Json("AuthError");
-                        case 0:
-                            break;
-                    }
-                }
-
-                // --- Check is added to scrub the bill manually if the patient is virtually discharged
-                // -- Who :Shashank Awasthy
-                // --  Why : To scrub the Virtual discharge patient.
-                // -- need to be changed after the confirmation from the client regarding this flow.
-                if (!string.IsNullOrEmpty(model.EncounterDischargePlan))
-                {
-                    var addVitruallDischargeLog = AddVirtualDischargeLog(model.EncounterID, fId, cId);
-                    //var encounterEndStatus = CheckEncounterEndStatusVirtualDischarge(model.EncounterID);
-                    var encounterEndStatus = CheckEncounterEndStatusVirtualDischarge(model.EncounterID, Convert.ToInt32(currentUserId));
-
-                    switch (encounterEndStatus)
-                    {
-                        case 1:
-                            return Json("Success");
-                        case 99:
-                            return Json("AuthError");
-                        case 0:
-                            break;
-                    }
-                }
-
-                return Json(model.EncounterID);
             }
+
+            // return Json(encounter.EncounterID);
+            if (model.EncounterEndType != null && model.EncounterEndType != 0)
+            {
+                var encounterEndStatus = CheckEncounterEndStatus(model.EncounterID);
+                switch (encounterEndStatus)
+                {
+                    case 1:
+                        return Json("Success");
+                    case 99:
+                        return Json("AuthError");
+                    case 0:
+                        break;
+                }
+            }
+
+            // --- Check is added to scrub the bill manually if the patient is virtually discharged
+            // -- Who :Shashank Awasthy
+            // --  Why : To scrub the Virtual discharge patient.
+            // -- need to be changed after the confirmation from the client regarding this flow.
+            if (!string.IsNullOrEmpty(model.EncounterDischargePlan))
+            {
+                var addVitruallDischargeLog = AddVirtualDischargeLog(model.EncounterID, fId, cId);
+                //var encounterEndStatus = CheckEncounterEndStatusVirtualDischarge(model.EncounterID);
+                var encounterEndStatus = CheckEncounterEndStatusVirtualDischarge(model.EncounterID, Convert.ToInt32(currentUserId));
+
+                switch (encounterEndStatus)
+                {
+                    case 1:
+                        return Json("Success");
+                    case 99:
+                        return Json("AuthError");
+                    case 0:
+                        break;
+                }
+            }
+
+            return Json(model.EncounterID);
+
         }
 
         /// <summary>
@@ -553,13 +547,10 @@ namespace BillingSystem.Controllers
              */
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new BedMasterBal(Helpers.DefaultServiceCodeTableNumber);
 
             // Need to change later and get the list by type. && _.IsOccupied == false
             // var availableBedList = bal.GetAvialableBedMasterList(facilityId);
-            var availableBedList = bal.GetBedStrutureForFacility(
-                facilityId,
-                corporateId);
+            var availableBedList = _bedservice.GetBedStrutureForFacility(facilityId, corporateId, Helpers.DefaultServiceCodeTableNumber);
             availableBedList = floorid > 0
                                    ? availableBedList.Where(x => x.FloorID == floorid).ToList()
                                    : availableBedList;
@@ -569,11 +560,9 @@ namespace BillingSystem.Controllers
             availableBedList = roomid > 0 ? availableBedList.Where(x => x.RoomID == roomid).ToList() : availableBedList;
             if (availableBedList != null)
             {
-                var bedRateCardBal = new BedRateCardBal();
                 availableBedList.ForEach(
-                    rate =>
-                    rate.MedRateCardlist =
-                    bedRateCardBal.GetBedRateCardsListByBedType(Convert.ToString(rate.BedType), rate.RoomNonChargeAble));
+                   rate =>
+                   rate.MedRateCardlist = _brcservice.GetBedRateCardsListByBedType(Convert.ToString(rate.BedType), rate.RoomNonChargeAble));
             }
 
             return PartialView(PartialViews.BedSearchFilterGrid, availableBedList);
@@ -588,9 +577,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFacilityStructureDDlData()
         {
             var facilityId = Helpers.GetDefaultFacilityId();
-            var facilitStructureBalyBal = new FacilityStructureBal();
-            var facilitystrutreList =
-                facilitStructureBalyBal.GetFacilityStructureForDDL(Convert.ToString(facilityId));
+            var facilitystrutreList = _fsservice.GetFacilityStructureForDDL(Convert.ToString(facilityId));
             var facilityFloors =
                 facilitystrutreList.Where(x => x.GlobalCodeID == Convert.ToInt32(BaseFacilityStucture.Floor))
                     .OrderBy(x => x.SortOrder)
@@ -619,16 +606,10 @@ namespace BillingSystem.Controllers
         public ActionResult GetFloorDepartments(int floorid)
         {
             var facilityId = Helpers.GetDefaultFacilityId();
-            var facilitStructureBalyBal = new FacilityStructureBal();
 
             // var facilitystrutreList = facilitStructureBalyBal.GetFacilityStructure(Convert.ToString(facilityId));
-            var facilitystrutreList =
-                facilitStructureBalyBal.GetFacilityStructureForDDL(Convert.ToString(facilityId));
-            var facilityDepartment =
-                facilitystrutreList.Where(
-                    x => x.GlobalCodeID == Convert.ToInt32(BaseFacilityStucture.Department) && x.ParentId == floorid)
-                    .OrderBy(x => x.SortOrder)
-                    .ToList();
+            var facilitystrutreList = _fsservice.GetFacilityStructureForDDL(Convert.ToString(facilityId));
+            var facilityDepartment = facilitystrutreList.Where(x => x.GlobalCodeID == Convert.ToInt32(BaseFacilityStucture.Department) && x.ParentId == floorid).OrderBy(x => x.SortOrder).ToList();
             var jsonResult = new { dtList = facilityDepartment, };
             return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
@@ -645,11 +626,9 @@ namespace BillingSystem.Controllers
         public ActionResult GetFloorDepartmentsRooms(int departmentid)
         {
             var facilityId = Helpers.GetDefaultFacilityId();
-            var facilitStructureBalyBal = new FacilityStructureBal();
 
             // var facilitystrutreList = facilitStructureBalyBal.GetFacilityStructure(Convert.ToString(facilityId));
-            var facilitystrutreList =
-                facilitStructureBalyBal.GetFacilityStructureForDDL(Convert.ToString(facilityId));
+            var facilitystrutreList = _fsservice.GetFacilityStructureForDDL(Convert.ToString(facilityId));
             var facilityDepartment =
                 facilitystrutreList.Where(
                     x => x.GlobalCodeID == Convert.ToInt32(BaseFacilityStucture.Rooms) && x.ParentId == departmentid)
@@ -676,30 +655,28 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetPatientBedInformation(int patientId, int bedId, string serviceCodeValue)
         {
-            using (var bal = new EncounterBal())
+            if (bedId > 0)
             {
-                if (bedId > 0)
-                {
-                    var result = bal.GetPatientBedInformationByBedId(
-                        patientId,
-                        bedId,
-                        serviceCodeValue);
-                    var jsonResult =
-                        new
-                        {
-                            result.FloorName,
-                            result.DepartmentName,
-                            result.Room,
-                            result.BedName,
-                            result.BedAssignedOn,
-                            result.BedRateApplicable,
-                            result.patientBedService
-                        };
-                    return Json(jsonResult, JsonRequestBehavior.AllowGet);
-                }
-
-                return Json(null);
+                var result = _service.GetPatientBedInformationByBedId(
+                    patientId,
+                    bedId,
+                    serviceCodeValue);
+                var jsonResult =
+                    new
+                    {
+                        result.FloorName,
+                        result.DepartmentName,
+                        result.Room,
+                        result.BedName,
+                        result.BedAssignedOn,
+                        result.BedRateApplicable,
+                        result.patientBedService
+                    };
+                return Json(jsonResult, JsonRequestBehavior.AllowGet);
             }
+
+            return Json(null);
+
         }
 
         /// <summary>
@@ -738,17 +715,12 @@ namespace BillingSystem.Controllers
              */
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new BedMasterBal(Helpers.DefaultServiceCodeTableNumber);
 
-            // Need to change later and get the list by type. && _.IsOccupied == false
-            // var availableBedList = bal.GetAvialableBedMasterList(facilityId);
-            var availableBedList = bal.GetBedStrutureForFacility(facilityId, corporateId);
+            var availableBedList = _bedservice.GetBedStrutureForFacility(facilityId, corporateId, Helpers.DefaultServiceCodeTableNumber);
             var bedAssignementView = new BedAssignmentView
             {
-                AvailableBedList =
-                                                 new List<FacilityBedStructureCustomModel>(),
-                OccupiedBedList =
-                                                 new List<FacilityBedStructureCustomModel>()
+                AvailableBedList = new List<FacilityBedStructureCustomModel>(),
+                OccupiedBedList = new List<FacilityBedStructureCustomModel>()
             };
             if (availableBedList != null && availableBedList.Any())
             {
@@ -759,11 +731,9 @@ namespace BillingSystem.Controllers
             // GetBedRateCardsListByBedType
             if (bedAssignementView.AvailableBedList != null)
             {
-                var bedRateCardBal = new BedRateCardBal();
                 bedAssignementView.AvailableBedList.ForEach(
-                    rate =>
-                    rate.MedRateCardlist =
-                    bedRateCardBal.GetBedRateCardsListByBedType(Convert.ToString(rate.BedType), rate.RoomNonChargeAble));
+                   rate =>
+                   rate.MedRateCardlist = _brcservice.GetBedRateCardsListByBedType(Convert.ToString(rate.BedType), rate.RoomNonChargeAble));
             }
 
             return PartialView(PartialViews.BedMappingPatientBedAssignment, bedAssignementView);
@@ -776,13 +746,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EncounterOpenOrdersPending(int encounterId)
         {
-            // Added the check as per the new task : 26a Orders open when trying to discharge
-            // Added on 15 jan 2016 time : 11:35 AM
-            // Added by Shashank
-            using (var bal = new EncounterBal())
-            {
-                return Json(bal.EncounterOpenOrders(encounterId));
-            }
+            return Json(_service.EncounterOpenOrders(encounterId));
+
         }
 
         /// <summary>
@@ -792,16 +757,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult PatientEncounterOrderPending(int patientId)
         {
-            // Added the check as per the new task : 26a Orders open when trying to discharge
-            // Added on 15 jan 2016 time : 11:35 AM
-            // Added by Shashank
-            using (var bal = new EncounterBal())
-            {
-                return Json(bal.PatientEncounterOpenOrders(patientId));
-                //var pendingorders = bal.PatientEncounterOpenOrders(patientId);
-                //var currentEncounterid = bal.GetPatientEncounterById(patientId);
-                //return Json(new { encID = currentEncounterid, pendingorders = pendingorders });
-            }
+            return Json(_service.PatientEncounterOpenOrders(patientId));
+
         }
 
         /// <summary>
@@ -811,28 +768,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult PatientEncounterOrderPendingPinfo(int patientId)
         {
-            // Added the check as per the new task : 26a Orders open when trying to discharge
-            // Added on 15 jan 2016 time : 11:35 AM
-            // Added by Shashank
-            using (var bal = new EncounterBal())
+            //return Json(bal.PatientEncounterOpenOrders(patientId));
+            var pendingorders = _service.PatientEncounterOpenOrders(patientId);
+            var currentEncounter = _service.GetActiveEncounterByPateintId(patientId);
+            if (currentEncounter != null)
             {
-                //return Json(bal.PatientEncounterOpenOrders(patientId));
-                var pendingorders = bal.PatientEncounterOpenOrders(patientId);
-                var currentEncounter = bal.GetActiveEncounterByPateintId(patientId);
-                if (currentEncounter != null)
-                {
-                    return
-                        Json(
-                            new
-                            {
-                                encID = currentEncounter.EncounterID,
-                                pendingorders = pendingorders,
-                                encType = currentEncounter.EncounterPatientType
-                            });
-                }
-
-                return Json(pendingorders);
+                return
+                    Json(
+                        new
+                        {
+                            encID = currentEncounter.EncounterID,
+                            pendingorders = pendingorders,
+                            encType = currentEncounter.EncounterPatientType
+                        });
             }
+
+            return Json(pendingorders);
+
         }
 
         /// <summary>
@@ -889,11 +841,10 @@ namespace BillingSystem.Controllers
         private int CheckEncounterEndStatus(int encounterid)
         {
             var userId = Helpers.GetLoggedInUserId();
-            using (var encounterbal = new EncounterBal())
-            {
-                var encounterEndStatus = encounterbal.GetEncounterEndCheck(encounterid, userId);
-                return encounterEndStatus;
-            }
+
+            var encounterEndStatus = _service.GetEncounterEndCheck(encounterid, userId);
+            return encounterEndStatus;
+
         }
 
 
@@ -905,11 +856,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private int CheckEncounterEndStatusVirtualDischarge(int encounterid, int loggedInUserId)
         {
-            using (var encounterbal = new EncounterBal())
-            {
-                var encounterEndStatus = encounterbal.GetEncounterEndCheckVirtualDischarge(encounterid, loggedInUserId);
-                return encounterEndStatus;
-            }
+            var encounterEndStatus = _service.GetEncounterEndCheckVirtualDischarge(encounterid, loggedInUserId);
+            return encounterEndStatus;
+
         }
 
         /// <summary>
@@ -919,11 +868,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private int ChekEncounterEndStatusBeforeUpdate(int encounterid)
         {
-            using (var encounterbal = new EncounterBal())
-            {
-                var encounterEndStatus = encounterbal.GetEncounterStatusBeforeUpdate(encounterid);
-                return encounterEndStatus;
-            }
+            var encounterEndStatus = _service.GetEncounterStatusBeforeUpdate(encounterid);
+            return encounterEndStatus;
+
         }
 
         /// <summary>
@@ -977,144 +924,104 @@ namespace BillingSystem.Controllers
         /// </returns>
         private int StartEncounter(EncounterCustomModel model)
         {
-            using (var bal = new EncounterBal())
-            {
-                var coporateid = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var datetimeLocal = Helpers.GetInvariantCultureDateTime();
+            var coporateid = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var datetimeLocal = Helpers.GetInvariantCultureDateTime();
 
-                var rn = new Random(Helpers.GetInvariantCultureDateTime().Ticks.GetHashCode()); // 2
-                var uniqueId = rn.Next(100, int.MaxValue);
-                while (bal.CheckEncounterNumberExist(Convert.ToString(uniqueId)))
-                    uniqueId = rn.Next(100, int.MaxValue);
+            var rn = new Random(Helpers.GetInvariantCultureDateTime().Ticks.GetHashCode()); // 2
+            var uniqueId = rn.Next(100, int.MaxValue);
+            while (_service.CheckEncounterNumberExist(Convert.ToString(uniqueId)))
+                uniqueId = rn.Next(100, int.MaxValue);
 
 
-                var encounterNumber = !string.IsNullOrEmpty(model.EncounterNumber)
-                                             ? model.EncounterNumber
-                                             : string.Format(
-                                                 "{0}{1}{2}{3}",
-                                                 model.EncounterFacility,
-                                                 model.PatientID,
-                                                 model.EncounterPatientType,
-                                                 uniqueId);
+            var encounterNumber = !string.IsNullOrEmpty(model.EncounterNumber)
+                                         ? model.EncounterNumber
+                                         : string.Format(
+                                             "{0}{1}{2}{3}",
+                                             model.EncounterFacility,
+                                             model.PatientID,
+                                             model.EncounterPatientType,
+                                             uniqueId);
 
-                var encounterid =
-                    bal.AddUpdateEncounter(
-                        new Encounter
-                        {
-                            EncounterPatientType = model.EncounterPatientType,
-                            EncounterConfidentialityLevel = model.EncounterConfidentialityLevel,
-                            EncounterServiceCategory = model.EncounterServiceCategory,
-                            PatientID = model.PatientID,
-                            EncounterTransferHospital = model.EncounterTransferHospital,
-                            EncounterFacility = model.EncounterFacility,
-                            EncounterTransferSource = model.EncounterTransferSource,
-                            EncounterAdmitReason = model.EncounterAdmitReason,
-                            EncounterType = model.EncounterType,
-                            EncounterStartType = model.EncounterStartType,
-                            EncounterSpecialty = model.EncounterSpecialty,
-                            EncounterModeofArrival = model.EncounterModeofArrival,
-                            EncounterAdmitType = model.EncounterAdmitType,
-                            EncounterAccidentRelated = model.EncounterAccidentRelated,
-                            EncounterAccidentType = model.EncounterAccidentType,
-                            EncounterEndType = model.EncounterEndType,
-                            EncounterAttendingPhysician = model.EncounterAttendingPhysician,
-                            EncounterPhysicianType = model.EncounterPhysicianType,
-                            EncounterNumber = encounterNumber,
-                            EncounterStartTime = Convert.ToDateTime(model.EncounterStartTime),
-                            EncounterInpatientAdmitDate = datetimeLocal,
-                            EncounterAccidentDate = datetimeLocal,
-                            EncounterRegistrationDate = datetimeLocal,
-                            EncounterEndTime = null,
-                            CorporateID = coporateid,
-                            HomeCareRecurring = model.HomeCareRecurring,
-                            CreatedBy = model.CreatedBy,
-                            CreatedDate = model.CreatedDate,
-                            EncounterID = model.EncounterID,
-                            ModifiedBy = model.ModifiedBy,
-                            ModifiedDate = model.ModifiedDate,
-                        });
-
-                if (model.EncounterPatientType == Convert.ToInt32(EncounterPatientType.InPatient))
-                {
-                    var objEncounterdetais = bal.GetEncounterDetailById(encounterid);
-                    if (objEncounterdetais != null)
+            var encounterid =
+                _service.AddUpdateEncounter(
+                    new Encounter
                     {
-                        using (var patientBed = new MappingPatientBedBal())
+                        EncounterPatientType = model.EncounterPatientType,
+                        EncounterConfidentialityLevel = model.EncounterConfidentialityLevel,
+                        EncounterServiceCategory = model.EncounterServiceCategory,
+                        PatientID = model.PatientID,
+                        EncounterTransferHospital = model.EncounterTransferHospital,
+                        EncounterFacility = model.EncounterFacility,
+                        EncounterTransferSource = model.EncounterTransferSource,
+                        EncounterAdmitReason = model.EncounterAdmitReason,
+                        EncounterType = model.EncounterType,
+                        EncounterStartType = model.EncounterStartType,
+                        EncounterSpecialty = model.EncounterSpecialty,
+                        EncounterModeofArrival = model.EncounterModeofArrival,
+                        EncounterAdmitType = model.EncounterAdmitType,
+                        EncounterAccidentRelated = model.EncounterAccidentRelated,
+                        EncounterAccidentType = model.EncounterAccidentType,
+                        EncounterEndType = model.EncounterEndType,
+                        EncounterAttendingPhysician = model.EncounterAttendingPhysician,
+                        EncounterPhysicianType = model.EncounterPhysicianType,
+                        EncounterNumber = encounterNumber,
+                        EncounterStartTime = Convert.ToDateTime(model.EncounterStartTime),
+                        EncounterInpatientAdmitDate = datetimeLocal,
+                        EncounterAccidentDate = datetimeLocal,
+                        EncounterRegistrationDate = datetimeLocal,
+                        EncounterEndTime = null,
+                        CorporateID = coporateid,
+                        HomeCareRecurring = model.HomeCareRecurring,
+                        CreatedBy = model.CreatedBy,
+                        CreatedDate = model.CreatedDate,
+                        EncounterID = model.EncounterID,
+                        ModifiedBy = model.ModifiedBy,
+                        ModifiedDate = model.ModifiedDate,
+                    });
+
+            if (model.EncounterPatientType == Convert.ToInt32(EncounterPatientType.InPatient))
+            {
+                var objEncounterdetais = _service.GetEncounterDetailById(encounterid);
+                if (objEncounterdetais != null)
+                {
+                    using (var patientBed = new MappingPatientBedBal())
+                    {
+                        var newBedToMap = _bedservice.GetBedMasterById(Convert.ToInt32(model.patientBedId));
+                        var mappingPatientBed = new MappingPatientBed
                         {
-                            using (var bedMasterBal = new BedMasterBal())
-                            {
-                                var newBedToMap =
-                                    bedMasterBal.GetBedMasterById(Convert.ToInt32(model.patientBedId));
-                                var mappingPatientBed = new MappingPatientBed
-                                {
-                                    MappingPatientBedId = 0,
-                                    FacilityNumber =
-                                                                    Convert.ToInt32(
-                                                                        objEncounterdetais
-                                                                    .EncounterFacility),
-                                    RoomNumber = "0",
-                                    BedNumber = model.patientBedId,
-                                    PatientID =
-                                                                    Convert.ToInt32(model.PatientID),
-                                    EncounterID = Convert.ToString(objEncounterdetais.EncounterID),
-                                    //StartDate =
-                                    //    Convert.ToDateTime(
-                                    //        encounter.patientBedStartDate), 
-                                    // Changes done by Shashank ON 14th March
-                                    // TO Add the Same date in Bed AS of the Encounter start date.
-                                    StartDate =
-                                                                    Convert.ToDateTime(
-                                                                        model.EncounterStartTime),
-                                    ServiceCode =
-                                                                    Convert.ToInt32(
-                                                                        model.patientBedService),
-                                    ExpectedEndDate =
-                                                                    Convert.ToDateTime(
-                                                                        model
-                                                                    .patientBedExpectedEndDate),
-
-                                    // OverrideBedType = encounter.OverrideBedType, // new added column on nov 1 2014
-                                    OverrideBedType =
-                                                                    !string.IsNullOrEmpty(
-                                                                        model.OverrideBedType)
-                                                                        ? bedMasterBal
-                                                                              .GetBedTypeByServiceCode(
-                                                                                  model
-                                                                              .OverrideBedType)
-                                                                        : null,
-                                    Corporateid = coporateid,
-                                    FacilityStructureID =
-                                                                    newBedToMap.FacilityStructureId,
-                                    BedType = newBedToMap.BedType
-
-                                    // new added column on nov 1 2014
-                                };
-                                var isMapped = patientBed.AddUpdateMappingPatientBed(mappingPatientBed);
-                                if (isMapped > 0)
-                                {
-                                    var patientBedId = Convert.ToInt32(model.patientBedId);
-                                    var patientBedobj = bedMasterBal.GetBedMasterById(patientBedId);
-                                    patientBedobj.IsOccupied = true;
-                                    bedMasterBal.AddUpdateBedMaster(patientBedobj);
-                                }
-                            }
+                            MappingPatientBedId = 0,
+                            FacilityNumber = Convert.ToInt32(objEncounterdetais.EncounterFacility),
+                            RoomNumber = "0",
+                            BedNumber = model.patientBedId,
+                            PatientID = Convert.ToInt32(model.PatientID),
+                            EncounterID = Convert.ToString(objEncounterdetais.EncounterID),
+                            StartDate = Convert.ToDateTime(model.EncounterStartTime),
+                            ServiceCode = Convert.ToInt32(model.patientBedService),
+                            ExpectedEndDate = Convert.ToDateTime(model.patientBedExpectedEndDate),
+                            OverrideBedType = !string.IsNullOrEmpty(model.OverrideBedType) ? _bedservice.GetBedTypeByServiceCode(model.OverrideBedType) : null,
+                            Corporateid = coporateid,
+                            FacilityStructureID = newBedToMap.FacilityStructureId,
+                            BedType = newBedToMap.BedType
+                        };
+                        var isMapped = patientBed.AddUpdateMappingPatientBed(mappingPatientBed);
+                        if (isMapped > 0)
+                        {
+                            var patientBedId = Convert.ToInt32(model.patientBedId);
+                            var patientBedobj = _bedservice.GetBedMasterById(patientBedId);
+                            patientBedobj.IsOccupied = true;
+                            _bedservice.AddUpdateBedMaster(patientBedobj);
                         }
+
                     }
                 }
-
-                using (var billHeaderbal = new BillHeaderBal())
-                {
-                    billHeaderbal.AddBillonEncounterStart(
-                        encounterid,
-                        0,
-                        Convert.ToInt32(model.PatientID),
-                        coporateid,
-                        facilityId);
-                }
-
-                return encounterid;
             }
+
+            _bhservice.AddBillonEncounterStart(encounterid, 0, Convert.ToInt32(model.PatientID), coporateid, facilityId);
+
+
+            return encounterid;
+
         }
 
         /// <summary>
@@ -1124,12 +1031,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private bool AddVirtualDischargeLog(int encounterid, int facilityId, int corporateId)
         {
-            //return true;
-            using (var encounterbal = new EncounterBal())
-            {
-                var encounterEndStatus = encounterbal.AddVirtualDischargeLog(encounterid, facilityId, corporateId);
-                return encounterEndStatus;
-            }
+            var encounterEndStatus = _service.AddVirtualDischargeLog(encounterid, facilityId, corporateId);
+            return encounterEndStatus;
+
         }
 
         //public ActionResult GetPreEvalutionData(int PatientId)
@@ -1163,8 +1067,7 @@ namespace BillingSystem.Controllers
             //Get License Types and Specialties Data
             var gcBal = new GlobalCodeBal();
             allList = gcBal.GetListByCategoriesRange(new List<string> { "1104", "1121" });
-            using (var uBal = new UsersBal())
-                uList = uBal.GetPhysiciansByRole(fId, cId);
+            uList = _uService.GetPhysiciansByRole(fId, cId);
 
             var jsonData = new
             {

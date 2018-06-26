@@ -7,7 +7,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.UI.WebControls;
 using BillingSystem.Bal.BusinessAccess;
-using BillingSystem.Bal.Mapper;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
@@ -19,6 +19,17 @@ namespace BillingSystem.Controllers
 {
     public class PatientPortalController : BaseController
     {
+        private readonly IPatientInfoService _piService;
+        private readonly IEncounterService _eService;
+        private readonly IBillHeaderService _bhService;
+
+        public PatientPortalController(IPatientInfoService piService, IEncounterService eService, IBillHeaderService bhService)
+        {
+            _piService = piService;
+            _eService = eService;
+            _bhService = bhService;
+        }
+
         /// <summary>
         /// Indexes the specified p identifier.
         /// </summary>
@@ -108,11 +119,8 @@ namespace BillingSystem.Controllers
             var id = (patientId != null && Convert.ToInt32(patientId) > 0) ? Convert.ToInt32(patientId) : 0;
             var patientInfoModel = new PatientInfoView { PatientId = id };
 
-            var objPatientInfoBal = new PatientInfoBal();
 
-            var currentPatient = id > 0
-                ? objPatientInfoBal.GetPatientInfoCustomModelById(id)
-                : new PatientInfoCustomModel { PatientInfo = new PatientInfo() };
+            var currentPatient = id > 0 ? _piService.GetPatientInfoCustomModelById(id) : new PatientInfoCustomModel { PatientInfo = new PatientInfo() };
 
             if (id == 0 && currentPatient.PatientInfo != null)
             {
@@ -177,8 +185,7 @@ namespace BillingSystem.Controllers
                     patientInfoModel.PatientLoginDetail = vm2;
             }
 
-            using (var enBal = new EncounterBal())
-                patientInfoModel.EncounterOpen = enBal.GetEncounterOpenStatus(id);
+            patientInfoModel.EncounterOpen = _eService.GetEncounterOpenStatus(id);
 
             return PartialView(PartialViews.PatientInfoView, patientInfoModel);
         }
@@ -200,10 +207,8 @@ namespace BillingSystem.Controllers
                 QueryStringTypeId = 0
             };
             if (patientId != null && Convert.ToInt32(patientId) != 0)
-            {
-                using (var bal = new BillHeaderBal())
-                {
-                    var encountersList = bal.GetAllBillHeaderListByPatientId(Convert.ToInt32(patientId));
+            { 
+                    var encountersList = _bhService.GetAllBillHeaderListByPatientId(Convert.ToInt32(patientId));
 
                     //Bill Details ViewModel to be binded to UI
                     billDetailsView = new BillDetailsView
@@ -215,7 +220,7 @@ namespace BillingSystem.Controllers
                         QueryStringId = 0,
                         QueryStringTypeId = 0
                     };
-                }
+               
             }
 
             //Pass the View Model in ActionResult to partial View BillHeader
@@ -265,115 +270,113 @@ namespace BillingSystem.Controllers
                 //Check if FacilityViewModel
                 if (patientVm != null)
                 {
-                    using (var bal = new PatientInfoBal())
+                    patientVm.PatientID = patientId;
+
+                    //Check for duplicate Social Security Number, DOB and LastName
+                    var isExists = _piService.CheckIfEmiratesIdExists(patientVm.PersonEmiratesIDNumber, patientId,
+                        patientVm.PersonLastName, Convert.ToDateTime(patientVm.PersonBirthDate), facilityId);
+                    if (isExists)
+                        return Json(new { patientId = 0, status = "duplicate" }, JsonRequestBehavior.AllowGet);
+
+
+                    //Check for duplicate Health Care Number (Member ID)
+                    isExists = _piService.CheckForDuplicateHealthCareNumber(cm.Insurance.PersonHealthCareNumber, patientId, cm.Insurance.InsuranceCompanyId, cm.Insurance.InsurancePlanId, cm.Insurance.InsurancePolicyId);
+                    if (isExists)
+                        return Json(new { patientId, status = "duplicatememberid" }, JsonRequestBehavior.AllowGet);
+
+                    //Check for duplicate Patient's Email
+                    isExists = _piService.CheckForDuplicateEmail(cm.PatientLoginDetail.Email, patientId);
+                    if (isExists)
+                        return Json(new { patientId, status = "duplicateemail" }, JsonRequestBehavior.AllowGet);
+
+
+                    using (var trans = new TransactionScope())
                     {
-                        patientVm.PatientID = patientId;
-
-                        //Check for duplicate Social Security Number, DOB and LastName
-                        var isExists = bal.CheckIfEmiratesIdExists(patientVm.PersonEmiratesIDNumber, patientId,
-                            patientVm.PersonLastName, Convert.ToDateTime(patientVm.PersonBirthDate), facilityId);
-                        if (isExists)
-                            return Json(new { patientId = 0, status = "duplicate" }, JsonRequestBehavior.AllowGet);
-
-
-                        //Check for duplicate Health Care Number (Member ID)
-                        isExists = bal.CheckForDuplicateHealthCareNumber(cm.Insurance.PersonHealthCareNumber, patientId, cm.Insurance.InsuranceCompanyId, cm.Insurance.InsurancePlanId, cm.Insurance.InsurancePolicyId);
-                        if (isExists)
-                            return Json(new { patientId, status = "duplicatememberid" }, JsonRequestBehavior.AllowGet);
-
-                        //Check for duplicate Patient's Email
-                        isExists = bal.CheckForDuplicateEmail(cm.PatientLoginDetail.Email, patientId);
-                        if (isExists)
-                            return Json(new { patientId, status = "duplicateemail" }, JsonRequestBehavior.AllowGet);
-
-
-                        using (var trans = new TransactionScope())
+                        try
                         {
-                            try
+                            var previouspatientInfoData = _piService.GetPatientInfoById(patientId);
+                            var isObjectsSame = CompareerValue(previouspatientInfoData, patientVm);
+                            if (!isObjectsSame)
                             {
-                                var previouspatientInfoData = bal.GetPatientInfoById(patientId);
-                                var isObjectsSame = CompareerValue(previouspatientInfoData, patientVm);
-                                if (!isObjectsSame)
-                                {
-                                    return Json(null, JsonRequestBehavior.AllowGet);
-                                }
-                                //patientId = bal.AddUpdatePatientInfo(patientVm);
-                                if (patientId > 0)
-                                {
-                                    var statusMessage = string.Empty;
-
-                                    //Save / Updates Profile Image
-                                    int imageId;
-                                    if (Session[SessionEnum.TempProfileFile.ToString()] != null)
-                                    {
-                                        imageId = SaveProfileImage(patientId);
-                                        if (imageId < 0)
-                                            statusMessage = "imageerror";
-                                    }
-                                    else imageId = 1;
-
-                                    //Save / Updates Patient's Insurance Details
-                                    if (cm.Insurance != null)
-                                        cm.Insurance.PatientID = patientId;
-                                    var insId = SavePatientInsuranceData(cm.Insurance);
-                                    if (insId <= 0)
-                                        statusMessage = "insuranceerror";
-
-                                    //Save / Updates Patient's Phone Details
-                                    if (cm.CurrentPhone != null)
-                                    {
-                                        cm.CurrentPhone.PatientID = patientId;
-                                        cm.CurrentPhone.PhoneNo = cm.CurrentPatient.PatientInfo.PersonContactNumber;
-                                        cm.CurrentPhone.IsPrimary = true;
-                                        cm.CurrentPhone.IsdontContact = false;
-                                        cm.CurrentPhone.IsDeleted = false;
-                                        cm.CurrentPhone.ModifiedDate = currentDateTime;
-                                        cm.CurrentPhone.ModifiedBy = userId;
-                                        cm.CurrentPhone.PhoneType = (int)PhoneType.MobilePhone;
-                                    }
-                                    else
-                                    {
-                                        cm.CurrentPhone = new PatientPhone
-                                        {
-                                            PatientID = patientId,
-                                            PhoneNo = cm.CurrentPatient.PatientInfo.PersonContactNumber,
-                                            PhoneType = (int)PhoneType.MobilePhone,
-                                            IsPrimary = true,
-                                            IsdontContact = false,
-                                            IsDeleted = false,
-                                            CreatedDate = currentDateTime,
-                                            CreatedBy = userId
-                                        };
-                                    }
-                                    var phoneId = SavePatientPhoneData(cm.CurrentPhone);
-                                    if (phoneId <= 0)
-                                        statusMessage = "phoneerror";
-
-
-                                    //Save / Updates Patient's Login Details
-                                    if (cm.PatientLoginDetail != null)
-                                        cm.PatientLoginDetail.PatientId = patientId;
-                                    var loginId = SavePatientSecuritySettings(cm.PatientLoginDetail);
-                                    if (loginId <= 0)
-                                        statusMessage = "logindetailerror";
-
-                                    if (imageId > 0 && insId > 0 && phoneId > 0 && loginId > 0)
-                                        trans.Complete();
-                                    else
-                                        return Json(new { patientId, status = statusMessage }, JsonRequestBehavior.AllowGet);
-                                }
+                                return Json(null, JsonRequestBehavior.AllowGet);
                             }
-                            catch
+                            //patientId = bal.AddUpdatePatientInfo(patientVm);
+                            if (patientId > 0)
                             {
-                                return Json(new { patientId, status = "error" }, JsonRequestBehavior.AllowGet);
-                                //throw ex;
+                                var statusMessage = string.Empty;
+
+                                //Save / Updates Profile Image
+                                int imageId;
+                                if (Session[SessionEnum.TempProfileFile.ToString()] != null)
+                                {
+                                    imageId = SaveProfileImage(patientId);
+                                    if (imageId < 0)
+                                        statusMessage = "imageerror";
+                                }
+                                else imageId = 1;
+
+                                //Save / Updates Patient's Insurance Details
+                                if (cm.Insurance != null)
+                                    cm.Insurance.PatientID = patientId;
+                                var insId = SavePatientInsuranceData(cm.Insurance);
+                                if (insId <= 0)
+                                    statusMessage = "insuranceerror";
+
+                                //Save / Updates Patient's Phone Details
+                                if (cm.CurrentPhone != null)
+                                {
+                                    cm.CurrentPhone.PatientID = patientId;
+                                    cm.CurrentPhone.PhoneNo = cm.CurrentPatient.PatientInfo.PersonContactNumber;
+                                    cm.CurrentPhone.IsPrimary = true;
+                                    cm.CurrentPhone.IsdontContact = false;
+                                    cm.CurrentPhone.IsDeleted = false;
+                                    cm.CurrentPhone.ModifiedDate = currentDateTime;
+                                    cm.CurrentPhone.ModifiedBy = userId;
+                                    cm.CurrentPhone.PhoneType = (int)PhoneType.MobilePhone;
+                                }
+                                else
+                                {
+                                    cm.CurrentPhone = new PatientPhone
+                                    {
+                                        PatientID = patientId,
+                                        PhoneNo = cm.CurrentPatient.PatientInfo.PersonContactNumber,
+                                        PhoneType = (int)PhoneType.MobilePhone,
+                                        IsPrimary = true,
+                                        IsdontContact = false,
+                                        IsDeleted = false,
+                                        CreatedDate = currentDateTime,
+                                        CreatedBy = userId
+                                    };
+                                }
+                                var phoneId = SavePatientPhoneData(cm.CurrentPhone);
+                                if (phoneId <= 0)
+                                    statusMessage = "phoneerror";
+
+
+                                //Save / Updates Patient's Login Details
+                                if (cm.PatientLoginDetail != null)
+                                    cm.PatientLoginDetail.PatientId = patientId;
+                                var loginId = SavePatientSecuritySettings(cm.PatientLoginDetail);
+                                if (loginId <= 0)
+                                    statusMessage = "logindetailerror";
+
+                                if (imageId > 0 && insId > 0 && phoneId > 0 && loginId > 0)
+                                    trans.Complete();
+                                else
+                                    return Json(new { patientId, status = statusMessage }, JsonRequestBehavior.AllowGet);
                             }
                         }
-                        if (patientId > 0)
-                            return Json(new { patientId, status = "success" },
-                                                JsonRequestBehavior.AllowGet);
+                        catch
+                        {
+                            return Json(new { patientId, status = "error" }, JsonRequestBehavior.AllowGet);
+                            //throw ex;
+                        }
                     }
+                    if (patientId > 0)
+                        return Json(new { patientId, status = "success" },
+                                            JsonRequestBehavior.AllowGet);
                 }
+
             }
             return Json(new { patientId, status = "error" }, JsonRequestBehavior.AllowGet);
         }

@@ -1,25 +1,25 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HolidayPlannerController.cs" company="SPadez">
-//   OmniHealthcare
-// </copyright>
-// <summary>
-//   The holiday planner controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using System.Web.Mvc;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Models;
+
 
 namespace BillingSystem.Controllers
 {
-    using System.Web.Mvc;
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Models;
+  
 
     /// <summary>
     /// AppointmentTypes controller.
     /// </summary>
     public class AppointmentTypesController : BaseController
     {
+        private readonly IAppointmentTypesService _service;
+
+        public AppointmentTypesController(IAppointmentTypesService service)
+        {
+            _service = service;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -32,23 +32,15 @@ namespace BillingSystem.Controllers
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             // Initialize the AppointmentTypes BAL object
-            using (var appointmentTypesBal = new AppointmentTypesBal())
-            {
-                // Get the facilities list
-                //var appointmentTypesList = appointmentTypesBal.GetAppointmentTypes();
-                var appointmentTypesList = appointmentTypesBal.GetAppointmentTypesData(corporateId, facilityId, showInActive);
+            var appointmentTypesList = _service.GetAppointmentTypesData(corporateId, facilityId, showInActive);
+            return PartialView(PartialViews.AppointmentTypesList, appointmentTypesList);
 
-
-                // Pass the ActionResult with List of AppointmentTypesViewModel object to Partial View AppointmentTypesList
-                return PartialView(PartialViews.AppointmentTypesList, appointmentTypesList);
-            }
         }
 
 
         public ActionResult BindAppointmentGridActiveInActive(int corporateId, int facilityId, bool showInActive)
         {
-            var appointmentType = new AppointmentTypesBal();
-            var list = appointmentType.GetAppointmentTypesData(corporateId, facilityId, showInActive);
+            var list = _service.GetAppointmentTypesData(corporateId, facilityId, showInActive);
             return PartialView(PartialViews.AppointmentTypesList, list);
 
         }
@@ -63,24 +55,22 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteAppointmentTypes(int id)
         {
-            using (var bal = new AppointmentTypesBal())
+            // Get AppointmentTypes model object by current AppointmentTypes ID
+            var currentAppointmentTypes = _service.GetAppointmentTypesById(id);
+
+            // Check If AppointmentTypes model is not null
+            if (currentAppointmentTypes != null)
             {
-                // Get AppointmentTypes model object by current AppointmentTypes ID
-                var currentAppointmentTypes = bal.GetAppointmentTypesById(id);
+                currentAppointmentTypes.IsActive = false;
 
-                // Check If AppointmentTypes model is not null
-                if (currentAppointmentTypes != null)
-                {
-                    currentAppointmentTypes.IsActive = false;
-
-                    // Update Operation of current AppointmentTypes
-                    int result = bal.DeleteAppointmentTyepsData(currentAppointmentTypes);
+                // Update Operation of current AppointmentTypes
+                int result = _service.DeleteAppointmentTyepsData(currentAppointmentTypes);
 
 
-                    // return deleted ID of current AppointmentTypes as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                // return deleted ID of current AppointmentTypes as Json Result to the Ajax Call.
+                return Json(result);
             }
+
 
             // Return the Json result as Action Result back JSON Call Success
             return Json(null);
@@ -97,14 +87,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetAppointmentTypes(int id)
         {
-            using (var bal = new AppointmentTypesBal())
-            {
-                // Call the AddAppointmentTypes Method to Add / Update current AppointmentTypes
-                AppointmentTypes currentAppointmentTypes = bal.GetAppointmentTypesById(id);
+            AppointmentTypes currentAppointmentTypes = _service.GetAppointmentTypesById(id);
 
-                // Pass the ActionResult with the current AppointmentTypesViewModel object as model to PartialView AppointmentTypesAddEdit
-                return PartialView(PartialViews.AppointmentTypesAddEdit, currentAppointmentTypes);
-            }
+            // Pass the ActionResult with the current AppointmentTypesViewModel object as model to PartialView AppointmentTypesAddEdit
+            return PartialView(PartialViews.AppointmentTypesAddEdit, currentAppointmentTypes);
+
         }
 
         /// <summary>
@@ -119,11 +106,9 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            // Initialize the AppointmentTypes BAL object
-            var appointmentTypesBal = new AppointmentTypesBal();
 
             // Get the Entity list
-            var appointmentTypesList = appointmentTypesBal.GetAppointmentTypesData(corporateId, facilityId,true);
+            var appointmentTypesList = _service.GetAppointmentTypesData(corporateId, facilityId, true);
 
             // Intialize the View Model i.e. AppointmentTypesView which is binded to Main View Index.cshtml under AppointmentTypes
             var appointmentTypesView = new AppointmentTypesView
@@ -170,30 +155,28 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new AppointmentTypesBal())
+                var isExist = _service.CheckDuplicateAppointmentType(model.Id, model.Name, model.CorporateId, model.FacilityId);
+
+                if (isExist)
+                    return Json("-1");
+                var categoryIsExist = _service.CheckDuplicateCategoryNumber(model.Id, model.CategoryNumber, model.CorporateId, model.FacilityId);
+                if (categoryIsExist)
+                    return Json("-2");
+
+                if (model.Id > 0)
                 {
-                    var isExist = bal.CheckDuplicateAppointmentType(model.Id, model.Name, model.CorporateId, model.FacilityId);
-
-                    if (isExist)
-                        return Json("-1");
-                    var categoryIsExist = bal.CheckDuplicateCategoryNumber(model.Id, model.CategoryNumber, model.CorporateId, model.FacilityId);
-                    if (categoryIsExist)
-                        return Json("-2");
-
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        model.CraetedDate = Helpers.GetInvariantCultureDateTime();
-                        model.CreatedBy = userId;
-                    }
-
-                    // Call the AddAppointmentTypes Method to Add / Update current AppointmentTypes
-                    newId = bal.SaveAppointmentTypes(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    model.CraetedDate = Helpers.GetInvariantCultureDateTime();
+                    model.CreatedBy = userId;
+                }
+
+                // Call the AddAppointmentTypes Method to Add / Update current AppointmentTypes
+                newId = _service.SaveAppointmentTypes(model);
+
             }
 
             return Json(newId);
@@ -202,31 +185,24 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetAppointmentData(int id)
         {
-
-            using (var appointmnet = new AppointmentTypesBal())
+            var currentappointmnet = _service.GetAppointmentTypesById(id);
+            var jsonResult = new
             {
+                currentappointmnet.Id,
+                currentappointmnet.FacilityId,
+                currentappointmnet.CorporateId,
+                currentappointmnet.CptRangeFrom,
+                currentappointmnet.CptRangeTo,
+                currentappointmnet.CategoryNumber,
+                currentappointmnet.DefaultTime,
+                currentappointmnet.Description,
+                currentappointmnet.IsActive,
+                currentappointmnet.Name,
+                currentappointmnet.ExtValue1,
+                currentappointmnet.ExtValue2
 
-                var currentappointmnet = appointmnet.GetAppointmentTypesById(id);
-                var jsonResult = new
-                {
-                    currentappointmnet.Id,
-                    currentappointmnet.FacilityId,
-                    currentappointmnet.CorporateId,
-                    currentappointmnet.CptRangeFrom,
-                    currentappointmnet.CptRangeTo,
-                    currentappointmnet.CategoryNumber,
-                    currentappointmnet.DefaultTime,
-                    currentappointmnet.Description,
-                    currentappointmnet.IsActive,
-                    currentappointmnet.Name,
-                    currentappointmnet.ExtValue1,
-                    currentappointmnet.ExtValue2
-
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
-
-
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
         /// <summary>
         /// Method is used to bind the appointment type dropdown by passing facility id
@@ -237,25 +213,18 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             // Initialize the AppointmentTypes BAL object
-            using (var appointmentTypesBal = new AppointmentTypesBal())
-            {
-                // Get the facilities list
-                //var appointmentTypesList = appointmentTypesBal.GetAppointmentTypes();
-                var appointmentTypesList = appointmentTypesBal.GetAppointmentTypesData(corporateId, facilityId,true);
+            var appointmentTypesList = _service.GetAppointmentTypesData(corporateId, facilityId, true);
 
-                return Json(appointmentTypesList, JsonRequestBehavior.AllowGet);
+            return Json(appointmentTypesList, JsonRequestBehavior.AllowGet);
 
-            }
         }
 
 
         public ActionResult GetMaxCategoryNumber(int corporateId, int facilityId)
         {
-            using (var bal = new AppointmentTypesBal())
-            {
-                int categoryNumber = bal.GetMaxCategoryNumber(facilityId, corporateId);
-                return Json(categoryNumber);
-            }
+            int categoryNumber = _service.GetMaxCategoryNumber(facilityId, corporateId);
+            return Json(categoryNumber);
+
         }
 
         #endregion
