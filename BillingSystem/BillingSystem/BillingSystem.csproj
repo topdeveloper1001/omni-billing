@@ -3014,6 +3014,8 @@
     <Content Include="SQL Scripts\Release 5.1\4 - Update PROC iSprocGetBookedAppointments 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.1\5 - Update PROC SprocGetPatientSummaryTabData 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.1\6 - Update PROC SprocGetPatientInfoView 27 March 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\1 - Update PROC SprocGetDashboardDisplayOrders 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\2 - new PROC SprocGetDashboardIndicatorData 27 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\1 - Update PROC iSprocGetBookedAppointments 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\10 - Update PROC SPROC_GetPaitentFutureOrder 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\2 - Update PROC SprocOrdersViewData 28 March 2018.sql" />

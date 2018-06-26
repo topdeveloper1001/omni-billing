@@ -840,7 +840,9 @@ namespace BillingSystem.Common.Common
         SprocGetCurrentDiagnosisData,
         SprocDeleteDiagnosisById,
         SprocGetOrderActivitiesByOpenOrder,
-        SPROC_GetOrderActivityDetailsByOrderActivityID
+        SPROC_GetOrderActivityDetailsByOrderActivityID,
+        SprocGetDashboardDisplayOrders,
+        SprocGetDashboardIndicatorData
     }
 
     public enum StoredProcsiOS
@@ -1830,6 +1832,7 @@ namespace BillingSystem.Common.Common
         MedicalRecord,
         DiagnosisCodes,
         FavoriteDiagnosis,
-        Diagnosis
+        Diagnosis,
+        DashboardResult
     }
 }

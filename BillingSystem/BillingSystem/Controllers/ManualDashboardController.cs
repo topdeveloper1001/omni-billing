@@ -21,14 +21,17 @@ namespace BillingSystem.Controllers
     public class ManualDashboardController : BaseController
     {
         private readonly IFacilityStructureService _fsService;
+        private readonly IDashboardIndicatorDataService _diService;
         private readonly IPatientInfoService _piService;
         private readonly IUsersService _uService;
 
-        public ManualDashboardController(IFacilityStructureService fsService, IPatientInfoService piService, IUsersService uService)
+        public ManualDashboardController(IDashboardIndicatorDataService diService, IFacilityStructureService fsService
+            , IPatientInfoService piService, IUsersService uService)
         {
             _fsService = fsService;
             _piService = piService;
             _uService = uService;
+            _diService = diService;
         }
 
         /// <summary>
@@ -143,13 +146,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteManualDashboardDetails(int facilityId, int corporateId, string year, string indicatorNumber, string budgetType, string subCategory1, string subCategory2)
         {
-            using (var bal = new DashboardIndicatorDataBal())
-            {
-                //Call the AddManualDashboard Method to Add / Update current ManualDashboard
-                var indicatorsDatalst = bal.DeleteManualDashboardDetails(corporateId, facilityId,
+            var status = _diService.DeleteManualDashboardDetails(corporateId, facilityId,
                      indicatorNumber, budgetType, year, subCategory1, subCategory2);
-                //Pass the ActionResult with the current ManualDashboardViewModel object as model to PartialView ManualDashboardAddEdit
-            }
+
             using (var manualDashboardData = new ManualDashboardBal())
             {
                 var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
@@ -429,18 +428,18 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("usertokentoaccess");
             Users userCm = null;
-             
-                var currentDate = Helpers.GetInvariantCultureDateTime();
-                userCm = _uService.GetUserById(loggedInUserId);
-                var facilityname = _piService.GetFacilityNameByFacilityId(facilityId);
-                if (!string.IsNullOrEmpty(msgBody) && userCm != null)
-                {
-                    userCm.UserToken = usertoken;
-                    msgBody = msgBody.Replace("{User}", userCm.UserName)
-                       .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
-                       Replace("{TokenExpireOn}", expiryDate.Value.ToShortDateString());
-                }
-             
+
+            var currentDate = Helpers.GetInvariantCultureDateTime();
+            userCm = _uService.GetUserById(loggedInUserId);
+            var facilityname = _piService.GetFacilityNameByFacilityId(facilityId);
+            if (!string.IsNullOrEmpty(msgBody) && userCm != null)
+            {
+                userCm.UserToken = usertoken;
+                msgBody = msgBody.Replace("{User}", userCm.UserName)
+                   .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
+                   Replace("{TokenExpireOn}", expiryDate.Value.ToShortDateString());
+            }
+
             var status = false;
             if (userCm != null && !string.IsNullOrEmpty(userCm.Email))
             {
@@ -688,21 +687,21 @@ namespace BillingSystem.Controllers
 
             #region Get Departments Data
             /*-----------Get Departments Data Start here----------------------*/
-                 var deps = _fsService.GetFacilityDepartments(corporateid, facilityid);
-                if (deps.Count > 0)
-                {
-                    listDepartments.AddRange(
-                        deps.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
-                            .Select(item => new DropdownListData
-                            {
-                                //Text = item.ExternalValue1,
-                                Value = Convert.ToString(item.ExternalValue1),
-                                Text =
-                                    Convert.ToString(item.ExternalValue1) + @" (Department Name :" +
-                                    item.FacilityStructureName + @" )",
-                            }));
-                }
-            
+            var deps = _fsService.GetFacilityDepartments(corporateid, facilityid);
+            if (deps.Count > 0)
+            {
+                listDepartments.AddRange(
+                    deps.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
+                        .Select(item => new DropdownListData
+                        {
+                            //Text = item.ExternalValue1,
+                            Value = Convert.ToString(item.ExternalValue1),
+                            Text =
+                                Convert.ToString(item.ExternalValue1) + @" (Department Name :" +
+                                item.FacilityStructureName + @" )",
+                        }));
+            }
+
             /*-----------Get Departments Data End here----------------------*/
 
             #endregion

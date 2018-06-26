@@ -22,6 +22,14 @@ namespace BillingSystem.Controllers
     {
         private readonly IPatientInfoService _piService;
         private readonly IUsersService _uService;
+        private readonly IDashboardIndicatorDataService _diService;
+
+        public ManualDashboardV1Controller(IPatientInfoService piService, IUsersService uService, IDashboardIndicatorDataService diService)
+        {
+            _piService = piService;
+            _uService = uService;
+            _diService = diService;
+        }
 
         /// <summary>
         /// Get the details of the ManualDashboard View in the Model ManualDashboard such as ManualDashboardList, list of countries etc.
@@ -113,9 +121,9 @@ namespace BillingSystem.Controllers
                         model.CreatedBy = userId;
                         model.CreatedDate = currentDate;
 
-                        using (var indicatorDataBal = new DashboardIndicatorDataBal())
+                        using (var b = new BaseBal())
                         {
-                            indicatorDataBal.SaveIndicators(new DashboardIndicators
+                            b.SaveIndicators(new DashboardIndicators
                             {
                                 FacilityId = model.FacilityId,
                                 CorporateId = corporateid,//Upadate by Krishna on 17072015
@@ -199,13 +207,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteManualDashboardDetails(int facilityId, int corporateId, string year, string indicatorNumber, string budgetType)
         {
-            using (var bal = new DashboardIndicatorDataBal())
-            {
-                //Call the AddManualDashboard Method to Add / Update current ManualDashboard
-                var indicatorsDatalst = bal.DeleteManualDashboardDetails(corporateId, facilityId,
+            var indicatorsDatalst = _diService.DeleteManualDashboardDetails(corporateId, facilityId,
                      indicatorNumber, budgetType, year, "", "");
-                //Pass the ActionResult with the current ManualDashboardViewModel object as model to PartialView ManualDashboardAddEdit
-            }
+
             using (var manualDashboardData = new ManualDashboardBal())
             {
                 var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
@@ -485,17 +489,17 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("usertokentoaccess");
             Users userCm = null;
-                 var currentDate = Helpers.GetInvariantCultureDateTime();
-                userCm = _uService.GetUserById(Convert.ToInt32(Helpers.GetLoggedInUserId()));
-                var facilityname = _piService.GetFacilityNameByFacilityId(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
-                if (!string.IsNullOrEmpty(msgBody) && userCm != null)
-                {
-                    userCm.UserToken = usertoken;
-                    msgBody = msgBody.Replace("{User}", userCm.UserName)
-                       .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
-                       Replace("{TokenExpireOn}", expiryDate.Value.ToShortDateString());
-                }
-             var emailInfo = new EmailInfo
+            var currentDate = Helpers.GetInvariantCultureDateTime();
+            userCm = _uService.GetUserById(Convert.ToInt32(Helpers.GetLoggedInUserId()));
+            var facilityname = _piService.GetFacilityNameByFacilityId(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
+            if (!string.IsNullOrEmpty(msgBody) && userCm != null)
+            {
+                userCm.UserToken = usertoken;
+                msgBody = msgBody.Replace("{User}", userCm.UserName)
+                   .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
+                   Replace("{TokenExpireOn}", expiryDate.Value.ToShortDateString());
+            }
+            var emailInfo = new EmailInfo
             {
                 VerificationTokenId = "",
                 PatientId = 0,

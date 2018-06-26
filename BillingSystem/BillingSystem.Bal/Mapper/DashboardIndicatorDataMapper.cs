@@ -20,6 +20,7 @@ namespace BillingSystem.Bal.Mapper
                 if (!string.IsNullOrEmpty(model.ExternalValue1))
                     vm.BudgetType = bal.GetNameByGlobalCodeValue(model.ExternalValue1,
                         Convert.ToString((int)GlobalCodeCategoryValue.DashBoardBudgetType));
+
                 if (!string.IsNullOrEmpty(model.SubCategory1) && !model.SubCategory1.Equals("0"))
                 {
                     int subCategory1;
@@ -62,8 +63,7 @@ namespace BillingSystem.Bal.Mapper
                         vm.CorporateName = vm.CorporateName.Trim();
                         model.CorporateId = bal.GetCorporateIdFromName(vm.CorporateName);
                     }
-                    model.ExternalValue1 =
-                        bal.GetGlobalCodeIdByName(Convert.ToString((int)GlobalCodeCategoryValue.DashBoardBudgetType),
+                    model.ExternalValue1 = bal.GetGlobalCodeIdByName(Convert.ToString((int)GlobalCodeCategoryValue.DashBoardBudgetType),
                             vm.BudgetType);
                 }
             }

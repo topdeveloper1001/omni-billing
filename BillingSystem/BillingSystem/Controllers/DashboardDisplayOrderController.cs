@@ -1,18 +1,22 @@
 ﻿using BillingSystem.Models;
 using BillingSystem.Common;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DashboardDisplayOrderController : BaseController
     {
+        private readonly IDashboardDisplayOrderService _service;
+
+        public DashboardDisplayOrderController(IDashboardDisplayOrderService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the DashboardDisplayOrder View in the Model DashboardDisplayOrder such as DashboardDisplayOrderList, list of countries etc.
         /// </summary>
@@ -21,22 +25,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the DashboardDisplayOrder BAL object
-            using (var bal = new DashboardDisplayOrderBal())
+            //Get the Entity list
+            var list = _service.GetDashboardDisplayOrderList(Helpers.GetSysAdminCorporateID(),Helpers.GetDefaultFacilityId());
+
+            //Intialize the View Model i.e. DashboardDisplayOrderView which is binded to Main View Index.cshtml under DashboardDisplayOrder
+            var viewModel = new DashboardDisplayOrderView
             {
-                //Get the Entity list
-                var list = bal.GetDashboardDisplayOrderList(Helpers.GetSysAdminCorporateID());
+                DashboardDisplayOrderList = list,
+                CurrentDashboardDisplayOrder = new DashboardDisplayOrder { IsDeleted = false }
+            };
 
-                //Intialize the View Model i.e. DashboardDisplayOrderView which is binded to Main View Index.cshtml under DashboardDisplayOrder
-                var viewModel = new DashboardDisplayOrderView
-                {
-                    DashboardDisplayOrderList = list,
-                    CurrentDashboardDisplayOrder = new DashboardDisplayOrder()
-                };
-
-                //Pass the View Model in ActionResult to View DashboardDisplayOrder
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View DashboardDisplayOrder
+            return View(viewModel);
         }
 
         /// <summary>
@@ -58,20 +58,14 @@ namespace BillingSystem.Controllers
             {
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 model.CorporateId = corporateid;
-                using (var bal = new DashboardDisplayOrderBal())
+                if (model.Id == 0)
                 {
-                    if (model.Id > 0)
-                    {
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddDashboardDisplayOrder Method to Add / Update current DashboardDisplayOrder
-                    list = bal.SaveDashboardDisplayOrder(model);
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
                 }
+
+                //Call the AddDashboardDisplayOrder Method to Add / Update current DashboardDisplayOrder
+                list = _service.SaveDashboardDisplayOrder(model);
             }
 
             //Pass the ActionResult with List of DashboardDisplayOrderViewModel object to Partial View DashboardDisplayOrderList
@@ -85,14 +79,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDashboardDisplayOrderDetails(int id)
         {
-            using (var bal = new DashboardDisplayOrderBal())
-            {
-                //Call the AddDashboardDisplayOrder Method to Add / Update current DashboardDisplayOrder
-                var current = bal.GetDashboardDisplayOrderByID(id);
+            //Call the AddDashboardDisplayOrder Method to Add / Update current DashboardDisplayOrder
+            var current = _service.GetDashboardDisplayOrderByID(id);
 
-                //Pass the ActionResult with the current DashboardDisplayOrderViewModel object as model to PartialView DashboardDisplayOrderAddEdit
-                return Json(current);
-            }
+            //Pass the ActionResult with the current DashboardDisplayOrderViewModel object as model to PartialView DashboardDisplayOrderAddEdit
+            return Json(current);
         }
 
         /// <summary>
@@ -102,25 +93,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDashboardDisplayOrder(int id)
         {
-            using (var bal = new DashboardDisplayOrderBal())
-            {
-                //Get DashboardDisplayOrder model object by current DashboardDisplayOrder ID
-                var model = bal.GetDashboardDisplayOrderByID(id);
-                var userId = Helpers.GetLoggedInUserId();
-                var list = new List<DashboardDisplayOrderCustomModel>();
-                var currentDate = Helpers.GetInvariantCultureDateTime();
+            var list = _service.SaveDashboardDisplayOrder(new DashboardDisplayOrder { Id = id, IsDeleted = true }, true);
 
-                //Check If DashboardDisplayOrder model is not null
-                if (model != null)
-                {
-                    model.IsDeleted = true;
-                    //Update Operation of current DashboardDisplayOrder
-                    list = bal.SaveDashboardDisplayOrder(model);
-                    //return deleted ID of current DashboardDisplayOrder as Json Result to the Ajax Call.
-                }
-                //Pass the ActionResult with List of DashboardDisplayOrderViewModel object to Partial View DashboardDisplayOrderList
-                return PartialView(PartialViews.DashboardDisplayOrderList, list);
-            }
+            //Pass the ActionResult with List of DashboardDisplayOrderViewModel object to Partial View DashboardDisplayOrderList
+            return PartialView(PartialViews.DashboardDisplayOrderList, list);
         }
     }
 }
