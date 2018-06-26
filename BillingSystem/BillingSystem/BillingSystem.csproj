@@ -2232,6 +2232,8 @@
     <Content Include="Libs\Gma.QrCodeNet.Encoding.dll" />
     <Content Include="Libs\ICSharpCode.SharpZipLib.dll" />
     <Content Include="Libs\itextsharp.dll" />
+    <Content Include="Libs\Kendo.Mvc.dll" />
+    <Content Include="Libs\Omu.ValueInjecter.dll" />
     <Content Include="Libs\SautinSoft.PdfFocus.dll" />
     <Content Include="MvcDiagnostics.aspx" />
     <Content Include="Plugins\Kendo.Mvc.dll" />
