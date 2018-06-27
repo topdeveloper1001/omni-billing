@@ -1,40 +1,34 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CPTCodesController.cs" company="Spadez">
-//   Services dot com
-// </copyright>
-// <summary>
-//   Defines the CPTCodesController type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Common;
+using BillingSystem.Common.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
+using System.Data;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.IO;
-    using System.Linq;
-    using System.Web;
-    using System.Web.Mvc;
 
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Common.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models;
-
-    using NPOI.HSSF.UserModel;
-    using NPOI.SS.UserModel;
-    using NPOI.SS.Util;
-    using Newtonsoft.Json;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Data;
 
     /// <summary>
     /// The cpt codes controller.
     /// </summary>
     public class CPTCodesController : BaseController
     {
+        private readonly ICarePlanService _cpService;
+        private readonly ICPTCodesService _service;
+
+        public CPTCodesController(ICarePlanService cpService, ICPTCodesService service)
+        {
+            _cpService = cpService;
+            _service = service;
+        }
+
         /// <summary>
         /// Indexes this instance.
         /// </summary>
@@ -63,54 +57,52 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetCptCodesList(string sidx, string sord, int? page, int? rows)
         {
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+            var list = _service.GetCPTCodes(Helpers.DefaultCptTableNumber);
+            var pageIndex = page.HasValue ? page.Value : 1;
+            var pageSize = rows == null ? 0 : Convert.ToInt32(rows);
+
+            if (!string.IsNullOrEmpty(sidx))
             {
-                var list = bal.GetCPTCodes();
-                var pageIndex = page.HasValue ? page.Value : 1;
-                var pageSize = rows == null ? 0 : Convert.ToInt32(rows);
+                if (sidx == "CodeTableNumber" && sord == "desc")
+                    list = list.OrderByDescending(e => e.CodeTableNumber).ToList();
+                if (sidx == "CodeTableNumber" && sord == "asc")
+                    list = list.OrderBy(e => e.CodeTableNumber).ToList();
+                if (sidx == "CodeNumbering" && sord == "asc")
+                    list = list.OrderBy(e => e.CodeNumbering).ToList();
+                if (sidx == "CodeNumbering" && sord == "desc")
+                    list = list.OrderByDescending(e => e.CodeNumbering).ToList();
+                if (sidx == "CodeDescription" && sord == "asc")
+                    list = list.OrderBy(e => e.CodeDescription).ToList();
+                if (sidx == "CodeDescription" && sord == "desc")
+                    list = list.OrderByDescending(e => e.CodeDescription).ToList();
+                if (sidx == "CodePrice" && sord == "asc")
+                    list = list.OrderBy(e => e.CodePrice).ToList();
+                if (sidx == "CodePrice" && sord == "desc")
+                    list = list.OrderByDescending(e => e.CodePrice).ToList();
+                if (sidx == "CodeAnesthesiaBaseUnit" && sord == "asc")
+                    list = list.OrderBy(e => e.CodeAnesthesiaBaseUnit).ToList();
+                if (sidx == "CodeAnesthesiaBaseUnit" && sord == "desc")
+                    list = list.OrderByDescending(e => e.CodeAnesthesiaBaseUnit).ToList();
+                if (sidx == "CodeGroup" && sord == "asc")
+                    list = list.OrderBy(e => e.CodeGroup).ToList();
+                if (sidx == "CodeGroup" && sord == "desc")
+                    list = list.OrderByDescending(e => e.CodeGroup).ToList();
+            }
 
-                if (!string.IsNullOrEmpty(sidx))
-                {
-                    if (sidx == "CodeTableNumber" && sord == "desc")
-                        list = list.OrderByDescending(e => e.CodeTableNumber).ToList();
-                    if (sidx == "CodeTableNumber" && sord == "asc")
-                        list = list.OrderBy(e => e.CodeTableNumber).ToList();
-                    if (sidx == "CodeNumbering" && sord == "asc")
-                        list = list.OrderBy(e => e.CodeNumbering).ToList();
-                    if (sidx == "CodeNumbering" && sord == "desc")
-                        list = list.OrderByDescending(e => e.CodeNumbering).ToList();
-                    if (sidx == "CodeDescription" && sord == "asc")
-                        list = list.OrderBy(e => e.CodeDescription).ToList();
-                    if (sidx == "CodeDescription" && sord == "desc")
-                        list = list.OrderByDescending(e => e.CodeDescription).ToList();
-                    if (sidx == "CodePrice" && sord == "asc")
-                        list = list.OrderBy(e => e.CodePrice).ToList();
-                    if (sidx == "CodePrice" && sord == "desc")
-                        list = list.OrderByDescending(e => e.CodePrice).ToList();
-                    if (sidx == "CodeAnesthesiaBaseUnit" && sord == "asc")
-                        list = list.OrderBy(e => e.CodeAnesthesiaBaseUnit).ToList();
-                    if (sidx == "CodeAnesthesiaBaseUnit" && sord == "desc")
-                        list = list.OrderByDescending(e => e.CodeAnesthesiaBaseUnit).ToList();
-                    if (sidx == "CodeGroup" && sord == "asc")
-                        list = list.OrderBy(e => e.CodeGroup).ToList();
-                    if (sidx == "CodeGroup" && sord == "desc")
-                        list = list.OrderByDescending(e => e.CodeGroup).ToList();
-                }
-
-                var totalRecords = list.Count();
-                var totalPages = (int)Math.Ceiling(totalRecords / (float)pageSize);
-                var jsonData = new
-                {
-                    total = totalPages,
-                    page = pageIndex,
-                    records = totalRecords,
-                    rows = (
-                        from data in list
-                        select new
+            var totalRecords = list.Count();
+            var totalPages = (int)Math.Ceiling(totalRecords / (float)pageSize);
+            var jsonData = new
+            {
+                total = totalPages,
+                page = pageIndex,
+                records = totalRecords,
+                rows = (
+                    from data in list
+                    select new
+                    {
+                        i = data.CPTCodesId,
+                        cell = new dynamic[]
                         {
-                            i = data.CPTCodesId,
-                            cell = new dynamic[]
-                            {
                                 data.CPTCodesId,
                                 data.CodeTableNumber,
                                 data.CodeNumbering,
@@ -118,11 +110,11 @@ namespace BillingSystem.Controllers
                                 data.CodePrice,
                                 data.CodeAnesthesiaBaseUnit,
                                 data.CodeGroup
-                            }
-                        }).ToArray()
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-            }
+                        }
+                    }).ToArray()
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -130,24 +122,20 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <returns></returns>
         public ActionResult CPTCodes()
-        {
-            //Initialize the CPTCodes Communicator object
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+        {  //Get the facilities list
+            var list = _service.GetCptCodesListOnDemand(1, Helpers.DefaultRecordCount, Helpers.DefaultCptTableNumber);
+
+            //Intialize the View Model i.e. CPTCodesView which is binded to Main View Index.cshtml under CPTCodes
+            var viewData = new CPTCodesView
             {
-                //Get the facilities list
-                var list = bal.GetCptCodesListOnDemand(1, Helpers.DefaultRecordCount);
+                CPTCodesList = list,
+                CurrentCPTCode = new CPTCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
-                //Intialize the View Model i.e. CPTCodesView which is binded to Main View Index.cshtml under CPTCodes
-                var viewData = new CPTCodesView
-                {
-                    CPTCodesList = list,
-                    CurrentCPTCode = new CPTCodes(),
-                    UserId = Helpers.GetLoggedInUserId()
-                };
+            //Pass the View Model in ActionResult to View CPTCodes
+            return View(viewData);
 
-                //Pass the View Model in ActionResult to View CPTCodes
-                return View(viewData);
-            }
         }
 
         /// <summary>
@@ -163,17 +151,15 @@ namespace BillingSystem.Controllers
             //Check if CPTCodesViewModel 
             if (model != null)
             {
-                using (var cptCodesBal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+                if (model.CPTCodesId > 0)
                 {
-                    if (model.CPTCodesId > 0)
-                    {
-                        model.ModifiedBy = Helpers.GetLoggedInUserId();
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                        model.IsDeleted = false;
-                    }
-                    //Call the AddCPTCodes Method to Add / Update current CPTCodes
-                    newId = cptCodesBal.AddUpdateCPTCodes(model);
+                    model.ModifiedBy = Helpers.GetLoggedInUserId();
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                    model.IsDeleted = false;
                 }
+                //Call the AddCPTCodes Method to Add / Update current CPTCodes
+                newId = _service.AddUpdateCPTCodes(model, Helpers.DefaultCptTableNumber);
+
             }
             return Json(newId);
         }
@@ -185,21 +171,17 @@ namespace BillingSystem.Controllers
         ///     action result with the partial view containing the CPTCodes list object
         /// </returns>
         public ActionResult BindCPTCodesList()
-        {
-            //Initialize the CPTCodes Communicator object
-            using (var cptCodesBal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+        {   //Get the facilities list
+            var cptCodesList = _service.GetCPTCodes(Helpers.DefaultCptTableNumber);
+            var viewData = new CPTCodesView
             {
-                //Get the facilities list
-                var cptCodesList = cptCodesBal.GetCPTCodes();
-                var viewData = new CPTCodesView
-                {
-                    CPTCodesList = cptCodesList,
-                    CurrentCPTCode = new CPTCodes(),
-                    UserId = Helpers.GetLoggedInUserId()
-                };
-                //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
-                return PartialView(PartialViews.CPTCodesList, viewData);
-            }
+                CPTCodesList = cptCodesList,
+                CurrentCPTCode = new CPTCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
+            //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
+            return PartialView(PartialViews.CPTCodesList, viewData);
+
         }
         /// <summary>
         ///     Bind all the CPTCodes list
@@ -210,20 +192,17 @@ namespace BillingSystem.Controllers
         public ActionResult BindCPTCodesListNew(string blockNumber, bool showInActive)
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-            //Initialize the CPTCodes Communicator object
-            using (var cptCodesBal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+            //Get the facilities list
+            var cptCodesList = _service.GetCPTCodesData(showInActive, Helpers.DefaultCptTableNumber).OrderByDescending(f => f.CPTCodesId).Take(takeValue).ToList();
+            var viewData = new CPTCodesView
             {
-                //Get the facilities list
-                var cptCodesList = cptCodesBal.GetCPTCodesData(showInActive).OrderByDescending(f => f.CPTCodesId).Take(takeValue).ToList();
-                var viewData = new CPTCodesView
-                {
-                    CPTCodesList = cptCodesList,
-                    CurrentCPTCode = new CPTCodes(),
-                    UserId = Helpers.GetLoggedInUserId()
-                };
-                //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
-                return PartialView(PartialViews.CPTCodesList, viewData);
-            }
+                CPTCodesList = cptCodesList,
+                CurrentCPTCode = new CPTCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
+            //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
+            return PartialView(PartialViews.CPTCodesList, viewData);
+
         }
         /// <summary>
         ///     Gets the CPT codes.
@@ -232,11 +211,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCPTCodes(string id)
         {
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-            {
-                var current = bal.GetCPTCodesById(Convert.ToInt32(id));
-                return PartialView(PartialViews.CPTCodesAddEdit, current);
-            }
+            var current = _service.GetCPTCodesById(Convert.ToInt32(id));
+            return PartialView(PartialViews.CPTCodesAddEdit, current);
+
         }
 
         /// <summary>
@@ -259,26 +236,24 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteCPTCodes(CommonModel model)
         {
-            using (var cptCodesBal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+            //Get CPTCodes model object by current CPTCodes ID
+            var currentCptCodes = _service.GetCPTCodesById(Convert.ToInt32(model.Id));
+
+            //Check If CPTCodes model is not null
+            if (currentCptCodes != null)
             {
-                //Get CPTCodes model object by current CPTCodes ID
-                var currentCptCodes = cptCodesBal.GetCPTCodesById(Convert.ToInt32(model.Id));
+                currentCptCodes.IsDeleted = true;
+                currentCptCodes.DeletedBy = Helpers.GetLoggedInUserId();
+                currentCptCodes.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                currentCptCodes.IsActive = false;
 
-                //Check If CPTCodes model is not null
-                if (currentCptCodes != null)
-                {
-                    currentCptCodes.IsDeleted = true;
-                    currentCptCodes.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentCptCodes.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    currentCptCodes.IsActive = false;
+                //Update Operation of current CPTCodes
+                var result = _service.AddUpdateCPTCodes(currentCptCodes, Helpers.DefaultCptTableNumber);
 
-                    //Update Operation of current CPTCodes
-                    var result = cptCodesBal.AddUpdateCPTCodes(currentCptCodes);
-
-                    //return deleted ID of current CPTCodes as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current CPTCodes as Json Result to the Ajax Call.
+                return Json(result);
             }
+
 
             //Return the Json result as Action Result back JSON Call Success
             return Json(null);
@@ -387,20 +362,17 @@ namespace BillingSystem.Controllers
         {
             var recordCount = Helpers.DefaultRecordCount;
 
-            //Initialize the CPTCodes Communicator object
-            using (var cptCodesBal = new CPTCodesBal(tableNumber))
+            var list = _service.GetCptCodesListOnDemand(blockNumber, recordCount, Helpers.DefaultCptTableNumber);
+            var jsonResult = new
             {
-                var list = cptCodesBal.GetCptCodesListOnDemand(blockNumber, recordCount);
-                var jsonResult = new
-                {
-                    list,
-                    NoMoreData = list.Count < recordCount,
-                    UserId = Helpers.GetLoggedInUserId()
-                };
+                list,
+                NoMoreData = list.Count < recordCount,
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
-                //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+
         }
 
         private string RenderPartialViewToString(string viewName, object model)
@@ -504,52 +476,47 @@ namespace BillingSystem.Controllers
         public ActionResult BindActiveInActiveCptCodesList(string blockNumber, bool showInActive)
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-            //Initialize the CPTCodes Communicator object
-            using (var cptCodesBal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+            //Get the facilities list
+            var cptCodesList = _service.GetCPTCodesData(showInActive, Helpers.DefaultCptTableNumber).OrderByDescending(f => f.CPTCodesId).Take(takeValue).ToList();
+            var viewData = new CPTCodesView
             {
-                //Get the facilities list
-                var cptCodesList = cptCodesBal.GetCPTCodesData(showInActive).OrderByDescending(f => f.CPTCodesId).Take(takeValue).ToList();
-                var viewData = new CPTCodesView
-                {
-                    CPTCodesList = cptCodesList,
-                    CurrentCPTCode = new CPTCodes(),
-                    UserId = Helpers.GetLoggedInUserId()
-                };
-                //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
-                return PartialView(PartialViews.CPTCodesList, viewData);
-            }
+                CPTCodesList = cptCodesList,
+                CurrentCPTCode = new CPTCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
+            //Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
+            return PartialView(PartialViews.CPTCodesList, viewData);
+
         }
 
 
         public ActionResult GetCptCodesOnEdit(string id)
         {
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+            var current = _service.GetCPTCodesById(Convert.ToInt32(id));
+            var jsonData = new
             {
-                var current = bal.GetCPTCodesById(Convert.ToInt32(id));
-                var jsonData = new
-                {
-                    current.CPTCodesId,
-                    current.CTPCodeRangeValue,
-                    current.CodeAnesthesiaBaseUnit,
-                    current.CodeBasicProductApplicationRule,
-                    current.CodeCPTMUEValues,
-                    current.CodeDescription,
-                    CodeEffectiveDate = current.CodeEffectiveDate.GetShortDateString3(),
-                    CodeExpiryDate = current.CodeExpiryDate.GetShortDateString3(),
-                    current.CodeGroup,
-                    current.CodeNumbering,
-                    current.CodeOtherProductsApplicationRule,
-                    current.CodePrice,
-                    current.CodeServiceCodeSubCategory,
-                    current.CodeServiceMainCategory,
-                    current.CodeTableDescription,
-                    current.CodeTableNumber,
-                    current.CodeUSCLSChapter,
-                    current.IsActive
+                current.CPTCodesId,
+                current.CTPCodeRangeValue,
+                current.CodeAnesthesiaBaseUnit,
+                current.CodeBasicProductApplicationRule,
+                current.CodeCPTMUEValues,
+                current.CodeDescription,
+                CodeEffectiveDate = current.CodeEffectiveDate.GetShortDateString3(),
+                CodeExpiryDate = current.CodeExpiryDate.GetShortDateString3(),
+                current.CodeGroup,
+                current.CodeNumbering,
+                current.CodeOtherProductsApplicationRule,
+                current.CodePrice,
+                current.CodeServiceCodeSubCategory,
+                current.CodeServiceMainCategory,
+                current.CodeTableDescription,
+                current.CodeTableNumber,
+                current.CodeUSCLSChapter,
+                current.IsActive
 
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-            }
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
+
     }
 }

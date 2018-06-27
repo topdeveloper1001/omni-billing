@@ -7,17 +7,18 @@ using BillingSystem.Common;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
-using iTextSharp.text;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using RazorPDF;
 using System.Collections.Generic;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class InsuranceController : BaseController
     {
+        private readonly ICountryService _cService;
         /// <summary>
         /// Get the details of the InsuranceCompany View in the Model InsuranceCompany such as InsuranceCompanyList, list of countries etc.
         /// </summary>
@@ -260,11 +261,8 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindCountriesWithCode()
         {
-            using (var bal = new CountryBal())
-            {
-                var list = bal.GetCountryWithCode();
-                return Json(list);
-            }
+            var list = _cService.GetCountryWithCode();
+            return Json(list);
         }
 
 

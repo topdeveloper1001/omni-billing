@@ -1,23 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elmah.ContentSyndication;
+using System.Web.Mvc;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
 {
-    using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Model.CustomModel;
-    using Models;
 
     /// <summary>
     /// The holiday planner controller.
     /// </summary>
     public class HolidayPlannerController : BaseController
     {
+        private readonly IFacilityStructureService _fsService;
+
+        public HolidayPlannerController(IFacilityStructureService fsService)
+        {
+            _fsService = fsService;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -208,18 +213,16 @@ namespace BillingSystem.Controllers
                         break;
                     //Departments
                     case 2:
-                        using (var bal = new FacilityStructureBal())
+                        var facilityDepartments = _fsService.GetFacilityDepartments(cId, Convert.ToString(fId));
+                        if (facilityDepartments.Any())
                         {
-                            var facilityDepartments = bal.GetFacilityDepartments(cId, Convert.ToString(fId));
-                            if (facilityDepartments.Any())
+                            list.AddRange(facilityDepartments.Select(item => new DropdownListData
                             {
-                                list.AddRange(facilityDepartments.Select(item => new DropdownListData
-                                {
-                                    Text = string.Format(" {0} ", item.FacilityStructureName),
-                                    Value = Convert.ToString(item.FacilityStructureId)
-                                }));
-                            }
+                                Text = string.Format(" {0} ", item.FacilityStructureName),
+                                Value = Convert.ToString(item.FacilityStructureId)
+                            }));
                         }
+
                         break;
                     //Physicians
                     case 3:

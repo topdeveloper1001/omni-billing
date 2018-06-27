@@ -16,6 +16,7 @@ namespace BillingSystem.Controllers
     using System.Web.Mvc;
 
     using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model.CustomModel;
     using BillingSystem.Models;
@@ -25,6 +26,13 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class FindClaimController : Controller
     {
+        private readonly IBillHeaderService _blservice;
+
+        public FindClaimController(IBillHeaderService blservice)
+        {
+            _blservice = blservice;
+        }
+
         // GET: /FindClaim/
         #region Public Methods and Operators
 
@@ -37,44 +45,42 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index(int? fileId)
         {
-            using (var bal = new BillHeaderBal())
+            var fid = Helpers.GetDefaultFacilityId();
+            var cid = Helpers.GetSysAdminCorporateID();
+            var currentdate = Helpers.GetInvariantCultureDateTime();
+            var firstDayOfMonth = new DateTime(currentdate.Year, currentdate.Month, 1);
+            var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+            var claimsList = new List<BillHeaderCustomModel>();
+            if (fileId != null)
             {
-                var fid = Helpers.GetDefaultFacilityId();
-                var cid = Helpers.GetSysAdminCorporateID();
-                var currentdate = Helpers.GetInvariantCultureDateTime();
-                var firstDayOfMonth = new DateTime(currentdate.Year, currentdate.Month, 1);
-                var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-                var claimsList = new List<BillHeaderCustomModel>();
-                if (fileId != null)
-                {
-                    // ---- view batch file claims
-                    claimsList = bal.FindClaimByFileId(
-                        string.Empty,
-                        string.Empty,
-                        firstDayOfMonth,
-                        lastDayOfMonth,
-                        fid,
-                        cid,
-                        fileId);
-                }
-                else
-                {
-                    claimsList = bal.FindClaim(
-                        string.Empty,
-                        string.Empty,
-                        firstDayOfMonth,
-                        lastDayOfMonth,
-                        fid,
-                        cid);
-                }
-                var findClaimsview = new FindClaimsModel()
-                                          {
-                                              ClaimsList = claimsList,
-                                              MonthStartDate = firstDayOfMonth,
-                                              MonthEndDate = lastDayOfMonth
-                                          };
-                return View(findClaimsview);
+                // ---- view batch file claims
+                claimsList = _blservice.FindClaimByFileId(
+                    string.Empty,
+                    string.Empty,
+                    firstDayOfMonth,
+                    lastDayOfMonth,
+                    fid,
+                    cid,
+                    fileId);
             }
+            else
+            {
+                claimsList = _blservice.FindClaim(
+                    string.Empty,
+                    string.Empty,
+                    firstDayOfMonth,
+                    lastDayOfMonth,
+                    fid,
+                    cid);
+            }
+            var findClaimsview = new FindClaimsModel()
+            {
+                ClaimsList = claimsList,
+                MonthStartDate = firstDayOfMonth,
+                MonthEndDate = lastDayOfMonth
+            };
+            return View(findClaimsview);
+
         }
 
 
@@ -88,15 +94,13 @@ namespace BillingSystem.Controllers
         /// <param name="claimstatus">The claimstatus.</param>
         /// <returns></returns>
         public ActionResult GetClaimsWithFilter(string serachstring, DateTime? txtDateFrom, DateTime? txtDateTill, int rbtnShowAutoClosed, string claimstatus)
-        {
-            using (var bal = new BillHeaderBal())
-            {
+        { 
                 var fid = Helpers.GetDefaultFacilityId();
                 var cid = Helpers.GetSysAdminCorporateID();
-                var claimsList = bal.FindClaim(serachstring, claimstatus, txtDateFrom, txtDateTill, fid, cid);
+                var claimsList = _blservice.FindClaim(serachstring, claimstatus, txtDateFrom, txtDateTill, fid, cid);
                 claimsList = rbtnShowAutoClosed == 1 ? claimsList.Where(x => x.IsAutoClosed == 1).ToList() : claimsList;
                 return this.PartialView(PartialViews.FindClaimList, claimsList);
-            }
+             
         }
         #endregion
     }

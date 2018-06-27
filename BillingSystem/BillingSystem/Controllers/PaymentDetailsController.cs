@@ -3,16 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
-using iTextSharp.text;
 
 namespace BillingSystem.Controllers
 {
     public class PaymentDetailsController : BaseController
     {
+        private readonly IBillHeaderService _bhService;
+        private readonly IPatientInfoService _piService;
+
+        public PaymentDetailsController(IBillHeaderService bhService, IPatientInfoService piService)
+        {
+            _bhService = bhService;
+            _piService = piService;
+        }
+
         //
         // GET: /PaymentDetails/
         public ActionResult Index()
@@ -34,68 +43,66 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPaymentDetails(int BillHeaderId)
         {
-            using (var billheaderbal = new BillHeaderBal())
+            var vm = new PaymentDetailsCustomModel();
+            var billPaymentBal = new PaymentBal();
+            var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
+            var insurencePayment = billPaymentObj.Where(x => x.PayType == 100).ToList();
+            var patientPayment = billPaymentObj.Where(x => x.PayType == 500).ToList();
+            var billDetails = _bhService.GetBillHeaderById(BillHeaderId);
+            if (billDetails != null)
             {
-                var vm = new PaymentDetailsCustomModel();
-                var billPaymentBal = new PaymentBal();
-                var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
-                var insurencePayment = billPaymentObj.Where(x => x.PayType == 100).ToList();
-                var patientPayment = billPaymentObj.Where(x => x.PayType == 500).ToList();
-                var billDetails = billheaderbal.GetBillHeaderById(BillHeaderId);
-                if (billDetails != null)
+                vm.PatientSharePayable = Convert.ToDecimal(billDetails.PatientShare);
+                vm.InsSharePayable = Convert.ToDecimal(billDetails.PayerShareNet);
+                vm.GrossSharePayable = Convert.ToDecimal(Convert.ToDecimal(billDetails.PatientShare) + Convert.ToDecimal(billDetails.PayerShareNet));
+
+                vm.PatientSharePaid = Convert.ToDecimal(billDetails.PatientPayAmount);
+                vm.InsSharePaid = Convert.ToDecimal(billDetails.PaymentAmount);
+                vm.GrossSharePaid = Convert.ToDecimal(Convert.ToDecimal(billDetails.PatientPayAmount) + Convert.ToDecimal(billDetails.PaymentAmount));
+
+                vm.PatientShareBalance = Convert.ToDecimal(Convert.ToDecimal(billDetails.PatientShare) - Convert.ToDecimal(billDetails.PatientPayAmount));
+                vm.InsShareBalance = Convert.ToDecimal(Convert.ToDecimal(billDetails.PayerShareNet) - Convert.ToDecimal(billDetails.PaymentAmount));
+                vm.GrossShareBalance = Convert.ToDecimal(Convert.ToDecimal(vm.PatientShareBalance) + Convert.ToDecimal(vm.InsShareBalance));
+
+                if (insurencePayment.Any())
                 {
-                    vm.PatientSharePayable = Convert.ToDecimal(billDetails.PatientShare);
-                    vm.InsSharePayable = Convert.ToDecimal(billDetails.PayerShareNet);
-                    vm.GrossSharePayable = Convert.ToDecimal(Convert.ToDecimal(billDetails.PatientShare) + Convert.ToDecimal(billDetails.PayerShareNet));
-
-                    vm.PatientSharePaid = Convert.ToDecimal(billDetails.PatientPayAmount);
-                    vm.InsSharePaid = Convert.ToDecimal(billDetails.PaymentAmount);
-                    vm.GrossSharePaid = Convert.ToDecimal(Convert.ToDecimal(billDetails.PatientPayAmount) + Convert.ToDecimal(billDetails.PaymentAmount));
-
-                    vm.PatientShareBalance = Convert.ToDecimal(Convert.ToDecimal(billDetails.PatientShare) - Convert.ToDecimal(billDetails.PatientPayAmount));
-                    vm.InsShareBalance = Convert.ToDecimal(Convert.ToDecimal(billDetails.PayerShareNet) - Convert.ToDecimal(billDetails.PaymentAmount));
-                    vm.GrossShareBalance = Convert.ToDecimal(Convert.ToDecimal(vm.PatientShareBalance) + Convert.ToDecimal(vm.InsShareBalance));
-
-                    if (insurencePayment.Any())
+                    var expectedInsurencePaymentAmount = Convert.ToDecimal(0.00);
+                    var TotalPaidAmount = Convert.ToDecimal(0.00);
+                    var TotalAppliedAmount = Convert.ToDecimal(0.00);
+                    var TotalUNAppliedAmount = Convert.ToDecimal(0.00);
+                    foreach (var paymentCustomModel in insurencePayment)
                     {
-                        var expectedInsurencePaymentAmount = Convert.ToDecimal(0.00);
-                        var TotalPaidAmount = Convert.ToDecimal(0.00);
-                        var TotalAppliedAmount = Convert.ToDecimal(0.00);
-                        var TotalUNAppliedAmount = Convert.ToDecimal(0.00);
-                        foreach (var paymentCustomModel in insurencePayment)
-                        {
-                            expectedInsurencePaymentAmount += Convert.ToDecimal(paymentCustomModel.PayNETAmount);
-                            TotalPaidAmount += Convert.ToDecimal(paymentCustomModel.PayAmount);
-                            TotalAppliedAmount += Convert.ToDecimal(paymentCustomModel.PayAppliedAmount);
-                            TotalUNAppliedAmount += Convert.ToDecimal(paymentCustomModel.PayUnAppliedAmount);
-                        }
-                        vm.InsPayment = expectedInsurencePaymentAmount;
-                        vm.InsTotalPaid = TotalPaidAmount;
-                        vm.InsApplied = TotalAppliedAmount;
-                        vm.InsUnapplied = TotalUNAppliedAmount;
+                        expectedInsurencePaymentAmount += Convert.ToDecimal(paymentCustomModel.PayNETAmount);
+                        TotalPaidAmount += Convert.ToDecimal(paymentCustomModel.PayAmount);
+                        TotalAppliedAmount += Convert.ToDecimal(paymentCustomModel.PayAppliedAmount);
+                        TotalUNAppliedAmount += Convert.ToDecimal(paymentCustomModel.PayUnAppliedAmount);
                     }
-                    if (patientPayment.Any())
-                    {
-                        var expectedInsurencePaymentAmount = Convert.ToDecimal(0.00);
-                        var totalPatientPaidAmount = Convert.ToDecimal(0.00);
-                        var totalPatientAppliedAmount = Convert.ToDecimal(0.00);
-                        var totalPatientUnAppliedAmount = Convert.ToDecimal(0.00);
-                        foreach (var patientpaymentCustomModel in patientPayment)
-                        {
-                            expectedInsurencePaymentAmount += Convert.ToDecimal(patientpaymentCustomModel.PayNETAmount);
-                            totalPatientPaidAmount += Convert.ToDecimal(patientpaymentCustomModel.PayAmount);
-                            totalPatientAppliedAmount += Convert.ToDecimal(patientpaymentCustomModel.PayAppliedAmount);
-                            totalPatientUnAppliedAmount += Convert.ToDecimal(patientpaymentCustomModel.PayUnAppliedAmount);
-                        }
-                        vm.PatientPayment = expectedInsurencePaymentAmount;
-                        vm.PatientTotalPaid = totalPatientPaidAmount;
-                        vm.PatientApplied = totalPatientAppliedAmount;
-                        vm.PatientUnApplied = totalPatientUnAppliedAmount;
-                    }
-                    // paymentDetailCustomModel.PaymentDetails = insurencePayment;
+                    vm.InsPayment = expectedInsurencePaymentAmount;
+                    vm.InsTotalPaid = TotalPaidAmount;
+                    vm.InsApplied = TotalAppliedAmount;
+                    vm.InsUnapplied = TotalUNAppliedAmount;
                 }
-                return Json(vm);
+                if (patientPayment.Any())
+                {
+                    var expectedInsurencePaymentAmount = Convert.ToDecimal(0.00);
+                    var totalPatientPaidAmount = Convert.ToDecimal(0.00);
+                    var totalPatientAppliedAmount = Convert.ToDecimal(0.00);
+                    var totalPatientUnAppliedAmount = Convert.ToDecimal(0.00);
+                    foreach (var patientpaymentCustomModel in patientPayment)
+                    {
+                        expectedInsurencePaymentAmount += Convert.ToDecimal(patientpaymentCustomModel.PayNETAmount);
+                        totalPatientPaidAmount += Convert.ToDecimal(patientpaymentCustomModel.PayAmount);
+                        totalPatientAppliedAmount += Convert.ToDecimal(patientpaymentCustomModel.PayAppliedAmount);
+                        totalPatientUnAppliedAmount += Convert.ToDecimal(patientpaymentCustomModel.PayUnAppliedAmount);
+                    }
+                    vm.PatientPayment = expectedInsurencePaymentAmount;
+                    vm.PatientTotalPaid = totalPatientPaidAmount;
+                    vm.PatientApplied = totalPatientAppliedAmount;
+                    vm.PatientUnApplied = totalPatientUnAppliedAmount;
+                }
+                // paymentDetailCustomModel.PaymentDetails = insurencePayment;
             }
+            return Json(vm);
+
         }
 
         /// <summary>
@@ -194,9 +201,8 @@ namespace BillingSystem.Controllers
             var corporateid = Helpers.GetSysAdminCorporateID();
             common.FacilityId = facilityid;
             common.CorporateId = corporateid;
-            var bal = new PatientInfoBal();
-            //var objPatientInfoData = bal.GetPatientSearchResult(common);
-            var objPatientInfoData = bal.GetPatientSearchResultInPayment(common);
+
+            var objPatientInfoData = _piService.GetPatientSearchResultInPayment(common);
             return PartialView(PartialViews.SearchResultListInDetail, objPatientInfoData);
         }
     }

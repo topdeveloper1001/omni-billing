@@ -20,22 +20,22 @@ namespace BillingSystem.Bal.Mapper
                     vm.FacilityName = bal.GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
                 }
 
-                using (var fBal = new FacilityStructureBal())
-                {
-                    var departmentName = fBal.GetParentNameByFacilityStructureId(model.FacilityStructureId);
-                    var obj = fBal.GetFacilityStructureById(model.FacilityStructureId);
-                    vm.AssignedRoom = obj != null &&
-                                      !string.IsNullOrEmpty(obj.FacilityStructureName)
-                        ? obj.FacilityStructureName
-                        : string.Empty;
-                    vm.RoomDepartment = departmentName;
+                //using (var fBal = new FacilityStructureService())
+                //{
+                //    var departmentName = fBal.GetParentNameByFacilityStructureId(model.FacilityStructureId);
+                //    var obj = fBal.GetFacilityStructureById(model.FacilityStructureId);
+                //    vm.AssignedRoom = obj != null &&
+                //                      !string.IsNullOrEmpty(obj.FacilityStructureName)
+                //        ? obj.FacilityStructureName
+                //        : string.Empty;
+                //    vm.RoomDepartment = departmentName;
 
-                    if (!string.IsNullOrEmpty(model.BaseLocation))
-                    {
-                        var dep = fBal.GetFacilityStructureById(Convert.ToInt32(model.BaseLocation));
-                        vm.Department = dep != null ? dep.FacilityStructureName : string.Empty;
-                    }
-                }
+                //    if (!string.IsNullOrEmpty(model.BaseLocation))
+                //    {
+                //        var dep = fBal.GetFacilityStructureById(Convert.ToInt32(model.BaseLocation));
+                //        vm.Department = dep != null ? dep.FacilityStructureName : string.Empty;
+                //    }
+                //}
             }
             return vm;
         }

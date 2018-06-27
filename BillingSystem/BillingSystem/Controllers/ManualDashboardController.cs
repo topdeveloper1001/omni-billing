@@ -1,11 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Transactions;
 using System.Web;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Common;
-using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
@@ -16,11 +14,22 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using System.Threading.Tasks;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ManualDashboardController : BaseController
     {
+        private readonly IFacilityStructureService _fsService;
+        private readonly IPatientInfoService _piService;
+        private readonly IUsersService _uService;
+
+        public ManualDashboardController(IFacilityStructureService fsService, IPatientInfoService piService, IUsersService uService)
+        {
+            _fsService = fsService;
+            _piService = piService;
+            _uService = uService;
+        }
 
         /// <summary>
         /// Get the details of the ManualDashboard View in the Model ManualDashboard such as ManualDashboardList, list of countries etc.
@@ -420,11 +429,10 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("usertokentoaccess");
             Users userCm = null;
-            using (var bal = new UsersBal())
-            {
+             
                 var currentDate = Helpers.GetInvariantCultureDateTime();
-                userCm = bal.GetUserById(loggedInUserId);
-                var facilityname = bal.GetFacilityNameByFacilityId(facilityId);
+                userCm = _uService.GetUserById(loggedInUserId);
+                var facilityname = _piService.GetFacilityNameByFacilityId(facilityId);
                 if (!string.IsNullOrEmpty(msgBody) && userCm != null)
                 {
                     userCm.UserToken = usertoken;
@@ -432,7 +440,7 @@ namespace BillingSystem.Controllers
                        .Replace("{Facility-Name}", facilityname).Replace("{CodeValue}", usertoken).Replace("{TokenGeneratedon}", currentDate.ToShortDateString()).
                        Replace("{TokenExpireOn}", expiryDate.Value.ToShortDateString());
                 }
-            }
+             
             var status = false;
             if (userCm != null && !string.IsNullOrEmpty(userCm.Email))
             {
@@ -680,9 +688,7 @@ namespace BillingSystem.Controllers
 
             #region Get Departments Data
             /*-----------Get Departments Data Start here----------------------*/
-            using (var bal = new FacilityStructureBal())
-            {
-                var deps = bal.GetFacilityDepartments(corporateid, facilityid);
+                 var deps = _fsService.GetFacilityDepartments(corporateid, facilityid);
                 if (deps.Count > 0)
                 {
                     listDepartments.AddRange(
@@ -696,7 +702,7 @@ namespace BillingSystem.Controllers
                                     item.FacilityStructureName + @" )",
                             }));
                 }
-            }
+            
             /*-----------Get Departments Data End here----------------------*/
 
             #endregion

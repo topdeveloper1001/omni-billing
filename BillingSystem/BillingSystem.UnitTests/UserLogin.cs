@@ -49,17 +49,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
         [TestMethod]
         public void CheckIfBothUsernameAndPasswordEmpty()
         {
-            using (var bal = new UsersBal())
-            {
-                /* Uncomment the below 2 lines to pass this Test Method */
-                this.model.UserName = "kperry";
-                this.model.Password = "Loveme7070";
+            //using (var bal = new UsersService())
+            //{
+            //    /* Uncomment the below 2 lines to pass this Test Method */
+            //    this.model.UserName = "kperry";
+            //    this.model.Password = "Loveme7070";
 
-                Users usersViewModel = bal.GetUser(this.model.UserName, this.model.Password);
-                Assert.IsTrue(
-                    usersViewModel != null && !string.IsNullOrEmpty(this.model.UserName)
-                    && !string.IsNullOrEmpty(this.model.Password));
-            }
+            //    Users usersViewModel = bal.GetUser(this.model.UserName, this.model.Password);
+            //    Assert.IsTrue(
+            //        usersViewModel != null && !string.IsNullOrEmpty(this.model.UserName)
+            //        && !string.IsNullOrEmpty(this.model.Password));
+            //}
         }
 
         /// <summary>
@@ -68,17 +68,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
         [TestMethod]
         public void CheckIfUserExists()
         {
-            using (var bal = new UsersBal())
-            {
-                /* Uncomment the below 2 lines to pass this Test Method */
-                this.model.UserName = "kperry";
-                this.model.Password = "Loveme7070";
+            //using (var bal = new UsersService())
+            //{
+            //    /* Uncomment the below 2 lines to pass this Test Method */
+            //    this.model.UserName = "kperry";
+            //    this.model.Password = "Loveme7070";
 
-                Users usersViewModel = bal.GetUser(this.model.UserName, this.model.Password);
-                Assert.IsNotNull(this.model);
-                Assert.IsNotNull(usersViewModel);
-                Assert.AreEqual(this.model.UserName, usersViewModel.UserName);
-            }
+            //    Users usersViewModel = bal.GetUser(this.model.UserName, this.model.Password);
+            //    Assert.IsNotNull(this.model);
+            //    Assert.IsNotNull(usersViewModel);
+            //    Assert.AreEqual(this.model.UserName, usersViewModel.UserName);
+            //}
         }
 
         #endregion

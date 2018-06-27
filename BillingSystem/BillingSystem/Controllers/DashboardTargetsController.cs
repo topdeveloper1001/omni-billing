@@ -7,11 +7,15 @@ using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DashboardTargetsController : BaseController
     {
+        private readonly ICorporateService _cService;
+
+
         /// <summary>
         /// Get the details of the DashboardTargets View in the Model DashboardTargets such as DashboardTargetsList, list of countries etc.
         /// </summary>
@@ -161,6 +165,19 @@ namespace BillingSystem.Controllers
             return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
 
+        private List<DropdownListData> GetCorporateList()
+        {
+            var list = new List<DropdownListData>();
+            var cId = Helpers.GetDefaultCorporateId();
+            var cList = _cService.GetCorporateDDL(cId);
+            list.AddRange(cList.Select(item => new DropdownListData
+            {
+                Text = item.CorporateName,
+                Value = Convert.ToString(item.CorporateID)
+            }));
+
+            return list;
+        }
         public JsonResult GetCorporateData(int cId)
         {
             List<DropdownListData> fList;
@@ -207,9 +224,9 @@ namespace BillingSystem.Controllers
 
         public ActionResult SortDahboardTarget(int corporateId, int facilityId)
         {
-            using (var bal=new DashboardTargetsBal())
+            using (var bal = new DashboardTargetsBal())
             {
-                var list = bal.GetDashboardTargetsList(corporateId,facilityId);
+                var list = bal.GetDashboardTargetsList(corporateId, facilityId);
                 return PartialView(PartialViews.DashboardTargetsList, list);
 
             }

@@ -1,5 +1,7 @@
-﻿using System;
+﻿using BillingSystem.Common.Interfaces;
+using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -12,7 +14,7 @@ namespace BillingSystem.Repository.Interfaces
         Task<T> AddAsync(T t);
         int Count();
         Task<int> CountAsync();
-        void Delete(T entity);
+        int Delete(T entity);
         Task<int> DeleteAsync(T entity);
         void Dispose();
         T Find(Expression<Func<T, bool>> match);
@@ -29,6 +31,27 @@ namespace BillingSystem.Repository.Interfaces
         void Save();
         Task<int> SaveAsync();
         T Update(T t, object key);
-        Task<T> UpdateAsyn(T t, object key);
+        T UpdateEntity(T t, object key);
+        int Updatei(T t, object key);
+        Task<T> UpdateAsync(T t, object key);
+        T GetSingle(object keyValues);
+        IPagedList GetAll(IPagedListParameters pagedListParameters);
+        Int64 Max(Expression<Func<T, long>> predicate);
+        int? Create(T entity);
+        Task<int> CreateAsync(T entity);
+        int? Create(IEnumerable<T> entities);
+        int? Update(T entity);
+        int? Update(IEnumerable<T> entities);
+        int? Delete(IEnumerable<T> entities);
+        int Delete(object id);
+        int? Delete(string ids);
+        int? Save(T entity);
+        IQueryable<T> Where(Expression<Func<T, bool>> predicate);
+        IQueryable<T> Where(IPagedListParameters pagedListParameters);
+        void ExecuteCommand(string sql, SqlParameter[] parameters);
+        IQueryable<T> Where(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] childrensToInclude);
+        IQueryable<T> Where(IList<Expression<Func<T, bool>>> predicates);
+        IPagedList Where(Expression<Func<T, bool>> predicate, IPagedListParameters pagedListParameters);
+        IPagedList Where(IList<Expression<Func<T, bool>>> predicates, IPagedListParameters pagedListParameters);
     }
 }

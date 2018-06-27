@@ -10,11 +10,14 @@ using BillingSystem.Model.CustomModel;
 using System.Linq;
 using BillingSystem.Common.Common;
 using Microsoft.Ajax.Utilities;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class GlobalCodeController : BaseController
     {
+        private readonly IUsersService _uService;
+
         #region Global Code
         /// <summary>
         /// Indexes this instance.
@@ -277,22 +280,6 @@ namespace BillingSystem.Controllers
         }
 
         #endregion
-
-        ///// <summary>
-        ///// Gets the global code category name by identifier.
-        ///// </summary>
-        ///// <param name="globalCodeCategoryID">The global code category identifier.</param>
-        ///// <returns></returns>
-        //private string GetGlobalCodeCategoryNameByID(string globalCodeCategoryID)
-        //{
-
-        //    var globalCodeCategoryBal = new GlobalCodeCategoryBal();
-        //    var info = globalCodeCategoryBal.GetGlobalCodeCategoryByValue(globalCodeCategoryID);
-        //    if (info != null)
-        //        return info.GlobalCodeCategoryName;
-        //    else
-        //        return string.Empty;
-        //}
 
         #region Order Type Sub-Category
         //order sub Category
@@ -570,7 +557,6 @@ namespace BillingSystem.Controllers
 
 
         #endregion
-
 
         #region Correction Codes View
         public ActionResult CorrectionCodesView()
@@ -1541,20 +1527,16 @@ namespace BillingSystem.Controllers
             var cId = Helpers.GetSysAdminCorporateID();
 
             //Get Users and UserRole data
-            using (var uBal = new UsersBal())
+            var uList = _uService.GetUsersByRole(fId, cId);
+            if (uList.Count > 0)
             {
-                var uList = uBal.GetUsersByRole(fId, cId);
-                if (uList.Count > 0)
+                urList.AddRange(uList.DistinctBy(k => k.RoleId).Select(item => new DropdownListData
                 {
-                    urList.AddRange(uList.DistinctBy(k => k.RoleId).Select(item => new DropdownListData
-                    {
-                        Text = item.RoleName,
-                        Value = Convert.ToString(item.RoleId)
-                    }));
-                }
-                return Json(urList, JsonRequestBehavior.AllowGet);
-
+                    Text = item.RoleName,
+                    Value = Convert.ToString(item.RoleId)
+                }));
             }
+            return Json(urList, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult DeleteLicenceType(int globalCodeId)

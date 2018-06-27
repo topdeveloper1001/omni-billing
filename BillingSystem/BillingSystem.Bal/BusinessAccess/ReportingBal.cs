@@ -1,6 +1,7 @@
-﻿using BillingSystem.Bal.Mapper;
-using BillingSystem.Common.Common;
+﻿using BillingSystem.Common.Common;
+using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
+using BillingSystem.Repository.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,8 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class ReportingBal : BaseBal
     {
-
+        private readonly IRepository<Users> _uRepository;
+        private readonly IRepository<UserRole> _urRepository;
         //private PhysicianActivityMapper PhysicianActivityMapper { get; set; }
 
         public ReportingBal()
@@ -58,23 +60,60 @@ namespace BillingSystem.Bal.BusinessAccess
                         ModifiedDate = item.ModifiedDate,
                         UserName = GetNameByUserId(item.ID),
                     }));
-                    using (var usersBal = new UsersBal())
+
+                    var userroleBal = new UserRoleBal();
+                    foreach (var item in list)
                     {
-                        var userroleBal = new UserRoleBal();
-                        foreach (var item in list)
-                        {
-                            var getUserRoles = userroleBal.GetUserRolesByUserId(item.ID);
-                            var userRoles = usersBal.UserRoles(getUserRoles);
-                            var getUsersFacility = usersBal.UserFacilities(getUserRoles);
-                            item.AssignedRoles = userRoles;
-                            item.AssignedFacilities = getUsersFacility;
-                        }
+                        var getUserRoles = userroleBal.GetUserRolesByUserId(item.ID);
+                        var userRoles = UserRoles(getUserRoles);
+                        var getUsersFacility = UserFacilities(getUserRoles);
+                        item.AssignedRoles = userRoles;
+                        item.AssignedFacilities = getUsersFacility;
                     }
+
                 }
             }
             return list;
         }
+        private string UserFacilities(IEnumerable<UserRole> userRoles)
+        {
+            var facilityNames = string.Empty;
+            var ids = new List<int>();
+            foreach (var item in userRoles)
+            {
+                if (item.Role != null)
+                {
+                    foreach (var f in item.Role.FacilityRole.ToList())
+                    {
+                        if (ids.All(fac => fac != f.FacilityId))
+                        {
+                            ids.Add(f.FacilityId);
+                            using (var facBal = new FacilityBal())
+                            {
+                                if (string.IsNullOrEmpty(facilityNames))
+                                    facilityNames = facBal.GetFacilityNameById(f.FacilityId);
+                                else
+                                    facilityNames += string.Format(", {0}", facBal.GetFacilityNameById(f.FacilityId));
+                            }
+                        }
+                    }
+                }
+            }
+            return facilityNames;
+        }
 
+        private string UserRoles(IEnumerable<UserRole> roles)
+        {
+            var roleNames = string.Empty;
+            foreach (var item in roles)
+            {
+                if (string.IsNullOrEmpty(roleNames))
+                    roleNames = item.Role.RoleName;
+                else
+                    roleNames += string.Format(", {0}", item.Role.RoleName);
+            }
+            return roleNames;
+        }
         /// <summary>
         /// Gets the password disabled log.
         /// </summary>
@@ -117,17 +156,14 @@ namespace BillingSystem.Bal.BusinessAccess
 
                     list = GetFilteredListByCorporateId(corporateId, list, isAll);
 
-                    using (var usersBal = new UsersBal())
+                    var userroleBal = new UserRoleBal();
+                    foreach (var item in list)
                     {
-                        var userroleBal = new UserRoleBal();
-                        foreach (var item in list)
-                        {
-                            var getUserRoles = userroleBal.GetUserRolesByUserId(Convert.ToInt32(item.UserId));
-                            var userRoles = usersBal.UserRoles(getUserRoles);
-                            var getUsersFacility = usersBal.UserFacilities(getUserRoles);
-                            item.AssignedRoles = userRoles;
-                            item.AssignedFacilities = getUsersFacility;
-                        }
+                        var getUserRoles = userroleBal.GetUserRolesByUserId(Convert.ToInt32(item.UserId));
+                        var userRoles = UserRoles(getUserRoles);
+                        var getUsersFacility = UserFacilities(getUserRoles);
+                        item.AssignedRoles = userRoles;
+                        item.AssignedFacilities = getUsersFacility;
                     }
                 }
             }
@@ -180,17 +216,14 @@ namespace BillingSystem.Bal.BusinessAccess
 
                     list = GetFilteredListByCorporateId(corporateId, list, isAll);
 
-                    using (var usersBal = new UsersBal())
+                    var userroleBal = new UserRoleBal();
+                    foreach (var item in list)
                     {
-                        var userroleBal = new UserRoleBal();
-                        foreach (var item in list)
-                        {
-                            var getUserRoles = userroleBal.GetUserRolesByUserId(Convert.ToInt32(item.UserId));
-                            var userRoles = usersBal.UserRoles(getUserRoles);
-                            var getUsersFacility = usersBal.UserFacilities(getUserRoles);
-                            item.AssignedRoles = userRoles;
-                            item.AssignedFacilities = getUsersFacility;
-                        }
+                        var getUserRoles = userroleBal.GetUserRolesByUserId(Convert.ToInt32(item.UserId));
+                        var userRoles = UserRoles(getUserRoles);
+                        var getUsersFacility = UserFacilities(getUserRoles);
+                        item.AssignedRoles = userRoles;
+                        item.AssignedFacilities = getUsersFacility;
                     }
                 }
             }
@@ -497,17 +530,14 @@ namespace BillingSystem.Bal.BusinessAccess
                         ModifiedDate = item.ModifiedDate,
                         UserName = GetNameByUserId(item.ID),
                     }));
-                    using (var usersBal = new UsersBal())
+                    var userroleBal = new UserRoleBal();
+                    foreach (var item in list)
                     {
-                        var userroleBal = new UserRoleBal();
-                        foreach (var item in list)
-                        {
-                            var getUserRoles = userroleBal.GetUserRolesByUserId(item.ID);
-                            var userRoles = usersBal.UserRoles(getUserRoles);
-                            var getUsersFacility = usersBal.UserFacilities(getUserRoles);
-                            item.AssignedRoles = userRoles;
-                            item.AssignedFacilities = getUsersFacility;
-                        }
+                        var getUserRoles = userroleBal.GetUserRolesByUserId(item.ID);
+                        var userRoles = UserRoles(getUserRoles);
+                        var getUsersFacility = UserFacilities(getUserRoles);
+                        item.AssignedRoles = userRoles;
+                        item.AssignedFacilities = getUsersFacility;
                     }
                 }
             }
@@ -809,12 +839,12 @@ namespace BillingSystem.Bal.BusinessAccess
 
 
         public List<PhysicianDepartmentUtilizationCustomModel> GetDepartmentUtilizationReport(int corporateId, DateTime? fromDate,
-            DateTime? tillDate,int displayflag,int facilityId,int physicianId, int departmentId)
+            DateTime? tillDate, int displayflag, int facilityId, int physicianId, int departmentId)
         {
             var list = new List<PhysicianDepartmentUtilizationCustomModel>();
             using (var rep = UnitOfWork.ScrubHeaderRepository)
             {
-                list = rep.GetUtilizationReport(corporateId, fromDate, tillDate, displayflag, facilityId,physicianId, departmentId);
+                list = rep.GetUtilizationReport(corporateId, fromDate, tillDate, displayflag, facilityId, physicianId, departmentId);
             }
             return list;
         }
@@ -847,12 +877,12 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="corporateId">The corporate identifier.</param>
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
-        public List<AuditLogCustomModel> GetPasswordChangeLog_SP(DateTime fromDate, DateTime tillDate, bool isAll, int corporateId,int facilityId)
+        public List<AuditLogCustomModel> GetPasswordChangeLog_SP(DateTime fromDate, DateTime tillDate, bool isAll, int corporateId, int facilityId)
         {
             var list = new List<AuditLogCustomModel>();
             using (var rep = UnitOfWork.AuditLogRepository)
             {
-              list = rep.GetPasswordChangesLog(fromDate, tillDate, isAll, corporateId, facilityId);
+                list = rep.GetPasswordChangesLog(fromDate, tillDate, isAll, corporateId, facilityId);
             }
             return list;
         }

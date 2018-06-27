@@ -13,11 +13,17 @@ using System.Web;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ExternalDashboardController : BaseController
     {
+        private readonly IFacilityStructureService _fsService;
+        private readonly IUsersService _uService;
+        private readonly IDashboardBudgetService _dbService;
+        private readonly IEncounterService _eService;
+
         private static List<ExternalDashboardModel> ExternalDashboardLocalList { get; set; }
 
         #region Common Dashboard Class
@@ -44,14 +50,13 @@ namespace BillingSystem.Controllers
             var fList = new List<DropdownListData>();
             var rList = new List<DropdownListData>();
             var mList = new List<DropdownListData>();
-            var currentdt = Helpers.GetInvariantCultureDateTime();
-            var defaultYear = currentdt.Year;
-            var defaultMonth = currentdt.Month;
 
             //Get Departments data
-            using (var bal = new FacilityStructureBal())
-                dList = bal.GetRevenueDepartments(corporateid,
-                    facilityId == 0 ? Convert.ToString(Helpers.GetDefaultFacilityId()) : Convert.ToString(facilityId));
+            dList = _fsService.GetRevenueDepartments(corporateid,
+               facilityId == 0 ? Convert.ToString(Helpers.GetDefaultFacilityId()) : Convert.ToString(facilityId));
+            var currentdt = _eService.GetInvariantCultureDateTime(facilityId);
+            var defaultYear = currentdt.Year;
+            var defaultMonth = currentdt.Month;
 
             //Get Facility data
             using (var bal = new FacilityBal())
@@ -139,76 +144,75 @@ namespace BillingSystem.Controllers
             var section10RemarksList = new List<DashboardRemarkCustomModel>();
             #endregion
 
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
-            var currentYear = currentDateTime.Year;
 
-            var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
             var facilityId = facilityID ?? 9999;
             facilityId = facilityId == 0 ? 9999 : facilityId;
+
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+            var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
+
             var corporateid = Helpers.GetSysAdminCorporateID();
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var indicatorNumbers = "101,102,103,104,105,106,144,108,109,242,110,111,113,114,155,115,116,117,118,119,120,121,122,124,125,126,127,128,129,130,131,162,145,260,261,280,281,282,283,284,285,286,287,288,609,610";
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityId,
+                    corporateid, indicatorNumbers, customDate, facilityType, segment, Department);
+            ExternalDashboardLocalList = manualDashboardList;
+            var balanceSheetData = _dbService.GetExecutiveDashboardBalanceSheet(facilityId,
+               corporateid, "", customDate, 0, 0, 0);
+
+            #region Statistics Section Code/ listing for Grid
+            var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
+            var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
+            var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
+            var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
+
+            var section1ListOrders = ExecutiveDashboard1ListSortOrder();//-------------Get the Sort Ordering list for Section 1
+            var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();//-------------Get the Sort Ordering list for Section 4-5
+            var sectionVolume10ListOrders = ExecutiveDashboardSection10ListSortOrder();//-------------Get the Sort Ordering list for Section 10
+            var sectionBalanceSheetList = ExecutiveDashboardBalanceSheetListSortOrder();//-------------Get the Sort Ordering list for Section 12
+
+            var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
+            var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
+            var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
+            var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            section1List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim()))
+                    .ToList()
+                    .OrderBy(x => section1ListOrders[x.IndicatorNumber.Trim()])
+                    .ToList()
+                : new List<ExternalDashboardModel>();
+            var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
+            section1List =
+                section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
+            section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
+            section5List = manualDashboardList != null ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
+                : new List<ExternalDashboardModel>();
+            section10List = manualDashboardList != null ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume10ListOrders[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
+            balanceSheetSectionList = balanceSheetData != null
+              ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+              .OrderBy(x => sectionBalanceSheetList[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
+            #endregion
+
+            #region Remarks Section Listing
+            using (var bal = new DashboardRemarkBal())
             {
-                var indicatorNumbers = "101,102,103,104,105,106,144,108,109,242,110,111,113,114,155,115,116,117,118,119,120,121,122,124,125,126,127,128,129,130,131,162,145,260,261,280,281,282,283,284,285,286,287,288,609,610";
-                var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityId,
-                        corporateid, indicatorNumbers, customDate, facilityType, segment, Department);
-                ExternalDashboardLocalList = manualDashboardList;
-                var balanceSheetData = manualdashboardbal.GetExecutiveDashboardBalanceSheet(facilityId,
-                   corporateid, "", customDate, 0, 0, 0);
-
-                #region Statistics Section Code/ listing for Grid
-                var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
-                var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
-                var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
-                var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
-
-                var section1ListOrders = ExecutiveDashboard1ListSortOrder();//-------------Get the Sort Ordering list for Section 1
-                var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();//-------------Get the Sort Ordering list for Section 4-5
-                var sectionVolume10ListOrders = ExecutiveDashboardSection10ListSortOrder();//-------------Get the Sort Ordering list for Section 10
-                var sectionBalanceSheetList = ExecutiveDashboardBalanceSheetListSortOrder();//-------------Get the Sort Ordering list for Section 12
-
-                var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
-                var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
-                var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
-                var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                section1List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim()))
-                        .ToList()
-                        .OrderBy(x => section1ListOrders[x.IndicatorNumber.Trim()])
-                        .ToList()
-                    : new List<ExternalDashboardModel>();
-                var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
-                section1List =
-                    section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
-                section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
-                section5List = manualDashboardList != null ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
-                    : new List<ExternalDashboardModel>();
-                section10List = manualDashboardList != null ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume10ListOrders[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
-                balanceSheetSectionList = balanceSheetData != null
-                  ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                  .OrderBy(x => sectionBalanceSheetList[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
-                #endregion
-
-                #region Remarks Section Listing
-                using (var bal = new DashboardRemarkBal())
+                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
+                    Convert.ToInt32(1));
+                if (allRemarksList != null && allRemarksList.Count > 0)
                 {
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
-                        Convert.ToInt32(1));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                        section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                        section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                        section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                        section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                    }
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
                 }
-                #endregion
             }
+            #endregion
             #region Dashboard View Initialization
             var dashboardview = new ExecutiveDashboardView
             {
@@ -248,95 +252,89 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExecutiveDashboardGraphList(int facilityId, int month, int facilityType, int segment, int department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            //var execDashboardData = "144,156,120,110,121,159,247,103,277,165,127,143,109,122";
+            const string execDashboardData = "144,156,120,110,121,159,247,103,277,143,109,122,244,245,1316";
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(execDashboardData),
+                currentYear, facilityType, segment, department);
+            var adcChart =
+                manualDashboardData.Where(x => x.Indicators == 144)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList(); //ADCChart
+            var adcServiceCodeChart = new List<ManualDashboardCustomModel>();
+            adcServiceCodeChart.AddRange(
+                manualDashboardData.Where(
+                    x => x.Indicators == 156 && x.Year == currentYear && x.BudgetType == 2 && x.SubCategory2 != "0")
+                    .ToList().OrderBy(x => x.SubCategory2));
+            var swbChart =
+                manualDashboardData.Where(x => x.Indicators == 120)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var netRevenueChart =
+                manualDashboardData.Where(x => x.Indicators == 110)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var indirectNetRevenueChart =
+                manualDashboardData.Where(x => x.Indicators == 121)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var payorMixChart =
+                manualDashboardData.Where(x => x.Indicators == 159)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var referalPayorChart =
+                manualDashboardData.Where(x => x.Indicators == 247)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var inpatientDays = manualDashboardData.Where(x => x.Indicators == 103)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var cashCollectionChart1 = new List<ManualDashboardCustomModel>();
+
+            var cashFlowIndicators = new List<int?> { 143, 244, 245, 1316 };
+
+            var cashFlowList =
+                manualDashboardData.Where(
+                    x => x.Indicators != null && cashFlowIndicators.Contains(x.Indicators) && x.BudgetType == 2 && x.Year == currentYear).OrderBy(c => c.Indicators)
+                    .ToList();
+            cashCollectionChart1.AddRange(cashFlowList);
+
+            var bedOccupancyChartYTD = new List<ExternalDashboardModel>();
+            var ebitdaChartYTD = new List<ExternalDashboardModel>();
+            if (ExternalDashboardLocalList != null && ExternalDashboardLocalList.Any())
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                //var execDashboardData = "144,156,120,110,121,159,247,103,277,165,127,143,109,122";
-                const string execDashboardData = "144,156,120,110,121,159,247,103,277,143,109,122,244,245,1316";
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(execDashboardData),
-                    currentYear, facilityType, segment, department);
-                var adcChart =
-                    manualDashboardData.Where(x => x.Indicators == 144)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList(); //ADCChart
-                var adcServiceCodeChart = new List<ManualDashboardCustomModel>();
-                adcServiceCodeChart.AddRange(
-                    manualDashboardData.Where(
-                        x => x.Indicators == 156 && x.Year == currentYear && x.BudgetType == 2 && x.SubCategory2 != "0")
-                        .ToList().OrderBy(x => x.SubCategory2));
-                var swbChart =
-                    manualDashboardData.Where(x => x.Indicators == 120)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var netRevenueChart =
-                    manualDashboardData.Where(x => x.Indicators == 110)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var indirectNetRevenueChart =
-                    manualDashboardData.Where(x => x.Indicators == 121)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var payorMixChart =
-                    manualDashboardData.Where(x => x.Indicators == 159)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var referalPayorChart =
-                    manualDashboardData.Where(x => x.Indicators == 247)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var inpatientDays = manualDashboardData.Where(x => x.Indicators == 103)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var cashCollectionChart1 = new List<ManualDashboardCustomModel>();
-
-                var cashFlowIndicators = new List<int?> { 143, 244, 245, 1316 };
-                //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 143 && x.BudgetType == 2 && x.Year == currentYear));
-                //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 165 && x.BudgetType == 2 && x.Year == currentYear));
-                //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 127 && x.BudgetType == 2 && x.Year == currentYear));
-
-                var cashFlowList =
-                    manualDashboardData.Where(
-                        x => x.Indicators != null && cashFlowIndicators.Contains(x.Indicators) && x.BudgetType == 2 && x.Year == currentYear).OrderBy(c => c.Indicators)
-                        .ToList();
-                cashCollectionChart1.AddRange(cashFlowList);
-
-                var bedOccupancyChartYTD = new List<ExternalDashboardModel>();
-                var ebitdaChartYTD = new List<ExternalDashboardModel>();
-                if (ExternalDashboardLocalList != null && ExternalDashboardLocalList.Any())
-                {
-                    bedOccupancyChartYTD =
-                     ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "109")
-                        .ToList();
-                    ebitdaChartYTD =
-                     ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "122")
-                         .ToList();
-                }
-                var jsonResult = new
-                {
-                    adcChart,
-                    adcServiceCodeChart,
-                    //getOpEncounterChart,
-                    swbChart,
-                    netRevenueChart,
-                    indirectNetRevenueChart,
-                    payorMixChart,
-                    referalPayorChart,
-                    cashCollectionChart1,
-                    inpatientDays,
-                    nursingHoursPPD,
-                    bedOccupancyChartYTD,
-                    ebitdaChartYTD
-                };
-
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                bedOccupancyChartYTD =
+                 ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "109")
+                    .ToList();
+                ebitdaChartYTD =
+                 ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "122")
+                     .ToList();
             }
+            var jsonResult = new
+            {
+                adcChart,
+                adcServiceCodeChart,
+                //getOpEncounterChart,
+                swbChart,
+                netRevenueChart,
+                indirectNetRevenueChart,
+                payorMixChart,
+                referalPayorChart,
+                cashCollectionChart1,
+                inpatientDays,
+                nursingHoursPPD,
+                bedOccupancyChartYTD,
+                ebitdaChartYTD
+            };
+
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -351,95 +349,91 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExecutiveDashboardGraphListV1(int facilityId, int month, int facilityType, int segment, int department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            const string execDashboardData = "144,156,120,110,121,159,247,103,277,143,109,122,244,245,1316";
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            var manualDashboardData = _dbService.GetManualDashBoardV1(facilityId, corporateId,
+                Convert.ToString(execDashboardData),
+                currentYear, facilityType, segment, department);
+            var adcChart =
+                manualDashboardData.Where(x => x.Indicators == 144)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList(); //ADCChart
+            var adcServiceCodeChart = new List<ManualDashboardCustomModel>();
+            adcServiceCodeChart.AddRange(
+                manualDashboardData.Where(
+                    x => x.Indicators == 156 && x.Year == currentYear && x.BudgetType == 2 && x.SubCategory2 != "0")
+                    .ToList().OrderBy(x => x.SubCategory2));
+            var swbChart =
+                manualDashboardData.Where(x => x.Indicators == 120)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var netRevenueChart =
+                manualDashboardData.Where(x => x.Indicators == 110)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var indirectNetRevenueChart =
+                manualDashboardData.Where(x => x.Indicators == 121)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var payorMixChart =
+                manualDashboardData.Where(x => x.Indicators == 159)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var referalPayorChart =
+                manualDashboardData.Where(x => x.Indicators == 247)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var inpatientDays = manualDashboardData.Where(x => x.Indicators == 103)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277)
+                    .OrderBy(x => x.Year)
+                    .ThenByDescending(x => x.BudgetType).ToList();
+            var cashCollectionChart1 = new List<ManualDashboardCustomModel>();
+
+            var cashFlowIndicators = new List<int?> { 143, 244, 245, 1316 };
+            //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 143 && x.BudgetType == 2 && x.Year == curentYear));
+            //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 165 && x.BudgetType == 2 && x.Year == curentYear));
+            //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 127 && x.BudgetType == 2 && x.Year == curentYear));
+
+            var cashFlowList =
+                manualDashboardData.Where(
+                    x => x.Indicators != null && cashFlowIndicators.Contains(x.Indicators) && x.BudgetType == 2 && x.Year == currentYear).OrderBy(c => c.Indicators)
+                    .ToList();
+            cashCollectionChart1.AddRange(cashFlowList);
+
+            var bedOccupancyChartYTD = new List<ExternalDashboardModel>();
+            var ebitdaChartYTD = new List<ExternalDashboardModel>();
+            if (ExternalDashboardLocalList != null && ExternalDashboardLocalList.Any())
             {
-                const string execDashboardData = "144,156,120,110,121,159,247,103,277,143,109,122,244,245,1316";
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-
-                var manualDashboardData = manualdashboardbal.GetManualDashBoardV1(facilityId, corporateId,
-                    Convert.ToString(execDashboardData),
-                    currentYear, facilityType, segment, department);
-                var adcChart =
-                    manualDashboardData.Where(x => x.Indicators == 144)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList(); //ADCChart
-                var adcServiceCodeChart = new List<ManualDashboardCustomModel>();
-                adcServiceCodeChart.AddRange(
-                    manualDashboardData.Where(
-                        x => x.Indicators == 156 && x.Year == currentYear && x.BudgetType == 2 && x.SubCategory2 != "0")
-                        .ToList().OrderBy(x => x.SubCategory2));
-                var swbChart =
-                    manualDashboardData.Where(x => x.Indicators == 120)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var netRevenueChart =
-                    manualDashboardData.Where(x => x.Indicators == 110)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var indirectNetRevenueChart =
-                    manualDashboardData.Where(x => x.Indicators == 121)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var payorMixChart =
-                    manualDashboardData.Where(x => x.Indicators == 159)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var referalPayorChart =
-                    manualDashboardData.Where(x => x.Indicators == 247)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var inpatientDays = manualDashboardData.Where(x => x.Indicators == 103)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277)
-                        .OrderBy(x => x.Year)
-                        .ThenByDescending(x => x.BudgetType).ToList();
-                var cashCollectionChart1 = new List<ManualDashboardCustomModel>();
-
-                var cashFlowIndicators = new List<int?> { 143, 244, 245, 1316 };
-                //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 143 && x.BudgetType == 2 && x.Year == curentYear));
-                //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 165 && x.BudgetType == 2 && x.Year == curentYear));
-                //cashCollectionChart1.AddRange(manualDashboardData.Where(x => x.Indicators == 127 && x.BudgetType == 2 && x.Year == curentYear));
-
-                var cashFlowList =
-                    manualDashboardData.Where(
-                        x => x.Indicators != null && cashFlowIndicators.Contains(x.Indicators) && x.BudgetType == 2 && x.Year == currentYear).OrderBy(c => c.Indicators)
-                        .ToList();
-                cashCollectionChart1.AddRange(cashFlowList);
-
-                var bedOccupancyChartYTD = new List<ExternalDashboardModel>();
-                var ebitdaChartYTD = new List<ExternalDashboardModel>();
-                if (ExternalDashboardLocalList != null && ExternalDashboardLocalList.Any())
-                {
-                    bedOccupancyChartYTD =
-                     ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "109")
-                        .ToList();
-                    ebitdaChartYTD =
-                     ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "122")
-                         .ToList();
-                }
-                var jsonResult = new
-                {
-                    adcChart,
-                    adcServiceCodeChart,
-                    //getOpEncounterChart,
-                    swbChart,
-                    netRevenueChart,
-                    indirectNetRevenueChart,
-                    payorMixChart,
-                    referalPayorChart,
-                    cashCollectionChart1,
-                    inpatientDays,
-                    nursingHoursPPD,
-                    bedOccupancyChartYTD,
-                    ebitdaChartYTD
-                };
-
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                bedOccupancyChartYTD =
+                 ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "109")
+                    .ToList();
+                ebitdaChartYTD =
+                 ExternalDashboardLocalList.Where(x => x.IndicatorNumber == "122")
+                     .ToList();
             }
+            var jsonResult = new
+            {
+                adcChart,
+                adcServiceCodeChart,
+                //getOpEncounterChart,
+                swbChart,
+                netRevenueChart,
+                indirectNetRevenueChart,
+                payorMixChart,
+                referalPayorChart,
+                cashCollectionChart1,
+                inpatientDays,
+                nursingHoursPPD,
+                bedOccupancyChartYTD,
+                ebitdaChartYTD
+            };
+
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -474,103 +468,101 @@ namespace BillingSystem.Controllers
                 ? loggedinfacilityId
                  : 0;
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
 
-            #region Main Code
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            #region Main Code 
+            #region Stats Section List objects
+            var customdateVal = currentDateTime.ToShortDateString();
+            if (month == null)
             {
-                #region Stats Section List objects
-                var customdateVal = currentDateTime.ToShortDateString();
-                if (month == null)
+                var monthVal = currentDateTime.Month;
+                var yearVal = monthVal == 1 ? currentDateTime.AddYears(-1).Year : currentDateTime.Year;
+                customdateVal = (Convert.ToDateTime("06/06/" + yearVal)).ToShortDateString();
+            }
+            var customDate = month == null
+                ? customdateVal : (Convert.ToDateTime("06/06/" + currentDateTime.Year)).ToShortDateString();
+            var manualDashboardList = _dbService.GetDashBoardDataStatList(facilityid,
+                corporateid, "", customDate, 0, 0, 0);
+
+            var balanceSheetData = _dbService.GetDashboardDataBalanceSheetList(facilityid,
+                corporateid, "", customDate, 0, 0, 0);
+
+            var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
+            var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
+            var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
+            var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
+            var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+
+            var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();
+            var section10ListOrder = ExecutiveDashboardSection10ListSortOrder();
+            section1List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+                : new List<ExternalDashboardModel>();
+            var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
+            section1List =
+                section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
+            section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
+            section5List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim()))
+                    .ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
+                : new List<ExternalDashboardModel>();
+            section10List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+                .OrderBy(x => section10ListOrder[x.IndicatorNumber.Trim()]).ToList()
+                : new List<ExternalDashboardModel>();
+            balanceSheetSectionList = balanceSheetData != null
+               ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+               : new List<ExternalDashboardModel>();
+            #endregion
+
+            using (var bal = new DashboardRemarkBal())
+            {
+                #region Remarks Data
+                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                                Convert.ToInt32(1));
+                if (allRemarksList != null && allRemarksList.Count > 0)
                 {
-                    var monthVal = currentDateTime.Month;
-                    var yearVal = monthVal == 1 ? currentDateTime.AddYears(-1).Year : currentDateTime.Year;
-                    customdateVal = (Convert.ToDateTime("06/06/" + yearVal)).ToShortDateString();
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
                 }
-                var customDate = month == null
-                    ? customdateVal : (Convert.ToDateTime("06/06/" + currentDateTime.Year)).ToShortDateString();
-                var manualDashboardList = manualdashboardbal.GetDashBoardDataStatList(facilityid,
-                    corporateid, "", customDate, 0, 0, 0);
-
-                var balanceSheetData = manualdashboardbal.GetDashboardDataBalanceSheetList(facilityid,
-                    corporateid, "", customDate, 0, 0, 0);
-
-                var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
-                var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
-                var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
-                var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
-                var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-
-                var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();
-                var section10ListOrder = ExecutiveDashboardSection10ListSortOrder();
-                section1List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                    : new List<ExternalDashboardModel>();
-                var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
-                section1List =
-                    section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
-                section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
-                section5List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim()))
-                        .ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
-                    : new List<ExternalDashboardModel>();
-                section10List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                    .OrderBy(x => section10ListOrder[x.IndicatorNumber.Trim()]).ToList()
-                    : new List<ExternalDashboardModel>();
-                balanceSheetSectionList = balanceSheetData != null
-                   ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                   : new List<ExternalDashboardModel>();
                 #endregion
 
-                using (var bal = new DashboardRemarkBal())
+                #region Executive Dashboard Assignment/ initialization
+                var dashboardview = new ExecutiveDashboardView
                 {
-                    #region Remarks Data
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                                    Convert.ToInt32(1));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                        section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                        section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                        section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                        section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                    }
-                    #endregion
-
-                    #region Executive Dashboard Assignment/ initialization
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 1,
-                        Title = Helpers.ExternalDashboardTitleView("1"),
-                        Section1List = section1List,
-                        Section5List = section5List,
-                        Section10List = section10List,
-                        BalanceSheetList = balanceSheetSectionList,
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                        Section3RemarksList = section3RemarksList,
-                        Section4RemarksList = section4RemarksList,
-                        Section5RemarksList = section5RemarksList,
-                        Section6RemarksList = section6RemarksList,
-                        Section7RemarksList = section7RemarksList,
-                        Section8RemarksList = section8RemarksList,
-                        Section9RemarksList = section9RemarksList,
-                        Section10RemarksList = section10RemarksList
-                    };
-                    #endregion
-                    return View(dashboardview);
-                }
+                    FacilityId = facilityid,
+                    DashboardType = 1,
+                    Title = Helpers.ExternalDashboardTitleView("1"),
+                    Section1List = section1List,
+                    Section5List = section5List,
+                    Section10List = section10List,
+                    BalanceSheetList = balanceSheetSectionList,
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                    Section3RemarksList = section3RemarksList,
+                    Section4RemarksList = section4RemarksList,
+                    Section5RemarksList = section5RemarksList,
+                    Section6RemarksList = section6RemarksList,
+                    Section7RemarksList = section7RemarksList,
+                    Section8RemarksList = section8RemarksList,
+                    Section9RemarksList = section9RemarksList,
+                    Section10RemarksList = section10RemarksList
+                };
+                #endregion
+                return View(dashboardview);
             }
+
             #endregion
         }
 
@@ -606,75 +598,75 @@ namespace BillingSystem.Controllers
             var section10RemarksList = new List<DashboardRemarkCustomModel>();
             #endregion
 
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
-            var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentDateTime.Year).ToShortDateString();
             var facilityId = facilityID ?? 9999;
             facilityId = facilityId == 0 ? 9999 : facilityId;
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentDateTime.Year).ToShortDateString();
+
             var corporateid = Helpers.GetSysAdminCorporateID();
-            using (var manualdashboardbal = new DashboardBudgetBal())
+
+            var indicatorNumbers = "101,102,103,104,105,106,144,108,109,242,110,111,113,114,155,115,116,117,118,119,120,121,122,124,125,126,127,128,129,130,131,162,145,260,261,280,281,282,283,284,285,286,287,288,609,610";
+            var manualDashboardList = _dbService.GetDashBoardDataStatList(facilityId,
+                    corporateid, indicatorNumbers, customDate, facilityType, segment, Department);
+            ExternalDashboardLocalList = manualDashboardList;
+            var balanceSheetData = _dbService.GetDashboardDataBalanceSheetList(facilityId,
+                corporateid, "", customDate, 0, 0, 0);
+
+            #region Statistics Section Code/ listing for Grid
+            var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
+            var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
+            var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
+            var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
+
+            var section1ListOrders = ExecutiveDashboard1ListSortOrder();//-------------Get the Sort Ordering list for Section 1
+            var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();//-------------Get the Sort Ordering list for Section 4-5
+            var sectionVolume10ListOrders = ExecutiveDashboardSection10ListSortOrder();//-------------Get the Sort Ordering list for Section 10
+            var sectionBalanceSheetList = ExecutiveDashboardBalanceSheetListSortOrder();//-------------Get the Sort Ordering list for Section 12
+
+            var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
+            var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
+            var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
+            var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            section1List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim()))
+                    .ToList()
+                    .OrderBy(x => section1ListOrders[x.IndicatorNumber.Trim()])
+                    .ToList()
+                : new List<ExternalDashboardModel>();
+            var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
+            section1List =
+                section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
+            section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
+            section5List = manualDashboardList != null ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
+                : new List<ExternalDashboardModel>();
+            section10List = manualDashboardList != null ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume10ListOrders[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
+            balanceSheetSectionList = balanceSheetData != null
+              ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+              .OrderBy(x => sectionBalanceSheetList[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
+            #endregion
+
+            #region Remarks Section Listing
+            using (var bal = new DashboardRemarkBal())
             {
-                var indicatorNumbers = "101,102,103,104,105,106,144,108,109,242,110,111,113,114,155,115,116,117,118,119,120,121,122,124,125,126,127,128,129,130,131,162,145,260,261,280,281,282,283,284,285,286,287,288,609,610";
-                var manualDashboardList = manualdashboardbal.GetDashBoardDataStatList(facilityId,
-                        corporateid, indicatorNumbers, customDate, facilityType, segment, Department);
-                ExternalDashboardLocalList = manualDashboardList;
-                var balanceSheetData = manualdashboardbal.GetDashboardDataBalanceSheetList(facilityId,
-                    corporateid, "", customDate, 0, 0, 0);
-
-                #region Statistics Section Code/ listing for Grid
-                var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
-                var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
-                var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
-                var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
-
-                var section1ListOrders = ExecutiveDashboard1ListSortOrder();//-------------Get the Sort Ordering list for Section 1
-                var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();//-------------Get the Sort Ordering list for Section 4-5
-                var sectionVolume10ListOrders = ExecutiveDashboardSection10ListSortOrder();//-------------Get the Sort Ordering list for Section 10
-                var sectionBalanceSheetList = ExecutiveDashboardBalanceSheetListSortOrder();//-------------Get the Sort Ordering list for Section 12
-
-                var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
-                var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
-                var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = ((int)enumValue).ToString() });
-                var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                section1List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim()))
-                        .ToList()
-                        .OrderBy(x => section1ListOrders[x.IndicatorNumber.Trim()])
-                        .ToList()
-                    : new List<ExternalDashboardModel>();
-                var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
-                section1List =
-                    section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
-                section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
-                section5List = manualDashboardList != null ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
-                    : new List<ExternalDashboardModel>();
-                section10List = manualDashboardList != null ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList().OrderBy(x => sectionVolume10ListOrders[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
-                balanceSheetSectionList = balanceSheetData != null
-                  ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                  .OrderBy(x => sectionBalanceSheetList[x.IndicatorNumber.Trim()]).ToList() : new List<ExternalDashboardModel>();
-                #endregion
-
-                #region Remarks Section Listing
-                using (var bal = new DashboardRemarkBal())
+                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
+                    Convert.ToInt32(1));
+                if (allRemarksList != null && allRemarksList.Count > 0)
                 {
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
-                        Convert.ToInt32(1));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                        section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                        section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                        section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                        section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                    }
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
                 }
-                #endregion
             }
+            #endregion
+
             #region Dashboard View Initialization
             var dashboardview = new ExecutiveDashboardView
             {
@@ -733,103 +725,102 @@ namespace BillingSystem.Controllers
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                 ? loggedinfacilityId
                  : 0;
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
             var corporateid = Helpers.GetSysAdminCorporateID();
             #region Main Code
-            using (var manualdashboardbal = new DashboardBudgetBal())
+
+            #region Stats Section List objects
+            var customdateVal = currentDateTime.ToShortDateString();
+            if (month == null)
             {
-                #region Stats Section List objects
-                var customdateVal = currentDateTime.ToShortDateString();
-                if (month == null)
+                var monthVal = currentDateTime.Month;
+                var yearVal = monthVal == 1 ? currentDateTime.AddYears(-1).Year : currentDateTime.Year;
+                customdateVal = (Convert.ToDateTime("06/06/" + yearVal)).ToShortDateString();
+            }
+            var customDate = month == null
+                ? customdateVal : (Convert.ToDateTime("06/06/" + currentDateTime.Year)).ToShortDateString();
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityid,
+                corporateid, "", customDate, 0, 0, 0);
+
+            var balanceSheetData = _dbService.GetExecutiveDashboardBalanceSheet(facilityid,
+                corporateid, "", customDate, 0, 0, 0);
+
+            var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
+            var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
+            var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
+            var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
+            var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+            var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
+
+            var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();
+            var section10ListOrder = ExecutiveDashboardSection10ListSortOrder();
+            section1List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+                : new List<ExternalDashboardModel>();
+            var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
+            section1List =
+                section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
+            section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
+            section5List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim()))
+                    .ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
+                : new List<ExternalDashboardModel>();
+            section10List = manualDashboardList != null
+                ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+                .OrderBy(x => section10ListOrder[x.IndicatorNumber.Trim()]).ToList()
+                : new List<ExternalDashboardModel>();
+            balanceSheetSectionList = balanceSheetData != null
+               ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
+               : new List<ExternalDashboardModel>();
+            #endregion
+
+            using (var bal = new DashboardRemarkBal())
+            {
+                #region Remarks Data
+                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                                Convert.ToInt32(1));
+                if (allRemarksList != null && allRemarksList.Count > 0)
                 {
-                    var monthVal = currentDateTime.Month;
-                    var yearVal = monthVal == 1 ? currentDateTime.AddYears(-1).Year : currentDateTime.Year;
-                    customdateVal = (Convert.ToDateTime("06/06/" + yearVal)).ToShortDateString();
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
                 }
-                var customDate = month == null
-                    ? customdateVal : (Convert.ToDateTime("06/06/" + currentDateTime.Year)).ToShortDateString();
-                var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityid,
-                    corporateid, "", customDate, 0, 0, 0);
-
-                var balanceSheetData = manualdashboardbal.GetExecutiveDashboardBalanceSheet(facilityid,
-                    corporateid, "", customDate, 0, 0, 0);
-
-                var section1Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection1Stat)).OfType<object>().ToList();
-                var section5Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection5Stat)).OfType<object>().ToList();
-                var section10Enumlist = Enum.GetValues(typeof(ExecutiveDashboardSection10Stat)).OfType<object>().ToList();
-                var balanceSheetEnumlist = Enum.GetValues(typeof(ExecutiveDashboardBalanceSheetStat)).OfType<object>().ToList();
-                var section1 = section1Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                var section5 = section5Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                var section10 = section10Enumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-                var balanceSheetSection = balanceSheetEnumlist.Select(enumValue => new SelectListItem { Text = enumValue.ToString(), Value = Convert.ToString((int)enumValue) });
-
-                var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();
-                var section10ListOrder = ExecutiveDashboardSection10ListSortOrder();
-                section1List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section1.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                    : new List<ExternalDashboardModel>();
-                var adccontroller = section1List.Where(x => x.IndicatorNumber == "105").ToList();
-                section1List =
-                    section1List.Where(x => (x.IndicatorNumber != "105")).ToList();
-                section1List.Add(adccontroller.FirstOrDefault(x => x.IndicatorNumber == "105"));
-                section5List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section5.Any(r => r.Value == x.IndicatorNumber.Trim()))
-                        .ToList().OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
-                    : new List<ExternalDashboardModel>();
-                section10List = manualDashboardList != null
-                    ? manualDashboardList.Where(x => section10.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                    .OrderBy(x => section10ListOrder[x.IndicatorNumber.Trim()]).ToList()
-                    : new List<ExternalDashboardModel>();
-                balanceSheetSectionList = balanceSheetData != null
-                   ? balanceSheetData.Where(x => balanceSheetSection.Any(r => r.Value == x.IndicatorNumber.Trim())).ToList()
-                   : new List<ExternalDashboardModel>();
                 #endregion
 
-                using (var bal = new DashboardRemarkBal())
+                #region Executive Dashboard Assignment/ initialization
+                var dashboardview = new ExecutiveDashboardView
                 {
-                    #region Remarks Data
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                                    Convert.ToInt32(1));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                        section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                        section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                        section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                        section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                    }
-                    #endregion
-
-                    #region Executive Dashboard Assignment/ initialization
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 1,
-                        Title = Helpers.ExternalDashboardTitleView("1"),
-                        Section1List = section1List,
-                        Section5List = section5List,
-                        Section10List = section10List,
-                        BalanceSheetList = balanceSheetSectionList,
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                        Section3RemarksList = section3RemarksList,
-                        Section4RemarksList = section4RemarksList,
-                        Section5RemarksList = section5RemarksList,
-                        Section6RemarksList = section6RemarksList,
-                        Section7RemarksList = section7RemarksList,
-                        Section8RemarksList = section8RemarksList,
-                        Section9RemarksList = section9RemarksList,
-                        Section10RemarksList = section10RemarksList
-                    };
-                    #endregion
-                    return View(dashboardview);
-                }
+                    FacilityId = facilityid,
+                    DashboardType = 1,
+                    Title = Helpers.ExternalDashboardTitleView("1"),
+                    Section1List = section1List,
+                    Section5List = section5List,
+                    Section10List = section10List,
+                    BalanceSheetList = balanceSheetSectionList,
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                    Section3RemarksList = section3RemarksList,
+                    Section4RemarksList = section4RemarksList,
+                    Section5RemarksList = section5RemarksList,
+                    Section6RemarksList = section6RemarksList,
+                    Section7RemarksList = section7RemarksList,
+                    Section8RemarksList = section8RemarksList,
+                    Section9RemarksList = section9RemarksList,
+                    Section10RemarksList = section10RemarksList
+                };
+                #endregion
+                return View(dashboardview);
             }
+
             #endregion
         }
 
@@ -1007,33 +998,29 @@ namespace BillingSystem.Controllers
         public PatientAcquisitionData GetPatientAcquisitionGraphData(int facilityId, int month, int facilityType, int segment, int department)
         {
             const string ClinicalComplianceGrpahsArray = "720,721,722,723";
-            using (var manualdashboardbal = new DashboardBudgetBal())
+
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId, Convert.ToString(ClinicalComplianceGrpahsArray), currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+
+            var conversionRate = manualDashboardData.Where(x => x.Indicators == 720).ToList();
+            var patientinFunnel = manualDashboardData.Where(x => x.Indicators == 721).ToList();
+            var timefromFunneltoBed = manualDashboardData.Where(x => x.Indicators == 722).ToList();
+            var lostfromFunnel = manualDashboardData.Where(x => x.Indicators == 723).ToList();
+
+
+            var result = new PatientAcquisitionData
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(ClinicalComplianceGrpahsArray), currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-
-                var conversionRate = manualDashboardData.Where(x => x.Indicators == 720).ToList();
-                var patientinFunnel = manualDashboardData.Where(x => x.Indicators == 721).ToList();
-                var timefromFunneltoBed = manualDashboardData.Where(x => x.Indicators == 722).ToList();
-                var lostfromFunnel = manualDashboardData.Where(x => x.Indicators == 723).ToList();
-
-
-                var result = new PatientAcquisitionData
-                {
-                    conversionRate = conversionRate,
-                    patientinFunnel = patientinFunnel,
-                    timefromFunneltoBed = timefromFunneltoBed,
-                    lostfromFunnel = lostfromFunnel
-                };
-                return result;
-            }
+                conversionRate = conversionRate,
+                patientinFunnel = patientinFunnel,
+                timefromFunneltoBed = timefromFunneltoBed,
+                lostfromFunnel = lostfromFunnel
+            };
+            return result;
         }
 
         public JsonResult RebindPatientAcquisitionData(int facilityId, int month, int facilityType, int segment, int department)
@@ -1128,82 +1115,79 @@ namespace BillingSystem.Controllers
         public ClinicalData GetClinicalGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
             const string clinicalGrpahsArray = "750,174,830,832,758,756,180,181,186,175,752,754,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(clinicalGrpahsArray),
+                currentYear, facilityType, segment, department);
+
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+
+            var totalsentinelevents = manualDashboardData.Where(x => x.Indicators == 750).ToList();
+            var patienFallRate = manualDashboardData.Where(x => x.Indicators == 174).ToList();
+            var totalNearmiss = manualDashboardData.Where(x => x.Indicators == 830).ToList();
+            var totaladverseincidents = manualDashboardData.Where(x => x.Indicators == 832).ToList();
+
+            var TotalMedicationErrors = manualDashboardData.Where(x => x.Indicators == 758).ToList();
+            var totalIncidentsReports = manualDashboardData.Where(x => x.Indicators == 756).ToList();
+            var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
+            var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
+
+            var handHygieneCompliance = manualDashboardData.Where(x => x.Indicators == 186).ToList();
+
+            var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
+            var averageFIMScorePAR = manualDashboardData.Where(x => x.Indicators == 752).ToList();
+            var averageFIMScoreLTC = manualDashboardData.Where(x => x.Indicators == 754).ToList();
+
+            var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
+            var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
+
+            var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
+            var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
+            var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
+            var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear).ToList();
+            var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
+            //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
+            var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
+
+            var customDataToreturn = new List<ManualDashboardCustomModel>();
+            var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
+            customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            var categoryofIncidents = customDataToreturn;
+
+
+            var data = new ClinicalData
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(clinicalGrpahsArray),
-                    currentYear, facilityType, segment, department);
+                totalsentinelevents = totalsentinelevents,
+                patienFallRate = patienFallRate,
+                totalNearmiss = totalNearmiss,
+                totaladverseincidents = totaladverseincidents,
+                TotalMedicationErrors = TotalMedicationErrors,
+                totalIncidentsReports = totalIncidentsReports,
+                mdroRate = mdroRate,
+                mrsaRate = mrsaRate,
+                handHygieneCompliance = handHygieneCompliance,
+                pressureUlcerIncidentRate = pressureUlcerIncidentRate,
+                averageFIMScorePAR = averageFIMScorePAR,
+                averageFIMScoreLTC = averageFIMScoreLTC,
+                inappropriateAntiBioticUsageRate = inappropriateAntiBioticUsageRate,
+                therapyInitialAssessmentProtocolCompliance = therapyInitialAssessmentProtocolCompliance,
+                manualHandlingRiskAssessmentProtocolCompliance = manualHandlingRiskAssessmentProtocolCompliance,
+                standardizedOutcomeMeasureProtocol = standardizedOutcomeMeasureProtocol,
+                Incidents = Incidents,
+                nonMedicationRelatedIncidents = nonMedicationRelatedIncidents,
+                typeOfIncidents = typeOfIncidents,
+                medicationErrors = medicationErrors,
+                categoryofIncidents = categoryofIncidents
+            };
+            return data;
 
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-
-                var totalsentinelevents = manualDashboardData.Where(x => x.Indicators == 750).ToList();
-                var patienFallRate = manualDashboardData.Where(x => x.Indicators == 174).ToList();
-                var totalNearmiss = manualDashboardData.Where(x => x.Indicators == 830).ToList();
-                var totaladverseincidents = manualDashboardData.Where(x => x.Indicators == 832).ToList();
-
-                var TotalMedicationErrors = manualDashboardData.Where(x => x.Indicators == 758).ToList();
-                var totalIncidentsReports = manualDashboardData.Where(x => x.Indicators == 756).ToList();
-                var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
-                var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
-
-                var handHygieneCompliance = manualDashboardData.Where(x => x.Indicators == 186).ToList();
-
-                var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
-                var averageFIMScorePAR = manualDashboardData.Where(x => x.Indicators == 752).ToList();
-                var averageFIMScoreLTC = manualDashboardData.Where(x => x.Indicators == 754).ToList();
-
-                var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
-                var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
-
-                var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
-                var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
-                var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
-                var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear).ToList();
-                var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
-                //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
-                var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
-
-                var customDataToreturn = new List<ManualDashboardCustomModel>();
-                var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
-                customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                var categoryofIncidents = customDataToreturn;
-
-
-                var data = new ClinicalData
-                {
-                    totalsentinelevents = totalsentinelevents,
-                    patienFallRate = patienFallRate,
-                    totalNearmiss = totalNearmiss,
-                    totaladverseincidents = totaladverseincidents,
-                    TotalMedicationErrors = TotalMedicationErrors,
-                    totalIncidentsReports = totalIncidentsReports,
-                    mdroRate = mdroRate,
-                    mrsaRate = mrsaRate,
-                    handHygieneCompliance = handHygieneCompliance,
-                    pressureUlcerIncidentRate = pressureUlcerIncidentRate,
-                    averageFIMScorePAR = averageFIMScorePAR,
-                    averageFIMScoreLTC = averageFIMScoreLTC,
-                    inappropriateAntiBioticUsageRate = inappropriateAntiBioticUsageRate,
-                    therapyInitialAssessmentProtocolCompliance = therapyInitialAssessmentProtocolCompliance,
-                    manualHandlingRiskAssessmentProtocolCompliance = manualHandlingRiskAssessmentProtocolCompliance,
-                    standardizedOutcomeMeasureProtocol = standardizedOutcomeMeasureProtocol,
-                    Incidents = Incidents,
-                    nonMedicationRelatedIncidents = nonMedicationRelatedIncidents,
-                    typeOfIncidents = typeOfIncidents,
-                    medicationErrors = medicationErrors,
-                    categoryofIncidents = categoryofIncidents
-                };
-                return data;
-                //return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
         }
 
         public JsonResult BindAllClinicalDataOnLoad(int facilityId)
@@ -1404,66 +1388,56 @@ namespace BillingSystem.Controllers
 
         public FinancialManagementData GetFinancialManagementGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+            var corporateid = Helpers.GetSysAdminCorporateID();
+
+            const string FinancialMgtIndicators = "110,111,113,115,280,259,256,257,258,260,281,282,117,142,1010,1015,1020";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid, Convert.ToString(FinancialMgtIndicators), currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-                var corporateid = Helpers.GetSysAdminCorporateID();
-
-                const string FinancialMgtIndicators = "110,111,113,115,280,259,256,257,258,260,281,282,117,142,1010,1015,1020";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(
-                    facilityId,
-                    corporateid,
-                    Convert.ToString(FinancialMgtIndicators),
-                    currentYear,
-                    facilityType,
-                    segment,
-                    department);
-                if (manualDashboardData.Any())
-                {
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                }
-
-                var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
-                var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
-                var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
-                var otherGAExpenses = manualDashboardData.Where(x => x.Indicators == 115).ToList();
-                var facilityRentandUtilities = manualDashboardData.Where(x => x.Indicators == 280).ToList();
-                var otherdirectpatientrelatedcosts = manualDashboardData.Where(x => x.Indicators == 259).ToList();
-                var consumablesPPD = manualDashboardData.Where(x => x.Indicators == 256).ToList();
-                var pharmacyPPD = manualDashboardData.Where(x => x.Indicators == 257).ToList();
-                var fBPPD = manualDashboardData.Where(x => x.Indicators == 258).ToList();
-                var newmarketdevelopmentSWB = manualDashboardData.Where(x => x.Indicators == 260).ToList();
-                var marketingBDCosts = manualDashboardData.Where(x => x.Indicators == 281).ToList();
-                var newMarketDevelopmentOtherCosts = manualDashboardData.Where(x => x.Indicators == 282).ToList();
-                var deprandAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
-                var NursePatientRatio = manualDashboardData.Where(x => x.Indicators == 142 && x.SubCategory1 == "0").ToList();
-                var healthCareassistantPatientratio = manualDashboardData.Where(x => x.Indicators == 1010).ToList();
-                var therapistPatientratio = manualDashboardData.Where(x => x.Indicators == 1015).ToList();
-                var physicianPatientratio = manualDashboardData.Where(x => x.Indicators == 1020).ToList();
-
-                var data = new FinancialManagementData
-                {
-                    netRevenue = netRevenue,
-                    swbDirect = swbDirect,
-                    otherDirect = otherDirect,
-                    otherGAExpenses = otherGAExpenses,
-                    facilityRentandUtilities = facilityRentandUtilities,
-                    otherdirectpatientrelatedcosts = otherdirectpatientrelatedcosts,
-                    consumablesPPD = consumablesPPD,
-                    pharmacyPPD = pharmacyPPD,
-                    fBPPD = fBPPD,
-                    newmarketdevelopmentSWB = newmarketdevelopmentSWB,
-                    marketingBDCosts = marketingBDCosts,
-                    newMarketDevelopmentOtherCosts = newMarketDevelopmentOtherCosts,
-                    deprandAmort = deprandAmort,
-                    NursePatientRatio = NursePatientRatio,
-                    healthCareassistantPatientratio = healthCareassistantPatientratio,
-                    therapistPatientratio = therapistPatientratio,
-                    physicianPatientratio = physicianPatientratio
-                };
-                return data;
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
             }
+
+            var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
+            var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
+            var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
+            var otherGAExpenses = manualDashboardData.Where(x => x.Indicators == 115).ToList();
+            var facilityRentandUtilities = manualDashboardData.Where(x => x.Indicators == 280).ToList();
+            var otherdirectpatientrelatedcosts = manualDashboardData.Where(x => x.Indicators == 259).ToList();
+            var consumablesPPD = manualDashboardData.Where(x => x.Indicators == 256).ToList();
+            var pharmacyPPD = manualDashboardData.Where(x => x.Indicators == 257).ToList();
+            var fBPPD = manualDashboardData.Where(x => x.Indicators == 258).ToList();
+            var newmarketdevelopmentSWB = manualDashboardData.Where(x => x.Indicators == 260).ToList();
+            var marketingBDCosts = manualDashboardData.Where(x => x.Indicators == 281).ToList();
+            var newMarketDevelopmentOtherCosts = manualDashboardData.Where(x => x.Indicators == 282).ToList();
+            var deprandAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
+            var NursePatientRatio = manualDashboardData.Where(x => x.Indicators == 142 && x.SubCategory1 == "0").ToList();
+            var healthCareassistantPatientratio = manualDashboardData.Where(x => x.Indicators == 1010).ToList();
+            var therapistPatientratio = manualDashboardData.Where(x => x.Indicators == 1015).ToList();
+            var physicianPatientratio = manualDashboardData.Where(x => x.Indicators == 1020).ToList();
+
+            var data = new FinancialManagementData
+            {
+                netRevenue = netRevenue,
+                swbDirect = swbDirect,
+                otherDirect = otherDirect,
+                otherGAExpenses = otherGAExpenses,
+                facilityRentandUtilities = facilityRentandUtilities,
+                otherdirectpatientrelatedcosts = otherdirectpatientrelatedcosts,
+                consumablesPPD = consumablesPPD,
+                pharmacyPPD = pharmacyPPD,
+                fBPPD = fBPPD,
+                newmarketdevelopmentSWB = newmarketdevelopmentSWB,
+                marketingBDCosts = marketingBDCosts,
+                newMarketDevelopmentOtherCosts = newMarketDevelopmentOtherCosts,
+                deprandAmort = deprandAmort,
+                NursePatientRatio = NursePatientRatio,
+                healthCareassistantPatientratio = healthCareassistantPatientratio,
+                therapistPatientratio = therapistPatientratio,
+                physicianPatientratio = physicianPatientratio
+            };
+            return data;
         }
 
         public JsonResult RebindFinancialManagementGraphs(int facilityId, int month, int facilityType, int segment, int department)
@@ -1593,73 +1567,71 @@ namespace BillingSystem.Controllers
         public ActionResult RCMGraphsDataUpdated(int facilityId, int month, int facilityType, int segment, int department)
         {
 
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var cId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+
+            var customDate = month == 0
+                ? currentDateTime.ToShortDateString()
+                : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
+            var RCMDashboardData = "11,10,108,290,925,230,1000,1005,160,161";
+            var indicatorsYtd = "103,270,700,701,910,242,106,229,222";
+
+            if (facilityId == 0)
+                facilityId = 9999;
+
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityId, cId, indicatorsYtd,
+                customDate, facilityType, segment, department);
+
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, cId,
+                Convert.ToString(RCMDashboardData),
+                currentYear, facilityType, segment, department);
+
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+
+            var idgReveune = manualDashboardList.Where(x => x.IndicatorNumber.Equals("103")).ToList();
+            var idnRevenue = manualDashboardList.Where(x => x.IndicatorNumber.Equals("700")).ToList();
+            var outOnPassDays = manualDashboardList.Where(x => x.IndicatorNumber.Equals("701")).ToList();
+            var dischargePatientDays = manualDashboardList.Where(x => x.IndicatorNumber.Equals("910") && x.SubCategoryValue1Str.Equals("0") && x.SubCategoryValue2Str.Equals("0")).ToList();
+            var pdServiceCodeRevenue = manualDashboardList.Where(x => x.IndicatorNumber.Equals("242")).ToList();
+
+            var averageLengthOfStay = manualDashboardList.Where(x => x.IndicatorNumber.Equals("106")).ToList();
+
+            var totalOperatingBedsRevenue = manualDashboardData.Where(x => x.Indicators == 108).ToList();
+            var netarbalanceRevenue = manualDashboardData.Where(x => x.Indicators == 290).ToList();
+            var opRevenue = manualDashboardData.Where(x => x.Indicators == 161).ToList();
+            var ipRevenue = manualDashboardData.Where(x => x.Indicators == 160).ToList();
+            var payorMix = manualDashboardData.Where(x => x.Indicators == 925).ToList();
+            var percentagebilledReveune = manualDashboardData.Where(x => x.Indicators == 230).ToList();
+            var accountSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 1000).ToList();
+            var claimsResubmissionPercentage = manualDashboardData.Where(x => x.Indicators == 1005).ToList();
+            var revenueByCategory = manualDashboardList.Where(x => x.IndicatorNumber.Equals("222")).ToList();
+            var revenueByServiceCode = manualDashboardList.Where(x => x.IndicatorNumber.Equals("229")).ToList();
+
+
+            var jsonResult = new
             {
-                var cId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+                idgReveune,
+                idnRevenue,
+                outOnPassDays,
+                dischargePatientDays,
+                pdServiceCodeRevenue,
+                averageLengthOfStay,
+                totalOperatingBedsRevenue,
+                netarbalanceRevenue,
+                opRevenue,
+                ipRevenue,
+                payorMix,
+                percentagebilledReveune,
+                accountSubmittedClaims,
+                claimsResubmissionPercentage,
+                revenueByCategory,
+                revenueByServiceCode
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
 
-
-                var customDate = month == 0
-                    ? currentDateTime.ToShortDateString()
-                    : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
-                var RCMDashboardData = "11,10,108,290,925,230,1000,1005,160,161";
-                var indicatorsYtd = "103,270,700,701,910,242,106,229,222";
-
-                if (facilityId == 0)
-                    facilityId = 9999;
-
-                var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityId, cId, indicatorsYtd,
-                    customDate, facilityType, segment, department);
-
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, cId,
-                    Convert.ToString(RCMDashboardData),
-                    currentYear, facilityType, segment, department);
-
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-
-                var idgReveune = manualDashboardList.Where(x => x.IndicatorNumber.Equals("103")).ToList();
-                var idnRevenue = manualDashboardList.Where(x => x.IndicatorNumber.Equals("700")).ToList();
-                var outOnPassDays = manualDashboardList.Where(x => x.IndicatorNumber.Equals("701")).ToList();
-                var dischargePatientDays = manualDashboardList.Where(x => x.IndicatorNumber.Equals("910") && x.SubCategoryValue1Str.Equals("0") && x.SubCategoryValue2Str.Equals("0")).ToList();
-                var pdServiceCodeRevenue = manualDashboardList.Where(x => x.IndicatorNumber.Equals("242")).ToList();
-
-                var averageLengthOfStay = manualDashboardList.Where(x => x.IndicatorNumber.Equals("106")).ToList();
-
-                var totalOperatingBedsRevenue = manualDashboardData.Where(x => x.Indicators == 108).ToList();
-                var netarbalanceRevenue = manualDashboardData.Where(x => x.Indicators == 290).ToList();
-                var opRevenue = manualDashboardData.Where(x => x.Indicators == 161).ToList();
-                var ipRevenue = manualDashboardData.Where(x => x.Indicators == 160).ToList();
-                var payorMix = manualDashboardData.Where(x => x.Indicators == 925).ToList();
-                var percentagebilledReveune = manualDashboardData.Where(x => x.Indicators == 230).ToList();
-                var accountSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 1000).ToList();
-                var claimsResubmissionPercentage = manualDashboardData.Where(x => x.Indicators == 1005).ToList();
-                var revenueByCategory = manualDashboardList.Where(x => x.IndicatorNumber.Equals("222")).ToList();
-                var revenueByServiceCode = manualDashboardList.Where(x => x.IndicatorNumber.Equals("229")).ToList();
-
-
-                var jsonResult = new
-                {
-                    idgReveune,
-                    idnRevenue,
-                    outOnPassDays,
-                    dischargePatientDays,
-                    pdServiceCodeRevenue,
-                    averageLengthOfStay,
-                    totalOperatingBedsRevenue,
-                    netarbalanceRevenue,
-                    opRevenue,
-                    ipRevenue,
-                    payorMix,
-                    percentagebilledReveune,
-                    accountSubmittedClaims,
-                    claimsResubmissionPercentage,
-                    revenueByCategory,
-                    revenueByServiceCode
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
         }
         #endregion
 
@@ -1680,75 +1652,72 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsData_New(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
 
-                var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
-                var corporateid = Helpers.GetSysAdminCorporateID();
+            var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
+            var corporateid = Helpers.GetSysAdminCorporateID();
 
-                const string caseManagementIndicators = "101,102,141,900,104,901,902,903,904";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateid,
-                    caseManagementIndicators, currentYear,
-                    facilityType, segment, department);
+            const string caseManagementIndicators = "101,102,141,900,104,901,902,903,904";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid,
+                caseManagementIndicators, currentYear,
+                facilityType, segment, department);
 
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
 
 
-                var admissions = manualDashboardData.Where(x => x.Indicators == 101).ToList();
-                var discharges = manualDashboardData.Where(x => x.Indicators == 102).ToList();
-                var outpatientEncounters = manualDashboardData.Where(x => x.Indicators == 104).ToList();
-                var totalOPAppointments = manualDashboardData.Where(x => x.Indicators == 902).ToList();
+            var admissions = manualDashboardData.Where(x => x.Indicators == 101).ToList();
+            var discharges = manualDashboardData.Where(x => x.Indicators == 102).ToList();
+            var outpatientEncounters = manualDashboardData.Where(x => x.Indicators == 104).ToList();
+            var totalOPAppointments = manualDashboardData.Where(x => x.Indicators == 902).ToList();
 
-                var adminssionbyReferalSource =
-                    manualDashboardData.Where(
-                        x => x.Indicators == 141 && x.BudgetType == 2 && x.Year == currentYear).OrderBy(x => x.SubCategory1).ToList();
+            var adminssionbyReferalSource =
+                manualDashboardData.Where(
+                    x => x.Indicators == 141 && x.BudgetType == 2 && x.Year == currentYear).OrderBy(x => x.SubCategory1).ToList();
 
-                var dischargesbyDisposition =
-                    manualDashboardData.Where(
-                        x => x.Indicators == 900 && x.BudgetType == 2 && x.Year == currentYear).OrderBy(x => x.SubCategory1).ToList();
+            var dischargesbyDisposition =
+                manualDashboardData.Where(
+                    x => x.Indicators == 900 && x.BudgetType == 2 && x.Year == currentYear).OrderBy(x => x.SubCategory1).ToList();
 
-                var oPEncountersbyType =
-                   manualDashboardData.Where(
-                       x => x.Indicators == 901 && x.SubCategory1 != "0" && x.BudgetType == 2 && x.Year == currentYear).OrderBy(x => x.SubCategory1).ToList();
+            var oPEncountersbyType =
+               manualDashboardData.Where(
+                   x => x.Indicators == 901 && x.SubCategory1 != "0" && x.BudgetType == 2 && x.Year == currentYear).OrderBy(x => x.SubCategory1).ToList();
 
-                var oPSchedulingTypes = new List<ManualDashboardCustomModel>();
-                var moPSchedulingTypes1 = manualDashboardData.Where(x => x.Indicators == 903 && x.ExternalValue3 == "1").ToList();
-                var moPSchedulingTypes2 = manualDashboardData.Where(x => x.Indicators == 904 && x.ExternalValue3 == "1").ToList();
-                oPSchedulingTypes.Add(moPSchedulingTypes1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                oPSchedulingTypes.Add(moPSchedulingTypes2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            var oPSchedulingTypes = new List<ManualDashboardCustomModel>();
+            var moPSchedulingTypes1 = manualDashboardData.Where(x => x.Indicators == 903 && x.ExternalValue3 == "1").ToList();
+            var moPSchedulingTypes2 = manualDashboardData.Where(x => x.Indicators == 904 && x.ExternalValue3 == "1").ToList();
+            oPSchedulingTypes.Add(moPSchedulingTypes1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            oPSchedulingTypes.Add(moPSchedulingTypes2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
 
-                var ytdReportForSelectedMonth = manualdashboardbal.GetManualDashBoardStatData(
-                    facilityId != 0 ? facilityId : 9999,
-                    corporateid,
-                    "141,900",
-                    customDate,
-                    facilityType,
-                    segment,
-                    department);
-                var adminssionbyReferalSourceYtd =
-                    ytdReportForSelectedMonth.Where(x => x.IndicatorNumber == "141").ToList();
-                var dischargesbyDispositionYtd =
-                   ytdReportForSelectedMonth.Where(x => x.IndicatorNumber == "900").ToList();
+            var ytdReportForSelectedMonth = _dbService.GetManualDashBoardStatData(
+                facilityId != 0 ? facilityId : 9999,
+                corporateid,
+                "141,900",
+                customDate,
+                facilityType,
+                segment,
+                department);
+            var adminssionbyReferalSourceYtd =
+                ytdReportForSelectedMonth.Where(x => x.IndicatorNumber == "141").ToList();
+            var dischargesbyDispositionYtd =
+               ytdReportForSelectedMonth.Where(x => x.IndicatorNumber == "900").ToList();
 
-                var jsonResult =
-                    new
-                    {
-                        admissions,
-                        discharges,
-                        outpatientEncounters,
-                        totalOPAppointments,
-                        adminssionbyReferalSource,
-                        dischargesbyDisposition,
-                        oPEncountersbyType,
-                        oPSchedulingTypes,
-                        adminssionbyReferalSourceYtd,
-                        dischargesbyDispositionYtd
-                    };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            var jsonResult =
+                new
+                {
+                    admissions,
+                    discharges,
+                    outpatientEncounters,
+                    totalOPAppointments,
+                    adminssionbyReferalSource,
+                    dischargesbyDisposition,
+                    oPEncountersbyType,
+                    oPSchedulingTypes,
+                    adminssionbyReferalSourceYtd,
+                    dischargesbyDispositionYtd
+                };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
         #endregion
 
@@ -1897,13 +1866,11 @@ namespace BillingSystem.Controllers
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
 
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var customDate = currentDateTime.Year;
-                patinetFallList = manualdashboardbal.GetPatientFallRate(facilityid,
-                    Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
-            }
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
+
+            var customDate = currentDateTime.Year;
+            patinetFallList = _dbService.GetPatientFallRate(facilityid, Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
+
             using (var bal = new DashboardRemarkBal())
             {
                 var corporateid = Helpers.GetSysAdminCorporateID();
@@ -1978,14 +1945,12 @@ namespace BillingSystem.Controllers
             var section12RemarksList = new List<DashboardRemarkCustomModel>();
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
             #endregion
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(Convert.ToInt32(facilityID));
             #region patinetFallList Data
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var customDate = currentDateTime.Year;
-                patinetFallList = manualdashboardbal.GetPatientFallRate(Convert.ToInt32(facilityID),
-                    Helpers.GetSysAdminCorporateID(), "", customDate, facilityType, segment, Department);
-            }
+            var customDate = currentDateTime.Year;
+            patinetFallList = _dbService.GetPatientFallRate(Convert.ToInt32(facilityID),
+                Helpers.GetSysAdminCorporateID(), "", customDate, facilityType, segment, Department);
+
             #endregion
 
             #region KPI Dashboard Filtered Data Section
@@ -2262,51 +2227,49 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetManualDashboardData(int facilityID, int month, int facilityType, int segment, int Department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var manualDashboardData = new List<ManualDashboardCustomModel>();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var curentYear = currentDateTime.Year;
+            if (type == "124")
             {
-                var manualDashboardData = new List<ManualDashboardCustomModel>();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var curentYear = currentDateTime.Year;
-                if (type == "124")
+                var totalOperatingExpenditures = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "165", curentYear, facilityType, segment, Department);
+                var netCapitalExpendureOperations =
+                    _dbService.GetManualDashBoard(facilityID,
+                        Helpers.GetSysAdminCorporateID(), "127", curentYear, facilityType, segment, Department);
+                var netCashCollection = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "143", curentYear, facilityType, segment, Department);
+                manualDashboardData.AddRange(netCashCollection.Where(x => x.BudgetType == 2 && x.Year == curentYear));
+                manualDashboardData.AddRange(totalOperatingExpenditures.Where(x => x.BudgetType == 2 && x.Year == curentYear));
+                manualDashboardData.AddRange(netCapitalExpendureOperations.Where(x => x.BudgetType == 2 && x.Year == curentYear));
+            }
+            else
+            {
+                if (type == "156") //.....Average Daily census By Service Code
                 {
-                    var totalOperatingExpenditures = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "165", curentYear, facilityType, segment, Department);
-                    var netCapitalExpendureOperations =
-                        manualdashboardbal.GetManualDashBoard(facilityID,
-                            Helpers.GetSysAdminCorporateID(), "127", curentYear, facilityType, segment, Department);
-                    var netCashCollection = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "143", curentYear, facilityType, segment, Department);
-                    manualDashboardData.AddRange(netCashCollection.Where(x => x.BudgetType == 2 && x.Year == curentYear));
-                    manualDashboardData.AddRange(totalOperatingExpenditures.Where(x => x.BudgetType == 2 && x.Year == curentYear));
-                    manualDashboardData.AddRange(netCapitalExpendureOperations.Where(x => x.BudgetType == 2 && x.Year == curentYear));
+                    manualDashboardData = _dbService.GetManualDashBoard(facilityID, corporateId,
+                           Convert.ToString("242"),
+                           curentYear, facilityType, segment, Department);
+
+                    var averageDailyCencus = GetADCByServiceCodePerMonth(manualDashboardData).OrderBy(x => x.SubCategory1);
+                    return Json(averageDailyCencus.Any() ? averageDailyCencus : null, JsonRequestBehavior.AllowGet);
                 }
                 else
                 {
-                    if (type == "156") //.....Average Daily census By Service Code
+                    manualDashboardData = _dbService.GetManualDashBoard(facilityID, corporateId,
+                        Convert.ToString(type),
+                        curentYear, facilityType, segment, Department);
+                    if (type == "242")
                     {
-                        manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityID, corporateId,
-                               Convert.ToString("242"),
-                               curentYear, facilityType, segment, Department);
-
-                        var averageDailyCencus = GetADCByServiceCodePerMonth(manualDashboardData).OrderBy(x => x.SubCategory1);
-                        return Json(averageDailyCencus.Any() ? averageDailyCencus : null, JsonRequestBehavior.AllowGet);
+                        var patientDays = GetPatientDaysAll(manualDashboardData);
+                        return Json(patientDays.Any() ? patientDays : null, JsonRequestBehavior.AllowGet);
                     }
-                    else
-                    {
-                        manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityID, corporateId,
-                            Convert.ToString(type),
-                            curentYear, facilityType, segment, Department);
-                        if (type == "242")
-                        {
-                            var patientDays = GetPatientDaysAll(manualDashboardData);
-                            return Json(patientDays.Any() ? patientDays : null, JsonRequestBehavior.AllowGet);
-                        }
-                    }
-
                 }
-                return Json(manualDashboardData.Any() ? manualDashboardData : null, JsonRequestBehavior.AllowGet);
+
             }
+            return Json(manualDashboardData.Any() ? manualDashboardData : null, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -2323,49 +2286,47 @@ namespace BillingSystem.Controllers
         {
             var dashboardTypeid = Convert.ToInt32(type);
             var manualDashboardData = new List<ManualDashboardCustomModel>();
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "1")
             {
-                using (var manualdashboardbal = new DashboardBudgetBal())
-                {
-                    var addmissionslist = manualdashboardbal.GetManualDashBoard(facilityID,
-                            Helpers.GetSysAdminCorporateID(), "101", curentYear, facilityType, segment, Department);
-                    var dischargeslist = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "102", curentYear, facilityType, segment, Department);
-                    var inaptientDayslist = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "103", curentYear, facilityType, segment, Department);
-                    var opEncountersList = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "104", curentYear, facilityType, segment, Department);
-                    var netrevunelist = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "110", curentYear, facilityType, segment, Department);
-                    var occupencyRateList = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "109", curentYear, facilityType, segment, Department);
-                    var netreveunelist = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "120", curentYear, facilityType, segment, Department);
-                    var inderectreveunelist = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "121", curentYear, facilityType, segment, Department);
-                    var netIncomeLosslist = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "119", curentYear, facilityType, segment, Department);
-                    var netCashFromOperations = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "124", curentYear, facilityType, segment, Department);
-                    var netCapitalExpendureOperations = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "127", curentYear, facilityType, segment, Department);
-                    var netcashOperations = manualdashboardbal.GetManualDashBoard(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "143", curentYear, facilityType, segment, Department);
-                    manualDashboardData.AddRange(addmissionslist);
-                    manualDashboardData.AddRange(dischargeslist);
-                    manualDashboardData.AddRange(inaptientDayslist);
-                    manualDashboardData.AddRange(opEncountersList);
-                    manualDashboardData.AddRange(netrevunelist);
-                    manualDashboardData.AddRange(occupencyRateList);
-                    manualDashboardData.AddRange(netreveunelist);
-                    manualDashboardData.AddRange(inderectreveunelist);
-                    manualDashboardData.AddRange(netIncomeLosslist);
-                    manualDashboardData.AddRange(netCashFromOperations);
-                    manualDashboardData.AddRange(netCapitalExpendureOperations);
-                    manualDashboardData.AddRange(netcashOperations);
-                }
+                var addmissionslist = _dbService.GetManualDashBoard(facilityID,
+                        Helpers.GetSysAdminCorporateID(), "101", curentYear, facilityType, segment, Department);
+                var dischargeslist = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "102", curentYear, facilityType, segment, Department);
+                var inaptientDayslist = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "103", curentYear, facilityType, segment, Department);
+                var opEncountersList = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "104", curentYear, facilityType, segment, Department);
+                var netrevunelist = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "110", curentYear, facilityType, segment, Department);
+                var occupencyRateList = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "109", curentYear, facilityType, segment, Department);
+                var netreveunelist = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "120", curentYear, facilityType, segment, Department);
+                var inderectreveunelist = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "121", curentYear, facilityType, segment, Department);
+                var netIncomeLosslist = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "119", curentYear, facilityType, segment, Department);
+                var netCashFromOperations = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "124", curentYear, facilityType, segment, Department);
+                var netCapitalExpendureOperations = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "127", curentYear, facilityType, segment, Department);
+                var netcashOperations = _dbService.GetManualDashBoard(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "143", curentYear, facilityType, segment, Department);
+                manualDashboardData.AddRange(addmissionslist);
+                manualDashboardData.AddRange(dischargeslist);
+                manualDashboardData.AddRange(inaptientDayslist);
+                manualDashboardData.AddRange(opEncountersList);
+                manualDashboardData.AddRange(netrevunelist);
+                manualDashboardData.AddRange(occupencyRateList);
+                manualDashboardData.AddRange(netreveunelist);
+                manualDashboardData.AddRange(inderectreveunelist);
+                manualDashboardData.AddRange(netIncomeLosslist);
+                manualDashboardData.AddRange(netCashFromOperations);
+                manualDashboardData.AddRange(netCapitalExpendureOperations);
+                manualDashboardData.AddRange(netcashOperations);
+
             }
             return PartialView(PartialViews.ExternalDashboardList, manualDashboardData);
         }
@@ -2384,17 +2345,12 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var manualDashboardData = new List<ExternalDashboardModel>();
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "1")
             {
-                using (var manualdashboardbal = new DashboardBudgetBal())
-                {
-                    var customDate = Convert.ToDateTime("01/" + month + "/" + curentYear).ToShortDateString();
-                    var addmissionslist = manualdashboardbal.GetManualDashBoardStatData(facilityID,
-                            Helpers.GetSysAdminCorporateID(), "101", customDate, facilityType, segment, Department);
-
-                }
+                var customDate = Convert.ToDateTime("01/" + month + "/" + curentYear).ToShortDateString();
+                var addmissionslist = _dbService.GetManualDashBoardStatData(facilityID, Helpers.GetSysAdminCorporateID(), "101", customDate, facilityType, segment, Department);
             }
             return PartialView(PartialViews.VolumeExecutiveStats, manualDashboardData);
         }
@@ -2412,40 +2368,37 @@ namespace BillingSystem.Controllers
         public ActionResult GetYearToDateData(int facilityID, int month, int facilityType, int segment,
             int Department, string type)
         {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
 
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var customDate = month == 0
+            var customDate = month == 0
                     ? currentDateTime.ToShortDateString()
                     : Convert.ToDateTime(month + "/" + month + "/" + curentYear).ToShortDateString();
 
-                var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityID,
-                  Helpers.GetSysAdminCorporateID(), "", customDate, facilityType, segment, Department);
-                if (type == "109")
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityID,
+              Helpers.GetSysAdminCorporateID(), "", customDate, facilityType, segment, Department);
+            if (type == "109")
+            {
+                var bedoccupancyRate = manualDashboardList != null
+                    ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == "109")
+                    : null;
+                var ebitdaMargin = manualDashboardList != null
+                    ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == "122")
+                    : null;
+                var jsonResult = new
                 {
-                    var bedoccupancyRate = manualDashboardList != null
-                        ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == "109")
-                        : null;
-                    var ebitdaMargin = manualDashboardList != null
-                        ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == "122")
-                        : null;
-                    var jsonResult = new
-                    {
-                        bedoccupancyRate,
-                        ebitdaMargin,
-                    };
-                    return Json(jsonResult ?? null, JsonRequestBehavior.AllowGet);
-                }
-                else
-                {
-                    var datatoreturn = manualDashboardList != null
-                        ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == type)
-                        : null;
+                    bedoccupancyRate,
+                    ebitdaMargin,
+                };
+                return Json(jsonResult ?? null, JsonRequestBehavior.AllowGet);
+            }
+            else
+            {
+                var datatoreturn = manualDashboardList != null
+                    ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == type)
+                    : null;
 
-                    return Json(datatoreturn ?? null, JsonRequestBehavior.AllowGet);
-                }
+                return Json(datatoreturn ?? null, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -2462,86 +2415,84 @@ namespace BillingSystem.Controllers
         public ActionResult GetSubCategoryCharts(int facilityID, int month, int facilityType, int segment,
             int Department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentYear = currentDateTime.Year;
+
+
+            var manualDashboardData = _dbService.GetSubCategoryCharts(facilityID, corporateId,
+                Convert.ToString(type), currentYear, facilityType, segment, Department);
+
+            if (type == "156" || type == "159" || type == "142" || type == "141")
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-
-                var manualDashboardData = manualdashboardbal.GetSubCategoryCharts(facilityID, corporateId,
-                    Convert.ToString(type), currentYear, facilityType, segment, Department);
-
-                if (type == "156" || type == "159" || type == "142" || type == "141")
+                if (manualDashboardData.Any())
                 {
-                    if (manualDashboardData.Any())
+                    var newIndicatorLine = new ManualDashboardCustomModel
                     {
-                        var newIndicatorLine = new ManualDashboardCustomModel
-                        {
-                            M1 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M1)).ToString(),
-                            M2 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M2)).ToString(),
-                            M3 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M3)).ToString(),
-                            M4 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M4)).ToString(),
-                            M5 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M5)).ToString(),
-                            M6 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M6)).ToString(),
-                            M7 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M7)).ToString(),
-                            M8 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M8)).ToString(),
-                            M9 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M9)).ToString(),
-                            M10 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M10)).ToString(),
-                            M11 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M11)).ToString(),
-                            M12 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M12)).ToString(),
-                        };
-                        var lastrow = newIndicatorLine;
-                        foreach (var item in manualDashboardData)
-                        {
-                            item.M1 = lastrow.M1 != "0.00"
-                                ? ((Convert.ToDecimal(item.M1) / Convert.ToDecimal(lastrow.M1)) * 100).ToString()
-                                : "0.00";
-                            item.M2 = lastrow.M2 != "0.00"
-                                ? ((Convert.ToDecimal(item.M2) / Convert.ToDecimal(lastrow.M2)) * 100).ToString()
-                                : "0.00";
-                            item.M3 = lastrow.M3 != "0.00"
-                                ? ((Convert.ToDecimal(item.M3) / Convert.ToDecimal(lastrow.M3)) * 100).ToString()
-                                : "0.00";
-                            item.M4 = lastrow.M4 != "0.00"
-                                ? ((Convert.ToDecimal(item.M4) / Convert.ToDecimal(lastrow.M4)) * 100).ToString()
-                                : "0.00";
-                            item.M5 = lastrow.M5 != "0.00"
-                                ? ((Convert.ToDecimal(item.M5) / Convert.ToDecimal(lastrow.M5)) * 100).ToString()
-                                : "0.00";
-                            item.M6 = lastrow.M6 != "0.00"
-                                ? ((Convert.ToDecimal(item.M6) / Convert.ToDecimal(lastrow.M6)) * 100).ToString()
-                                : "0.00";
-                            item.M7 = lastrow.M7 != "0.00"
-                                ? ((Convert.ToDecimal(item.M7) / Convert.ToDecimal(lastrow.M7)) * 100).ToString()
-                                : "0.00";
-                            item.M8 = lastrow.M8 != "0.00"
-                                ? ((Convert.ToDecimal(item.M8) / Convert.ToDecimal(lastrow.M8)) * 100).ToString()
-                                : "0.00";
-                            item.M9 = lastrow.M9 != "0.00"
-                                ? ((Convert.ToDecimal(item.M9) / Convert.ToDecimal(lastrow.M9)) * 100).ToString()
-                                : "0.00";
-                            item.M10 = lastrow.M10 != "0.00"
-                                ? ((Convert.ToDecimal(item.M10) / Convert.ToDecimal(lastrow.M10)) * 100).ToString()
-                                : "0.00";
-                            item.M11 = lastrow.M11 != "0.00"
-                                ? ((Convert.ToDecimal(item.M11) / Convert.ToDecimal(lastrow.M11)) * 100).ToString()
-                                : "0.00";
-                            item.M12 = lastrow.M12 != "0.00"
-                                ? ((Convert.ToDecimal(item.M12) / Convert.ToDecimal(lastrow.M12)) * 100).ToString()
-                                : "0.00";
-                        }
+                        M1 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M1)).ToString(),
+                        M2 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M2)).ToString(),
+                        M3 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M3)).ToString(),
+                        M4 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M4)).ToString(),
+                        M5 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M5)).ToString(),
+                        M6 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M6)).ToString(),
+                        M7 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M7)).ToString(),
+                        M8 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M8)).ToString(),
+                        M9 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M9)).ToString(),
+                        M10 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M10)).ToString(),
+                        M11 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M11)).ToString(),
+                        M12 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M12)).ToString(),
+                    };
+                    var lastrow = newIndicatorLine;
+                    foreach (var item in manualDashboardData)
+                    {
+                        item.M1 = lastrow.M1 != "0.00"
+                            ? ((Convert.ToDecimal(item.M1) / Convert.ToDecimal(lastrow.M1)) * 100).ToString()
+                            : "0.00";
+                        item.M2 = lastrow.M2 != "0.00"
+                            ? ((Convert.ToDecimal(item.M2) / Convert.ToDecimal(lastrow.M2)) * 100).ToString()
+                            : "0.00";
+                        item.M3 = lastrow.M3 != "0.00"
+                            ? ((Convert.ToDecimal(item.M3) / Convert.ToDecimal(lastrow.M3)) * 100).ToString()
+                            : "0.00";
+                        item.M4 = lastrow.M4 != "0.00"
+                            ? ((Convert.ToDecimal(item.M4) / Convert.ToDecimal(lastrow.M4)) * 100).ToString()
+                            : "0.00";
+                        item.M5 = lastrow.M5 != "0.00"
+                            ? ((Convert.ToDecimal(item.M5) / Convert.ToDecimal(lastrow.M5)) * 100).ToString()
+                            : "0.00";
+                        item.M6 = lastrow.M6 != "0.00"
+                            ? ((Convert.ToDecimal(item.M6) / Convert.ToDecimal(lastrow.M6)) * 100).ToString()
+                            : "0.00";
+                        item.M7 = lastrow.M7 != "0.00"
+                            ? ((Convert.ToDecimal(item.M7) / Convert.ToDecimal(lastrow.M7)) * 100).ToString()
+                            : "0.00";
+                        item.M8 = lastrow.M8 != "0.00"
+                            ? ((Convert.ToDecimal(item.M8) / Convert.ToDecimal(lastrow.M8)) * 100).ToString()
+                            : "0.00";
+                        item.M9 = lastrow.M9 != "0.00"
+                            ? ((Convert.ToDecimal(item.M9) / Convert.ToDecimal(lastrow.M9)) * 100).ToString()
+                            : "0.00";
+                        item.M10 = lastrow.M10 != "0.00"
+                            ? ((Convert.ToDecimal(item.M10) / Convert.ToDecimal(lastrow.M10)) * 100).ToString()
+                            : "0.00";
+                        item.M11 = lastrow.M11 != "0.00"
+                            ? ((Convert.ToDecimal(item.M11) / Convert.ToDecimal(lastrow.M11)) * 100).ToString()
+                            : "0.00";
+                        item.M12 = lastrow.M12 != "0.00"
+                            ? ((Convert.ToDecimal(item.M12) / Convert.ToDecimal(lastrow.M12)) * 100).ToString()
+                            : "0.00";
                     }
                 }
-                manualDashboardData = manualDashboardData.All(
-                     x =>
-                         x.M1 == "0.00" && x.M2 == "0.00" && x.M3 == "0.00" && x.M4 == "0.00" && x.M5 == "0.00" &&
-                         x.M6 == "0.00" && x.M7 == "0.00" && x.M8 == "0.00" && x.M9 == "0.00" && x.M10 == "0.00" &&
-                         x.M11 == "0.00" && x.M12 == "0.00")
-                     ? null
-                     : manualDashboardData;
-                return Json(manualDashboardData ?? null, JsonRequestBehavior.AllowGet);
             }
+            manualDashboardData = manualDashboardData.All(
+                 x =>
+                     x.M1 == "0.00" && x.M2 == "0.00" && x.M3 == "0.00" && x.M4 == "0.00" && x.M5 == "0.00" &&
+                     x.M6 == "0.00" && x.M7 == "0.00" && x.M8 == "0.00" && x.M9 == "0.00" && x.M10 == "0.00" &&
+                     x.M11 == "0.00" && x.M12 == "0.00")
+                 ? null
+                 : manualDashboardData;
+            return Json(manualDashboardData ?? null, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -2648,133 +2599,98 @@ namespace BillingSystem.Controllers
         public ActionResult ClinicalGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
             var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
-            using (var manualdashboardbal = new DashboardBudgetBal())
+
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var curentYear = currentDateTime.Year;
+
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(clinicalGrpahsArray),
+                curentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var hamList = manualDashboardData.Where(x => x.Indicators == 172).ToList();
+            var fallRiskList = manualDashboardData.Where(x => x.Indicators == 177).ToList();
+            var painManagementList = manualDashboardData.Where(x => x.Indicators == 176).ToList();
+            var dischargeToComunityrate = manualDashboardData.Where(x => x.Indicators == 166).ToList();
+
+            var lostReferals = manualDashboardData.Where(x => x.Indicators == 167).ToList();
+            var transferOutRate = manualDashboardData.Where(x => x.Indicators == 168).ToList();
+            var nursingStaffCompetency = manualDashboardData.Where(x => x.Indicators == 169).ToList();
+            var nursingDepartmentOrientation = manualDashboardData.Where(x => x.Indicators == 170).ToList();
+
+            var patientIdentification = manualDashboardData.Where(x => x.Indicators == 171).ToList();
+            var patientFallRatewithInjury = manualDashboardData.Where(x => x.Indicators == 174).ToList();
+            var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
+            var fallRiskAssessmentProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 177).ToList();
+
+            var compliancetoPressureUlcerPreventionProtocol = manualDashboardData.Where(x => x.Indicators == 178).ToList();
+            var sbarProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 179).ToList();
+            var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
+            var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
+
+            var esblRate = manualDashboardData.Where(x => x.Indicators == 182).ToList();
+            var lrtiRate = manualDashboardData.Where(x => x.Indicators == 183).ToList();
+            var cautiRate = manualDashboardData.Where(x => x.Indicators == 184).ToList();
+            var bsiRate = manualDashboardData.Where(x => x.Indicators == 185).ToList();
+
+            var handHygineComplainceRate = manualDashboardData.Where(x => x.Indicators == 186).ToList();
+            var staffVaccinationRate = manualDashboardData.Where(x => x.Indicators == 187).ToList();
+            var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
+            var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
+
+            var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
+            var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
+            var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
+            var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == curentYear).ToList();
+            var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == curentYear).ToList();
+            //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
+            var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == curentYear).ToList();  //categoryofIncidents
+
+            var customDataToreturn = new List<ManualDashboardCustomModel>();
+            var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
+            customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == curentYear));
+            customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == curentYear));
+            customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == curentYear));
+            var categoryofIncidents = customDataToreturn;
+
+            var jsonResult = new
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var curentYear = currentDateTime.Year;
-
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(clinicalGrpahsArray),
-                    curentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var hamList = manualDashboardData.Where(x => x.Indicators == 172).ToList();
-                var fallRiskList = manualDashboardData.Where(x => x.Indicators == 177).ToList();
-                var painManagementList = manualDashboardData.Where(x => x.Indicators == 176).ToList();
-                var dischargeToComunityrate = manualDashboardData.Where(x => x.Indicators == 166).ToList();
-
-                var lostReferals = manualDashboardData.Where(x => x.Indicators == 167).ToList();
-                var transferOutRate = manualDashboardData.Where(x => x.Indicators == 168).ToList();
-                var nursingStaffCompetency = manualDashboardData.Where(x => x.Indicators == 169).ToList();
-                var nursingDepartmentOrientation = manualDashboardData.Where(x => x.Indicators == 170).ToList();
-
-                var patientIdentification = manualDashboardData.Where(x => x.Indicators == 171).ToList();
-                var patientFallRatewithInjury = manualDashboardData.Where(x => x.Indicators == 174).ToList();
-                var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
-                var fallRiskAssessmentProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 177).ToList();
-
-                var compliancetoPressureUlcerPreventionProtocol = manualDashboardData.Where(x => x.Indicators == 178).ToList();
-                var sbarProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 179).ToList();
-                var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
-                var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
-
-                var esblRate = manualDashboardData.Where(x => x.Indicators == 182).ToList();
-                var lrtiRate = manualDashboardData.Where(x => x.Indicators == 183).ToList();
-                var cautiRate = manualDashboardData.Where(x => x.Indicators == 184).ToList();
-                var bsiRate = manualDashboardData.Where(x => x.Indicators == 185).ToList();
-
-                var handHygineComplainceRate = manualDashboardData.Where(x => x.Indicators == 186).ToList();
-                var staffVaccinationRate = manualDashboardData.Where(x => x.Indicators == 187).ToList();
-                var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
-                var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
-
-                var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
-                var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
-                var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
-                var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == curentYear).ToList();
-                var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == curentYear).ToList();
-                //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
-                var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == curentYear).ToList();  //categoryofIncidents
-
-                var customDataToreturn = new List<ManualDashboardCustomModel>();
-                var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
-                customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == curentYear));
-                customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == curentYear));
-                customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == curentYear));
-                var categoryofIncidents = customDataToreturn;
-
-                var jsonResult = new
-                {
-                    hamList,
-                    fallRiskList,
-                    painManagementList,
-                    dischargeToComunityrate,
-                    lostReferals,
-                    transferOutRate,
-                    nursingStaffCompetency,
-                    nursingDepartmentOrientation,
-                    patientIdentification,
-                    patientFallRatewithInjury,
-                    pressureUlcerIncidentRate,
-                    fallRiskAssessmentProtocolComplianceRate,
-                    compliancetoPressureUlcerPreventionProtocol,
-                    sbarProtocolComplianceRate,
-                    mdroRate,
-                    mrsaRate,
-                    esblRate,
-                    lrtiRate,
-                    cautiRate,
-                    bsiRate,
-                    handHygineComplainceRate,
-                    staffVaccinationRate,
-                    inappropriateAntiBioticUsageRate,
-                    therapyInitialAssessmentProtocolCompliance,
-                    manualHandlingRiskAssessmentProtocolCompliance,
-                    standardizedOutcomeMeasureProtocol,
-                    Incidents,
-                    nonMedicationRelatedIncidents,
-                    typeOfIncidents,
-                    categoryofIncidents,
-                    medicationErrors
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
-            #region Old Chart Binding
-            //var hamList = GetGraphsData(facilityId, month, facilityType, segment, department, "172");   //Management of High Alert Medication
-            //var fallRiskList = GetGraphsData(facilityId, month, facilityType, segment, department, "177");  //Fall Risk
-            //var painManagementList = GetGraphsData(facilityId, month, facilityType, segment, department, "176");   //Pain Management Compliance  Rate
-            //var dischargeToComunityrate = GetGraphsData(facilityId, month, facilityType, segment, department, "166");   //Discharge to Community Rate
-            //var lostReferals = GetGraphsData(facilityId, month, facilityType, segment, department, "167");  //Lost Referals
-            //var transferOutRate = GetGraphsData(facilityId, month, facilityType, segment, department, "168");   //Transfer Out Rate
-            //var nursingStaffCompetency = GetGraphsData(facilityId, month, facilityType, segment, department, "169");   //Nursing Staff Competency
-            //var nursingDepartmentOrientation = GetGraphsData(facilityId, month, facilityType, segment, department, "170");  //Nursing Department Orientation
-            //var patientIdentification = GetGraphsData(facilityId, month, facilityType, segment, department, "171");   //Patient Identification
-            //var patientFallRatewithInjury = GetGraphsData(facilityId, month, facilityType, segment, department, "174");   //Patient Fall Rate with Injury
-            //var pressureUlcerIncidentRate = GetGraphsData(facilityId, month, facilityType, segment, department, "175");  //Pressure Ulcer Incident Rate
-            //var fallRiskAssessmentProtocolComplianceRate = GetGraphsData(facilityId, month, facilityType, segment, department, "177");   //Fall Risk Assessment Protocol Compliance Rate
-            //var compliancetoPressureUlcerPreventionProtocol = GetGraphsData(facilityId, month, facilityType, segment, department, "178");  //Compliance to Pressure Ulcer Prevention Protocol
-            //var sbarProtocolComplianceRate = GetGraphsData(facilityId, month, facilityType, segment, department, "179");   //SBAR Protocol Compliance Rate
-            //var mdroRate = GetGraphsData(facilityId, month, facilityType, segment, department, "180");   //MDRO Rate
-            //var mrsaRate = GetGraphsData(facilityId, month, facilityType, segment, department, "181");  //MRSA Rate
-            //var esblRate = GetGraphsData(facilityId, month, facilityType, segment, department, "182");   //ESBL Rate
-            //var lrtiRate = GetGraphsData(facilityId, month, facilityType, segment, department, "183");   //LRTI Rate
-            //var cautiRate = GetGraphsData(facilityId, month, facilityType, segment, department, "184");  //Cauti Rate
-            //var bsiRate = GetGraphsData(facilityId, month, facilityType, segment, department, "185");   //BSI Rate
-            //var handHygineComplainceRate = GetGraphsData(facilityId, month, facilityType, segment, department, "186");   //Hand Hygine Complaince Rate
-            //var staffVaccinationRate = GetGraphsData(facilityId, month, facilityType, segment, department, "187");  //Staff Vaccination Rate
-            //var inappropriateAntiBioticUsageRate = GetGraphsData(facilityId, month, facilityType, segment, department, "188");   //Inappropriate Anti-Biotic Usage Rate
-            //var therapyInitialAssessmentProtocolCompliance = GetGraphsData(facilityId, month, facilityType, segment, department, "189");   //Therapy Initial Assessment Protocol Compliance
-            //var manualHandlingRiskAssessmentProtocolCompliance = GetGraphsData(facilityId, month, facilityType, segment, department, "190");   //Manual Handling Risk Assessment Protocol Compliance
-            //var standardizedOutcomeMeasureProtocol = GetGraphsData(facilityId, month, facilityType, segment, department, "191");  //Standardized Outcome Measure Protocol within 7 days of Admission Compliance
-            //var Incidents = GetLocalSubCategoryCharts(facilityId, month, facilityType, segment, department, "192");   //Incidents
-            //var nonMedicationRelatedIncidents = GetGraphsData(facilityId, month, facilityType, segment, department, "1312").Where(x => x.Year == currentYear).ToList();  //nonMedicationRelatedIncidents
-            //var typeOfIncidents = GetGraphsData(facilityId, month, facilityType, segment, department, "1313").Where(x => x.Year == currentYear).ToList();  //type Of Incidents
-            //var categoryofIncidents = GetGraphsData(facilityId, month, facilityType, segment, department, "1314").Where(x => x.Year == currentYear).ToList();  //categoryofIncidents
-            //var medicationErrors = GetGraphsData(facilityId, month, facilityType, segment, department, "1311").Where(x => x.Year == currentYear).ToList();  //Medication Errors 
-            #endregion
+                hamList,
+                fallRiskList,
+                painManagementList,
+                dischargeToComunityrate,
+                lostReferals,
+                transferOutRate,
+                nursingStaffCompetency,
+                nursingDepartmentOrientation,
+                patientIdentification,
+                patientFallRatewithInjury,
+                pressureUlcerIncidentRate,
+                fallRiskAssessmentProtocolComplianceRate,
+                compliancetoPressureUlcerPreventionProtocol,
+                sbarProtocolComplianceRate,
+                mdroRate,
+                mrsaRate,
+                esblRate,
+                lrtiRate,
+                cautiRate,
+                bsiRate,
+                handHygineComplainceRate,
+                staffVaccinationRate,
+                inappropriateAntiBioticUsageRate,
+                therapyInitialAssessmentProtocolCompliance,
+                manualHandlingRiskAssessmentProtocolCompliance,
+                standardizedOutcomeMeasureProtocol,
+                Incidents,
+                nonMedicationRelatedIncidents,
+                typeOfIncidents,
+                categoryofIncidents,
+                medicationErrors
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -2788,127 +2704,82 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult RCMGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            //const string rcmDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
+            const string rcmDashboardData = "1308,221,222,224,144,101,102,225,108,227,228,161,242,229,230,231,232,159,270,131";
+
+            var customDate = month == 0 ? currentDateTime.ToShortDateString() : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityId,
+                Helpers.GetSysAdminCorporateID(), "270", customDate, facilityType, segment, department);
+
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(rcmDashboardData),
+                currentYear, facilityType, segment, department);
+
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var ipReveune = manualDashboardData.Where(x => x.Indicators == 1308).ToList();
+            var reveunePPD = manualDashboardData.Where(x => x.Indicators == 221).ToList();
+            var revenueIP = manualDashboardData.Where(x => x.Indicators == 222).ToList();
+
+            var revenueDaman = revenueIP != null && revenueIP.Any()
+                ? revenueIP.Where(x => x.SubCategory1 == "2").ToList()
+                : revenueIP;
+            var reveuneRoyalFamily = revenueIP != null && revenueIP.Any()
+                ? revenueIP.Where(x => x.SubCategory1 == "31").ToList()
+                : revenueIP; //Revenue Royal Family
+
+            var reveuneInpatinetOther = manualDashboardData.Where(x => x.Indicators == 224).ToList();
+
+            var averageDailyCencus = manualDashboardData.Where(x => x.Indicators == 144).ToList();
+            var newAdmissions = manualDashboardData.Where(x => x.Indicators == 101).ToList();
+            var plannedDischarges = manualDashboardData.Where(x => x.Indicators == 102).ToList();
+            var dischargesUnplanned = manualDashboardData.Where(x => x.Indicators == 225).ToList();
+
+            var acuteOutsPatients = manualDashboardData.Where(x => x.Indicators == 108).ToList();
+            var acuteOutsDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
+            var therapeuticLeaves = manualDashboardData.Where(x => x.Indicators == 228).ToList();
+            var opRevenue = manualDashboardData.Where(x => x.Indicators == 161).ToList();
+            var patientDaysList = manualDashboardData.Where(x => x.Indicators == 242).ToList();
+            var patientDays = GetPatientDaysAll(patientDaysList);
+            var serviceCodeDistributionbyBilledClaims = manualDashboardData.Where(x => x.Indicators == 229).ToList();
+            var percentagebilledReveune = manualDashboardData.Where(x => x.Indicators == 230).ToList();
+            var accountSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 231).ToList();
+            var numberSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 232).ToList();
+
+            var payorMix = GetSubCategoryChartsPayorMix(facilityId, month, facilityType, segment, department, "159");//payor Mix
+            var claimsResubmissionPercentage = manualDashboardList.Where(x => x.IndicatorNumber == "270").ToList();
+            var arDays = manualDashboardData.Where(x => x.Indicators == 131).ToList(); //GetGraphsData(facilityId, month, facilityType, segment, department, ""); //manualDashboardList.Where(x => x.IndicatorNumber == "131").ToList(); 
+
+
+            var jsonResult = new
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                //const string rcmDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
-                const string rcmDashboardData = "1308,221,222,224,144,101,102,225,108,227,228,161,242,229,230,231,232,159,270,131";
-
-                var customDate = month == 0 ? currentDateTime.ToShortDateString() : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
-                var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityId,
-                    Helpers.GetSysAdminCorporateID(), "270", customDate, facilityType, segment, department);
-
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(rcmDashboardData),
-                    currentYear, facilityType, segment, department);
-
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var ipReveune = manualDashboardData.Where(x => x.Indicators == 1308).ToList();
-                var reveunePPD = manualDashboardData.Where(x => x.Indicators == 221).ToList();
-                var revenueIP = manualDashboardData.Where(x => x.Indicators == 222).ToList();
-
-                var revenueDaman = revenueIP != null && revenueIP.Any()
-                    ? revenueIP.Where(x => x.SubCategory1 == "2").ToList()
-                    : revenueIP;
-                var reveuneRoyalFamily = revenueIP != null && revenueIP.Any()
-                    ? revenueIP.Where(x => x.SubCategory1 == "31").ToList()
-                    : revenueIP; //Revenue Royal Family
-
-                var reveuneInpatinetOther = manualDashboardData.Where(x => x.Indicators == 224).ToList();
-
-                var averageDailyCencus = manualDashboardData.Where(x => x.Indicators == 144).ToList();
-                var newAdmissions = manualDashboardData.Where(x => x.Indicators == 101).ToList();
-                var plannedDischarges = manualDashboardData.Where(x => x.Indicators == 102).ToList();
-                var dischargesUnplanned = manualDashboardData.Where(x => x.Indicators == 225).ToList();
-
-                var acuteOutsPatients = manualDashboardData.Where(x => x.Indicators == 108).ToList();
-                var acuteOutsDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
-                var therapeuticLeaves = manualDashboardData.Where(x => x.Indicators == 228).ToList();
-                var opRevenue = manualDashboardData.Where(x => x.Indicators == 161).ToList();
-                var patientDaysList = manualDashboardData.Where(x => x.Indicators == 242).ToList();
-                var patientDays = GetPatientDaysAll(patientDaysList);
-                var serviceCodeDistributionbyBilledClaims = manualDashboardData.Where(x => x.Indicators == 229).ToList();
-                var percentagebilledReveune = manualDashboardData.Where(x => x.Indicators == 230).ToList();
-                var accountSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 231).ToList();
-                var numberSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 232).ToList();
-
-                var payorMix = GetSubCategoryChartsPayorMix(facilityId, month, facilityType, segment, department, "159");//payor Mix
-                var claimsResubmissionPercentage = manualDashboardList.Where(x => x.IndicatorNumber == "270").ToList();
-                var arDays = manualDashboardData.Where(x => x.Indicators == 131).ToList(); //GetGraphsData(facilityId, month, facilityType, segment, department, ""); //manualDashboardList.Where(x => x.IndicatorNumber == "131").ToList(); 
-
-                #region Old Dashboard graph concept
-                //var ipReveune = GetGraphsData(facilityId, month, facilityType, segment, department, "1308"); //IP Reveune
-                //var reveunePPD = GetGraphsData(facilityId, month, facilityType, segment, department, "221");//Revenue Per Pateint Day
-                //var revenueIP = GetGraphsData(facilityId, month, facilityType, segment, department, "222");//Revenue Daman
-
-                //var revenueDaman = revenueIP != null && revenueIP.Any()
-                //    ? revenueIP.Where(x => x.SubCategory1 == "2").ToList()
-                //    : revenueIP;
-                //var reveuneRoyalFamily = revenueIP != null && revenueIP.Any()
-                //    ? revenueIP.Where(x => x.SubCategory1 == "31").ToList()
-                //    : revenueIP; //Revenue Royal Family
-
-                // var reveuneInpatinetOther = GetGraphsData(facilityId, month, facilityType, segment, department, "224");//Revenue Inpatient Other (Self Pay)
-                // var averageDailyCencus = GetGraphsData(facilityId, month, facilityType, segment, department, "144");//ADC averageDailyCencus
-                //// var arDays = GetGraphsData(facilityId, month, facilityType, segment, department, "131"); //AR Days
-                // var newAdmissions = GetGraphsData(facilityId, month, facilityType, segment, department, "101");//New Addmissions
-                // var plannedDischarges = GetGraphsData(facilityId, month, facilityType, segment, department, "102");//Discharges planned
-                // var dischargesUnplanned = GetGraphsData(facilityId, month, facilityType, segment, department, "225");//Discharges Unplanned & Exp
-                // var acuteOutsPatients = GetGraphsData(facilityId, month, facilityType, segment, department, "226");//Acute Outs Patients
-                // var acuteOutsDays = GetGraphsData(facilityId, month, facilityType, segment, department, "227");//Acute Out Days
-                // var therapeuticLeaves = GetGraphsData(facilityId, month, facilityType, segment, department, "228");//Therapeutic Leaves (OOP) Days
-                // var opRevenue = GetGraphsData(facilityId, month, facilityType, segment, department, "161"); //OP Revenue
-                //var patientDaysList = GetGraphsData(facilityId, month, facilityType, segment, department, "242");//Patient Days
-
-
-                //var patientDaysCurrentYearBudget = patientDays.Where(x => x.BudgetType == 1 && x.Year == currentYear).ToList();
-                //var patientDaysCurrentYearActual = patientDays.Where(x => x.BudgetType == 2 && x.Year == currentYear).ToList();
-                //var patientDaysPreviousYearActual = patientDays.Where(x => x.BudgetType == 2 && x.Year == currentYear -1).ToList();
-
-
-                //var serviceCodeDistributionbyBilledClaims = GetLocalSubCategoryCharts(facilityId, month, facilityType,
-                //    segment, department, "229");
-                ////GetGraphsData(facilityId, month, facilityType, segment, department, "229"); //Service Code Distribution by Billed Claims
-                //var percentagebilledReveune = GetGraphsData(facilityId, month, facilityType, segment, department, "230");//% Billed Revenue by Month End
-                //var accountSubmittedClaims = GetGraphsData(facilityId, month, facilityType, segment, department, "231");//Amount Submitted Claims
-                //var numberSubmittedClaims = GetGraphsData(facilityId, month, facilityType, segment, department, "232");//number Submitted Claims
-                //var payorMix = GetLocalSubCategoryCharts(facilityId, month, facilityType, segment, department, "159");//payor Mix
-
-                //var claimsResubmissionPercentage = manualDashboardList.Where(x => x.IndicatorNumber == "270").ToList();
-                //var arDays = GetGraphsData(facilityId, month, facilityType, segment, department, "131"); //manualDashboardList.Where(x => x.IndicatorNumber == "131").ToList(); 
-                //GetLocalYearToDateData(facilityId, month, facilityType, segment,//department, "270"); //Claims Resubmission % 
-                #endregion
-
-                var jsonResult = new
-                {
-                    ipReveune,
-                    reveunePPD,
-                    revenueDaman,
-                    reveuneRoyalFamily,
-                    reveuneInpatinetOther,
-                    averageDailyCencus,
-                    arDays,
-                    newAdmissions,
-                    plannedDischarges,
-                    dischargesUnplanned,
-                    acuteOutsPatients,
-                    acuteOutsDays,
-                    therapeuticLeaves,
-                    opRevenue,
-                    patientDays,
-                    serviceCodeDistributionbyBilledClaims,
-                    percentagebilledReveune,
-                    accountSubmittedClaims,
-                    numberSubmittedClaims,
-                    payorMix,
-                    claimsResubmissionPercentage
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                ipReveune,
+                reveunePPD,
+                revenueDaman,
+                reveuneRoyalFamily,
+                reveuneInpatinetOther,
+                averageDailyCencus,
+                arDays,
+                newAdmissions,
+                plannedDischarges,
+                dischargesUnplanned,
+                acuteOutsPatients,
+                acuteOutsDays,
+                therapeuticLeaves,
+                opRevenue,
+                patientDays,
+                serviceCodeDistributionbyBilledClaims,
+                percentagebilledReveune,
+                accountSubmittedClaims,
+                numberSubmittedClaims,
+                payorMix,
+                claimsResubmissionPercentage
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -2923,55 +2794,40 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
 
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var caseManagementIndicators = "227,233,234,235,236,237,238,239,240,255";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateid,
-                    Convert.ToString(caseManagementIndicators),
-                    currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
-                var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
-                var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
-                var presenceInitialAssessment = manualDashboardData.Where(x => x.Indicators == 235).ToList();
-                var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
-                var presenceDischargedDocumentation = manualDashboardData.Where(x => x.Indicators == 237).ToList();
-                var dischargeDisposition = manualDashboardData.Where(x => x.Indicators == 238).ToList();
-                var numberUnplannedDischarges = manualDashboardData.Where(x => x.Indicators == 239).ToList();
-                var postDischargeFollowup = manualDashboardData.Where(x => x.Indicators == 240).ToList();
-                var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
-                //var dischargeDisposition = manualDashboardData.Where(x => x.Indicators == 241).ToList();
-                //var acuteOutDays = GetGraphsData(facilityId, month, facilityType, segment, department, "227");   //Acute Out Days
-                //var acuteOut = GetGraphsData(facilityId, month, facilityType, segment, department, "233");   //Acute Out
-                //var therapueticLeaves = GetGraphsData(facilityId, month, facilityType, segment, department, "234");   //Therapuetic Leaves
-                //var presenceInitialAssessment = GetGraphsData(facilityId, month, facilityType, segment, department, "235");  //Presence of initial assessment
-                //var presenceMDTdocumentation = GetGraphsData(facilityId, month, facilityType, segment, department, "236");   //Presence of MDT documentation
-                //var presenceDischargedDocumentation = GetGraphsData(facilityId, month, facilityType, segment, department, "237");   //Presence of discharged documentation
-                //var dischargeDisposition = GetGraphsData(facilityId, month, facilityType, segment, department, "238");   //Discharge Disposition
-                //var numberUnplannedDischarges = GetGraphsData(facilityId, month, facilityType, segment, department, "239");   //Number of unplanned discharges
-                //var postDischargeFollowup = GetGraphsData(facilityId, month, facilityType, segment, department, "240");   //Post Discharge Follow-up Contact
-                //var lostReferral = GetGraphsData(facilityId, month, facilityType, segment, department, "255");   //Lost Referral %
-                //var dischargeDisposition = GetGraphsData(facilityId, month, facilityType, segment, department, "241");  //Discharge Disposition
-                var jsonResult = new
-                {
-                    acuteOutDays,
-                    acuteOut,
-                    therapueticLeaves,
-                    presenceInitialAssessment,
-                    presenceMDTdocumentation,
-                    presenceDischargedDocumentation,
-                    dischargeDisposition,
-                    numberUnplannedDischarges,
-                    postDischargeFollowup,
-                    lostReferral
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var caseManagementIndicators = "227,233,234,235,236,237,238,239,240,255";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid,
+                Convert.ToString(caseManagementIndicators),
+                currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
+            var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
+            var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
+            var presenceInitialAssessment = manualDashboardData.Where(x => x.Indicators == 235).ToList();
+            var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
+            var presenceDischargedDocumentation = manualDashboardData.Where(x => x.Indicators == 237).ToList();
+            var dischargeDisposition = manualDashboardData.Where(x => x.Indicators == 238).ToList();
+            var numberUnplannedDischarges = manualDashboardData.Where(x => x.Indicators == 239).ToList();
+            var postDischargeFollowup = manualDashboardData.Where(x => x.Indicators == 240).ToList();
+            var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
+            var jsonResult = new
+            {
+                acuteOutDays,
+                acuteOut,
+                therapueticLeaves,
+                presenceInitialAssessment,
+                presenceMDTdocumentation,
+                presenceDischargedDocumentation,
+                dischargeDisposition,
+                numberUnplannedDischarges,
+                postDischargeFollowup,
+                lostReferral
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -2986,91 +2842,56 @@ namespace BillingSystem.Controllers
         public ActionResult GetFinancialMGTGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var curentYear = currentDateTime.Year;
+
+            var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
+            //var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityId,
+            //    Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var financialMgtIndicators = "110,111,112,113,155,115,117,118,125,126,127,129,130,240,243,244,245,255";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid,
+                Convert.ToString(financialMgtIndicators),
+                curentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
+            var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
+            var supplies = manualDashboardData.Where(x => x.Indicators == 112).ToList();
+            var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
+            var swbinDirect = manualDashboardData.Where(x => x.Indicators == 155).ToList();
+            var otherIndirectCosts = manualDashboardData.Where(x => x.Indicators == 115).ToList();
+            var deprAndAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
+            var interest = manualDashboardData.Where(x => x.Indicators == 118).ToList();
+            var changesWorkingCapital = manualDashboardData.Where(x => x.Indicators == 125).ToList();
+            var otherAdjustments = manualDashboardData.Where(x => x.Indicators == 126).ToList();
+            var capitalExpenditures = manualDashboardData.Where(x => x.Indicators == 127).ToList();
+            var cashInBank = manualDashboardData.Where(x => x.Indicators == 129).ToList();
+            var daysTotalExpendituresInCash = manualDashboardData.Where(x => x.Indicators == 130).ToList();
+            var totalCashCollected = manualDashboardData.Where(x => x.Indicators == 243).ToList();
+            var totalPayablesSalaries = manualDashboardData.Where(x => x.Indicators == 244).ToList();
+            var totalCapitalPaymentsMade = manualDashboardData.Where(x => x.Indicators == 245).ToList();
+
+            var jsonResult = new
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var curentYear = currentDateTime.Year;
-
-                var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
-                //var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityId,
-                //    Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var financialMgtIndicators = "110,111,112,113,155,115,117,118,125,126,127,129,130,240,243,244,245,255";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateid,
-                    Convert.ToString(financialMgtIndicators),
-                    curentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
-                var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
-                var supplies = manualDashboardData.Where(x => x.Indicators == 112).ToList();
-                var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
-                var swbinDirect = manualDashboardData.Where(x => x.Indicators == 155).ToList();
-                var otherIndirectCosts = manualDashboardData.Where(x => x.Indicators == 115).ToList();
-                var deprAndAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
-                var interest = manualDashboardData.Where(x => x.Indicators == 118).ToList();
-                var changesWorkingCapital = manualDashboardData.Where(x => x.Indicators == 125).ToList();
-                var otherAdjustments = manualDashboardData.Where(x => x.Indicators == 126).ToList();
-                var capitalExpenditures = manualDashboardData.Where(x => x.Indicators == 127).ToList();
-                var cashInBank = manualDashboardData.Where(x => x.Indicators == 129).ToList();
-                var daysTotalExpendituresInCash = manualDashboardData.Where(x => x.Indicators == 130).ToList();
-                var totalCashCollected = manualDashboardData.Where(x => x.Indicators == 243).ToList();
-                var totalPayablesSalaries = manualDashboardData.Where(x => x.Indicators == 244).ToList();
-                var totalCapitalPaymentsMade = manualDashboardData.Where(x => x.Indicators == 245).ToList();
-
-                #region Old Code to bind the
-                //var netRevenue = GetGraphsData(facilityId, month, facilityType, segment, department, "110");
-                //    //Net Revenue
-                //var swbDirect = GetGraphsData(facilityId, month, facilityType, segment, department, "111"); //SWB Direct
-                //var supplies = GetGraphsData(facilityId, month, facilityType, segment, department, "112"); //Supplies
-                //var otherDirect = GetGraphsData(facilityId, month, facilityType, segment, department, "113");
-                //    //Other Direct
-                //var swbinDirect = GetGraphsData(facilityId, month, facilityType, segment, department, "155");
-                //    //SWB inDirect
-                //var otherIndirectCosts = GetGraphsData(facilityId, month, facilityType, segment, department, "115");
-                //    //Other Indirect Costs
-                //var deprAndAmort = GetGraphsData(facilityId, month, facilityType, segment, department, "117");
-                //    //Depr & Amort
-                //var interest = GetGraphsData(facilityId, month, facilityType, segment, department, "118"); //Interest
-                //var changesWorkingCapital = GetGraphsData(facilityId, month, facilityType, segment, department, "125");
-                //    //Changes in Working Capital
-                //var otherAdjustments = GetGraphsData(facilityId, month, facilityType, segment, department, "126");
-                //    //Other Adjustments to Working Capital//Capital Expenditures
-                //var capitalExpenditures = GetGraphsData(facilityId, month, facilityType, segment, department, "127");
-                //    //Capital Expenditures
-                //var cashInBank = GetGraphsData(facilityId, month, facilityType, segment, department, "129");
-                //    //Cash in Bank
-                //var daysTotalExpendituresInCash = GetGraphsData(facilityId, month, facilityType, segment, department,
-                //    "130"); //Days of Total Expenditures in Cash
-                //var totalCashCollected = GetGraphsData(facilityId, month, facilityType, segment, department, "243");
-                //    //Total Cash Collected
-                //var totalPayablesSalaries = GetGraphsData(facilityId, month, facilityType, segment, department, "244");
-                //    //Total Payables and Salaries Paid Out
-                //var totalCapitalPaymentsMade = GetGraphsData(facilityId, month, facilityType, segment, department, "245");
-                //    //Total Capital Payments Made 
-                #endregion
-
-                var jsonResult = new
-                {
-                    netRevenue,
-                    swbDirect,
-                    supplies,
-                    otherDirect,
-                    swbinDirect,
-                    otherIndirectCosts,
-                    deprAndAmort,
-                    interest,
-                    changesWorkingCapital,
-                    otherAdjustments,
-                    capitalExpenditures,
-                    cashInBank,
-                    daysTotalExpendituresInCash,
-                    totalCashCollected,
-                    totalPayablesSalaries,
-                    totalCapitalPaymentsMade
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                netRevenue,
+                swbDirect,
+                supplies,
+                otherDirect,
+                swbinDirect,
+                otherIndirectCosts,
+                deprAndAmort,
+                interest,
+                changesWorkingCapital,
+                otherAdjustments,
+                capitalExpenditures,
+                cashInBank,
+                daysTotalExpendituresInCash,
+                totalCashCollected,
+                totalPayablesSalaries,
+                totalCapitalPaymentsMade
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -3085,65 +2906,44 @@ namespace BillingSystem.Controllers
         public ActionResult GetHRGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var curentYear = currentDateTime.Year;
+
+            var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
+            //var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityId,
+            //    Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
+
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var hrGraphsIndicators = "254,246,247,248,211,250,251,252,253,277";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid,
+                Convert.ToString(hrGraphsIndicators),
+                curentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
+            var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
+            var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
+            var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
+            var employeeEngagementScore = manualDashboardData.Where(x => x.Indicators == 211).ToList();
+            var administrationTotalStaff = manualDashboardData.Where(x => x.Indicators == 250).ToList();
+            var timetakenToRecruitVacantPos = manualDashboardData.Where(x => x.Indicators == 251).ToList();
+            var productiveHours = manualDashboardData.Where(x => x.Indicators == 252).ToList();
+            var unproductiveHours = manualDashboardData.Where(x => x.Indicators == 253).ToList();
+            var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277).ToList();
+            var jsonResult = new
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var curentYear = currentDateTime.Year;
-
-                var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
-                //var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityId,
-                //    Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
-
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var hrGraphsIndicators = "254,246,247,248,211,250,251,252,253,277";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateid,
-                    Convert.ToString(hrGraphsIndicators),
-                    curentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
-                var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
-                var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
-                var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
-                var employeeEngagementScore = manualDashboardData.Where(x => x.Indicators == 211).ToList();
-                var administrationTotalStaff = manualDashboardData.Where(x => x.Indicators == 250).ToList();
-                var timetakenToRecruitVacantPos = manualDashboardData.Where(x => x.Indicators == 251).ToList();
-                var productiveHours = manualDashboardData.Where(x => x.Indicators == 252).ToList();
-                var unproductiveHours = manualDashboardData.Where(x => x.Indicators == 253).ToList();
-                var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277).ToList();
-                //var FTEs = GetGraphsData(facilityId, month, facilityType, segment, department, "254"); //FTEs
-                //var headcount = GetGraphsData(facilityId, month, facilityType, segment, department, "246"); //Headcount
-                //var overtimeHours = GetGraphsData(facilityId, month, facilityType, segment, department, "247");
-                //    //Overtime Hours % of Total Worked Hours
-                //var attritionRate = GetGraphsData(facilityId, month, facilityType, segment, department, "248");
-                //    //Attrition rate
-                //var employeeEngagementScore = GetGraphsData(facilityId, month, facilityType, segment, department, "211");
-                //    //Employee Engagement Score
-                //var administrationTotalStaff = GetGraphsData(facilityId, month, facilityType, segment, department, "250");
-                //    //Administration as a % of Total Staff 
-                //var timetakenToRecruitVacantPos = GetGraphsData(facilityId, month, facilityType, segment, department,
-                //    "251"); //Time taken to recruit for a vacant position 
-                //var productiveHours = GetGraphsData(facilityId, month, facilityType, segment, department, "252");
-                //    //Productive Hours
-                //var unproductiveHours = GetGraphsData(facilityId, month, facilityType, segment, department, "253");
-                //    //UnProductive Hours
-                //var nursingHoursPPD = GetGraphsData(facilityId, month, facilityType, segment, department, "277");
-                //    //Nursing Hours Per Patient Day
-                var jsonResult = new
-                {
-                    FTEs,
-                    headcount,
-                    overtimeHours,
-                    attritionRate,
-                    employeeEngagementScore,
-                    administrationTotalStaff,
-                    timetakenToRecruitVacantPos,
-                    productiveHours,
-                    unproductiveHours,
-                    nursingHoursPPD
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                FTEs,
+                headcount,
+                overtimeHours,
+                attritionRate,
+                employeeEngagementScore,
+                administrationTotalStaff,
+                timetakenToRecruitVacantPos,
+                productiveHours,
+                unproductiveHours,
+                nursingHoursPPD
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -3158,117 +2958,62 @@ namespace BillingSystem.Controllers
         public ActionResult GetKPIGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var hrGraphsIndicators = "254,246,172,174,247,248,255,236,237,233,234,1312,1313,1311,1314,1309,1310,227";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid,
+                Convert.ToString(hrGraphsIndicators),
+                currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
+            var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
+            var highAlertMedicationChart = manualDashboardData.Where(x => x.Indicators == 172).ToList();
+            var patientFallRateGraph = manualDashboardData.Where(x => x.Indicators == 174).ToList();
+            var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
+            var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
+            var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
+            var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
+            var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
+            var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
+            var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
+            var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear && x.BudgetType == 2).ToList();
+            var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
+
+            var customDataToreturn = new List<ManualDashboardCustomModel>();
+            var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
+            customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            var categoryofIncidents = customDataToreturn;
+
+            var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
+
+            var jsonResult = new
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var hrGraphsIndicators = "254,246,172,174,247,248,255,236,237,233,234,1312,1313,1311,1314,1309,1310,227";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateid,
-                    Convert.ToString(hrGraphsIndicators),
-                    currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
-                var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
-                var highAlertMedicationChart = manualDashboardData.Where(x => x.Indicators == 172).ToList();
-                var patientFallRateGraph = manualDashboardData.Where(x => x.Indicators == 174).ToList();
-                var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
-                var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
-                var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
-                var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
-                var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
-                var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
-                var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
-                var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear && x.BudgetType == 2).ToList();
-                var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
-
-                //var categoryofIncidents =  manualDashboardData.Where(x => x.Indicators ==  1309).ToList(); //categoryofIncidents1
-                //var categoryofIncidents1 = manualDashboardData.Where(x => x.Indicators == 1310).ToList(); //categoryofIncidents2
-                //var categoryofIncidents2 = manualDashboardData.Where(x => x.Indicators == 1311).ToList(); //categoryofIncidents3
-                var customDataToreturn = new List<ManualDashboardCustomModel>();
-                var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
-                customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                var categoryofIncidents = customDataToreturn;
-
-                var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
-
-                var jsonResult = new
-                {
-                    FTEs,
-                    headcount,
-                    highAlertMedicationChart,
-                    patientFallRateGraph,
-                    overtimeHours,
-                    attritionRate,
-                    lostReferral,
-                    presenceMDTdocumentation,
-                    acuteOutDays,
-                    acuteOut,
-                    therapueticLeaves,
-                    nonMedicationRelatedIncidents,
-                    typeOfIncidents,
-                    categoryofIncidents,
-                    medicationErrors
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                FTEs,
+                headcount,
+                highAlertMedicationChart,
+                patientFallRateGraph,
+                overtimeHours,
+                attritionRate,
+                lostReferral,
+                presenceMDTdocumentation,
+                acuteOutDays,
+                acuteOut,
+                therapueticLeaves,
+                nonMedicationRelatedIncidents,
+                typeOfIncidents,
+                categoryofIncidents,
+                medicationErrors
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
-
-        #region  Project Dashboard
-        //public ActionResult ProjectsDashboard()
-        //{
-        //    var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-        //    var facilitybal = new FacilityBal();
-        //    var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-        //    var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
-        //           ? loggedinfacilityId
-        //            : Helpers.GetFacilityIdNextDefaultCororateFacility();
-        //    var corporateid = Helpers.GetSysAdminCorporateID();
-        //    var section1RemarksList = new List<DashboardRemarkCustomModel>();
-        //    var section2RemarksList = new List<DashboardRemarkCustomModel>();
-        //    var section3RemarksList = new List<DashboardRemarkCustomModel>();
-        //    var section4RemarksList = new List<DashboardRemarkCustomModel>();
-        //    var projectDashboardCustomModel = new List<ProjectDashboardCustomModel>();
-        //    var tasksDashboardCustomModel = new List<ProjectDashboardCustomModel>();
-        //    using (var bal = new DashboardRemarkBal())
-        //    {
-        //        using (var projectsDashbordbal = new ProjectDashboardBal())
-        //        {
-        //            var projectsdata = projectsDashbordbal.GetProjectDashboardData(corporateid, 0,
-        //                currentYear.ToString());
-
-        //            var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-        //                Convert.ToInt32(9));
-        //            if (allRemarksList != null && allRemarksList.Count > 0)
-        //            {
-        //                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-        //                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-        //                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-        //                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-        //            }
-        //            var dashboardview = new ProjectsDashboardView
-        //            {
-        //                FacilityId = facilityid,
-        //                DashboardType = 9,
-        //                ProjectsDashbaord = projectsdata.Where(x => x.TaskID == null).ToList(),
-        //                TaskDashbaord = projectsdata.Where(x => x.TaskID != null).ToList(),
-        //                Title = Helpers.ExternalDashboardTitleView("8"),
-        //                Section1RemarksList = section1RemarksList,
-        //                Section2RemarksList = section2RemarksList,
-        //                Section3RemarksList = section3RemarksList,
-        //                Section4RemarksList = section4RemarksList,
-        //            };
-        //            return View(dashboardview);
-        //        }
-        //    }
-        //}
 
         /// <summary>
         /// Executives the key performance.
@@ -3285,51 +3030,15 @@ namespace BillingSystem.Controllers
             //const int facilityid = 0;
             var userId = Helpers.GetLoggedInUserId();
 
-            using (var bal = new UsersBal())
-            {
-                var users = bal.GetNonAdminUsersByCorporate(corporateid);
-                var ifAny = users.Any(u => u.UserID == userId);
-                if (!ifAny)
-                    userId = 0;
-            }
+            var users = _uService.GetNonAdminUsersByCorporate(corporateid);
+            var ifAny = users.Any(u => u.UserID == userId);
+            if (!ifAny)
+                userId = 0;
+
 
             var dashboardview = GetProjectsData(0, userId);
             return View(dashboardview);
 
-            //using (var bal = new DashboardRemarkBal())
-            //{
-            //    var mainList = GetProjectsDashboardData(facilityid, userId == 0 ? string.Empty : Convert.ToString(userId));
-            //    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid, dashboardType);
-
-            //    var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
-            //    var financialType = Convert.ToString((int)DashboardProjectType.Financial);
-            //    var indType = Convert.ToString((int)DashboardProjectType.Individual);
-
-            //    var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
-            //    var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
-            //    var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
-
-            //    if (allRemarksList != null && allRemarksList.Count > 0)
-            //    {
-            //        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-            //        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-            //        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-            //    }
-            //    var dashboardview = new ProjectsDashboardView
-            //    {
-            //        FacilityId = facilityid,
-            //        DashboardType = dashboardType,
-            //        StrategicKpiList = strategicExec,
-            //        FinancialKpiList = financialExec,
-            //        IndividualKpiList = individualExec,
-            //        Title = Helpers.ExternalDashboardTitleView(Convert.ToString(dashboardType)),
-            //        Section1RemarksList = section1RemarksList,
-            //        Section2RemarksList = section2RemarksList,
-            //        Section3RemarksList = section3RemarksList,
-            //        ResponsibleUserId = userId
-            //    };
-            //    return View(dashboardview);
-            //}
         }
 
         /// <summary>
@@ -3342,11 +3051,6 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ProjectsDashboardFilters(int? facilityID, int facilityType, int segment, string userId)
         {
-            //const int dashboardType = 9;
-            //var section1RemarksList = new List<DashboardRemarkCustomModel>();
-            //var section2RemarksList = new List<DashboardRemarkCustomModel>();
-            //var section3RemarksList = new List<DashboardRemarkCustomModel>();
-
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var facilitybal = new FacilityBal();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
@@ -3357,42 +3061,6 @@ namespace BillingSystem.Controllers
 
             var dashboardview = GetProjectsData(facilityId, Convert.ToInt32(userId));
             return PartialView(PartialViews.ProjectsDashView, dashboardview);
-
-            //using (var bal = new DashboardRemarkBal())
-            //{
-            //    var mainList = GetProjectsDashboardData(facilityId, userId);
-            //    var corporateid = Helpers.GetSysAdminCorporateID();
-            //    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityId, dashboardType);
-
-            //    var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
-            //    var financialType = Convert.ToString((int)DashboardProjectType.Financial);
-            //    var indType = Convert.ToString((int)DashboardProjectType.Individual);
-
-            //    var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
-            //    var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
-            //    var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
-            //    if (allRemarksList != null && allRemarksList.Count > 0)
-            //    {
-            //        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-            //        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-            //        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-            //    }
-            //    var dashboardview = new ProjectsDashboardView
-            //    {
-            //        FacilityId = facilityid,
-            //        DashboardType = dashboardType,
-            //        StrategicKpiList = strategicExec,
-            //        FinancialKpiList = financialExec,
-            //        IndividualKpiList = individualExec,
-            //        Title = Helpers.ExternalDashboardTitleView(Convert.ToString(dashboardType)),
-            //        Section1RemarksList = section1RemarksList,
-            //        Section2RemarksList = section2RemarksList,
-            //        Section3RemarksList = section3RemarksList,
-            //    };
-            //return PartialView(PartialViews.ProjectsDashView, dashboardview);
-            //}
-
-
 
         }
 
@@ -3405,7 +3073,6 @@ namespace BillingSystem.Controllers
                 return Json(comments, JsonRequestBehavior.AllowGet);
             }
         }
-        #endregion
 
 
         /// <summary>
@@ -3438,52 +3105,46 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetManualDashboardDataV1(int facilityID, int month, int facilityType, int segment, int Department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var manualDashboardData = new List<ManualDashboardCustomModel>();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+            var manualDashboardData = new List<ManualDashboardCustomModel>();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentYear = currentDateTime.Year;
 
-                if (type == "124")
+            if (type == "124")
+            {
+                var totalOperatingExpenditures = _dbService.GetManualDashBoardV1(facilityID,
+                    Helpers.GetSysAdminCorporateID(), "165", currentYear, facilityType, segment, Department);
+                var netCapitalExpendureOperations = _dbService.GetManualDashBoardV1(facilityID, Helpers.GetSysAdminCorporateID(), "127", currentYear, facilityType, segment, Department);
+                var netCashCollection = _dbService.GetManualDashBoardV1(facilityID, Helpers.GetSysAdminCorporateID(), "143", currentYear, facilityType, segment, Department);
+                manualDashboardData.AddRange(netCashCollection.Where(x => x.BudgetType == 2 && x.Year == currentYear));
+                manualDashboardData.AddRange(totalOperatingExpenditures.Where(x => x.BudgetType == 2 && x.Year == currentYear));
+                manualDashboardData.AddRange(netCapitalExpendureOperations.Where(x => x.BudgetType == 2 && x.Year == currentYear));
+            }
+            else
+            {
+                if (type == "156") //.....Average Daily census By Service Code
                 {
-                    var totalOperatingExpenditures = manualdashboardbal.GetManualDashBoardV1(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "165", currentYear, facilityType, segment, Department);
-                    var netCapitalExpendureOperations =
-                        manualdashboardbal.GetManualDashBoardV1(facilityID,
-                            Helpers.GetSysAdminCorporateID(), "127", currentYear, facilityType, segment, Department);
-                    var netCashCollection = manualdashboardbal.GetManualDashBoardV1(facilityID,
-                        Helpers.GetSysAdminCorporateID(), "143", currentYear, facilityType, segment, Department);
-                    manualDashboardData.AddRange(netCashCollection.Where(x => x.BudgetType == 2 && x.Year == currentYear));
-                    manualDashboardData.AddRange(totalOperatingExpenditures.Where(x => x.BudgetType == 2 && x.Year == currentYear));
-                    manualDashboardData.AddRange(netCapitalExpendureOperations.Where(x => x.BudgetType == 2 && x.Year == currentYear));
+                    manualDashboardData = _dbService.GetManualDashBoardV1(facilityID, corporateId,
+                           Convert.ToString("242"),
+                           currentYear, facilityType, segment, Department);
+
+                    var averageDailyCencus = GetADCByServiceCodePerMonth(manualDashboardData).OrderBy(x => x.SubCategory1);
+                    return Json(averageDailyCencus.Any() ? averageDailyCencus : null, JsonRequestBehavior.AllowGet);
                 }
                 else
                 {
-                    if (type == "156") //.....Average Daily census By Service Code
+                    manualDashboardData = _dbService.GetManualDashBoardV1(facilityID, corporateId,
+                        Convert.ToString(type),
+                        currentYear, facilityType, segment, Department);
+                    if (type == "242")
                     {
-                        manualDashboardData = manualdashboardbal.GetManualDashBoardV1(facilityID, corporateId,
-                               Convert.ToString("242"),
-                               currentYear, facilityType, segment, Department);
-
-                        var averageDailyCencus = GetADCByServiceCodePerMonth(manualDashboardData).OrderBy(x => x.SubCategory1);
-                        return Json(averageDailyCencus.Any() ? averageDailyCencus : null, JsonRequestBehavior.AllowGet);
+                        var patientDays = GetPatientDaysAll(manualDashboardData);
+                        return Json(patientDays.Any() ? patientDays : null, JsonRequestBehavior.AllowGet);
                     }
-                    else
-                    {
-                        manualDashboardData = manualdashboardbal.GetManualDashBoardV1(facilityID, corporateId,
-                            Convert.ToString(type),
-                            currentYear, facilityType, segment, Department);
-                        if (type == "242")
-                        {
-                            var patientDays = GetPatientDaysAll(manualDashboardData);
-                            return Json(patientDays.Any() ? patientDays : null, JsonRequestBehavior.AllowGet);
-                        }
-                    }
-
                 }
-                return Json(manualDashboardData.Any() ? manualDashboardData : null, JsonRequestBehavior.AllowGet);
+
             }
+            return Json(manualDashboardData.Any() ? manualDashboardData : null, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -3639,7 +3300,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var facilitybal = new FacilityBal();
 
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(loggedinfacilityId);
             var currentYear = currentDateTime.Year;
 
 
@@ -3647,11 +3308,7 @@ namespace BillingSystem.Controllers
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                patinetFallList = manualdashboardbal.GetPatientFallRateV1(facilityid,
-                    Helpers.GetSysAdminCorporateID(), "", currentYear, 0, 0, 0);
-            }
+            patinetFallList = _dbService.GetPatientFallRateV1(facilityid, Helpers.GetSysAdminCorporateID(), "", currentYear, 0, 0, 0);
             using (var bal = new DashboardRemarkBal())
             {
                 var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3910,100 +3567,97 @@ namespace BillingSystem.Controllers
         public ActionResult ClinicalGraphsDataV1(int facilityId, int month, int facilityType, int segment, int department)
         {
             var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(clinicalGrpahsArray),
+                currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var hamList = manualDashboardData.Where(x => x.Indicators == 172).ToList();
+            var fallRiskList = manualDashboardData.Where(x => x.Indicators == 177).ToList();
+            var painManagementList = manualDashboardData.Where(x => x.Indicators == 176).ToList();
+            var dischargeToComunityrate = manualDashboardData.Where(x => x.Indicators == 166).ToList();
+
+            var lostReferals = manualDashboardData.Where(x => x.Indicators == 167).ToList();
+            var transferOutRate = manualDashboardData.Where(x => x.Indicators == 168).ToList();
+            var nursingStaffCompetency = manualDashboardData.Where(x => x.Indicators == 169).ToList();
+            var nursingDepartmentOrientation = manualDashboardData.Where(x => x.Indicators == 170).ToList();
+
+            var patientIdentification = manualDashboardData.Where(x => x.Indicators == 171).ToList();
+            var patientFallRatewithInjury = manualDashboardData.Where(x => x.Indicators == 174).ToList();
+            var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
+            var fallRiskAssessmentProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 177).ToList();
+
+            var compliancetoPressureUlcerPreventionProtocol = manualDashboardData.Where(x => x.Indicators == 178).ToList();
+            var sbarProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 179).ToList();
+            var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
+            var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
+
+            var esblRate = manualDashboardData.Where(x => x.Indicators == 182).ToList();
+            var lrtiRate = manualDashboardData.Where(x => x.Indicators == 183).ToList();
+            var cautiRate = manualDashboardData.Where(x => x.Indicators == 184).ToList();
+            var bsiRate = manualDashboardData.Where(x => x.Indicators == 185).ToList();
+
+            var handHygineComplainceRate = manualDashboardData.Where(x => x.Indicators == 186).ToList();
+            var staffVaccinationRate = manualDashboardData.Where(x => x.Indicators == 187).ToList();
+            var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
+            var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
+
+            var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
+            var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
+            var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
+            var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear).ToList();
+            var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
+            //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
+            var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
+
+            var customDataToreturn = new List<ManualDashboardCustomModel>();
+            var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
+            customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            var categoryofIncidents = customDataToreturn;
+
+            var jsonResult = new
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(clinicalGrpahsArray),
-                    currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var hamList = manualDashboardData.Where(x => x.Indicators == 172).ToList();
-                var fallRiskList = manualDashboardData.Where(x => x.Indicators == 177).ToList();
-                var painManagementList = manualDashboardData.Where(x => x.Indicators == 176).ToList();
-                var dischargeToComunityrate = manualDashboardData.Where(x => x.Indicators == 166).ToList();
-
-                var lostReferals = manualDashboardData.Where(x => x.Indicators == 167).ToList();
-                var transferOutRate = manualDashboardData.Where(x => x.Indicators == 168).ToList();
-                var nursingStaffCompetency = manualDashboardData.Where(x => x.Indicators == 169).ToList();
-                var nursingDepartmentOrientation = manualDashboardData.Where(x => x.Indicators == 170).ToList();
-
-                var patientIdentification = manualDashboardData.Where(x => x.Indicators == 171).ToList();
-                var patientFallRatewithInjury = manualDashboardData.Where(x => x.Indicators == 174).ToList();
-                var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
-                var fallRiskAssessmentProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 177).ToList();
-
-                var compliancetoPressureUlcerPreventionProtocol = manualDashboardData.Where(x => x.Indicators == 178).ToList();
-                var sbarProtocolComplianceRate = manualDashboardData.Where(x => x.Indicators == 179).ToList();
-                var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
-                var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
-
-                var esblRate = manualDashboardData.Where(x => x.Indicators == 182).ToList();
-                var lrtiRate = manualDashboardData.Where(x => x.Indicators == 183).ToList();
-                var cautiRate = manualDashboardData.Where(x => x.Indicators == 184).ToList();
-                var bsiRate = manualDashboardData.Where(x => x.Indicators == 185).ToList();
-
-                var handHygineComplainceRate = manualDashboardData.Where(x => x.Indicators == 186).ToList();
-                var staffVaccinationRate = manualDashboardData.Where(x => x.Indicators == 187).ToList();
-                var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
-                var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
-
-                var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
-                var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
-                var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
-                var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear).ToList();
-                var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
-                //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
-                var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
-
-                var customDataToreturn = new List<ManualDashboardCustomModel>();
-                var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
-                customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                var categoryofIncidents = customDataToreturn;
-
-                var jsonResult = new
-                {
-                    hamList,
-                    fallRiskList,
-                    painManagementList,
-                    dischargeToComunityrate,
-                    lostReferals,
-                    transferOutRate,
-                    nursingStaffCompetency,
-                    nursingDepartmentOrientation,
-                    patientIdentification,
-                    patientFallRatewithInjury,
-                    pressureUlcerIncidentRate,
-                    fallRiskAssessmentProtocolComplianceRate,
-                    compliancetoPressureUlcerPreventionProtocol,
-                    sbarProtocolComplianceRate,
-                    mdroRate,
-                    mrsaRate,
-                    esblRate,
-                    lrtiRate,
-                    cautiRate,
-                    bsiRate,
-                    handHygineComplainceRate,
-                    staffVaccinationRate,
-                    inappropriateAntiBioticUsageRate,
-                    therapyInitialAssessmentProtocolCompliance,
-                    manualHandlingRiskAssessmentProtocolCompliance,
-                    standardizedOutcomeMeasureProtocol,
-                    Incidents,
-                    nonMedicationRelatedIncidents,
-                    typeOfIncidents,
-                    categoryofIncidents,
-                    medicationErrors
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                hamList,
+                fallRiskList,
+                painManagementList,
+                dischargeToComunityrate,
+                lostReferals,
+                transferOutRate,
+                nursingStaffCompetency,
+                nursingDepartmentOrientation,
+                patientIdentification,
+                patientFallRatewithInjury,
+                pressureUlcerIncidentRate,
+                fallRiskAssessmentProtocolComplianceRate,
+                compliancetoPressureUlcerPreventionProtocol,
+                sbarProtocolComplianceRate,
+                mdroRate,
+                mrsaRate,
+                esblRate,
+                lrtiRate,
+                cautiRate,
+                bsiRate,
+                handHygineComplainceRate,
+                staffVaccinationRate,
+                inappropriateAntiBioticUsageRate,
+                therapyInitialAssessmentProtocolCompliance,
+                manualHandlingRiskAssessmentProtocolCompliance,
+                standardizedOutcomeMeasureProtocol,
+                Incidents,
+                nonMedicationRelatedIncidents,
+                typeOfIncidents,
+                categoryofIncidents,
+                medicationErrors
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -4018,85 +3672,82 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult RCMGraphsDataV1(int facilityId, int month, int facilityType, int segment, int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var RCMDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
+
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            var customDate = month == 0
+                ? currentDateTime.ToShortDateString()
+                : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityId,
+                Helpers.GetSysAdminCorporateID(), "270", customDate, facilityType, segment, department);
+
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(RCMDashboardData),
+                currentYear, facilityType, segment, department);
+
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var ipReveune = manualDashboardData.Where(x => x.Indicators == 1308).ToList();
+            var reveunePPD = manualDashboardData.Where(x => x.Indicators == 221).ToList();
+            var revenueIP = manualDashboardData.Where(x => x.Indicators == 222).ToList();
+
+            var revenueDaman = revenueIP != null && revenueIP.Any()
+                ? revenueIP.Where(x => x.SubCategory1 == "2").ToList()
+                : revenueIP;
+            var reveuneRoyalFamily = revenueIP != null && revenueIP.Any()
+                ? revenueIP.Where(x => x.SubCategory1 == "31").ToList()
+                : revenueIP; //Revenue Royal Family
+
+            var reveuneInpatinetOther = manualDashboardData.Where(x => x.Indicators == 224).ToList();
+
+            var averageDailyCencus = manualDashboardData.Where(x => x.Indicators == 144).ToList();
+            var newAdmissions = manualDashboardData.Where(x => x.Indicators == 101).ToList();
+            var plannedDischarges = manualDashboardData.Where(x => x.Indicators == 102).ToList();
+            var dischargesUnplanned = manualDashboardData.Where(x => x.Indicators == 225).ToList();
+
+            var acuteOutsPatients = manualDashboardData.Where(x => x.Indicators == 226).ToList();
+            var acuteOutsDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
+            var therapeuticLeaves = manualDashboardData.Where(x => x.Indicators == 228).ToList();
+            var opRevenue = manualDashboardData.Where(x => x.Indicators == 161).ToList();
+            var patientDaysList = manualDashboardData.Where(x => x.Indicators == 242).ToList();
+            var patientDays = GetPatientDaysAll(patientDaysList);
+            var serviceCodeDistributionbyBilledClaims = manualDashboardData.Where(x => x.Indicators == 229).ToList();
+            var percentagebilledReveune = manualDashboardData.Where(x => x.Indicators == 230).ToList();
+            var accountSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 231).ToList();
+            var numberSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 232).ToList();
+
+            var payorMix = GetSubCategoryChartsPayorMix(facilityId, month, facilityType, segment, department, "159");//payor Mix
+            var claimsResubmissionPercentage = manualDashboardList.Where(x => x.IndicatorNumber == "270").ToList();
+            var arDays = manualDashboardData.Where(x => x.Indicators == 131).ToList(); //GetGraphsData(facilityId, month, facilityType, segment, department, ""); //manualDashboardList.Where(x => x.IndicatorNumber == "131").ToList(); 
+
+            var jsonResult = new
             {
-                var RCMDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
-
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                var customDate = month == 0
-                    ? currentDateTime.ToShortDateString()
-                    : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
-                var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityId,
-                    Helpers.GetSysAdminCorporateID(), "270", customDate, facilityType, segment, department);
-
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(RCMDashboardData),
-                    currentYear, facilityType, segment, department);
-
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var ipReveune = manualDashboardData.Where(x => x.Indicators == 1308).ToList();
-                var reveunePPD = manualDashboardData.Where(x => x.Indicators == 221).ToList();
-                var revenueIP = manualDashboardData.Where(x => x.Indicators == 222).ToList();
-
-                var revenueDaman = revenueIP != null && revenueIP.Any()
-                    ? revenueIP.Where(x => x.SubCategory1 == "2").ToList()
-                    : revenueIP;
-                var reveuneRoyalFamily = revenueIP != null && revenueIP.Any()
-                    ? revenueIP.Where(x => x.SubCategory1 == "31").ToList()
-                    : revenueIP; //Revenue Royal Family
-
-                var reveuneInpatinetOther = manualDashboardData.Where(x => x.Indicators == 224).ToList();
-
-                var averageDailyCencus = manualDashboardData.Where(x => x.Indicators == 144).ToList();
-                var newAdmissions = manualDashboardData.Where(x => x.Indicators == 101).ToList();
-                var plannedDischarges = manualDashboardData.Where(x => x.Indicators == 102).ToList();
-                var dischargesUnplanned = manualDashboardData.Where(x => x.Indicators == 225).ToList();
-
-                var acuteOutsPatients = manualDashboardData.Where(x => x.Indicators == 226).ToList();
-                var acuteOutsDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
-                var therapeuticLeaves = manualDashboardData.Where(x => x.Indicators == 228).ToList();
-                var opRevenue = manualDashboardData.Where(x => x.Indicators == 161).ToList();
-                var patientDaysList = manualDashboardData.Where(x => x.Indicators == 242).ToList();
-                var patientDays = GetPatientDaysAll(patientDaysList);
-                var serviceCodeDistributionbyBilledClaims = manualDashboardData.Where(x => x.Indicators == 229).ToList();
-                var percentagebilledReveune = manualDashboardData.Where(x => x.Indicators == 230).ToList();
-                var accountSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 231).ToList();
-                var numberSubmittedClaims = manualDashboardData.Where(x => x.Indicators == 232).ToList();
-
-                var payorMix = GetSubCategoryChartsPayorMix(facilityId, month, facilityType, segment, department, "159");//payor Mix
-                var claimsResubmissionPercentage = manualDashboardList.Where(x => x.IndicatorNumber == "270").ToList();
-                var arDays = manualDashboardData.Where(x => x.Indicators == 131).ToList(); //GetGraphsData(facilityId, month, facilityType, segment, department, ""); //manualDashboardList.Where(x => x.IndicatorNumber == "131").ToList(); 
-
-                var jsonResult = new
-                {
-                    ipReveune,
-                    reveunePPD,
-                    revenueDaman,
-                    reveuneRoyalFamily,
-                    reveuneInpatinetOther,
-                    averageDailyCencus,
-                    arDays,
-                    newAdmissions,
-                    plannedDischarges,
-                    dischargesUnplanned,
-                    acuteOutsPatients,
-                    acuteOutsDays,
-                    therapeuticLeaves,
-                    opRevenue,
-                    patientDays,
-                    serviceCodeDistributionbyBilledClaims,
-                    percentagebilledReveune,
-                    accountSubmittedClaims,
-                    numberSubmittedClaims,
-                    payorMix,
-                    claimsResubmissionPercentage
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                ipReveune,
+                reveunePPD,
+                revenueDaman,
+                reveuneRoyalFamily,
+                reveuneInpatinetOther,
+                averageDailyCencus,
+                arDays,
+                newAdmissions,
+                plannedDischarges,
+                dischargesUnplanned,
+                acuteOutsPatients,
+                acuteOutsDays,
+                therapeuticLeaves,
+                opRevenue,
+                patientDays,
+                serviceCodeDistributionbyBilledClaims,
+                percentagebilledReveune,
+                accountSubmittedClaims,
+                numberSubmittedClaims,
+                payorMix,
+                claimsResubmissionPercentage
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -4111,42 +3762,39 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
 
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var caseManagementIndicators = "227,233,234,235,236,237,238,239,240,255";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateid,
-                    Convert.ToString(caseManagementIndicators), currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
-                var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
-                var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
-                var presenceInitialAssessment = manualDashboardData.Where(x => x.Indicators == 235).ToList();
-                var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
-                var presenceDischargedDocumentation = manualDashboardData.Where(x => x.Indicators == 237).ToList();
-                var dischargeDisposition = manualDashboardData.Where(x => x.Indicators == 238).ToList();
-                var numberUnplannedDischarges = manualDashboardData.Where(x => x.Indicators == 239).ToList();
-                var postDischargeFollowup = manualDashboardData.Where(x => x.Indicators == 240).ToList();
-                var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
-                var jsonResult = new
-                {
-                    acuteOutDays,
-                    acuteOut,
-                    therapueticLeaves,
-                    presenceInitialAssessment,
-                    presenceMDTdocumentation,
-                    presenceDischargedDocumentation,
-                    dischargeDisposition,
-                    numberUnplannedDischarges,
-                    postDischargeFollowup,
-                    lostReferral
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var caseManagementIndicators = "227,233,234,235,236,237,238,239,240,255";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid,
+                Convert.ToString(caseManagementIndicators), currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
+            var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
+            var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
+            var presenceInitialAssessment = manualDashboardData.Where(x => x.Indicators == 235).ToList();
+            var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
+            var presenceDischargedDocumentation = manualDashboardData.Where(x => x.Indicators == 237).ToList();
+            var dischargeDisposition = manualDashboardData.Where(x => x.Indicators == 238).ToList();
+            var numberUnplannedDischarges = manualDashboardData.Where(x => x.Indicators == 239).ToList();
+            var postDischargeFollowup = manualDashboardData.Where(x => x.Indicators == 240).ToList();
+            var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
+            var jsonResult = new
+            {
+                acuteOutDays,
+                acuteOut,
+                therapueticLeaves,
+                presenceInitialAssessment,
+                presenceMDTdocumentation,
+                presenceDischargedDocumentation,
+                dischargeDisposition,
+                numberUnplannedDischarges,
+                postDischargeFollowup,
+                lostReferral
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -4161,56 +3809,53 @@ namespace BillingSystem.Controllers
         public ActionResult GetFinancialMGTGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var financialMgtIndicators = "110,111,112,113,155,115,117,118,125,126,127,129,130,240,243,244,245,255";
+            var manualDashboardData = _dbService.GetManualDashBoardV1(facilityId, corporateid,
+                Convert.ToString(financialMgtIndicators),
+                currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
+            var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
+            var supplies = manualDashboardData.Where(x => x.Indicators == 112).ToList();
+            var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
+            var swbinDirect = manualDashboardData.Where(x => x.Indicators == 155).ToList();
+            var otherIndirectCosts = manualDashboardData.Where(x => x.Indicators == 115).ToList();
+            var deprAndAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
+            var interest = manualDashboardData.Where(x => x.Indicators == 118).ToList();
+            var changesWorkingCapital = manualDashboardData.Where(x => x.Indicators == 125).ToList();
+            var otherAdjustments = manualDashboardData.Where(x => x.Indicators == 126).ToList();
+            var capitalExpenditures = manualDashboardData.Where(x => x.Indicators == 127).ToList();
+            var cashInBank = manualDashboardData.Where(x => x.Indicators == 129).ToList();
+            var daysTotalExpendituresInCash = manualDashboardData.Where(x => x.Indicators == 130).ToList();
+            var totalCashCollected = manualDashboardData.Where(x => x.Indicators == 243).ToList();
+            var totalPayablesSalaries = manualDashboardData.Where(x => x.Indicators == 244).ToList();
+            var totalCapitalPaymentsMade = manualDashboardData.Where(x => x.Indicators == 245).ToList();
+
+            var jsonResult = new
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var financialMgtIndicators = "110,111,112,113,155,115,117,118,125,126,127,129,130,240,243,244,245,255";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoardV1(facilityId, corporateid,
-                    Convert.ToString(financialMgtIndicators),
-                    currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
-                var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
-                var supplies = manualDashboardData.Where(x => x.Indicators == 112).ToList();
-                var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
-                var swbinDirect = manualDashboardData.Where(x => x.Indicators == 155).ToList();
-                var otherIndirectCosts = manualDashboardData.Where(x => x.Indicators == 115).ToList();
-                var deprAndAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
-                var interest = manualDashboardData.Where(x => x.Indicators == 118).ToList();
-                var changesWorkingCapital = manualDashboardData.Where(x => x.Indicators == 125).ToList();
-                var otherAdjustments = manualDashboardData.Where(x => x.Indicators == 126).ToList();
-                var capitalExpenditures = manualDashboardData.Where(x => x.Indicators == 127).ToList();
-                var cashInBank = manualDashboardData.Where(x => x.Indicators == 129).ToList();
-                var daysTotalExpendituresInCash = manualDashboardData.Where(x => x.Indicators == 130).ToList();
-                var totalCashCollected = manualDashboardData.Where(x => x.Indicators == 243).ToList();
-                var totalPayablesSalaries = manualDashboardData.Where(x => x.Indicators == 244).ToList();
-                var totalCapitalPaymentsMade = manualDashboardData.Where(x => x.Indicators == 245).ToList();
-
-                var jsonResult = new
-                {
-                    netRevenue,
-                    swbDirect,
-                    supplies,
-                    otherDirect,
-                    swbinDirect,
-                    otherIndirectCosts,
-                    deprAndAmort,
-                    interest,
-                    changesWorkingCapital,
-                    otherAdjustments,
-                    capitalExpenditures,
-                    cashInBank,
-                    daysTotalExpendituresInCash,
-                    totalCashCollected,
-                    totalPayablesSalaries,
-                    totalCapitalPaymentsMade
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                netRevenue,
+                swbDirect,
+                supplies,
+                otherDirect,
+                swbinDirect,
+                otherIndirectCosts,
+                deprAndAmort,
+                interest,
+                changesWorkingCapital,
+                otherAdjustments,
+                capitalExpenditures,
+                cashInBank,
+                daysTotalExpendituresInCash,
+                totalCashCollected,
+                totalPayablesSalaries,
+                totalCapitalPaymentsMade
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -4225,43 +3870,40 @@ namespace BillingSystem.Controllers
         public ActionResult GetHRGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
 
-                var hrGraphsIndicators = "254,246,247,248,211,250,251,252,253,277";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoardV1(facilityId, corporateid,
-                    Convert.ToString(hrGraphsIndicators),
-                    currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
-                var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
-                var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
-                var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
-                var employeeEngagementScore = manualDashboardData.Where(x => x.Indicators == 211).ToList();
-                var administrationTotalStaff = manualDashboardData.Where(x => x.Indicators == 250).ToList();
-                var timetakenToRecruitVacantPos = manualDashboardData.Where(x => x.Indicators == 251).ToList();
-                var productiveHours = manualDashboardData.Where(x => x.Indicators == 252).ToList();
-                var unproductiveHours = manualDashboardData.Where(x => x.Indicators == 253).ToList();
-                var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277).ToList();
-                var jsonResult = new
-                {
-                    FTEs,
-                    headcount,
-                    overtimeHours,
-                    attritionRate,
-                    employeeEngagementScore,
-                    administrationTotalStaff,
-                    timetakenToRecruitVacantPos,
-                    productiveHours,
-                    unproductiveHours,
-                    nursingHoursPPD
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            var hrGraphsIndicators = "254,246,247,248,211,250,251,252,253,277";
+            var manualDashboardData = _dbService.GetManualDashBoardV1(facilityId, corporateid,
+                Convert.ToString(hrGraphsIndicators),
+                currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
+            var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
+            var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
+            var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
+            var employeeEngagementScore = manualDashboardData.Where(x => x.Indicators == 211).ToList();
+            var administrationTotalStaff = manualDashboardData.Where(x => x.Indicators == 250).ToList();
+            var timetakenToRecruitVacantPos = manualDashboardData.Where(x => x.Indicators == 251).ToList();
+            var productiveHours = manualDashboardData.Where(x => x.Indicators == 252).ToList();
+            var unproductiveHours = manualDashboardData.Where(x => x.Indicators == 253).ToList();
+            var nursingHoursPPD = manualDashboardData.Where(x => x.Indicators == 277).ToList();
+            var jsonResult = new
+            {
+                FTEs,
+                headcount,
+                overtimeHours,
+                attritionRate,
+                employeeEngagementScore,
+                administrationTotalStaff,
+                timetakenToRecruitVacantPos,
+                productiveHours,
+                unproductiveHours,
+                nursingHoursPPD
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -4276,63 +3918,60 @@ namespace BillingSystem.Controllers
         public ActionResult GetKPIGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            var hrGraphsIndicators = "254,246,172,174,247,248,255,236,237,233,234,1312,1313,1311,1314,1309,1310,227";
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateid,
+                Convert.ToString(hrGraphsIndicators),
+                currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+            var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
+            var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
+            var highAlertMedicationChart = manualDashboardData.Where(x => x.Indicators == 172).ToList();
+            var patientFallRateGraph = manualDashboardData.Where(x => x.Indicators == 174).ToList();
+            var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
+            var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
+            var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
+            var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
+            var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
+            var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
+            var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
+            var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear && x.BudgetType == 2).ToList();
+            var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
+
+            var customDataToreturn = new List<ManualDashboardCustomModel>();
+            var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
+            customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            var categoryofIncidents = customDataToreturn;
+
+            var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
+
+            var jsonResult = new
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                var hrGraphsIndicators = "254,246,172,174,247,248,255,236,237,233,234,1312,1313,1311,1314,1309,1310,227";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateid,
-                    Convert.ToString(hrGraphsIndicators),
-                    currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                var FTEs = manualDashboardData.Where(x => x.Indicators == 254).ToList();
-                var headcount = manualDashboardData.Where(x => x.Indicators == 246).ToList();
-                var highAlertMedicationChart = manualDashboardData.Where(x => x.Indicators == 172).ToList();
-                var patientFallRateGraph = manualDashboardData.Where(x => x.Indicators == 174).ToList();
-                var overtimeHours = manualDashboardData.Where(x => x.Indicators == 247).ToList();
-                var attritionRate = manualDashboardData.Where(x => x.Indicators == 248).ToList();
-                var lostReferral = manualDashboardData.Where(x => x.Indicators == 255).ToList();
-                var presenceMDTdocumentation = manualDashboardData.Where(x => x.Indicators == 236).ToList();
-                var acuteOutDays = manualDashboardData.Where(x => x.Indicators == 227).ToList();
-                var acuteOut = manualDashboardData.Where(x => x.Indicators == 233).ToList();
-                var therapueticLeaves = manualDashboardData.Where(x => x.Indicators == 234).ToList();
-                var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear && x.BudgetType == 2).ToList();
-                var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
-
-                var customDataToreturn = new List<ManualDashboardCustomModel>();
-                var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
-                customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                var categoryofIncidents = customDataToreturn;
-
-                var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
-
-                var jsonResult = new
-                {
-                    FTEs,
-                    headcount,
-                    highAlertMedicationChart,
-                    patientFallRateGraph,
-                    overtimeHours,
-                    attritionRate,
-                    lostReferral,
-                    presenceMDTdocumentation,
-                    acuteOutDays,
-                    acuteOut,
-                    therapueticLeaves,
-                    nonMedicationRelatedIncidents,
-                    typeOfIncidents,
-                    categoryofIncidents,
-                    medicationErrors
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                FTEs,
+                headcount,
+                highAlertMedicationChart,
+                patientFallRateGraph,
+                overtimeHours,
+                attritionRate,
+                lostReferral,
+                presenceMDTdocumentation,
+                acuteOutDays,
+                acuteOut,
+                therapueticLeaves,
+                nonMedicationRelatedIncidents,
+                typeOfIncidents,
+                categoryofIncidents,
+                medicationErrors
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
         #endregion
 
@@ -4342,7 +3981,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExportToExcel(int? type, int? month, int? facilityId)
         {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(Convert.ToInt32(facilityId));
             var workbook = new HSSFWorkbook();
             #region Excel Creation and Formatting
             var sheet = workbook.CreateSheet("ExternalDashboardData");
@@ -4462,289 +4101,286 @@ namespace BillingSystem.Controllers
             #endregion
             #endregion
             #region Data Rows
-            using (var bal = new DashboardBudgetBal())
+            var facilityid = facilityId == null
+                ? Helpers.GetFacilityIdNextDefaultCororateFacility()
+                : facilityId == 0 ? 9999 : facilityId;
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            //var currentDateTime = _eService.GetInvariantCultureDateTime();
+            var currentYear = currentDateTime.Year;
+
+            var indicatorNumbers = string.Empty;
+            var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();
+            var section10ListOrder = ExecutiveDashboardSection10ListSortOrder();
+            if (type == 1)
             {
-                var facilityid = facilityId == null
-                    ? Helpers.GetFacilityIdNextDefaultCororateFacility()
-                    : facilityId == 0 ? 9999 : facilityId;
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                //var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+                var enumRessult = Helpers.GetEnumList<ExecutiveDashboardSection1Stat>();
+                var resultList = enumRessult.Where(x => Enum.IsDefined(typeof(ExecutiveDashboardSection1Stat), x))
+                    .Select(x => (int)Enum.Parse(typeof(ExecutiveDashboardSection1Stat), x, true)).ToList();
+                indicatorNumbers = (String.Join(",", resultList));
+            }
+            else if (type == 2)
+            {
+                var enumRessult = Helpers.GetEnumList<ExecutiveDashboardSection5Stat>();
+                var resultList = new List<string>(sectionVolume5ListOrders.Keys);
+                indicatorNumbers = (String.Join(",", resultList));
+            }
+            else if (type == 3)
+            {
+                var enumRessult = Helpers.GetEnumList<ExecutiveDashboardSection10Stat>();
+                var resultList = new List<string>(section10ListOrder.Keys);
+                indicatorNumbers = (String.Join(",", resultList));
+            }
 
-                var indicatorNumbers = string.Empty;
-                var sectionVolume5ListOrders = ExecutiveDashboardListSortOrder();
-                var section10ListOrder = ExecutiveDashboardSection10ListSortOrder();
-                if (type == 1)
+            var customDate = month == null
+                ? currentDateTime.ToShortDateString()
+                : (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
+
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(Convert.ToInt32(facilityid),
+                corporateid, indicatorNumbers, customDate, 0, 0, 0);
+            manualDashboardList = type == 2
+                ? manualDashboardList.OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
+                : type == 3
+                    ? manualDashboardList.OrderBy(x => section10ListOrder[x.IndicatorNumber.Trim()]).ToList()
+                    : manualDashboardList;
+            //----------------- Data Formattter
+
+
+            var cellGreenStyle = workbook.CreateCellStyle();
+            cellGreenStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
+            cellGreenStyle.FillPattern = FillPattern.SolidForeground;
+            cellGreenStyle.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
+
+            var cellRedStyle = workbook.CreateCellStyle();
+            cellRedStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+            cellRedStyle.FillPattern = FillPattern.SolidForeground;
+            cellRedStyle.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
+
+            var cellYellowStyle = workbook.CreateCellStyle();
+            cellYellowStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Yellow.Index;
+            cellYellowStyle.FillPattern = FillPattern.SolidForeground;
+            cellYellowStyle.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
+
+            var cellGreenStylepercent = workbook.CreateCellStyle();
+            cellGreenStylepercent.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
+            cellGreenStylepercent.FillPattern = FillPattern.SolidForeground;
+            cellGreenStylepercent.DataFormat = formatIdpercentage == -1 ? format.GetFormat("0.0%") : formatIdpercentage;
+            cellGreenStylepercent.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
+
+            var cellRedStylepercent = workbook.CreateCellStyle();
+            cellRedStylepercent.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+            cellRedStylepercent.FillPattern = FillPattern.SolidForeground;
+            cellRedStylepercent.DataFormat = formatIdpercentage == -1 ? format.GetFormat("0.0%") : formatIdpercentage;
+            cellRedStylepercent.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
+
+            var cellYellowStylepercent = workbook.CreateCellStyle();
+            cellYellowStylepercent.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Yellow.Index;
+            cellYellowStylepercent.FillPattern = FillPattern.SolidForeground;
+            cellYellowStylepercent.DataFormat = formatIdpercentage == -1 ? format.GetFormat("0.0%") : formatIdpercentage;
+            cellYellowStylepercent.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
+
+            #region Data Formmatter
+
+            var cellStyle = workbook.CreateCellStyle();
+            var cellStylepercentage = workbook.CreateCellStyle();
+            cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("#,##0");
+            var formatId = HSSFDataFormat.GetBuiltinFormat("0.00%");
+            cellStylepercentage.DataFormat = formatId == -1 ? format.GetFormat("0.00%") : formatId;
+
+            #endregion
+            //--------Data formatter ends
+
+            foreach (var item in manualDashboardList)
+            {
+                row = sheet.CreateRow(rowIndex);
+                row.CreateCell(0).SetCellType(CellType.Numeric);
+                if (item.FormatType == 1)
                 {
-                    var enumRessult = Helpers.GetEnumList<ExecutiveDashboardSection1Stat>();
-                    var resultList = enumRessult.Where(x => Enum.IsDefined(typeof(ExecutiveDashboardSection1Stat), x))
-                        .Select(x => (int)Enum.Parse(typeof(ExecutiveDashboardSection1Stat), x, true)).ToList();
-                    indicatorNumbers = (String.Join(",", resultList));
+                    row.GetCell(0).CellStyle = cellStyle;
+                    row.GetCell(0).SetCellValue(Convert.ToDouble(item.CMA));
                 }
-                else if (type == 2)
+                else
                 {
-                    var enumRessult = Helpers.GetEnumList<ExecutiveDashboardSection5Stat>();
-                    var resultList = new List<string>(sectionVolume5ListOrders.Keys);
-                    indicatorNumbers = (String.Join(",", resultList));
+                    row.GetCell(0).CellStyle = cellStylepercentage;
+                    row.GetCell(0).SetCellValue(Convert.ToDouble(item.CMA) / 100);
                 }
-                else if (type == 3)
+                row.CreateCell(1).SetCellType(CellType.Numeric);
+                if (item.FormatType == 1)
                 {
-                    var enumRessult = Helpers.GetEnumList<ExecutiveDashboardSection10Stat>();
-                    var resultList = new List<string>(section10ListOrder.Keys);
-                    indicatorNumbers = (String.Join(",", resultList));
+                    row.GetCell(1).CellStyle = cellStyle;
+                    row.GetCell(1).SetCellValue(Convert.ToDouble(item.CMB));
                 }
-
-                var customDate = month == null
-                    ? currentDateTime.ToShortDateString()
-                    : (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
-
-                var manualDashboardList = bal.GetManualDashBoardStatData(Convert.ToInt32(facilityid),
-                    corporateid, indicatorNumbers, customDate, 0, 0, 0);
-                manualDashboardList = type == 2
-                    ? manualDashboardList.OrderBy(x => sectionVolume5ListOrders[x.IndicatorNumber.Trim()]).ToList()
-                    : type == 3
-                        ? manualDashboardList.OrderBy(x => section10ListOrder[x.IndicatorNumber.Trim()]).ToList()
-                        : manualDashboardList;
-                //----------------- Data Formattter
-
-
-                var cellGreenStyle = workbook.CreateCellStyle();
-                cellGreenStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
-                cellGreenStyle.FillPattern = FillPattern.SolidForeground;
-                cellGreenStyle.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
-
-                var cellRedStyle = workbook.CreateCellStyle();
-                cellRedStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
-                cellRedStyle.FillPattern = FillPattern.SolidForeground;
-                cellRedStyle.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
-
-                var cellYellowStyle = workbook.CreateCellStyle();
-                cellYellowStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Yellow.Index;
-                cellYellowStyle.FillPattern = FillPattern.SolidForeground;
-                cellYellowStyle.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
-
-                var cellGreenStylepercent = workbook.CreateCellStyle();
-                cellGreenStylepercent.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
-                cellGreenStylepercent.FillPattern = FillPattern.SolidForeground;
-                cellGreenStylepercent.DataFormat = formatIdpercentage == -1 ? format.GetFormat("0.0%") : formatIdpercentage;
-                cellGreenStylepercent.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
-
-                var cellRedStylepercent = workbook.CreateCellStyle();
-                cellRedStylepercent.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
-                cellRedStylepercent.FillPattern = FillPattern.SolidForeground;
-                cellRedStylepercent.DataFormat = formatIdpercentage == -1 ? format.GetFormat("0.0%") : formatIdpercentage;
-                cellRedStylepercent.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
-
-                var cellYellowStylepercent = workbook.CreateCellStyle();
-                cellYellowStylepercent.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Yellow.Index;
-                cellYellowStylepercent.FillPattern = FillPattern.SolidForeground;
-                cellYellowStylepercent.DataFormat = formatIdpercentage == -1 ? format.GetFormat("0.0%") : formatIdpercentage;
-                cellYellowStylepercent.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Black.Index;
-
-                #region Data Formmatter
-
-                var cellStyle = workbook.CreateCellStyle();
-                var cellStylepercentage = workbook.CreateCellStyle();
-                cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("#,##0");
-                var formatId = HSSFDataFormat.GetBuiltinFormat("0.00%");
-                cellStylepercentage.DataFormat = formatId == -1 ? format.GetFormat("0.00%") : formatId;
-
-                #endregion
-                //--------Data formatter ends
-
-                foreach (var item in manualDashboardList)
+                else
                 {
-                    row = sheet.CreateRow(rowIndex);
-                    row.CreateCell(0).SetCellType(CellType.Numeric);
-                    if (item.FormatType == 1)
-                    {
-                        row.GetCell(0).CellStyle = cellStyle;
-                        row.GetCell(0).SetCellValue(Convert.ToDouble(item.CMA));
-                    }
-                    else
-                    {
-                        row.GetCell(0).CellStyle = cellStylepercentage;
-                        row.GetCell(0).SetCellValue(Convert.ToDouble(item.CMA) / 100);
-                    }
-                    row.CreateCell(1).SetCellType(CellType.Numeric);
-                    if (item.FormatType == 1)
-                    {
-                        row.GetCell(1).CellStyle = cellStyle;
-                        row.GetCell(1).SetCellValue(Convert.ToDouble(item.CMB));
-                    }
-                    else
-                    {
-                        row.GetCell(1).CellStyle = cellStylepercentage;
-                        row.GetCell(1).SetCellValue(Convert.ToDouble(item.CMB) / 100);
-                    }
-                    row.CreateCell(2).SetCellType(CellType.Numeric);
-                    row.CreateCell(2).CellStyle = cellStyle;
-                    //switch (item.CMVarColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(2).CellStyle = cellGreenStyle;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(2).CellStyle = cellYellowStyle;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(2).CellStyle = cellRedStyle;
-                    //        break;
-                    //}
-                    row.GetCell(2).SetCellValue(Convert.ToDouble(item.CMVar));
-                    row.CreateCell(3).SetCellType(CellType.Numeric);
-                    row.GetCell(3).CellStyle = cellStylepercentage;
-                    //switch (item.CMVarPercentColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(3).CellStyle = cellGreenStylepercent;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(3).CellStyle = cellYellowStylepercent;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(3).CellStyle = cellRedStylepercent;
-                    //        break;
-                    //}
-                    row.GetCell(3).SetCellValue(Convert.ToDouble(item.CMVarPercentage));
-                    row.CreateCell(4).SetCellType(CellType.Numeric);
-                    if (item.FormatType == 1)
-                    {
-                        row.GetCell(4).CellStyle = cellStyle;
-                        row.GetCell(4).SetCellValue(Convert.ToDouble(item.PMA));
-                    }
-                    else
-                    {
-                        row.GetCell(4).CellStyle = cellStylepercentage;
-                        row.GetCell(4).SetCellValue(Convert.ToDouble(item.PMA) / 100);
-                    }
-                    row.CreateCell(5).SetCellType(CellType.Numeric);
-                    row.GetCell(5).CellStyle = cellStyle;
-                    //switch (item.PMAPercentColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(5).CellStyle = cellGreenStyle;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(5).CellStyle = cellYellowStyle;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(5).CellStyle = cellRedStyle;
-                    //        break;
-                    //}
-                    row.GetCell(5).SetCellValue(Convert.ToDouble(item.PMVar));
-                    row.CreateCell(6).SetCellType(CellType.Numeric);
-                    row.GetCell(6).CellStyle = cellStylepercentage;
-                    //switch (item.PMAPercentColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(6).CellStyle = cellGreenStylepercent;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(6).CellStyle = cellYellowStylepercent;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(6).CellStyle = cellRedStylepercent;
-                    //        break;
-                    //}
-                    row.GetCell(6).SetCellValue(Convert.ToDouble(item.PMVarPercentage));
-                    row.CreateCell(7).SetCellType(CellType.String);
-                    row.GetCell(7).SetCellValue((item.DashBoard));
-                    row.CreateCell(8).SetCellType(CellType.Numeric);
-                    if (item.FormatType == 1)
-                    {
-                        row.GetCell(8).CellStyle = cellStyle;
-                        row.GetCell(8).SetCellValue(Convert.ToDouble(item.CYTA));
-                    }
-                    else
-                    {
-                        row.GetCell(8).CellStyle = cellStylepercentage;
-                        row.GetCell(8).SetCellValue(Convert.ToDouble(item.CYTA) / 100);
-                    }
-                    row.CreateCell(9).SetCellType(CellType.Numeric);
-                    if (item.FormatType == 1)
-                    {
-                        row.GetCell(9).CellStyle = cellStyle;
-                        row.GetCell(9).SetCellValue(Convert.ToDouble(item.CYTB));
-                    }
-                    else
-                    {
-                        row.GetCell(9).CellStyle = cellStylepercentage;
-                        row.GetCell(9).SetCellValue(Convert.ToDouble(item.CYTB) / 100);
-                    }
-                    row.CreateCell(10).SetCellType(CellType.Numeric);
-                    row.GetCell(10).CellStyle = cellStyle;
-                    //switch (item.CYTAVarColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(10).CellStyle = cellGreenStyle;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(10).CellStyle = cellYellowStyle;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(10).CellStyle = cellRedStyle;
-                    //        break;
-                    //}
-                    row.GetCell(10).SetCellValue(Convert.ToDouble(item.CYTBVar));
-                    row.CreateCell(11).SetCellType(CellType.Numeric);
-                    row.GetCell(11).CellStyle = cellStylepercentage;
-                    //switch (item.CYTBPercentColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(11).CellStyle = cellGreenStylepercent;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(11).CellStyle = cellYellowStylepercent;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(11).CellStyle = cellRedStylepercent;
-                    //        break;
-                    //}
-                    row.GetCell(11).SetCellValue(Convert.ToDouble(item.CYTBVarPercentage));
-                    row.CreateCell(12).SetCellType(CellType.Numeric);
-                    if (item.FormatType == 1)
-                    {
-                        row.GetCell(12).CellStyle = cellStyle;
-                        row.GetCell(12).SetCellValue(Convert.ToDouble(item.PYTA));
-                    }
-                    else
-                    {
-                        row.GetCell(12).CellStyle = cellStylepercentage;
-                        row.GetCell(12).SetCellValue(Convert.ToDouble(item.PYTA) / 100);
-                    }
-                    row.CreateCell(13).SetCellType(CellType.Numeric);
-                    row.GetCell(13).CellStyle = cellStyle;
-                    //switch (item.PYTAColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(13).CellStyle = cellGreenStyle;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(13).CellStyle = cellYellowStyle;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(13).CellStyle = cellRedStyle;
-                    //        break;
-                    //}
-                    row.GetCell(13).SetCellValue(Convert.ToInt32(item.PYTBVar));
-                    row.CreateCell(14).SetCellType(CellType.Numeric);
-                    row.GetCell(14).CellStyle = cellStylepercentage;
-                    //switch (item.PYTAPercentColor)
-                    //{
-                    //    case "1":
-                    //        row.GetCell(14).CellStyle = cellGreenStylepercent;
-                    //        break;
-                    //    case "2":
-                    //        row.GetCell(14).CellStyle = cellYellowStylepercent;
-                    //        break;
-                    //    case "3":
-                    //        row.GetCell(14).CellStyle = cellRedStylepercent;
-                    //        break;
-                    //}
-                    row.GetCell(14).SetCellValue(Convert.ToInt32(item.PYTBVarPercentage));
-                    rowIndex++;
+                    row.GetCell(1).CellStyle = cellStylepercentage;
+                    row.GetCell(1).SetCellValue(Convert.ToDouble(item.CMB) / 100);
                 }
+                row.CreateCell(2).SetCellType(CellType.Numeric);
+                row.CreateCell(2).CellStyle = cellStyle;
+                //switch (item.CMVarColor)
+                //{
+                //    case "1":
+                //        row.GetCell(2).CellStyle = cellGreenStyle;
+                //        break;
+                //    case "2":
+                //        row.GetCell(2).CellStyle = cellYellowStyle;
+                //        break;
+                //    case "3":
+                //        row.GetCell(2).CellStyle = cellRedStyle;
+                //        break;
+                //}
+                row.GetCell(2).SetCellValue(Convert.ToDouble(item.CMVar));
+                row.CreateCell(3).SetCellType(CellType.Numeric);
+                row.GetCell(3).CellStyle = cellStylepercentage;
+                //switch (item.CMVarPercentColor)
+                //{
+                //    case "1":
+                //        row.GetCell(3).CellStyle = cellGreenStylepercent;
+                //        break;
+                //    case "2":
+                //        row.GetCell(3).CellStyle = cellYellowStylepercent;
+                //        break;
+                //    case "3":
+                //        row.GetCell(3).CellStyle = cellRedStylepercent;
+                //        break;
+                //}
+                row.GetCell(3).SetCellValue(Convert.ToDouble(item.CMVarPercentage));
+                row.CreateCell(4).SetCellType(CellType.Numeric);
+                if (item.FormatType == 1)
+                {
+                    row.GetCell(4).CellStyle = cellStyle;
+                    row.GetCell(4).SetCellValue(Convert.ToDouble(item.PMA));
+                }
+                else
+                {
+                    row.GetCell(4).CellStyle = cellStylepercentage;
+                    row.GetCell(4).SetCellValue(Convert.ToDouble(item.PMA) / 100);
+                }
+                row.CreateCell(5).SetCellType(CellType.Numeric);
+                row.GetCell(5).CellStyle = cellStyle;
+                //switch (item.PMAPercentColor)
+                //{
+                //    case "1":
+                //        row.GetCell(5).CellStyle = cellGreenStyle;
+                //        break;
+                //    case "2":
+                //        row.GetCell(5).CellStyle = cellYellowStyle;
+                //        break;
+                //    case "3":
+                //        row.GetCell(5).CellStyle = cellRedStyle;
+                //        break;
+                //}
+                row.GetCell(5).SetCellValue(Convert.ToDouble(item.PMVar));
+                row.CreateCell(6).SetCellType(CellType.Numeric);
+                row.GetCell(6).CellStyle = cellStylepercentage;
+                //switch (item.PMAPercentColor)
+                //{
+                //    case "1":
+                //        row.GetCell(6).CellStyle = cellGreenStylepercent;
+                //        break;
+                //    case "2":
+                //        row.GetCell(6).CellStyle = cellYellowStylepercent;
+                //        break;
+                //    case "3":
+                //        row.GetCell(6).CellStyle = cellRedStylepercent;
+                //        break;
+                //}
+                row.GetCell(6).SetCellValue(Convert.ToDouble(item.PMVarPercentage));
+                row.CreateCell(7).SetCellType(CellType.String);
+                row.GetCell(7).SetCellValue((item.DashBoard));
+                row.CreateCell(8).SetCellType(CellType.Numeric);
+                if (item.FormatType == 1)
+                {
+                    row.GetCell(8).CellStyle = cellStyle;
+                    row.GetCell(8).SetCellValue(Convert.ToDouble(item.CYTA));
+                }
+                else
+                {
+                    row.GetCell(8).CellStyle = cellStylepercentage;
+                    row.GetCell(8).SetCellValue(Convert.ToDouble(item.CYTA) / 100);
+                }
+                row.CreateCell(9).SetCellType(CellType.Numeric);
+                if (item.FormatType == 1)
+                {
+                    row.GetCell(9).CellStyle = cellStyle;
+                    row.GetCell(9).SetCellValue(Convert.ToDouble(item.CYTB));
+                }
+                else
+                {
+                    row.GetCell(9).CellStyle = cellStylepercentage;
+                    row.GetCell(9).SetCellValue(Convert.ToDouble(item.CYTB) / 100);
+                }
+                row.CreateCell(10).SetCellType(CellType.Numeric);
+                row.GetCell(10).CellStyle = cellStyle;
+                //switch (item.CYTAVarColor)
+                //{
+                //    case "1":
+                //        row.GetCell(10).CellStyle = cellGreenStyle;
+                //        break;
+                //    case "2":
+                //        row.GetCell(10).CellStyle = cellYellowStyle;
+                //        break;
+                //    case "3":
+                //        row.GetCell(10).CellStyle = cellRedStyle;
+                //        break;
+                //}
+                row.GetCell(10).SetCellValue(Convert.ToDouble(item.CYTBVar));
+                row.CreateCell(11).SetCellType(CellType.Numeric);
+                row.GetCell(11).CellStyle = cellStylepercentage;
+                //switch (item.CYTBPercentColor)
+                //{
+                //    case "1":
+                //        row.GetCell(11).CellStyle = cellGreenStylepercent;
+                //        break;
+                //    case "2":
+                //        row.GetCell(11).CellStyle = cellYellowStylepercent;
+                //        break;
+                //    case "3":
+                //        row.GetCell(11).CellStyle = cellRedStylepercent;
+                //        break;
+                //}
+                row.GetCell(11).SetCellValue(Convert.ToDouble(item.CYTBVarPercentage));
+                row.CreateCell(12).SetCellType(CellType.Numeric);
+                if (item.FormatType == 1)
+                {
+                    row.GetCell(12).CellStyle = cellStyle;
+                    row.GetCell(12).SetCellValue(Convert.ToDouble(item.PYTA));
+                }
+                else
+                {
+                    row.GetCell(12).CellStyle = cellStylepercentage;
+                    row.GetCell(12).SetCellValue(Convert.ToDouble(item.PYTA) / 100);
+                }
+                row.CreateCell(13).SetCellType(CellType.Numeric);
+                row.GetCell(13).CellStyle = cellStyle;
+                //switch (item.PYTAColor)
+                //{
+                //    case "1":
+                //        row.GetCell(13).CellStyle = cellGreenStyle;
+                //        break;
+                //    case "2":
+                //        row.GetCell(13).CellStyle = cellYellowStyle;
+                //        break;
+                //    case "3":
+                //        row.GetCell(13).CellStyle = cellRedStyle;
+                //        break;
+                //}
+                row.GetCell(13).SetCellValue(Convert.ToInt32(item.PYTBVar));
+                row.CreateCell(14).SetCellType(CellType.Numeric);
+                row.GetCell(14).CellStyle = cellStylepercentage;
+                //switch (item.PYTAPercentColor)
+                //{
+                //    case "1":
+                //        row.GetCell(14).CellStyle = cellGreenStylepercent;
+                //        break;
+                //    case "2":
+                //        row.GetCell(14).CellStyle = cellYellowStylepercent;
+                //        break;
+                //    case "3":
+                //        row.GetCell(14).CellStyle = cellRedStylepercent;
+                //        break;
+                //}
+                row.GetCell(14).SetCellValue(Convert.ToInt32(item.PYTBVarPercentage));
+                rowIndex++;
             }
             #endregion
 
@@ -4774,33 +4410,30 @@ namespace BillingSystem.Controllers
         public ActionResult ClinicalComplianceGraphsDataV1(int facilityId, int month, int facilityType, int segment, int department)
         {
             const string ClinicalComplianceGrpahsArray = "720,721,722,723";
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(ClinicalComplianceGrpahsArray), currentYear, facilityType, segment, department);
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+
+            var conversionRate = manualDashboardData.Where(x => x.Indicators == 720).ToList();
+            var patientinFunnel = manualDashboardData.Where(x => x.Indicators == 721).ToList();
+            var timefromFunneltoBed = manualDashboardData.Where(x => x.Indicators == 722).ToList();
+            var lostfromFunnel = manualDashboardData.Where(x => x.Indicators == 723).ToList();
+
+
+            var jsonResult = new
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(ClinicalComplianceGrpahsArray), currentYear, facilityType, segment, department);
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-
-                var conversionRate = manualDashboardData.Where(x => x.Indicators == 720).ToList();
-                var patientinFunnel = manualDashboardData.Where(x => x.Indicators == 721).ToList();
-                var timefromFunneltoBed = manualDashboardData.Where(x => x.Indicators == 722).ToList();
-                var lostfromFunnel = manualDashboardData.Where(x => x.Indicators == 723).ToList();
-
-
-                var jsonResult = new
-                {
-                    conversionRate,
-                    patientinFunnel,
-                    timefromFunneltoBed,
-                    lostfromFunnel
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                conversionRate,
+                patientinFunnel,
+                timefromFunneltoBed,
+                lostfromFunnel
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -4816,81 +4449,78 @@ namespace BillingSystem.Controllers
         {
             // var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             const string clinicalGrpahsArray = "750,174,830,832,758,756,180,181,186,175,752,754,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+            var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                Convert.ToString(clinicalGrpahsArray),
+                currentYear, facilityType, segment, department);
+
+            if (manualDashboardData.Any())
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
+
+            var totalsentinelevents = manualDashboardData.Where(x => x.Indicators == 750).ToList();
+            var patienFallRate = manualDashboardData.Where(x => x.Indicators == 174).ToList();
+            var totalNearmiss = manualDashboardData.Where(x => x.Indicators == 830).ToList();
+            var totaladverseincidents = manualDashboardData.Where(x => x.Indicators == 832).ToList();
+
+            var TotalMedicationErrors = manualDashboardData.Where(x => x.Indicators == 758).ToList();
+            var totalIncidentsReports = manualDashboardData.Where(x => x.Indicators == 756).ToList();
+            var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
+            var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
+
+            var handHygieneCompliance = manualDashboardData.Where(x => x.Indicators == 186).ToList();
+
+            var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
+            var averageFIMScorePAR = manualDashboardData.Where(x => x.Indicators == 752).ToList();
+            var averageFIMScoreLTC = manualDashboardData.Where(x => x.Indicators == 754).ToList();
+
+            var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
+            var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
+
+            var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
+            var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
+            var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
+            var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear).ToList();
+            var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
+            //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
+            var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
+
+            var customDataToreturn = new List<ManualDashboardCustomModel>();
+            var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
+            customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            var categoryofIncidents = customDataToreturn;
+
+
+            var jsonResult = new
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                    Convert.ToString(clinicalGrpahsArray),
-                    currentYear, facilityType, segment, department);
-
-                if (manualDashboardData.Any())
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-
-                var totalsentinelevents = manualDashboardData.Where(x => x.Indicators == 750).ToList();
-                var patienFallRate = manualDashboardData.Where(x => x.Indicators == 174).ToList();
-                var totalNearmiss = manualDashboardData.Where(x => x.Indicators == 830).ToList();
-                var totaladverseincidents = manualDashboardData.Where(x => x.Indicators == 832).ToList();
-
-                var TotalMedicationErrors = manualDashboardData.Where(x => x.Indicators == 758).ToList();
-                var totalIncidentsReports = manualDashboardData.Where(x => x.Indicators == 756).ToList();
-                var mdroRate = manualDashboardData.Where(x => x.Indicators == 180).ToList();
-                var mrsaRate = manualDashboardData.Where(x => x.Indicators == 181).ToList();
-
-                var handHygieneCompliance = manualDashboardData.Where(x => x.Indicators == 186).ToList();
-
-                var pressureUlcerIncidentRate = manualDashboardData.Where(x => x.Indicators == 175).ToList();
-                var averageFIMScorePAR = manualDashboardData.Where(x => x.Indicators == 752).ToList();
-                var averageFIMScoreLTC = manualDashboardData.Where(x => x.Indicators == 754).ToList();
-
-                var inappropriateAntiBioticUsageRate = manualDashboardData.Where(x => x.Indicators == 188).ToList();
-                var therapyInitialAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 189).ToList();
-
-                var manualHandlingRiskAssessmentProtocolCompliance = manualDashboardData.Where(x => x.Indicators == 190).ToList();
-                var standardizedOutcomeMeasureProtocol = manualDashboardData.Where(x => x.Indicators == 191).ToList();
-                var Incidents = manualDashboardData.Where(x => x.Indicators == 192).ToList();
-                var nonMedicationRelatedIncidents = manualDashboardData.Where(x => x.Indicators == 1312 && x.Year == currentYear).ToList();
-                var typeOfIncidents = manualDashboardData.Where(x => x.Indicators == 1313 && x.Year == currentYear).ToList();
-                //var categoryofIncidents = manualDashboardData.Where(x => x.Indicators == 1314).ToList();  //categoryofIncidents
-                var medicationErrors = manualDashboardData.Where(x => x.Indicators == 1311 && x.Year == currentYear).ToList();  //categoryofIncidents
-
-                var customDataToreturn = new List<ManualDashboardCustomModel>();
-                var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1309 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 1310 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 1314 && x.ExternalValue3 == "1").ToList();
-                customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                var categoryofIncidents = customDataToreturn;
-
-
-                var jsonResult = new
-                {
-                    totalsentinelevents,
-                    patienFallRate,
-                    totalNearmiss,
-                    totaladverseincidents,
-                    TotalMedicationErrors,
-                    totalIncidentsReports,
-                    mdroRate,
-                    mrsaRate,
-                    handHygieneCompliance,
-                    pressureUlcerIncidentRate,
-                    averageFIMScorePAR,
-                    averageFIMScoreLTC,
-                    inappropriateAntiBioticUsageRate,
-                    therapyInitialAssessmentProtocolCompliance,
-                    manualHandlingRiskAssessmentProtocolCompliance,
-                    standardizedOutcomeMeasureProtocol,
-                    Incidents,
-                    nonMedicationRelatedIncidents,
-                    typeOfIncidents,
-                    medicationErrors,
-                    categoryofIncidents
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                totalsentinelevents,
+                patienFallRate,
+                totalNearmiss,
+                totaladverseincidents,
+                TotalMedicationErrors,
+                totalIncidentsReports,
+                mdroRate,
+                mrsaRate,
+                handHygieneCompliance,
+                pressureUlcerIncidentRate,
+                averageFIMScorePAR,
+                averageFIMScoreLTC,
+                inappropriateAntiBioticUsageRate,
+                therapyInitialAssessmentProtocolCompliance,
+                manualHandlingRiskAssessmentProtocolCompliance,
+                standardizedOutcomeMeasureProtocol,
+                Incidents,
+                nonMedicationRelatedIncidents,
+                typeOfIncidents,
+                medicationErrors,
+                categoryofIncidents
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -4905,84 +4535,81 @@ namespace BillingSystem.Controllers
         public ActionResult GetHRGraphsData_New(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            const string HrGraphsIndicators = "1320,800,802,132,133,134,135,136,137,818,250,820,251,860,862,252,253,822";
+
+            var manualDashboardData = _dbService.GetManualDashBoard(
+                facilityId,
+                corporateid,
+                Convert.ToString(HrGraphsIndicators),
+                currentYear,
+                facilityType,
+                segment,
+                department);
+
+            if (manualDashboardData.Any())
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                const string HrGraphsIndicators = "1320,800,802,132,133,134,135,136,137,818,250,820,251,860,862,252,253,822";
-
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(
-                    facilityId,
-                    corporateid,
-                    Convert.ToString(HrGraphsIndicators),
-                    currentYear,
-                    facilityType,
-                    segment,
-                    department);
-
-                if (manualDashboardData.Any())
-                {
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                }
-
-                var physicianPositions = new List<ManualDashboardCustomModel>();
-                var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1320 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 800 && x.ExternalValue3 == "1").ToList();
-                var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 802 && x.ExternalValue3 == "1").ToList();
-                physicianPositions.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                physicianPositions.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                physicianPositions.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-
-                var clinicianPositions = new List<ManualDashboardCustomModel>();
-                var mclinicianPositions1 = manualDashboardData.Where(x => x.Indicators == 132 && x.ExternalValue3 == "1").ToList();
-                var mclinicianPositions2 = manualDashboardData.Where(x => x.Indicators == 133 && x.ExternalValue3 == "1").ToList();
-                var mclinicianPositions3 = manualDashboardData.Where(x => x.Indicators == 134 && x.ExternalValue3 == "1").ToList();
-                clinicianPositions.Add(mclinicianPositions1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                clinicianPositions.Add(mclinicianPositions2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                clinicianPositions.Add(mclinicianPositions3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-
-
-                var administrativePositions = new List<ManualDashboardCustomModel>();
-                var mAdministrativePositions1 = manualDashboardData.Where(x => x.Indicators == 135 && x.ExternalValue3 == "1").ToList();
-                var mAdministrativePositions2 = manualDashboardData.Where(x => x.Indicators == 136 && x.ExternalValue3 == "1").ToList();
-                var mAdministrativePositions3 = manualDashboardData.Where(x => x.Indicators == 137 && x.ExternalValue3 == "1").ToList();
-                administrativePositions.Add(mAdministrativePositions1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                administrativePositions.Add(mAdministrativePositions2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                administrativePositions.Add(mAdministrativePositions3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-
-                var totalPositions = manualDashboardData.Where(x => x.Indicators == 818).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
-                var administrationtotalStaff = manualDashboardData.Where(x => x.Indicators == 250).ToList();
-                var emiratizationRate = manualDashboardData.Where(x => x.Indicators == 820).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
-                var timeTakentoRecruitVacantPosition = manualDashboardData.Where(x => x.Indicators == 251).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
-
-                var attritionRate = new List<ManualDashboardCustomModel>();
-                var mattritionRate1 = manualDashboardData.Where(x => x.Indicators == 860 && x.ExternalValue3 == "1").ToList();
-                var mattritionRate2 = manualDashboardData.Where(x => x.Indicators == 862 && x.ExternalValue3 == "1").ToList();
-                attritionRate.Add(mattritionRate1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                attritionRate.Add(mattritionRate2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-
-                var overtimeRate = manualDashboardData.Where(x => x.Indicators == 822).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
-                var productiveHours = manualDashboardData.Where(x => x.Indicators == 252).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
-                var unproductiveHours = manualDashboardData.Where(x => x.Indicators == 253).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
-
-                var jsonResult = new
-                {
-                    physicianPositions,
-                    clinicianPositions,
-                    administrativePositions,
-                    totalPositions,
-                    administrationtotalStaff,
-                    emiratizationRate,
-                    timeTakentoRecruitVacantPosition,
-                    attritionRate,
-                    productiveHours,
-                    unproductiveHours,
-                    overtimeRate
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
             }
+
+            var physicianPositions = new List<ManualDashboardCustomModel>();
+            var manualDashboardData1 = manualDashboardData.Where(x => x.Indicators == 1320 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData2 = manualDashboardData.Where(x => x.Indicators == 800 && x.ExternalValue3 == "1").ToList();
+            var manualDashboardData3 = manualDashboardData.Where(x => x.Indicators == 802 && x.ExternalValue3 == "1").ToList();
+            physicianPositions.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            physicianPositions.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            physicianPositions.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+
+            var clinicianPositions = new List<ManualDashboardCustomModel>();
+            var mclinicianPositions1 = manualDashboardData.Where(x => x.Indicators == 132 && x.ExternalValue3 == "1").ToList();
+            var mclinicianPositions2 = manualDashboardData.Where(x => x.Indicators == 133 && x.ExternalValue3 == "1").ToList();
+            var mclinicianPositions3 = manualDashboardData.Where(x => x.Indicators == 134 && x.ExternalValue3 == "1").ToList();
+            clinicianPositions.Add(mclinicianPositions1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            clinicianPositions.Add(mclinicianPositions2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            clinicianPositions.Add(mclinicianPositions3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+
+
+            var administrativePositions = new List<ManualDashboardCustomModel>();
+            var mAdministrativePositions1 = manualDashboardData.Where(x => x.Indicators == 135 && x.ExternalValue3 == "1").ToList();
+            var mAdministrativePositions2 = manualDashboardData.Where(x => x.Indicators == 136 && x.ExternalValue3 == "1").ToList();
+            var mAdministrativePositions3 = manualDashboardData.Where(x => x.Indicators == 137 && x.ExternalValue3 == "1").ToList();
+            administrativePositions.Add(mAdministrativePositions1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            administrativePositions.Add(mAdministrativePositions2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            administrativePositions.Add(mAdministrativePositions3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+
+            var totalPositions = manualDashboardData.Where(x => x.Indicators == 818).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
+            var administrationtotalStaff = manualDashboardData.Where(x => x.Indicators == 250).ToList();
+            var emiratizationRate = manualDashboardData.Where(x => x.Indicators == 820).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
+            var timeTakentoRecruitVacantPosition = manualDashboardData.Where(x => x.Indicators == 251).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
+
+            var attritionRate = new List<ManualDashboardCustomModel>();
+            var mattritionRate1 = manualDashboardData.Where(x => x.Indicators == 860 && x.ExternalValue3 == "1").ToList();
+            var mattritionRate2 = manualDashboardData.Where(x => x.Indicators == 862 && x.ExternalValue3 == "1").ToList();
+            attritionRate.Add(mattritionRate1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+            attritionRate.Add(mattritionRate2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+
+            var overtimeRate = manualDashboardData.Where(x => x.Indicators == 822).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
+            var productiveHours = manualDashboardData.Where(x => x.Indicators == 252).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
+            var unproductiveHours = manualDashboardData.Where(x => x.Indicators == 253).OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ThenBy(m1 => m1.BudgetType).ToList();
+
+            var jsonResult = new
+            {
+                physicianPositions,
+                clinicianPositions,
+                administrativePositions,
+                totalPositions,
+                administrationtotalStaff,
+                emiratizationRate,
+                timeTakentoRecruitVacantPosition,
+                attritionRate,
+                productiveHours,
+                unproductiveHours,
+                overtimeRate
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -4997,67 +4624,64 @@ namespace BillingSystem.Controllers
         public ActionResult CamGetFinancialMGTGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            const string FinancialMgtIndicators = "110,111,113,115,280,259,256,257,258,260,281,282,117,142,1010,1015,1020";
+            var manualDashboardData = _dbService.GetManualDashBoard(
+                facilityId,
+                corporateid,
+                Convert.ToString(FinancialMgtIndicators),
+                currentYear,
+                facilityType,
+                segment,
+                department);
+            if (manualDashboardData.Any())
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                const string FinancialMgtIndicators = "110,111,113,115,280,259,256,257,258,260,281,282,117,142,1010,1015,1020";
-                var manualDashboardData = manualdashboardbal.GetManualDashBoard(
-                    facilityId,
-                    corporateid,
-                    Convert.ToString(FinancialMgtIndicators),
-                    currentYear,
-                    facilityType,
-                    segment,
-                    department);
-                if (manualDashboardData.Any())
-                {
-                    manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
-                }
-
-                var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
-                var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
-                var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
-                var otherGAExpenses = manualDashboardData.Where(x => x.Indicators == 115).ToList();
-                var facilityRentandUtilities = manualDashboardData.Where(x => x.Indicators == 280).ToList();
-                var otherdirectpatientrelatedcosts = manualDashboardData.Where(x => x.Indicators == 259).ToList();
-                var consumablesPPD = manualDashboardData.Where(x => x.Indicators == 256).ToList();
-                var pharmacyPPD = manualDashboardData.Where(x => x.Indicators == 257).ToList();
-                var fBPPD = manualDashboardData.Where(x => x.Indicators == 258).ToList();
-                var newmarketdevelopmentSWB = manualDashboardData.Where(x => x.Indicators == 260).ToList();
-                var marketingBDCosts = manualDashboardData.Where(x => x.Indicators == 281).ToList();
-                var newMarketDevelopmentOtherCosts = manualDashboardData.Where(x => x.Indicators == 282).ToList();
-                var deprandAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
-                var NursePatientRatio = manualDashboardData.Where(x => x.Indicators == 142 && x.SubCategory1 == "0").ToList();
-                var healthCareassistantPatientratio = manualDashboardData.Where(x => x.Indicators == 1010).ToList();
-                var therapistPatientratio = manualDashboardData.Where(x => x.Indicators == 1015).ToList();
-                var physicianPatientratio = manualDashboardData.Where(x => x.Indicators == 1020).ToList();
-
-                var jsonResult = new
-                {
-                    netRevenue,
-                    swbDirect,
-                    otherDirect,
-                    otherGAExpenses,
-                    facilityRentandUtilities,
-                    otherdirectpatientrelatedcosts,
-                    consumablesPPD,
-                    pharmacyPPD,
-                    fBPPD,
-                    newmarketdevelopmentSWB,
-                    marketingBDCosts,
-                    newMarketDevelopmentOtherCosts,
-                    deprandAmort,
-                    NursePatientRatio,
-                    healthCareassistantPatientratio,
-                    therapistPatientratio,
-                    physicianPatientratio
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                manualDashboardData = manualDashboardData.OrderBy(m => m.Indicators).ThenBy(m1 => m1.Year).ToList();
             }
+
+            var netRevenue = manualDashboardData.Where(x => x.Indicators == 110).ToList();
+            var swbDirect = manualDashboardData.Where(x => x.Indicators == 111).ToList();
+            var otherDirect = manualDashboardData.Where(x => x.Indicators == 113).ToList();
+            var otherGAExpenses = manualDashboardData.Where(x => x.Indicators == 115).ToList();
+            var facilityRentandUtilities = manualDashboardData.Where(x => x.Indicators == 280).ToList();
+            var otherdirectpatientrelatedcosts = manualDashboardData.Where(x => x.Indicators == 259).ToList();
+            var consumablesPPD = manualDashboardData.Where(x => x.Indicators == 256).ToList();
+            var pharmacyPPD = manualDashboardData.Where(x => x.Indicators == 257).ToList();
+            var fBPPD = manualDashboardData.Where(x => x.Indicators == 258).ToList();
+            var newmarketdevelopmentSWB = manualDashboardData.Where(x => x.Indicators == 260).ToList();
+            var marketingBDCosts = manualDashboardData.Where(x => x.Indicators == 281).ToList();
+            var newMarketDevelopmentOtherCosts = manualDashboardData.Where(x => x.Indicators == 282).ToList();
+            var deprandAmort = manualDashboardData.Where(x => x.Indicators == 117).ToList();
+            var NursePatientRatio = manualDashboardData.Where(x => x.Indicators == 142 && x.SubCategory1 == "0").ToList();
+            var healthCareassistantPatientratio = manualDashboardData.Where(x => x.Indicators == 1010).ToList();
+            var therapistPatientratio = manualDashboardData.Where(x => x.Indicators == 1015).ToList();
+            var physicianPatientratio = manualDashboardData.Where(x => x.Indicators == 1020).ToList();
+
+            var jsonResult = new
+            {
+                netRevenue,
+                swbDirect,
+                otherDirect,
+                otherGAExpenses,
+                facilityRentandUtilities,
+                otherdirectpatientrelatedcosts,
+                consumablesPPD,
+                pharmacyPPD,
+                fBPPD,
+                newmarketdevelopmentSWB,
+                marketingBDCosts,
+                newMarketDevelopmentOtherCosts,
+                deprandAmort,
+                NursePatientRatio,
+                healthCareassistantPatientratio,
+                therapistPatientratio,
+                physicianPatientratio
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -5076,91 +4700,88 @@ namespace BillingSystem.Controllers
         private List<ManualDashboardCustomModel> GetLocalSubCategoryCharts(int facilityID, int month, int facilityType, int segment,
             int Department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentYear = currentDateTime.Year;
+
+            var manualDashboardData = _dbService.GetSubCategoryCharts(
+                facilityID,
+                corporateId,
+                Convert.ToString(type),
+                currentYear,
+                facilityType,
+                segment,
+                Department);
+
+            // ......>Pie chart data Builder
+            if (type == "156" || type == "159" || type == "142" || type == "141" || type == "229" || type == "222" || type == "141")
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                var manualDashboardData = manualdashboardbal.GetSubCategoryCharts(
-                    facilityID,
-                    corporateId,
-                    Convert.ToString(type),
-                    currentYear,
-                    facilityType,
-                    segment,
-                    Department);
-
-                // ......>Pie chart data Builder
-                if (type == "156" || type == "159" || type == "142" || type == "141" || type == "229" || type == "222" || type == "141")
+                if (manualDashboardData.Any())
                 {
-                    if (manualDashboardData.Any())
+                    manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 2).ToList();
+                    var newIndicatorLine = new ManualDashboardCustomModel
                     {
-                        manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 2).ToList();
-                        var newIndicatorLine = new ManualDashboardCustomModel
-                        {
-                            M1 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M1)).ToString(),
-                            M2 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M2)).ToString(),
-                            M3 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M3)).ToString(),
-                            M4 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M4)).ToString(),
-                            M5 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M5)).ToString(),
-                            M6 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M6)).ToString(),
-                            M7 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M7)).ToString(),
-                            M8 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M8)).ToString(),
-                            M9 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M9)).ToString(),
-                            M10 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M10)).ToString(),
-                            M11 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M11)).ToString(),
-                            M12 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M12)).ToString(),
-                        };
-                        var lastrow = newIndicatorLine;
-                        foreach (var item in manualDashboardData)
-                        {
-                            item.M1 = lastrow.M1 != "0.00"
-                                ? ((Convert.ToDecimal(item.M1) / Convert.ToDecimal(lastrow.M1)) * 100).ToString()
-                                : "0.00";
-                            item.M2 = lastrow.M2 != "0.00"
-                                ? ((Convert.ToDecimal(item.M2) / Convert.ToDecimal(lastrow.M2)) * 100).ToString()
-                                : "0.00";
-                            item.M3 = lastrow.M3 != "0.00"
-                                ? ((Convert.ToDecimal(item.M3) / Convert.ToDecimal(lastrow.M3)) * 100).ToString()
-                                : "0.00";
-                            item.M4 = lastrow.M4 != "0.00"
-                                ? ((Convert.ToDecimal(item.M4) / Convert.ToDecimal(lastrow.M4)) * 100).ToString()
-                                : "0.00";
-                            item.M5 = lastrow.M5 != "0.00"
-                                ? ((Convert.ToDecimal(item.M5) / Convert.ToDecimal(lastrow.M5)) * 100).ToString()
-                                : "0.00";
-                            item.M6 = lastrow.M6 != "0.00"
-                                ? ((Convert.ToDecimal(item.M6) / Convert.ToDecimal(lastrow.M6)) * 100).ToString()
-                                : "0.00";
-                            item.M7 = lastrow.M7 != "0.00"
-                                ? ((Convert.ToDecimal(item.M7) / Convert.ToDecimal(lastrow.M7)) * 100).ToString()
-                                : "0.00";
-                            item.M8 = lastrow.M8 != "0.00"
-                                ? ((Convert.ToDecimal(item.M8) / Convert.ToDecimal(lastrow.M8)) * 100).ToString()
-                                : "0.00";
-                            item.M9 = lastrow.M9 != "0.00"
-                                ? ((Convert.ToDecimal(item.M9) / Convert.ToDecimal(lastrow.M9)) * 100).ToString()
-                                : "0.00";
-                            item.M10 = lastrow.M10 != "0.00"
-                                ? ((Convert.ToDecimal(item.M10) / Convert.ToDecimal(lastrow.M10)) * 100).ToString()
-                                : "0.00";
-                            item.M11 = lastrow.M11 != "0.00"
-                                ? ((Convert.ToDecimal(item.M11) / Convert.ToDecimal(lastrow.M11)) * 100).ToString()
-                                : "0.00";
-                            item.M12 = lastrow.M12 != "0.00"
-                                ? ((Convert.ToDecimal(item.M12) / Convert.ToDecimal(lastrow.M12)) * 100).ToString()
-                                : "0.00";
-                        }
+                        M1 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M1)).ToString(),
+                        M2 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M2)).ToString(),
+                        M3 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M3)).ToString(),
+                        M4 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M4)).ToString(),
+                        M5 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M5)).ToString(),
+                        M6 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M6)).ToString(),
+                        M7 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M7)).ToString(),
+                        M8 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M8)).ToString(),
+                        M9 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M9)).ToString(),
+                        M10 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M10)).ToString(),
+                        M11 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M11)).ToString(),
+                        M12 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M12)).ToString(),
+                    };
+                    var lastrow = newIndicatorLine;
+                    foreach (var item in manualDashboardData)
+                    {
+                        item.M1 = lastrow.M1 != "0.00"
+                            ? ((Convert.ToDecimal(item.M1) / Convert.ToDecimal(lastrow.M1)) * 100).ToString()
+                            : "0.00";
+                        item.M2 = lastrow.M2 != "0.00"
+                            ? ((Convert.ToDecimal(item.M2) / Convert.ToDecimal(lastrow.M2)) * 100).ToString()
+                            : "0.00";
+                        item.M3 = lastrow.M3 != "0.00"
+                            ? ((Convert.ToDecimal(item.M3) / Convert.ToDecimal(lastrow.M3)) * 100).ToString()
+                            : "0.00";
+                        item.M4 = lastrow.M4 != "0.00"
+                            ? ((Convert.ToDecimal(item.M4) / Convert.ToDecimal(lastrow.M4)) * 100).ToString()
+                            : "0.00";
+                        item.M5 = lastrow.M5 != "0.00"
+                            ? ((Convert.ToDecimal(item.M5) / Convert.ToDecimal(lastrow.M5)) * 100).ToString()
+                            : "0.00";
+                        item.M6 = lastrow.M6 != "0.00"
+                            ? ((Convert.ToDecimal(item.M6) / Convert.ToDecimal(lastrow.M6)) * 100).ToString()
+                            : "0.00";
+                        item.M7 = lastrow.M7 != "0.00"
+                            ? ((Convert.ToDecimal(item.M7) / Convert.ToDecimal(lastrow.M7)) * 100).ToString()
+                            : "0.00";
+                        item.M8 = lastrow.M8 != "0.00"
+                            ? ((Convert.ToDecimal(item.M8) / Convert.ToDecimal(lastrow.M8)) * 100).ToString()
+                            : "0.00";
+                        item.M9 = lastrow.M9 != "0.00"
+                            ? ((Convert.ToDecimal(item.M9) / Convert.ToDecimal(lastrow.M9)) * 100).ToString()
+                            : "0.00";
+                        item.M10 = lastrow.M10 != "0.00"
+                            ? ((Convert.ToDecimal(item.M10) / Convert.ToDecimal(lastrow.M10)) * 100).ToString()
+                            : "0.00";
+                        item.M11 = lastrow.M11 != "0.00"
+                            ? ((Convert.ToDecimal(item.M11) / Convert.ToDecimal(lastrow.M11)) * 100).ToString()
+                            : "0.00";
+                        item.M12 = lastrow.M12 != "0.00"
+                            ? ((Convert.ToDecimal(item.M12) / Convert.ToDecimal(lastrow.M12)) * 100).ToString()
+                            : "0.00";
                     }
                 }
-                // ......>Bar chart data Builder
-                else if (type == "192")
-                {
-                    manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 1).ToList();
-                }
-                return (manualDashboardData.Any() ? manualDashboardData : null);
             }
+            // ......>Bar chart data Builder
+            else if (type == "192")
+            {
+                manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 1).ToList();
+            }
+            return (manualDashboardData.Any() ? manualDashboardData : null);
         }
         /// <summary>
         /// 
@@ -5175,85 +4796,82 @@ namespace BillingSystem.Controllers
         private List<ManualDashboardCustomModel> GetSubCategoryChartsPayorMix(int facilityID, int month, int facilityType, int segment,
             int Department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentYear = currentDateTime.Year;
 
-                var manualDashboardData = manualdashboardbal.GetSubCategoryChartsPayorMix(facilityID, corporateId,
-                    Convert.ToString(type),
-                    currentYear, facilityType, segment, Department);
-                //......>Pie chart data Builder
-                if (type == "156" || type == "159" || type == "142" || type == "141" || type == "229" || type == "222")
+            var manualDashboardData = _dbService.GetSubCategoryChartsPayorMix(facilityID, corporateId,
+                Convert.ToString(type),
+                currentYear, facilityType, segment, Department);
+            //......>Pie chart data Builder
+            if (type == "156" || type == "159" || type == "142" || type == "141" || type == "229" || type == "222")
+            {
+                if (manualDashboardData.Any())
                 {
-                    if (manualDashboardData.Any())
+                    manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 2).ToList();
+                    var newIndicatorLine = new ManualDashboardCustomModel
                     {
-                        manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 2).ToList();
-                        var newIndicatorLine = new ManualDashboardCustomModel
-                        {
-                            M1 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M1)).ToString(),
-                            M2 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M2)).ToString(),
-                            M3 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M3)).ToString(),
-                            M4 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M4)).ToString(),
-                            M5 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M5)).ToString(),
-                            M6 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M6)).ToString(),
-                            M7 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M7)).ToString(),
-                            M8 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M8)).ToString(),
-                            M9 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M9)).ToString(),
-                            M10 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M10)).ToString(),
-                            M11 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M11)).ToString(),
-                            M12 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M12)).ToString(),
-                        };
-                        var lastrow = newIndicatorLine;
-                        foreach (var item in manualDashboardData)
-                        {
-                            item.M1 = lastrow.M1 != "0.00" && lastrow.M1 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M1) / Convert.ToDecimal(lastrow.M1)) * 100).ToString()
-                                : "0.00";
-                            item.M2 = lastrow.M2 != "0.00" && lastrow.M2 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M2) / Convert.ToDecimal(lastrow.M2)) * 100).ToString()
-                                : "0.00";
-                            item.M3 = lastrow.M3 != "0.00" && lastrow.M3 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M3) / Convert.ToDecimal(lastrow.M3)) * 100).ToString()
-                                : "0.00";
-                            item.M4 = lastrow.M4 != "0.00" && lastrow.M4 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M4) / Convert.ToDecimal(lastrow.M4)) * 100).ToString()
-                                : "0.00";
-                            item.M5 = lastrow.M5 != "0.00" && lastrow.M5 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M5) / Convert.ToDecimal(lastrow.M5)) * 100).ToString()
-                                : "0.00";
-                            item.M6 = lastrow.M6 != "0.00" && lastrow.M6 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M6) / Convert.ToDecimal(lastrow.M6)) * 100).ToString()
-                                : "0.00";
-                            item.M7 = lastrow.M7 != "0.0000" && lastrow.M7 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M7) / Convert.ToDecimal(lastrow.M7)) * 100).ToString()
-                                : "0.0000";
-                            item.M8 = lastrow.M8 != "0.0000" && lastrow.M8 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M8) / Convert.ToDecimal(lastrow.M8)) * 100).ToString()
-                                : "0.0000";
-                            item.M9 = lastrow.M9 != "0.0000" && lastrow.M9 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M9) / Convert.ToDecimal(lastrow.M9)) * 100).ToString()
-                                : "0.0000";
-                            item.M10 = lastrow.M10 != "0.0000" && lastrow.M10 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M10) / Convert.ToDecimal(lastrow.M10)) * 100).ToString()
-                                : "0.0000";
-                            item.M11 = lastrow.M11 != "0.0000" && lastrow.M11 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M11) / Convert.ToDecimal(lastrow.M11)) * 100).ToString()
-                                : "0.0000";
-                            item.M12 = lastrow.M12 != "0.0000" && lastrow.M12 != "0.0000"
-                                ? ((Convert.ToDecimal(item.M12) / Convert.ToDecimal(lastrow.M12)) * 100).ToString()
-                                : "0.0000";
-                        }
+                        M1 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M1)).ToString(),
+                        M2 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M2)).ToString(),
+                        M3 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M3)).ToString(),
+                        M4 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M4)).ToString(),
+                        M5 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M5)).ToString(),
+                        M6 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M6)).ToString(),
+                        M7 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M7)).ToString(),
+                        M8 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M8)).ToString(),
+                        M9 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M9)).ToString(),
+                        M10 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M10)).ToString(),
+                        M11 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M11)).ToString(),
+                        M12 = manualDashboardData.Sum(x => Convert.ToDecimal(x.M12)).ToString(),
+                    };
+                    var lastrow = newIndicatorLine;
+                    foreach (var item in manualDashboardData)
+                    {
+                        item.M1 = lastrow.M1 != "0.00" && lastrow.M1 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M1) / Convert.ToDecimal(lastrow.M1)) * 100).ToString()
+                            : "0.00";
+                        item.M2 = lastrow.M2 != "0.00" && lastrow.M2 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M2) / Convert.ToDecimal(lastrow.M2)) * 100).ToString()
+                            : "0.00";
+                        item.M3 = lastrow.M3 != "0.00" && lastrow.M3 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M3) / Convert.ToDecimal(lastrow.M3)) * 100).ToString()
+                            : "0.00";
+                        item.M4 = lastrow.M4 != "0.00" && lastrow.M4 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M4) / Convert.ToDecimal(lastrow.M4)) * 100).ToString()
+                            : "0.00";
+                        item.M5 = lastrow.M5 != "0.00" && lastrow.M5 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M5) / Convert.ToDecimal(lastrow.M5)) * 100).ToString()
+                            : "0.00";
+                        item.M6 = lastrow.M6 != "0.00" && lastrow.M6 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M6) / Convert.ToDecimal(lastrow.M6)) * 100).ToString()
+                            : "0.00";
+                        item.M7 = lastrow.M7 != "0.0000" && lastrow.M7 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M7) / Convert.ToDecimal(lastrow.M7)) * 100).ToString()
+                            : "0.0000";
+                        item.M8 = lastrow.M8 != "0.0000" && lastrow.M8 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M8) / Convert.ToDecimal(lastrow.M8)) * 100).ToString()
+                            : "0.0000";
+                        item.M9 = lastrow.M9 != "0.0000" && lastrow.M9 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M9) / Convert.ToDecimal(lastrow.M9)) * 100).ToString()
+                            : "0.0000";
+                        item.M10 = lastrow.M10 != "0.0000" && lastrow.M10 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M10) / Convert.ToDecimal(lastrow.M10)) * 100).ToString()
+                            : "0.0000";
+                        item.M11 = lastrow.M11 != "0.0000" && lastrow.M11 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M11) / Convert.ToDecimal(lastrow.M11)) * 100).ToString()
+                            : "0.0000";
+                        item.M12 = lastrow.M12 != "0.0000" && lastrow.M12 != "0.0000"
+                            ? ((Convert.ToDecimal(item.M12) / Convert.ToDecimal(lastrow.M12)) * 100).ToString()
+                            : "0.0000";
                     }
                 }
-                //......>Bar chart data Builder
-                else if (type == "192")
-                {
-                    manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 1).ToList();
-                }
-                return (manualDashboardData.Any() ? manualDashboardData : null);
             }
+            //......>Bar chart data Builder
+            else if (type == "192")
+            {
+                manualDashboardData = manualDashboardData.Where(x => x.BudgetType == 1).ToList();
+            }
+            return (manualDashboardData.Any() ? manualDashboardData : null);
         }
         /// <summary>
         /// Gets the local year to date data.
@@ -5268,21 +4886,18 @@ namespace BillingSystem.Controllers
         private ExternalDashboardModel GetLocalYearToDateData(int facilityID, int month, int facilityType, int segment,
            int Department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
-            {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentYear = currentDateTime.Year;
 
-                var customDate = month == 0
-                    ? currentDateTime.ToShortDateString()
-                    : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
-                var manualDashboardList = manualdashboardbal.GetManualDashBoardStatData(facilityID,
-                    Helpers.GetSysAdminCorporateID(), "", customDate, facilityType, segment, Department);
-                var datatoreturn = manualDashboardList != null
-                    ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == type)
-                    : null;
-                return (datatoreturn ?? null);
-            }
+            var customDate = month == 0
+                ? currentDateTime.ToShortDateString()
+                : Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
+            var manualDashboardList = _dbService.GetManualDashBoardStatData(facilityID,
+                Helpers.GetSysAdminCorporateID(), "", customDate, facilityType, segment, Department);
+            var datatoreturn = manualDashboardList != null
+                ? manualDashboardList.SingleOrDefault(x => x.IndicatorNumber == type)
+                : null;
+            return (datatoreturn ?? null);
         }
 
         /// <summary>
@@ -5412,7 +5027,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetPatientDaysAll(List<ManualDashboardCustomModel> patientDaysList)
         {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
             var currentYear = currentDateTime.Year;
 
             var newPatientDays = new List<ManualDashboardCustomModel>();
@@ -5530,7 +5145,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetADCByServiceCodePerMonth(List<ManualDashboardCustomModel> patientDaysList)
         {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
             var currentYear = currentDateTime.Year;
 
             var patientDaysForeachMonth = patientDaysList.Where(x => x.BudgetType == 2 && x.Year == currentYear).ToList();
@@ -5564,79 +5179,76 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetGraphsData(int facilityId, int month, int facilityType, int segment, int department, string type)
         {
-            using (var manualdashboardbal = new DashboardBudgetBal())
+            var manualDashboardData = new List<ManualDashboardCustomModel>();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentYear = currentDateTime.Year;
+
+            if (type == "124")
             {
-                var manualDashboardData = new List<ManualDashboardCustomModel>();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var currentYear = currentDateTime.Year;
-
-                if (type == "124")
-                {
-                    var totalOperatingExpenditures = manualdashboardbal.GetManualDashBoard(facilityId,
-                        Helpers.GetSysAdminCorporateID(), "165", currentYear, facilityType, segment, department);
-                    var netCapitalExpendureOperations =
-                        manualdashboardbal.GetManualDashBoard(facilityId,
-                            Helpers.GetSysAdminCorporateID(), "127", currentYear, facilityType, segment, department);
-                    var netCashCollection = manualdashboardbal.GetManualDashBoard(facilityId,
-                        Helpers.GetSysAdminCorporateID(), "143", currentYear, facilityType, segment, department);
-                    manualDashboardData.AddRange(netCashCollection.Where(x => x.BudgetType == 2 && x.Year == currentYear));
-                    manualDashboardData.AddRange(totalOperatingExpenditures.Where(x => x.BudgetType == 2 && x.Year == currentYear));
-                    manualDashboardData.AddRange(netCapitalExpendureOperations.Where(x => x.BudgetType == 2 && x.Year == currentYear));
-                }
-                else if (type == "121")
-                {
-                    var sumofFields = manualdashboardbal.GetManualDashBoard(facilityId, corporateId, Convert.ToString(type),
-                       currentYear, facilityType, segment, department);
-                    var fieldtoDivide = manualdashboardbal.GetManualDashBoard(facilityId, corporateId, Convert.ToString("110"),
-                       currentYear, facilityType, segment, department);
-                    foreach (var item in sumofFields)
-                    {
-                        var fd = fieldtoDivide.FirstOrDefault(x => x.BudgetType == item.BudgetType && x.Year == item.Year);
-                        if (fd != null)
-                        {
-                            item.M1 = fd.M1 == "0.00" ? (Convert.ToDecimal(item.M1) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M1) / Convert.ToDecimal(fd.M1)).ToString();
-                            item.M2 = fd.M2 == "0.00" ? (Convert.ToDecimal(item.M2) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M2) / Convert.ToDecimal(fd.M2)).ToString();
-                            item.M3 = fd.M3 == "0.00" ? (Convert.ToDecimal(item.M3) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M3) / Convert.ToDecimal(fd.M3)).ToString();
-                            item.M4 = fd.M4 == "0.00" ? (Convert.ToDecimal(item.M4) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M4) / Convert.ToDecimal(fd.M4)).ToString();
-                            item.M5 = fd.M5 == "0.00" ? (Convert.ToDecimal(item.M5) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M5) / Convert.ToDecimal(fd.M5)).ToString();
-                            item.M6 = fd.M6 == "0.00" ? (Convert.ToDecimal(item.M6) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M6) / Convert.ToDecimal(fd.M6)).ToString();
-                            item.M7 = fd.M7 == "0.00" ? (Convert.ToDecimal(item.M7) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M7) / Convert.ToDecimal(fd.M7)).ToString();
-                            item.M8 = fd.M8 == "0.00" ? (Convert.ToDecimal(item.M8) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M8) / Convert.ToDecimal(fd.M8)).ToString();
-                            item.M9 = fd.M9 == "0.00" ? (Convert.ToDecimal(item.M9) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M9) / Convert.ToDecimal(fd.M9)).ToString();
-                            item.M10 = fd.M10 == "0.00" ? (Convert.ToDecimal(item.M10) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M10) / Convert.ToDecimal(fd.M10)).ToString();
-                            item.M11 = fd.M11 == "0.00" ? (Convert.ToDecimal(item.M11) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M11) / Convert.ToDecimal(fd.M11)).ToString();
-                            item.M12 = fd.M12 == "0.00" ? (Convert.ToDecimal(item.M12) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M12) / Convert.ToDecimal(fd.M12)).ToString();
-                        }
-                    }
-                    manualDashboardData.AddRange(sumofFields);
-                }
-                else if (type == "1314")
-                {
-                    var customDataToreturn = new List<ManualDashboardCustomModel>();
-                    var manualDashboardData1 = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                       Convert.ToString("1309"),
-                       currentYear, facilityType, segment, department);
-                    var manualDashboardData2 = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                       Convert.ToString("1310"),
-                       currentYear, facilityType, segment, department);
-                    var manualDashboardData3 = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                       Convert.ToString("1314"),
-                       currentYear, facilityType, segment, department);
-
-                    customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                    customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                    customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
-                    return customDataToreturn;
-                }
-                else
-                {
-                    manualDashboardData = manualdashboardbal.GetManualDashBoard(facilityId, corporateId,
-                        Convert.ToString(type),
-                        currentYear, facilityType, segment, department);
-                }
-                return manualDashboardData;
+                var totalOperatingExpenditures = _dbService.GetManualDashBoard(facilityId,
+                    Helpers.GetSysAdminCorporateID(), "165", currentYear, facilityType, segment, department);
+                var netCapitalExpendureOperations =
+                    _dbService.GetManualDashBoard(facilityId,
+                        Helpers.GetSysAdminCorporateID(), "127", currentYear, facilityType, segment, department);
+                var netCashCollection = _dbService.GetManualDashBoard(facilityId,
+                    Helpers.GetSysAdminCorporateID(), "143", currentYear, facilityType, segment, department);
+                manualDashboardData.AddRange(netCashCollection.Where(x => x.BudgetType == 2 && x.Year == currentYear));
+                manualDashboardData.AddRange(totalOperatingExpenditures.Where(x => x.BudgetType == 2 && x.Year == currentYear));
+                manualDashboardData.AddRange(netCapitalExpendureOperations.Where(x => x.BudgetType == 2 && x.Year == currentYear));
             }
+            else if (type == "121")
+            {
+                var sumofFields = _dbService.GetManualDashBoard(facilityId, corporateId, Convert.ToString(type),
+                   currentYear, facilityType, segment, department);
+                var fieldtoDivide = _dbService.GetManualDashBoard(facilityId, corporateId, Convert.ToString("110"),
+                   currentYear, facilityType, segment, department);
+                foreach (var item in sumofFields)
+                {
+                    var fd = fieldtoDivide.FirstOrDefault(x => x.BudgetType == item.BudgetType && x.Year == item.Year);
+                    if (fd != null)
+                    {
+                        item.M1 = fd.M1 == "0.00" ? (Convert.ToDecimal(item.M1) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M1) / Convert.ToDecimal(fd.M1)).ToString();
+                        item.M2 = fd.M2 == "0.00" ? (Convert.ToDecimal(item.M2) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M2) / Convert.ToDecimal(fd.M2)).ToString();
+                        item.M3 = fd.M3 == "0.00" ? (Convert.ToDecimal(item.M3) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M3) / Convert.ToDecimal(fd.M3)).ToString();
+                        item.M4 = fd.M4 == "0.00" ? (Convert.ToDecimal(item.M4) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M4) / Convert.ToDecimal(fd.M4)).ToString();
+                        item.M5 = fd.M5 == "0.00" ? (Convert.ToDecimal(item.M5) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M5) / Convert.ToDecimal(fd.M5)).ToString();
+                        item.M6 = fd.M6 == "0.00" ? (Convert.ToDecimal(item.M6) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M6) / Convert.ToDecimal(fd.M6)).ToString();
+                        item.M7 = fd.M7 == "0.00" ? (Convert.ToDecimal(item.M7) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M7) / Convert.ToDecimal(fd.M7)).ToString();
+                        item.M8 = fd.M8 == "0.00" ? (Convert.ToDecimal(item.M8) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M8) / Convert.ToDecimal(fd.M8)).ToString();
+                        item.M9 = fd.M9 == "0.00" ? (Convert.ToDecimal(item.M9) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M9) / Convert.ToDecimal(fd.M9)).ToString();
+                        item.M10 = fd.M10 == "0.00" ? (Convert.ToDecimal(item.M10) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M10) / Convert.ToDecimal(fd.M10)).ToString();
+                        item.M11 = fd.M11 == "0.00" ? (Convert.ToDecimal(item.M11) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M11) / Convert.ToDecimal(fd.M11)).ToString();
+                        item.M12 = fd.M12 == "0.00" ? (Convert.ToDecimal(item.M12) / Convert.ToDecimal(1)).ToString() : (Convert.ToDecimal(item.M12) / Convert.ToDecimal(fd.M12)).ToString();
+                    }
+                }
+                manualDashboardData.AddRange(sumofFields);
+            }
+            else if (type == "1314")
+            {
+                var customDataToreturn = new List<ManualDashboardCustomModel>();
+                var manualDashboardData1 = _dbService.GetManualDashBoard(facilityId, corporateId,
+                   Convert.ToString("1309"),
+                   currentYear, facilityType, segment, department);
+                var manualDashboardData2 = _dbService.GetManualDashBoard(facilityId, corporateId,
+                   Convert.ToString("1310"),
+                   currentYear, facilityType, segment, department);
+                var manualDashboardData3 = _dbService.GetManualDashBoard(facilityId, corporateId,
+                   Convert.ToString("1314"),
+                   currentYear, facilityType, segment, department);
+
+                customDataToreturn.Add(manualDashboardData1.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+                customDataToreturn.Add(manualDashboardData3.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+                customDataToreturn.Add(manualDashboardData2.FirstOrDefault(x => x.BudgetType == 2 && x.Year == currentYear));
+                return customDataToreturn;
+            }
+            else
+            {
+                manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
+                    Convert.ToString(type),
+                    currentYear, facilityType, segment, department);
+            }
+            return manualDashboardData;
         }
 
 

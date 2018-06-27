@@ -1,36 +1,22 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CarePlanController.cs" company="Spadez">
-//   OmniHealthcare
-// </copyright>
-// </Screen Owner>
-// Shashank Modified on : Feb 09 2016
-// </Screen Owner>
-// <summary>
-//   The holiday planner controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
-using System;
+﻿using System;
 using System.Linq;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using System.Web.Mvc;
+using BillingSystem.Models;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
-    #region System Referneces
-    using System.Web.Mvc;
-    #endregion
-
-    #region Project Referneces
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Models;
-    #endregion
-
-    /// <summary>
-    /// CarePlan controller.
-    /// </summary>
     public class CarePlanController : Controller
     {
+        private readonly ICarePlanService _service;
+
+        public CarePlanController(ICarePlanService service)
+        {
+            _service = service;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -43,19 +29,16 @@ namespace BillingSystem.Controllers
             int corporateId = Helpers.GetSysAdminCorporateID();
             int faclityId = Helpers.GetDefaultFacilityId();
 
-            // Initialize the CarePlan BAL object
-            using (var carePlanBal = new CarePlanBal())
+            // Get the facilities list
+            // var carePlanList = carePlanBal.GetCarePlan();
+            var carePlanList = _service.GetActiveCarePlan(corporateId, faclityId, Convert.ToBoolean(val));
+            if (carePlanList.Count > 0)
             {
-                // Get the facilities list
-                // var carePlanList = carePlanBal.GetCarePlan();
-                var carePlanList = carePlanBal.GetActiveCarePlan(corporateId, faclityId, Convert.ToBoolean(val));
-                if (carePlanList.Count > 0)
-                {
-                    carePlanList = carePlanList.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
-                }
-                // Pass the ActionResult with List of CarePlanViewModel object to Partial View CarePlanList
-                return PartialView(PartialViews.CarePlanList, carePlanList);
+                carePlanList = carePlanList.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
             }
+            // Pass the ActionResult with List of CarePlanViewModel object to Partial View CarePlanList
+            return PartialView(PartialViews.CarePlanList, carePlanList);
+
         }
 
         /// <summary>
@@ -70,24 +53,22 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteCarePlan(int id, bool inActive)
         {
-            using (var bal = new CarePlanBal())
+            // Get CarePlan model object by current CarePlan ID
+            var currentCarePlan = _service.GetCarePlanById(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            // Check If CarePlan model is not null
+            if (currentCarePlan != null)
             {
-                // Get CarePlan model object by current CarePlan ID
-                var currentCarePlan = bal.GetCarePlanById(id);
-                var userId = Helpers.GetLoggedInUserId();
+                currentCarePlan.IsActive = false;
+                int result = inActive
+                    ? _service.SaveCarePlan(currentCarePlan, inActive ? 1 : 0)
+                    : _service.DeleteCarePlan(currentCarePlan);
 
-                // Check If CarePlan model is not null
-                if (currentCarePlan != null)
-                {
-                    currentCarePlan.IsActive = false;
-                    int result = inActive
-                        ? bal.SaveCarePlan(currentCarePlan, inActive ? 1 : 0)
-                        : bal.DeleteCarePlan(currentCarePlan);
-
-                    // return deleted ID of current CarePlan as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                // return deleted ID of current CarePlan as Json Result to the Ajax Call.
+                return Json(result);
             }
+
 
             // Return the Json result as Action Result back JSON Call Success
             return Json(null);
@@ -106,12 +87,9 @@ namespace BillingSystem.Controllers
             int corporateId = Helpers.GetSysAdminCorporateID();
             int faclityId = Helpers.GetDefaultFacilityId();
 
-            // Initialize the CarePlan BAL object
-            var carePlanBal = new CarePlanBal();
-
             // Get the Entity list
             // var carePlanList = carePlanBal.GetCarePlan();
-            var carePlanList = carePlanBal.GetActiveCarePlan(corporateId, faclityId, true);
+            var carePlanList = _service.GetActiveCarePlan(corporateId, faclityId, true);
 
             // Intialize the View Model i.e. CarePlanView which is binded to Main View Index.cshtml under CarePlan
             var carePlanView = new CarePlanView { CarePlanList = carePlanList, CurrentCarePlan = new Careplan() };
@@ -154,8 +132,7 @@ namespace BillingSystem.Controllers
             var dateTime = Helpers.GetInvariantCultureDateTime();
             int userId = Helpers.GetLoggedInUserId();
 
-            var cBal = new CarePlanBal();
-            var check = cBal.CheckDuplicateCarePlanNumber(model.Id, model.PlanNumber, facilityId, corporateId);
+            var check = _service.CheckDuplicateCarePlanNumber(model.Id, model.PlanNumber, facilityId, corporateId);
 
             // Check if Model is not null 
             if (check)
@@ -164,26 +141,24 @@ namespace BillingSystem.Controllers
             }
             else
             {
-                using (var bal = new CarePlanBal())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = dateTime;
-                        model.FacilityId = facilityId;
-                        model.CorporateId = corporateId;
-                    }
-                    else
-                    {
-                        model.FacilityId = facilityId;
-                        model.CorporateId = corporateId;
-                        model.CreatedBy = userId;
-                        model.CreatedDate = dateTime;
-                    }
-
-                    // Call the AddCarePlan Method to Add / Update current CarePlan
-                    newId = bal.SaveCarePlan(model, 2);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = dateTime;
+                    model.FacilityId = facilityId;
+                    model.CorporateId = corporateId;
                 }
+                else
+                {
+                    model.FacilityId = facilityId;
+                    model.CorporateId = corporateId;
+                    model.CreatedBy = userId;
+                    model.CreatedDate = dateTime;
+                }
+
+                // Call the AddCarePlan Method to Add / Update current CarePlan
+                newId = _service.SaveCarePlan(model, 2);
+
             }
 
             return Json(newId);
@@ -200,25 +175,23 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetCarePlanData(int id)
         {
-            using (var bal = new CarePlanBal())
-            {
-                var currentCarePlan = bal.GetCarePlanById(id);
-                var jsonResult =
-                    new
-                        {
-                            currentCarePlan.DiagnosisAssociated,
-                            currentCarePlan.EncounterPatientType,
-                            currentCarePlan.IsActive,
-                            currentCarePlan.PlanDescription,
-                            currentCarePlan.PlanLength,
-                            currentCarePlan.PlanLengthType,
-                            currentCarePlan.PlanNumber,
-                            currentCarePlan.Id,
-                            currentCarePlan.Name
-                        };
+            var currentCarePlan = _service.GetCarePlanById(id);
+            var jsonResult =
+                new
+                {
+                    currentCarePlan.DiagnosisAssociated,
+                    currentCarePlan.EncounterPatientType,
+                    currentCarePlan.IsActive,
+                    currentCarePlan.PlanDescription,
+                    currentCarePlan.PlanLength,
+                    currentCarePlan.PlanLengthType,
+                    currentCarePlan.PlanNumber,
+                    currentCarePlan.Id,
+                    currentCarePlan.Name
+                };
 
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -231,11 +204,9 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            using (var bal = new CarePlanBal())
-            {
-                int carePlanNumber = bal.GetTaskNumber(facilityId, corporateId);
-                return Json(carePlanNumber);
-            }
+            int carePlanNumber = _service.GetTaskNumber(facilityId, corporateId);
+            return Json(carePlanNumber);
+
         }
 
         #endregion

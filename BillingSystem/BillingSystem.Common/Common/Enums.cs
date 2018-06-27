@@ -500,6 +500,48 @@ namespace BillingSystem.Common.Common
         DRG = 9,
         DRUG = 5,
     }
+    public enum InputParams
+    {
+        pEncounterID,
+        BillHeaderID,
+        BillDetailLineNumber,
+        BillNumber,
+        AuthID,
+        AuthType,
+        AuthCode,
+        SelfPayFlag,
+        pReClaimFlag,
+        pClaimId,
+        lFID,
+        lCID,
+        pCorporateID,
+        pFacilityID,
+        pCID,
+        pFID,
+        pPid,
+        pEncId,
+        pIsEnc,
+        pBillHeaderId,
+        pLoggedInUserId,
+        pBillHeaderID,
+        pExecutedBy,
+        pRETStatus,
+        pPayerId,
+        pFileId,
+        pDateTill,
+        pDateFrom,
+        pClaimStatus,
+        pSearchString,
+        SenderID,
+        BillHeaderIds,
+        PayerID,
+        DispositionFlag,
+        pEncounuterID,
+        pDisplayTypeID,
+        pTillDate,
+        pFromDate,
+        pPatientID
+    }
 
     public enum StoredProcedures
     {

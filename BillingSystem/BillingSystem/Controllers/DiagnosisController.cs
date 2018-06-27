@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.Web;
-using BillingSystem.Common;
+﻿using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Models;
 using System;
@@ -10,14 +8,23 @@ using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.SS.Util;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DiagnosisController : BaseController
     {
+        private readonly IBillActivityService _blService;
+        private readonly ICPTCodesService _cptService;
+        private readonly IEncounterService _eService;
+
+        public DiagnosisController(IBillActivityService blService, ICPTCodesService cptService, IEncounterService eService)
+        {
+            _blService = blService;
+            _cptService = cptService;
+            _eService = eService;
+        }
+
         /// <summary>
         /// Additionals the diagnosis.
         /// </summary>
@@ -280,8 +287,7 @@ namespace BillingSystem.Controllers
         {
             using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
-                var encounterBal = new EncounterBal();
-                var encounterobj = encounterBal.GetActiveEncounterByPateintId(Convert.ToInt32(patientId));
+                var encounterobj = _eService.GetActiveEncounterByPateintId(Convert.ToInt32(patientId));
                 var diagnosisList = new List<DiagnosisCustomModel>();
                 if (encounterobj != null)
                 {
@@ -457,7 +463,7 @@ namespace BillingSystem.Controllers
             using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var diagnosis = bal.GetDiagnosisById(id);
-                var encounterBal = new EncounterBal();
+
                 var drgBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber);
                 var drg = drgBal.GetDrgCodesById(Convert.ToInt32(diagnosis.DRGCodeID));
                 //var encounterobj = encounterBal.GetActiveEncounterByPateintId(Convert.ToInt32(diagnosis.PatientID));
@@ -617,19 +623,17 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-                {
-                    var list = bal.GetFilteredCodes(text);
-                    var filteredList = list.Select(item => new
-                    {
-                        ID = item.CPTCodesId,
-                        Menu_Title = string.Format("{0} - {1}", item.CodeDescription, item.CodeNumbering),
-                        Name = item.CodeDescription,
-                        Code = item.CodeNumbering
-                    }).ToList();
 
-                    return Json(filteredList, JsonRequestBehavior.AllowGet);
-                }
+                var list = _cptService.GetFilteredCodes(text, Helpers.DefaultCptTableNumber);
+                var filteredList = list.Select(item => new
+                {
+                    ID = item.CPTCodesId,
+                    Menu_Title = string.Format("{0} - {1}", item.CodeDescription, item.CodeNumbering),
+                    Name = item.CodeDescription,
+                    Code = item.CodeNumbering
+                }).ToList();
+
+                return Json(filteredList, JsonRequestBehavior.AllowGet);
             }
             return Json(null);
         }
@@ -716,15 +720,14 @@ namespace BillingSystem.Controllers
                     if (alreadyExist != null)
                     {
                         orderactivitySave.OrderActivityID = alreadyExist.OrderActivityID;
-                        using (var billactivityBal = new BillActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+
+                        var encbillActivity = _blService.GetBillActivitiesByEncounterId(Convert.ToInt32(model.EncounterID), Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber).ToList();
+                        var encDrgactivity = encbillActivity.FirstOrDefault(x => x.ActivityType == "9");
+                        if (encDrgactivity != null)
                         {
-                            var encbillActivity = billactivityBal.GetBillActivitiesByEncounterId(Convert.ToInt32(model.EncounterID)).ToList();
-                            var encDrgactivity = encbillActivity.FirstOrDefault(x => x.ActivityType == "9");
-                            if (encDrgactivity != null)
-                            {
-                                billactivityBal.DeleteBillActivityFromBill(encDrgactivity.BillActivityID);
-                            }
+                            _blService.DeleteBillActivityFromBill(encDrgactivity.BillActivityID);
                         }
+
                     }
                     bal.AddUptdateOrderActivity(orderactivitySave);
                     bal.ApplyOrderActivityToBill(Convert.ToInt32(model.CorporateID), Convert.ToInt32(model.FacilityID), Convert.ToInt32(model.EncounterID), string.Empty, 0);
@@ -836,11 +839,10 @@ namespace BillingSystem.Controllers
                     model.DRGCodeID = null;
                     model.DiagnosisCodeId = null;
                     model.DiagnosisCode = model.MajorCPTCodeId;
-                    using (var cptCodesBal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-                    {
-                        var cptCodedesc = cptCodesBal.GetCPTCodeDescription(model.MajorCPTCodeId);
-                        model.DiagnosisCodeDescription = cptCodedesc;
-                    }
+
+                    var cptCodedesc = _cptService.GetCPTCodeDescription(model.MajorCPTCodeId, Helpers.DefaultCptTableNumber);
+                    model.DiagnosisCodeDescription = cptCodedesc;
+
                     result = bal.SaveDiagnosis(model);
                     majorCptDone = true;
                 }

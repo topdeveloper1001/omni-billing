@@ -8,11 +8,24 @@ using Hangfire;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using System.Linq;
+using BillingSystem.Bal.Interfaces;
+using Unity;
 
 namespace BillingSystem.Controllers
 {
     public class CorporateController : BaseController
     {
+        private readonly ICorporateService _service;
+        private readonly ICountryService _cService;
+        private readonly IUsersService _uService;
+
+        public CorporateController(ICorporateService service, ICountryService cService, IUsersService uService)
+        {
+            _service = service;
+            _cService = cService;
+            _uService = uService;
+        }
+
         /// <summary>
         /// Get the details of the Corporate View in the Model Corporate such as CorporateList, list of countries etc.
         /// </summary>
@@ -22,12 +35,9 @@ namespace BillingSystem.Controllers
         [CheckRolesAuthorize("1")]
         public ActionResult Index()
         {
-            //Initialize the Corporate BAL object
-            var corporateBal = new CorporateBal();
-
             //Get the Entity list
             var corporatId = Helpers.GetDefaultCorporateId();
-            var corporateList = corporateBal.GetCorporate(corporatId);
+            var corporateList = _service.GetCorporate(corporatId);
             //var corporateList = corporateBal.GetCorporate(corporatId);
 
             //Intialize the View Model i.e. CorporateView which is binded to Main View Index.cshtml under Corporate
@@ -49,35 +59,29 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindCorporateList()
         {
-            //Initialize the Corporate BAL object
-            using (var corporateBal = new CorporateBal())
-            {
-                //Get the corporate list
-                var corporatId = Helpers.GetDefaultCorporateId();
-                var corporateList = corporateBal.GetCorporate(corporatId);
+            //Get the corporate list
+            var corporatId = Helpers.GetDefaultCorporateId();
+            var corporateList = _service.GetCorporate(corporatId);
 
-                //Pass the ActionResult with List of CorporateViewModel object to Partial View CorporateList
-                return PartialView(PartialViews.CorporateList, corporateList);
-            }
+            //Pass the ActionResult with List of CorporateViewModel object to Partial View CorporateList
+            return PartialView(PartialViews.CorporateList, corporateList);
+
         }
 
         public ActionResult GetCorporates()
         {
-            //Initialize the Corporate BAL object
-            using (var corporateBal = new CorporateBal())
-            {
-                //Get the corporate list
-                var corporatId = Helpers.GetDefaultCorporateId();
-                var corporateList = corporateBal.GetCorporate(corporatId);
+            //Get the corporate list
+            var corporatId = Helpers.GetDefaultCorporateId();
+            var corporateList = _service.GetCorporate(corporatId);
 
-                //Pass the ActionResult with List of CorporateViewModel object to Partial View CorporateList
-                return Json(new
-                {
-                    iTotalRecords = corporateList.Count,
-                    iTotalDisplayRecords = corporateList.Count,
-                    aaData = corporateList.Select(x => new[] { x.CorporateID.ToString(), x.CorporateName, x.CorporateNumber, x.StreetAddress, x.Email, x.CorporateMainPhone })
-                }, JsonRequestBehavior.AllowGet);
-            }
+            //Pass the ActionResult with List of CorporateViewModel object to Partial View CorporateList
+            return Json(new
+            {
+                iTotalRecords = corporateList.Count,
+                iTotalDisplayRecords = corporateList.Count,
+                aaData = corporateList.Select(x => new[] { x.CorporateID.ToString(), x.CorporateName, x.CorporateNumber, x.StreetAddress, x.Email, x.CorporateMainPhone })
+            }, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -95,29 +99,27 @@ namespace BillingSystem.Controllers
             //Check if CorporateViewModel 
             if (corporateModel != null)
             {
-                using (var corporateBal = new CorporateBal())
+                var isExist = _service.CheckDuplicateCorporateNumber(corporateModel.CorporateNumber,
+                    corporateModel.CorporateID);
+                if (isExist)
+                    return Json("1");
+
+                if (corporateModel.CorporateID > 0)
                 {
-                    var isExist = corporateBal.CheckDuplicateCorporateNumber(corporateModel.CorporateNumber,
-                        corporateModel.CorporateID);
-                    if (isExist)
-                        return Json("1");
-
-                    if (corporateModel.CorporateID > 0)
-                    {
-                        corporateModel.ModifiedBy = Helpers.GetLoggedInUserId();
-                        corporateModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        corporateModel.CreatedBy = Helpers.GetLoggedInUserId();
-                        corporateModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    //Call the AddCorporate Method to Add / Update current Corporate
-                    newId = corporateBal.AddUptdateCorporate(corporateModel);
-
-                    if (isNew && newId > 0)
-                        BackgroundJob.Enqueue(() => CreateDefaultCorporateItems(corporateModel.CorporateID, corporateModel.CorporateName));
+                    corporateModel.ModifiedBy = Helpers.GetLoggedInUserId();
+                    corporateModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    corporateModel.CreatedBy = Helpers.GetLoggedInUserId();
+                    corporateModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+                //Call the AddCorporate Method to Add / Update current Corporate
+                newId = _service.AddUptdateCorporate(corporateModel);
+
+                if (isNew && newId > 0)
+                    BackgroundJob.Enqueue(() => CreateDefaultCorporateItems(corporateModel.CorporateID, corporateModel.CorporateName));
+
             }
             return Json(newId);
         }
@@ -129,43 +131,34 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCorporate(string Id)
         {
-            using (var bal = new CorporateBal())
-            {
-                //Call the AddCorporate Method to Add / Update current Corporate
-                var model = bal.GetCorporateById(Convert.ToInt32(Id));
+            var model = _service.GetCorporateById(Convert.ToInt32(Id));
 
-                //var jsonResult = new
-                //{
-                //    model.CorporateID,
-                //    model.CorporateMainPhone,
-                //    model.CorporateName,
-                //    model.CorporateNumber,
-                //    model.CorporatePOBox,
-                //    model.CorporateFax,
-                //    model.CorporateSecondPhone,
-                //};
-
-                //Pass the ActionResult with the current CorporateViewModel object as model to PartialView CorporateAddEdit
-                return PartialView(PartialViews.CorporateAddEdit, model);
-
-                //return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            //Pass the ActionResult with the current CorporateViewModel object as model to PartialView CorporateAddEdit
+            return PartialView(PartialViews.CorporateAddEdit, model);
         }
         public ActionResult GetCorporateById(string Id)
         {
-            using (var corporateBal = new CorporateBal())
-            {
-                //Call the AddCorporate Method to Add / Update current Corporate
-                var currentCorporate = corporateBal.GetCorporateById(Convert.ToInt32(Id));
-                return Json(currentCorporate);
-            }
+            var currentCorporate = _service.GetCorporateById(Convert.ToInt32(Id));
+            return Json(currentCorporate);
+
         }
         public bool CheckDefaultTableNumber(string defaultTableNumber, string corporateId)
         {
-            var corporateBal = new CorporateBal();
-            return corporateBal.CheckDefaultTableNumber(defaultTableNumber, Convert.ToInt32(corporateId));
+            return _service.CheckDefaultTableNumber(defaultTableNumber, Convert.ToInt32(corporateId));
         }
+        public List<DropdownListData> GetCorporateList()
+        {
+            var list = new List<DropdownListData>();
+            var cId = Helpers.GetDefaultCorporateId();
+            var cList = _service.GetCorporateDDL(cId);
+            list.AddRange(cList.Select(item => new DropdownListData
+            {
+                Text = item.CorporateName,
+                Value = Convert.ToString(item.CorporateID)
+            }));
 
+            return list;
+        }
         ///// <summary>
         ///// Delete the current Corporate based on the Corporate ID passed in the CorporateModel
         ///// </summary>
@@ -210,11 +203,9 @@ namespace BillingSystem.Controllers
         {
             if (Helpers.DefaultC != corporateId)
             {
-                using (var corporateBal = new CorporateBal())
-                {
-                    var value = corporateBal.DeleteCorporateData(Convert.ToString(corporateId));
-                    return Json(value ? "1" : "0", JsonRequestBehavior.AllowGet);
-                }
+                var value = _service.DeleteCorporateData(Convert.ToString(corporateId));
+                return Json(value ? "1" : "0", JsonRequestBehavior.AllowGet);
+
             }
             return Json("-2", JsonRequestBehavior.AllowGet);
 
@@ -256,11 +247,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckUserExistForCorporate(int id)
         {
-            using (var userBal = new UsersBal())
-            {
-                var result = userBal.CheckUserExistForCorporate(id);
-                return Json(result);
-            }
+            var result = _uService.CheckUserExistForCorporate(id);
+            return Json(result);
+
         }
         // Function to chek duplicate Corporate on the basis of username or Email
         /// <summary>
@@ -271,29 +260,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public bool CheckDuplicateCorporate(string name, int id)
         {
-            using (var corporateBal = new CorporateBal())
-            {
-                return corporateBal.CheckDuplicateCorporate(name, id);
-            }
+            return _service.CheckDuplicateCorporate(name, id);
+
         }
 
         public static void CreateDefaultCorporateItems(int cId, string cName)
         {
-            using (var bal = new CorporateBal())
-            {
-                bal.CreateDefaultCorporateItem(cId, cName);
-            }
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<ICorporateService>();
+            service.CreateDefaultCorporateItem(cId, cName);
         }
 
         public JsonResult BindAllCorporateDataOnLoad(string typeId)
         {
             var tlist = new List<BillingCodeTableSet>();
             var plist = new List<CountryCustomModel>();
-            using (var bal = new CountryBal())
-            {
-                tlist = bal.GetTableNumbersList(typeId);
-                plist = bal.GetCountryWithCode();
-            }
+            tlist = _cService.GetTableNumbersList(typeId);
+            plist = _cService.GetCountryWithCode();
 
             var jsonData = new
             {

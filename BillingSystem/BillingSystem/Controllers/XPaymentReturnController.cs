@@ -1,21 +1,26 @@
-﻿using System.Reflection;
-using BillingSystem.Common.Common;
+﻿using BillingSystem.Common.Common;
 using BillingSystem.Models;
 using BillingSystem.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
-using Microsoft.Ajax.Utilities;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class XPaymentReturnController : BaseController
     {
+        private readonly IBillHeaderService _bhService;
+
+        public XPaymentReturnController(IBillHeaderService bhService)
+        {
+            _bhService = bhService;
+        }
+
         /// <summary>
         /// Get the details of the XPaymentReturn View in the Model XPaymentReturn such as XPaymentReturnList, list of countries etc.
         /// </summary>
@@ -52,7 +57,7 @@ namespace BillingSystem.Controllers
                 PatientId = Pid
             };
 
-           //Pass the View Model in ActionResult to View XPaymentReturn
+            //Pass the View Model in ActionResult to View XPaymentReturn
             return View(xPaymentReturnView);
         }
 
@@ -83,7 +88,7 @@ namespace BillingSystem.Controllers
         {
             //Initialize the newId variable 
             var newId = -1;
-			var userId = Helpers.GetLoggedInUserId();
+            var userId = Helpers.GetLoggedInUserId();
             var currentDate = Helpers.GetInvariantCultureDateTime();
             //Check if Model is not null 
             if (model != null)
@@ -101,68 +106,7 @@ namespace BillingSystem.Controllers
                         bal.SaveXPaymentReturn(xPaymentReturn);
                         if (!string.IsNullOrEmpty(model.DenialCode))
                         {
-                            using (var billheaderBal = new BillHeaderBal())
-                            {
-                                var billheaderObj = billheaderBal.GetBillHeaderById(Convert.ToInt32(model.ID));
-                                if (billheaderObj.Status == (BillHeaderStatus.RA1).ToString() ||
-                                    billheaderObj.Status == (BillHeaderStatus.RA2).ToString() ||
-                                    billheaderObj.Status == (BillHeaderStatus.RA3).ToString() ||
-                                    billheaderObj.Status == (BillHeaderStatus.S1).ToString() ||
-                                    billheaderObj.Status == (BillHeaderStatus.S2).ToString() ||
-                                    billheaderObj.Status == (BillHeaderStatus.S3).ToString() )
-                                {
-                                    var billheaderNewStatus = SetBillheaderStatus(billheaderObj.Status);
-                                    if (!string.IsNullOrEmpty(billheaderNewStatus))
-                                    {
-                                        var globalCodeBal = new GlobalCodeBal();
-                                        var globalcodeObj =
-                                            globalCodeBal.GetGCodesListByCategoryValue(
-                                                Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString());
-                                        var newstatusval =
-                                            globalcodeObj.FirstOrDefault(
-                                                x => x.GlobalCodeName.Trim().Equals(billheaderObj.Status));
-                                        var newids = new List<int> { billheaderObj.BillHeaderID };
-                                        if (newstatusval != null)
-                                            billheaderBal.SetBillHeaderStatus(newids, billheaderNewStatus,
-                                                newstatusval.GlobalCodeValue);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-               
-            }
-            return Json(newId);
-        }
-
-        /// <summary>
-        /// Saves the x payment detail return.
-        /// </summary>
-        /// <param name="model">The model.</param>
-        /// <returns></returns>
-        public ActionResult SaveXPaymentDetailReturn(XPaymentReturn model)
-        {
-            //Initialize the newId variable 
-            var newId = -1;
-			var userId = Helpers.GetLoggedInUserId();
-            var currentDate = Helpers.GetInvariantCultureDateTime();
-            //Check if Model is not null 
-            if (model != null)
-            {
-                using (var bal = new XPaymentReturnBal())
-                {
-                    var getXpaymentObj = bal.GetXPaymentModelReturnById(Convert.ToInt32(model.XPaymentReturnID));
-                    getXpaymentObj.AADenialCode = model.AADenialCode;
-                    getXpaymentObj.AAPaymentAmount = model.AAPaymentAmount;
-                    getXpaymentObj.XModifiedBy = userId.ToString();
-                    getXpaymentObj.XModifiedDate = currentDate;
-                    newId = bal.SaveXPaymentReturn(getXpaymentObj);
-                    if (!string.IsNullOrEmpty(model.AADenialCode))
-                    {
-                        using (var billheaderBal = new BillHeaderBal())
-                        {
-                            var billheaderObj = billheaderBal.GetBillHeaderById(Convert.ToInt32(model.ID));
+                            var billheaderObj = _bhService.GetBillHeaderById(Convert.ToInt32(model.ID));
                             if (billheaderObj.Status == (BillHeaderStatus.RA1).ToString() ||
                                 billheaderObj.Status == (BillHeaderStatus.RA2).ToString() ||
                                 billheaderObj.Status == (BillHeaderStatus.RA3).ToString() ||
@@ -180,11 +124,66 @@ namespace BillingSystem.Controllers
                                     var newstatusval =
                                         globalcodeObj.FirstOrDefault(
                                             x => x.GlobalCodeName.Trim().Equals(billheaderObj.Status));
-                                    var newids = new List<int> {billheaderObj.BillHeaderID};
+                                    var newids = new List<int> { billheaderObj.BillHeaderID };
                                     if (newstatusval != null)
-                                        billheaderBal.SetBillHeaderStatus(newids, billheaderNewStatus,
+                                        _bhService.SetBillHeaderStatus(newids, billheaderNewStatus,
                                             newstatusval.GlobalCodeValue);
                                 }
+                            }
+                        }
+                    }
+                }
+
+            }
+            return Json(newId);
+        }
+
+        /// <summary>
+        /// Saves the x payment detail return.
+        /// </summary>
+        /// <param name="model">The model.</param>
+        /// <returns></returns>
+        public ActionResult SaveXPaymentDetailReturn(XPaymentReturn model)
+        {
+            //Initialize the newId variable 
+            var newId = -1;
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDate = Helpers.GetInvariantCultureDateTime();
+            //Check if Model is not null 
+            if (model != null)
+            {
+                using (var bal = new XPaymentReturnBal())
+                {
+                    var getXpaymentObj = bal.GetXPaymentModelReturnById(Convert.ToInt32(model.XPaymentReturnID));
+                    getXpaymentObj.AADenialCode = model.AADenialCode;
+                    getXpaymentObj.AAPaymentAmount = model.AAPaymentAmount;
+                    getXpaymentObj.XModifiedBy = userId.ToString();
+                    getXpaymentObj.XModifiedDate = currentDate;
+                    newId = bal.SaveXPaymentReturn(getXpaymentObj);
+                    if (!string.IsNullOrEmpty(model.AADenialCode))
+                    {
+                        var billheaderObj = _bhService.GetBillHeaderById(Convert.ToInt32(model.ID));
+                        if (billheaderObj.Status == (BillHeaderStatus.RA1).ToString() ||
+                            billheaderObj.Status == (BillHeaderStatus.RA2).ToString() ||
+                            billheaderObj.Status == (BillHeaderStatus.RA3).ToString() ||
+                            billheaderObj.Status == (BillHeaderStatus.S1).ToString() ||
+                            billheaderObj.Status == (BillHeaderStatus.S2).ToString() ||
+                            billheaderObj.Status == (BillHeaderStatus.S3).ToString())
+                        {
+                            var billheaderNewStatus = SetBillheaderStatus(billheaderObj.Status);
+                            if (!string.IsNullOrEmpty(billheaderNewStatus))
+                            {
+                                var globalCodeBal = new GlobalCodeBal();
+                                var globalcodeObj =
+                                    globalCodeBal.GetGCodesListByCategoryValue(
+                                        Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString());
+                                var newstatusval =
+                                    globalcodeObj.FirstOrDefault(
+                                        x => x.GlobalCodeName.Trim().Equals(billheaderObj.Status));
+                                var newids = new List<int> { billheaderObj.BillHeaderID };
+                                if (newstatusval != null)
+                                    _bhService.SetBillHeaderStatus(newids, billheaderNewStatus,
+                                        newstatusval.GlobalCodeValue);
                             }
                         }
                     }
@@ -192,7 +191,7 @@ namespace BillingSystem.Controllers
             }
             return Json(newId);
         }
-        
+
         /// <summary>
         /// Get the details of the current XPaymentReturn in the view model by ID 
         /// </summary>
@@ -221,7 +220,7 @@ namespace BillingSystem.Controllers
             {
                 //Get XPaymentReturn model object by current XPaymentReturn ID
                 var currentXPaymentReturn = bal.GetXPaymentReturnById(id);
-				var userId = Helpers.GetLoggedInUserId();
+                var userId = Helpers.GetLoggedInUserId();
 
                 //Check If XPaymentReturn model is not null
                 if (currentXPaymentReturn != null)
@@ -287,7 +286,7 @@ namespace BillingSystem.Controllers
             using (var xpaymentBal = new XPaymentReturnBal())
             {
                 var getGenratedPayments = xpaymentBal.GetXPaymentReturnByClaimId(claimId);
-                return PartialView(PartialViews.XPaymentHeader,getGenratedPayments.Any() ?  getGenratedPayments.FirstOrDefault() : new XPaymentReturnCustomModel());
+                return PartialView(PartialViews.XPaymentHeader, getGenratedPayments.Any() ? getGenratedPayments.FirstOrDefault() : new XPaymentReturnCustomModel());
             }
         }
 
@@ -302,7 +301,7 @@ namespace BillingSystem.Controllers
             {
                 var getGenratedPayments = xpaymentBal.GetXPaymentReturnByClaimId(claimId);
                 return PartialView(PartialViews.XPaymentReturnList, getGenratedPayments);
-            } 
+            }
         }
 
         /// <summary>
@@ -317,7 +316,7 @@ namespace BillingSystem.Controllers
                 var facilityId = Helpers.GetDefaultFacilityId();
                 var getGenratedPayments = xpaymentBal.GenerateRemittanceXmlFile(corporateId, facilityId);
                 return Json(getGenratedPayments);
-            }  
+            }
         }
 
 

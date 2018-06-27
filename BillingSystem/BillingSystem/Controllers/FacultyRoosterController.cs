@@ -1,31 +1,35 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HolidayPlannerController.cs" company="SPadez">
-//   OmniHealthcare
-// </copyright>
-// <summary>
-//   The holiday planner controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿
+using System;
+using System.Collections.Generic;
+using System.Web.Mvc;
+using System.Threading.Tasks;
+using System.Linq;
+using BillingSystem.Common.Common;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Common;
+using BillingSystem.Models;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Web.Mvc;
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Model.CustomModel;
-    using Models;
-    using System.Threading.Tasks;
-    using System.Linq;
-    using BillingSystem.Common.Common;
-
     /// <summary>
     /// FacultyRooster controller.
     /// </summary>
     public class FacultyRoosterController : BaseController
     {
+        private readonly IFacilityStructureService _fsService;
+        private readonly IClinicianRosterService _crService;
+        private readonly ICorporateService _cService;
+
+        public FacultyRoosterController(IFacilityStructureService fsService, IClinicianRosterService crService, ICorporateService cService)
+        {
+            _fsService = fsService;
+            _crService = crService;
+            _cService = cService;
+        }
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -171,11 +175,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityDepartments(int coporateId, int facilityId)
         {
-            using (var facilityStructureBal = new FacilityStructureBal())
-            {
-                var facilityDepartmentList = facilityStructureBal.GetFacilityDepartments(coporateId, facilityId.ToString());
-                return Json(facilityDepartmentList, JsonRequestBehavior.AllowGet);
-            }
+            var list = _fsService.GetFacilityDepartments(coporateId, facilityId.ToString());
+            return Json(list, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -266,9 +268,8 @@ namespace BillingSystem.Controllers
             var fId = Helpers.GetDefaultFacilityId();
 
 
-            //Bind Corporates
-            using (var bal = new CorporateBal())
-                cList = bal.GetCorporateDropdownData(Helpers.GetDefaultCorporateId());
+            //Bind Corporates 
+            cList = _cService.GetCorporateDropdownData(Helpers.GetDefaultCorporateId());
 
             //Bind Facilities
             using (var fBal = new FacilityBal())
@@ -287,20 +288,19 @@ namespace BillingSystem.Controllers
 
 
             /*-----------Get Departments Data Start here----------------------*/
-            using (var bal = new FacilityStructureBal())
+
+            var deps = _fsService.GetFacilityDepartments(cId, Convert.ToString(fId));
+            if (deps.Count > 0)
             {
-                var deps = bal.GetFacilityDepartments(cId, Convert.ToString(fId));
-                if (deps.Count > 0)
-                {
-                    listDepartments.AddRange(
-                        deps.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
-                            .Select(item => new DropdownListData
-                            {
-                                Value = Convert.ToString(item.FacilityStructureId),
-                                Text = string.Format(" {0} ", item.FacilityStructureName)
-                            }));
-                }
+                listDepartments.AddRange(
+                    deps.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
+                        .Select(item => new DropdownListData
+                        {
+                            Value = Convert.ToString(item.FacilityStructureId),
+                            Text = string.Format(" {0} ", item.FacilityStructureName)
+                        }));
             }
+
             /*-----------Get Departments Data End here----------------------*/
 
             var categories = new List<string> { "1121", "901", "80441" };
@@ -330,51 +330,37 @@ namespace BillingSystem.Controllers
         {
             IEnumerable<ClinicianRosterCustomModel> list = null;
 
-            // Initialize the FacultyRooster BAL object
-            using (var bal = new ClinicianRosterBal())
-                list = await bal.GetAll(Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID(), Helpers.GetLoggedInUserId(), id: 0);
+            // Initialize the FacultyRooster BAL object 
+            list = await _crService.GetAll(Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID(), Helpers.GetLoggedInUserId(), id: 0);
             var viewModel = new ClinicianRosterView { Current = new ClinicianRosterCustomModel { DateFrom = DateTime.Now, DateTo = DateTime.Now.AddDays(1), Id = 0 }, List = list };
             return View(viewModel);
         }
 
         public async Task<JsonResult> SaveRecordCR(ClinicianRosterCustomModel vm)
         {
-            using (var bal = new ClinicianRosterBal())
-            {
-                var result = await bal.Save(vm, Helpers.GetLoggedInUserId());
-                return Json(result, JsonRequestBehavior.AllowGet);
-            }
+            var result = await _crService.Save(vm, Helpers.GetLoggedInUserId());
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
 
         public async Task<PartialViewResult> DeleteRecordCR(long id, bool aStatus)
         {
-            using (var bal = new ClinicianRosterBal())
-            {
-                var result = await bal.Delete(Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID(), Helpers.GetLoggedInUserId(), id, aStatus);
-                //var viewpath = $"../FacultyRooster/{PartialViews.ClinicianRosterList}";
-                //var listAsJson = RenderPartialViewToStringBase(viewpath, result);
-                //return Json(listAsJson, JsonRequestBehavior.AllowGet);
-                return PartialView(PartialViews.ClinicianRosterList, result);
-            }
+            var result = await _crService.Delete(Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID(), Helpers.GetLoggedInUserId(), id, aStatus);
+
+            return PartialView(PartialViews.ClinicianRosterList, result);
         }
 
         public async Task<PartialViewResult> RebindClinicianRosterList(int fId, int cId, bool aStatus)
         {
             IEnumerable<ClinicianRosterCustomModel> result = null;
-            using (var bal = new ClinicianRosterBal())
-                result = await bal.GetAll(fId, cId, Helpers.GetLoggedInUserId(), aStatus: aStatus);
+            result = await _crService.GetAll(fId, cId, Helpers.GetLoggedInUserId(), aStatus: aStatus);
 
-            //var viewpath = $"../FacultyRooster/{PartialViews.ClinicianRosterList}";
-            //var listAsJson = RenderPartialViewToStringBase(viewpath, result);
-            //return Json(listAsJson, JsonRequestBehavior.AllowGet);
             return PartialView(PartialViews.ClinicianRosterList, result);
         }
 
         public async Task<JsonResult> GetSingleClinicianR(long id)
         {
             ClinicianRosterCustomModel vm = null;
-            using (var bal = new ClinicianRosterBal())
-                vm = await bal.GetSingle(Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID(), Helpers.GetLoggedInUserId(), id);
+            vm = await _crService.GetSingle(Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID(), Helpers.GetLoggedInUserId(), id);
 
             var json = new
             {
@@ -421,9 +407,8 @@ namespace BillingSystem.Controllers
             var fId = Helpers.GetDefaultFacilityId();
 
 
-            //Bind Corporates
-            using (var bal = new CorporateBal())
-                cList = bal.GetCorporateDropdownData(Helpers.GetDefaultCorporateId());
+            //Bind Corporates 
+            cList = _cService.GetCorporateDropdownData(Helpers.GetDefaultCorporateId());
 
             //Bind Facilities
             using (var fBal = new FacilityBal())
@@ -442,20 +427,19 @@ namespace BillingSystem.Controllers
 
 
             /*-----------Get Departments Data Start here----------------------*/
-            using (var bal = new FacilityStructureBal())
+
+            var deps = _fsService.GetFacilityDepartments(cId, Convert.ToString(fId));
+            if (deps.Count > 0)
             {
-                var deps = bal.GetFacilityDepartments(cId, Convert.ToString(fId));
-                if (deps.Count > 0)
-                {
-                    listDepartments.AddRange(
-                        deps.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
-                            .Select(item => new DropdownListData
-                            {
-                                Value = Convert.ToString(item.FacilityStructureId),
-                                Text = string.Format(" {0} ", item.FacilityStructureName)
-                            }));
-                }
+                listDepartments.AddRange(
+                    deps.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
+                        .Select(item => new DropdownListData
+                        {
+                            Value = Convert.ToString(item.FacilityStructureId),
+                            Text = string.Format(" {0} ", item.FacilityStructureName)
+                        }));
             }
+
             /*-----------Get Departments Data End here----------------------*/
 
             var categories = new List<string> { "1121", "901", "80441" };

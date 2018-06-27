@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
@@ -12,6 +13,8 @@ namespace BillingSystem.Controllers
 {
     public class LabTestMasterController : BaseController
     {
+        private readonly ICPTCodesService _cptService;
+
         #region Lab Test master Master
         /// <summary>
         /// Indexes this instance.
@@ -26,11 +29,8 @@ namespace BillingSystem.Controllers
                 var labTestRange = globalCodeBal.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
                 if (!string.IsNullOrEmpty(labTestRange))
                 {
-                    using (var cptcodebal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-                    {
-                      cptcodeList=  cptcodebal.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]),
-                            Convert.ToInt32(labTestRange.Split('-')[1]));
-                    }
+                    cptcodeList = _cptService.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]), Convert.ToInt32(labTestRange.Split('-')[1]), Helpers.DefaultCptTableNumber);
+
                 }
                 //var list = globalCodeBal.Get
                 var globalCodeView = new CPTCodesView
@@ -52,19 +52,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteLabTest(int globalCodeId)
         {
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
+            var gCode = _cptService.GetCPTCodesById(globalCodeId);
+            if (gCode != null)
             {
-                var gCode = bal.GetCPTCodesById(globalCodeId);
-                if (gCode != null)
-                {
-                    gCode.IsDeleted = true;
-                    gCode.DeletedBy = Helpers.GetLoggedInUserId();
-                    gCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    AddUpdateGlobalCode(gCode);
-                    return Json(gCode.CPTCodesId);
-                }
-                return Json(null);
+                gCode.IsDeleted = true;
+                gCode.DeletedBy = Helpers.GetLoggedInUserId();
+                gCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                AddUpdateGlobalCode(gCode);
+                return Json(gCode.CPTCodesId);
             }
+            return Json(null);
         }
 
         /// <summary>
@@ -74,7 +71,6 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public int AddUpdateGlobalCode(CPTCodes objGlobalCode)
         {
-            var globalCodeBal = new CPTCodesBal(Helpers.DefaultCptTableNumber);
             if (objGlobalCode.CPTCodesId > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -85,7 +81,7 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            return globalCodeBal.AddUpdateCPTCodes(objGlobalCode);
+            return _cptService.AddUpdateCPTCodes(objGlobalCode, Helpers.DefaultCptTableNumber);
         }
 
         /// <summary>
@@ -100,11 +96,7 @@ namespace BillingSystem.Controllers
                 var labTestRange = globalCodeBal.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
                 if (!string.IsNullOrEmpty(labTestRange))
                 {
-                    using (var cptcodebal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-                    {
-                        cptcodeList = cptcodebal.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]),
-                              Convert.ToInt32(labTestRange.Split('-')[1]));
-                    }
+                    cptcodeList = _cptService.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]), Convert.ToInt32(labTestRange.Split('-')[1]), Helpers.DefaultCptTableNumber);
                 }
                 return PartialView(PartialViews.LabTestListView, cptcodeList);
             }
@@ -118,11 +110,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCurrentLabTest(int id)
         {
-            using (var bal = new CPTCodesBal(Helpers.DefaultCptTableNumber))
-            {
-                var globalCode = bal.GetCPTCodesCustomById(id);
-                return PartialView(PartialViews.LabTestAddEdit, globalCode);
-            }
+            var globalCode = _cptService.GetCPTCodesCustomById(id, Helpers.DefaultCptTableNumber);
+            return PartialView(PartialViews.LabTestAddEdit, globalCode);
         }
 
         //Function To reset the User Form
@@ -136,5 +125,5 @@ namespace BillingSystem.Controllers
             return PartialView(PartialViews.LabTestAddEdit, globalCode);
         }
         #endregion
-	}
+    }
 }

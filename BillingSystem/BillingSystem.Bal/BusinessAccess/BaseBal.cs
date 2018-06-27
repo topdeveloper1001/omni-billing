@@ -328,11 +328,11 @@ namespace BillingSystem.Bal.BusinessAccess
                 switch (codeType)
                 {
                     case OrderType.CPT:
-                        using (var bal = new CPTCodesBal(CptTableNumber))
-                        {
-                            codeDescription = bal.GetCPTCodeDescription(orderCode);
-                            return codeDescription;
-                        }
+                        //using (var bal = new CPTCodesBal(CptTableNumber))
+                        //{
+                        //codeDescription = bal.GetCPTCodeDescription(orderCode);
+                        return codeDescription;
+                    //}
                     case OrderType.DRG:
                         using (var bal = new DRGCodesBal(DrgTableNumber))
                         {
@@ -552,27 +552,27 @@ namespace BillingSystem.Bal.BusinessAccess
         public List<GeneralCodesCustomModel> GetAllOrderingCodes(string text)
         {
             var finalList = new List<GeneralCodesCustomModel>();
-            using (var cptBal = new CPTCodesBal(CptTableNumber))
-            {
-                var cptList = cptBal.GetAllCptCodes();
-                finalList.AddRange(
-                    cptList.Select(
-                        item =>
-                        new GeneralCodesCustomModel
-                        {
-                            Code = item.CodeNumbering,
-                            Description = item.CodeDescription,
-                            CodeDescription =
-                                    string.Format(
-                                        "{0} - {1}",
-                                        item.CodeNumbering,
-                                        item.CodeDescription),
-                            CodeType = Convert.ToString((int)OrderType.CPT),
-                            CodeTypeName = "CPT",
-                            ExternalCode = item.CTPCodeRangeValue.ToString(),
-                            ID = Convert.ToString(item.CPTCodesId)
-                        }));
-            }
+            //using (var cptBal = new CPTCodesBal(CptTableNumber))
+            //{
+                //var cptList = cptBal.GetAllCptCodes();
+                //finalList.AddRange(
+                //    cptList.Select(
+                //        item =>
+                //        new GeneralCodesCustomModel
+                //        {
+                //            Code = item.CodeNumbering,
+                //            Description = item.CodeDescription,
+                //            CodeDescription =
+                //                    string.Format(
+                //                        "{0} - {1}",
+                //                        item.CodeNumbering,
+                //                        item.CodeDescription),
+                //            CodeType = Convert.ToString((int)OrderType.CPT),
+                //            CodeTypeName = "CPT",
+                //            ExternalCode = item.CTPCodeRangeValue.ToString(),
+                //            ID = Convert.ToString(item.CPTCodesId)
+                //        }));
+            //}
             using (var hcpcBal = new HCPCSCodesBal(HcpcsTableNumber))
             {
                 var hcpcList = hcpcBal.GetHCPCSCodes();
@@ -662,29 +662,29 @@ namespace BillingSystem.Bal.BusinessAccess
                 switch (type)
                 {
                     case OrderType.CPT:
-                        using (var cbal = new CPTCodesBal(CptTableNumber))
-                        {
-                            var result = cbal.GetCodesByRange(
-                                Convert.ToInt32(subCategory.ExternalValue2),
-                                Convert.ToInt32(subCategory.ExternalValue3));
-                            finalList.AddRange(
-                                result.Select(
-                                    item =>
-                                    new GeneralCodesCustomModel
-                                    {
-                                        Code = item.CodeNumbering,
-                                        Description = item.CodeDescription,
-                                        CodeDescription =
-                                                string.Format(
-                                                    "{0} - {1}",
-                                                    item.CodeDescription,
-                                                    item.CodeNumbering),
-                                        CodeType = Convert.ToInt32(OrderType.CPT).ToString(),
-                                        CodeTypeName = "CPT",
-                                        ExternalCode = item.CTPCodeRangeValue.ToString(),
-                                        ID = item.CPTCodesId.ToString()
-                                    }));
-                        }
+                        //using (var cbal = new CPTCodesBal(CptTableNumber))
+                        //{
+                        //    var result = cbal.GetCodesByRange(
+                        //        Convert.ToInt32(subCategory.ExternalValue2),
+                        //        Convert.ToInt32(subCategory.ExternalValue3));
+                        //    finalList.AddRange(
+                        //        result.Select(
+                        //            item =>
+                        //            new GeneralCodesCustomModel
+                        //            {
+                        //                Code = item.CodeNumbering,
+                        //                Description = item.CodeDescription,
+                        //                CodeDescription =
+                        //                        string.Format(
+                        //                            "{0} - {1}",
+                        //                            item.CodeDescription,
+                        //                            item.CodeNumbering),
+                        //                CodeType = Convert.ToInt32(OrderType.CPT).ToString(),
+                        //                CodeTypeName = "CPT",
+                        //                ExternalCode = item.CTPCodeRangeValue.ToString(),
+                        //                ID = item.CPTCodesId.ToString()
+                        //            }));
+                        //}
                         break;
                     case OrderType.HCPCS:
                         using (var cbal = new HCPCSCodesBal(HcpcsTableNumber))
@@ -1163,28 +1163,28 @@ namespace BillingSystem.Bal.BusinessAccess
             switch (orderTypeId)
             {
                 case 1:
-                    using (var cbal = new CPTCodesBal(CptTableNumber))
-                    {
-                        var result = cbal.GetFilteredCodes(text);
-                        finalList.AddRange(
-                            result.Select(
-                                item =>
-                                new GeneralCodesCustomModel
-                                {
-                                    Code = item.CodeNumbering,
-                                    Description = item.CodeDescription,
-                                    CodeDescription =
-                                            string.Format(
-                                                "{0} - {1}",
-                                                item.CodeDescription,
-                                                item.CodeNumbering),
-                                    CodeType =
-                                            Convert.ToString(Convert.ToInt32(OrderType.CPT)),
-                                    CodeTypeName = "CPT",
-                                    ExternalCode = Convert.ToString(item.CTPCodeRangeValue),
-                                    ID = Convert.ToString(item.CPTCodesId)
-                                }));
-                    }
+                    //using (var cbal = new CPTCodesBal(CptTableNumber))
+                    //{
+                    //    var result = cbal.GetFilteredCodes(text);
+                    //    finalList.AddRange(
+                    //        result.Select(
+                    //            item =>
+                    //            new GeneralCodesCustomModel
+                    //            {
+                    //                Code = item.CodeNumbering,
+                    //                Description = item.CodeDescription,
+                    //                CodeDescription =
+                    //                        string.Format(
+                    //                            "{0} - {1}",
+                    //                            item.CodeDescription,
+                    //                            item.CodeNumbering),
+                    //                CodeType =
+                    //                        Convert.ToString(Convert.ToInt32(OrderType.CPT)),
+                    //                CodeTypeName = "CPT",
+                    //                ExternalCode = Convert.ToString(item.CTPCodeRangeValue),
+                    //                ID = Convert.ToString(item.CPTCodesId)
+                    //            }));
+                    //}
                     break;
                 case 2:
                     using (var cbal = new HCPCSCodesBal(HcpcsTableNumber))
@@ -1274,16 +1274,16 @@ namespace BillingSystem.Bal.BusinessAccess
             var finalListAll = new List<GeneralCodesCustomModel>();
             using (var bal = new GlobalCodeBal())
             {
-                using (var cptBal = new CPTCodesBal(CptTableNumber))
-                {
-                    var cpt = cptBal.GetCPTCodesByCode(code);
-                    var cptCoderange = cpt != null ? cpt.CTPCodeRangeValue : null;
-                    if (cptCoderange != null)
-                    {
-                        var cptCoderangeInt = Convert.ToInt32(cptCoderange);
-                        finalListAll.Add(bal.GetGeneralGlobalCodeByRangeVal(cptCoderangeInt, Convert.ToInt32(OrderType.CPT).ToString()));
-                    }
-                }
+                //using (var cptBal = new CPTCodesBal(CptTableNumber))
+                //{
+                //    var cpt = cptBal.GetCPTCodesByCode(code);
+                //    var cptCoderange = cpt != null ? cpt.CTPCodeRangeValue : null;
+                //    if (cptCoderange != null)
+                //    {
+                //        var cptCoderangeInt = Convert.ToInt32(cptCoderange);
+                //        finalListAll.Add(bal.GetGeneralGlobalCodeByRangeVal(cptCoderangeInt, Convert.ToInt32(OrderType.CPT).ToString()));
+                //    }
+                //}
                 using (var drugBal = new DrugBal(DrugTableNumber))
                 {
                     var drugObj = drugBal.GetCurrentDrugByCode(code);
@@ -1581,9 +1581,10 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public string GetBillNumberByBillHeaderId(int billHeaderId)
         {
-            var billheaderbal = new BillHeaderBal();
-            var billheaderobj = billheaderbal.GetBillHeaderById(billHeaderId);
-            return billheaderobj != null ? billheaderobj.BillNumber : "NA";
+            return string.Empty;
+            //var billheaderbal = new BillHeaderBal();
+            //var billheaderobj = billheaderbal.GetBillHeaderById(billHeaderId);
+            //return billheaderobj != null ? billheaderobj.BillNumber : "NA";
         }
 
         /// <summary>
@@ -2301,11 +2302,12 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public string GetFacilityStructureNameById(int id)
         {
-            using (var facilitySructureBal = new FacilityStructureBal())
-            {
-                var roomObj = facilitySructureBal.GetFacilityStructureById(id);
-                return roomObj != null ? roomObj.FacilityStructureName : string.Empty;
-            }
+            return string.Empty;
+            //using (var facilitySructureBal = new FacilityStructureBal())
+            //{
+            //    var roomObj = facilitySructureBal.GetFacilityStructureById(id);
+            //    return roomObj != null ? roomObj.FacilityStructureName : string.Empty;
+            //}
         }
 
         public List<GlobalCodes> GetGlobalCodesListByCategory(string gcc)

@@ -1,6 +1,7 @@
 ﻿using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
+using BillingSystem.Repository.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,6 +12,7 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class DocumentsTemplatesBal : BaseBal
     {
+        private readonly IRepository<Encounter> _eRepository;
         /// <summary>
         /// Gets the patient documents.
         /// </summary>
@@ -149,7 +151,7 @@ namespace BillingSystem.Bal.BusinessAccess
                                     (_.IsDeleted == null || _.IsDeleted == false))
                             .OrderByDescending(_ => _.DocumentsTemplatesID)
                             .ToList();
-                    var encpunterbal = new EncounterBal();
+
                     documents.AddRange(lstDocumentsTemplates.Select(item => new DocumentsTemplatesCustomModel()
                     {
                         DocumentsTemplatesID = item.DocumentsTemplatesID,
@@ -177,7 +179,7 @@ namespace BillingSystem.Bal.BusinessAccess
                         EncounterNumber =
                             item.EncounterID == null
                                 ? string.Empty
-                                : encpunterbal.GetEncounterNumberByEncounterId(Convert.ToInt32(item.EncounterID)),
+                                : _eRepository.Where(x => x.EncounterID == Convert.ToInt32(item.EncounterID)).FirstOrDefault().EncounterNumber,
                         ExternalValue1 = item.ExternalValue1,
                         ExternalValue2 = item.ExternalValue2,
                         ExternalValue3 = item.ExternalValue3,
@@ -218,7 +220,7 @@ namespace BillingSystem.Bal.BusinessAccess
                                     (_.IsDeleted == null || _.IsDeleted == false))
                             .OrderByDescending(_ => _.DocumentsTemplatesID)
                             .ToList();
-                    var encpunterbal = new EncounterBal();
+
                     documents.AddRange(lstDocumentsTemplates.Select(item => new DocumentsTemplatesCustomModel()
                     {
                         DocumentsTemplatesID = item.DocumentsTemplatesID,
@@ -246,7 +248,7 @@ namespace BillingSystem.Bal.BusinessAccess
                         EncounterNumber =
                             item.EncounterID == null
                                 ? string.Empty
-                                : encpunterbal.GetEncounterNumberByEncounterId(Convert.ToInt32(item.EncounterID)),
+                                : _eRepository.Where(x => x.EncounterID == Convert.ToInt32(item.EncounterID)).FirstOrDefault().EncounterNumber,
                         OldMedicalRecordSoruce =
                             (item.AssociatedType == 4 && item.ExternalValue1 != null
                                 ? GetNameByGlobalCodeId(Convert.ToInt32(item.ExternalValue1))

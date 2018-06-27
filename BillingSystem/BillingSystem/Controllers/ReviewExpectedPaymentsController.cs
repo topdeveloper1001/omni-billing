@@ -3,12 +3,19 @@ using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Common;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
-using BillingSystem.Common.Common;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ReviewExpectedPaymentsController : BaseController
     {
+        private readonly IPatientInfoService _piService;
+
+        public ReviewExpectedPaymentsController(IPatientInfoService piService)
+        {
+            _piService = piService;
+        }
+
         //
         // GET: /ReviewExpectedPayments/
         public ActionResult Index()
@@ -36,8 +43,7 @@ namespace BillingSystem.Controllers
         {
             common.FacilityId = Helpers.GetDefaultFacilityId();
             common.CorporateId = Helpers.GetDefaultCorporateId();
-            var bal = new PatientInfoBal();
-            var objPatientInfoData = bal.GetPatientSearchResult(common);
+            var objPatientInfoData = _piService.GetPatientSearchResult(common);
             var viewpath = string.Format("../PatientSearch/{0}", PartialViews.PatientSearchList);
             //return PartialView("UserControls/_PatientSearchResult", objPatientInfoData);
             return PartialView(viewpath, objPatientInfoData);
@@ -90,18 +96,18 @@ namespace BillingSystem.Controllers
 
         public ActionResult SortExpactedPayment()
         {
-             var corporateId = Helpers.GetSysAdminCorporateID();
+            var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             var bal = new PaymentBal();
             var expectedPaymentInsNotPaidList = bal.GetExpectedPaymentInsNotPaid(corporateId, facilityId);
-           return PartialView(PartialViews.ExpectedPaymentInsNotPaidListView, expectedPaymentInsNotPaidList);
+            return PartialView(PartialViews.ExpectedPaymentInsNotPaidListView, expectedPaymentInsNotPaidList);
         }
         public ActionResult SortPatientVarianceReport()
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             var bal = new PaymentBal();
-            var  expectedPaymentPatientVarList = bal.GetExpectedPaymentPatientVar(corporateId, facilityId);
+            var expectedPaymentPatientVarList = bal.GetExpectedPaymentPatientVar(corporateId, facilityId);
             return PartialView(PartialViews.ExpectedPaymentPatientVarListView, expectedPaymentPatientVarList);
         }
 

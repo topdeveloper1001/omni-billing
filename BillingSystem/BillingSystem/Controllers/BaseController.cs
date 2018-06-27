@@ -168,21 +168,7 @@ namespace BillingSystem.Controllers
         }
 
 
-        protected List<DropdownListData> GetCorporateList()
-        {
-            var list = new List<DropdownListData>();
-            var cId = Helpers.GetDefaultCorporateId();
-            using (var bal = new CorporateBal())
-            {
-                var cList = bal.GetCorporateDDL(cId);
-                list.AddRange(cList.Select(item => new DropdownListData
-                {
-                    Text = item.CorporateName,
-                    Value = Convert.ToString(item.CorporateID)
-                }));
-            }
-            return list;
-        }
+        
 
         protected List<DropdownListData> GetDefaultFacilityList(int corporateId)
         {

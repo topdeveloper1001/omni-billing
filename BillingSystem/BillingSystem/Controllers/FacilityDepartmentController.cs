@@ -15,6 +15,7 @@ namespace BillingSystem.Controllers
     using System.Web.Mvc;
 
     using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
@@ -25,6 +26,13 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class FacilityDepartmentController : BaseController
     {
+
+        private readonly IFacilityStructureService _fsService;
+
+        public FacilityDepartmentController(IFacilityStructureService fsService)
+        {
+            _fsService = fsService;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -35,50 +43,49 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindAccountDropdowns()
         {
-            using (var bal = new FacilityStructureBal())
+
+            int facilityid = Helpers.GetDefaultFacilityId();
+            int corporateid = Helpers.GetSysAdminCorporateID();
+
+            // Get the Entity list
+            List<FacilityStructure> facilityDepartments = _fsService.GetFacilityDepartments(
+                corporateid,
+                facilityid.ToString());
+            var listrevenueAccount = new List<SelectListItem>();
+            var listGeneralGlAccount = new List<SelectListItem>();
+            if (facilityDepartments.Count > 0)
             {
-                int facilityid = Helpers.GetDefaultFacilityId();
-                int corporateid = Helpers.GetSysAdminCorporateID();
-
-                // Get the Entity list
-                List<FacilityStructure> facilityDepartments = bal.GetFacilityDepartments(
-                    corporateid, 
-                    facilityid.ToString());
-                var listrevenueAccount = new List<SelectListItem>();
-                var listGeneralGlAccount = new List<SelectListItem>();
-                if (facilityDepartments.Count > 0)
-                {
-                    listrevenueAccount.AddRange(
-                        facilityDepartments.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
-                            .Select(
-                                item => new SelectListItem
-                                            {
-                                                // Text = item.ExternalValue1,
-                                                Value = Convert.ToString(item.ExternalValue1), 
-                                                Text =
-                                                    Convert.ToString(item.ExternalValue1)
-                                                    + @" (Department Name :" + item.FacilityStructureName
-                                                    + @" )", 
-                                            }));
-                    listGeneralGlAccount.AddRange(
-                        facilityDepartments.Where(x => !string.IsNullOrEmpty(x.ExternalValue2))
-                            .Select(
-                                item => new SelectListItem
-                                            {
-                                                // Text = item.ExternalValue2,
-                                                Text =
-                                                    Convert.ToString(item.ExternalValue2)
-                                                    + @" (Department Name :" + item.FacilityStructureName
-                                                    + @" )", 
-                                                Value = Convert.ToString(item.ExternalValue2), 
-                                            }));
-                    var jsonResult =
-                        new { reveuneAccount = listrevenueAccount, generalLederAccount = listGeneralGlAccount, };
-                    return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
-                }
-
-                return this.Json(null);
+                listrevenueAccount.AddRange(
+                    facilityDepartments.Where(x => !string.IsNullOrEmpty(x.ExternalValue1))
+                        .Select(
+                            item => new SelectListItem
+                            {
+                                    // Text = item.ExternalValue1,
+                                    Value = Convert.ToString(item.ExternalValue1),
+                                Text =
+                                                Convert.ToString(item.ExternalValue1)
+                                                + @" (Department Name :" + item.FacilityStructureName
+                                                + @" )",
+                            }));
+                listGeneralGlAccount.AddRange(
+                    facilityDepartments.Where(x => !string.IsNullOrEmpty(x.ExternalValue2))
+                        .Select(
+                            item => new SelectListItem
+                            {
+                                    // Text = item.ExternalValue2,
+                                    Text =
+                                                Convert.ToString(item.ExternalValue2)
+                                                + @" (Department Name :" + item.FacilityStructureName
+                                                + @" )",
+                                Value = Convert.ToString(item.ExternalValue2),
+                            }));
+                var jsonResult =
+                    new { reveuneAccount = listrevenueAccount, generalLederAccount = listGeneralGlAccount, };
+                return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
             }
+
+            return this.Json(null);
+
         }
 
         /// <summary>
@@ -111,7 +118,7 @@ namespace BillingSystem.Controllers
 
                     // Update Operation of current FacilityDepartment
                     List<FacilityDepartmentCustomModel> result = bal.SaveFacilityDepartment(model);
-                    list = bal.GetFacilityDepartmentList(corporateid, facilityid,true);
+                    list = bal.GetFacilityDepartmentList(corporateid, facilityid, true);
 
                     // return deleted ID of current FacilityDepartment as Json Result to the Ajax Call.
                     return this.Json(result);
@@ -157,7 +164,7 @@ namespace BillingSystem.Controllers
                 int corporateid = Helpers.GetSysAdminCorporateID();
 
                 // Get the Entity list
-                List<FacilityDepartmentCustomModel> list = bal.GetFacilityDepartmentList(corporateid, facilityid,showInActive);
+                List<FacilityDepartmentCustomModel> list = bal.GetFacilityDepartmentList(corporateid, facilityid, showInActive);
                 return this.PartialView(PartialViews.FacilityDepartmentList, list);
             }
         }
@@ -179,14 +186,14 @@ namespace BillingSystem.Controllers
                 int corporateid = Helpers.GetSysAdminCorporateID();
 
                 // Get the Entity list
-                List<FacilityDepartmentCustomModel> list = bal.GetFacilityDepartmentList(corporateid, facilityid,true);
+                List<FacilityDepartmentCustomModel> list = bal.GetFacilityDepartmentList(corporateid, facilityid, true);
 
                 // Intialize the View Model i.e. FacilityDepartmentView which is binded to Main View Index.cshtml under FacilityDepartment
                 var viewModel = new FacilityDepartmentView
-                                    {
-                                        FacilityDepartmentList = list, 
-                                        CurrentFacilityDepartment = new FacilityDepartment()
-                                    };
+                {
+                    FacilityDepartmentList = list,
+                    CurrentFacilityDepartment = new FacilityDepartment()
+                };
 
                 // Pass the View Model in ActionResult to View FacilityDepartment
                 return View(viewModel);

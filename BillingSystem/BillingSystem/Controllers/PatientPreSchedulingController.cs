@@ -17,11 +17,11 @@ namespace BillingSystem.Controllers
     using System.Web.Mvc;
 
     using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Common.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models;
 
     /// <summary>
     /// PatientPreScheduling controller.
@@ -29,6 +29,15 @@ namespace BillingSystem.Controllers
     [AllowAnonymous]
     public class PatientPreSchedulingController : Controller
     {
+        private readonly IPatientInfoService _piService;
+        private readonly ICountryService _cService;
+
+        public PatientPreSchedulingController(IPatientInfoService piService, ICountryService cService)
+        {
+            _piService = piService;
+            _cService = cService;
+        }
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -117,7 +126,7 @@ namespace BillingSystem.Controllers
         /// returns the actionresult in the form of current object of the Model PatientPreScheduling to be passed to View
         /// PatientPreScheduling
         /// </returns>
-        public ActionResult Index(int? CId, int? FId,int? msg)
+        public ActionResult Index(int? CId, int? FId, int? msg)
         {
             // Pass the View Model in ActionResult to View PatientPreScheduling
             var patientSchedularlinkBal = new PreSchedulingLinkBal();
@@ -128,10 +137,10 @@ namespace BillingSystem.Controllers
             {
                 ViewBag.check = msg;
                 var objtoreturn = new Users()
-                                      {
-                                          CorporateId = Convert.ToInt32(CId),
-                                          FacilityId = Convert.ToInt32(FId)
-                                      };
+                {
+                    CorporateId = Convert.ToInt32(CId),
+                    FacilityId = Convert.ToInt32(FId)
+                };
                 return View(objtoreturn);
             }
             else
@@ -265,20 +274,20 @@ namespace BillingSystem.Controllers
                                 using (var bal = new LoginTrackingBal())
                                 {
                                     var loginTrackingVm = new LoginTracking
-                                                              {
-                                                                  ID = patientId,
-                                                                  LoginTime =
+                                    {
+                                        ID = patientId,
+                                        LoginTime =
                                                                       Helpers.GetInvariantCultureDateTime(),
-                                                                  LoginUserType =
+                                        LoginUserType =
                                                                       (int)LoginTrackingTypes.UserLogin,
-                                                                  FacilityId = currentPatient.FacilityId,
-                                                                  CorporateId = currentPatient.CorporateId,
-                                                                  IsDeleted = false,
-                                                                  IPAddress = Helpers.GetUser_IP(),
-                                                                  CreatedBy = patientId,
-                                                                  CreatedDate =
+                                        FacilityId = currentPatient.FacilityId,
+                                        CorporateId = currentPatient.CorporateId,
+                                        IsDeleted = false,
+                                        IPAddress = Helpers.GetUser_IP(),
+                                        CreatedBy = patientId,
+                                        CreatedDate =
                                                                       Helpers.GetInvariantCultureDateTime()
-                                                              };
+                                    };
 
                                     bal.AddUpdateLoginTrackingData(loginTrackingVm);
                                     pbal.UpdatePatientLoginFailedLog(
@@ -378,12 +387,10 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <returns></returns>
         public ActionResult GetCountriesWithCode()
-        {
-            using (var bal = new CountryBal())
-            {
-                var list = bal.GetCountryWithCode();
+        { 
+                var list = _cService.GetCountryWithCode();
                 return Json(list);
-            }
+           
         }
 
         /// <summary>
@@ -397,109 +404,108 @@ namespace BillingSystem.Controllers
             const string DefaultEmirate = "111-11-1111"; //"111-1111-1111111-1";
             var patientId = 0;
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
-            using (var bal = new PatientInfoBal())
-            {
-                var pinfoObj = new PatientInfo()
-                {
-                    CorporateId = pinfo.CorporateId,
-                    FacilityId = pinfo.FacilityId,
-                    CreatedBy = 9999,
-                    CreatedDate = currentDateTime,
-                    PersonEmiratesIDNumber = DefaultEmirate,
-                    IsDeleted = false,
-                    PersonBirthDate = Convert.ToDateTime(pinfo.PersonDateOfBirth),
-                    PersonLastName = pinfo.PersonFirstName,
-                    PersonFirstName = pinfo.PersonFirstName,
-                    PersonEmailAddress = pinfo.PersonEmailId,
-                };
 
-                // Check for duplicate Social Security Number, DOB and LastName
-                var isExists = bal.CheckIfEmiratesIdExists(
-                    pinfoObj.PersonEmiratesIDNumber,
-                    patientId,
-                    pinfoObj.PersonLastName,
-                    Convert.ToDateTime(pinfoObj.PersonBirthDate),
-                    Convert.ToInt32(pinfoObj.FacilityId));
+            var pinfoObj = new PatientInfo()
+            {
+                CorporateId = pinfo.CorporateId,
+                FacilityId = pinfo.FacilityId,
+                CreatedBy = 9999,
+                CreatedDate = currentDateTime,
+                PersonEmiratesIDNumber = DefaultEmirate,
+                IsDeleted = false,
+                PersonBirthDate = Convert.ToDateTime(pinfo.PersonDateOfBirth),
+                PersonLastName = pinfo.PersonFirstName,
+                PersonFirstName = pinfo.PersonFirstName,
+                PersonEmailAddress = pinfo.PersonEmailId,
+            };
+
+            // Check for duplicate Social Security Number, DOB and LastName
+            var isExists = _piService.CheckIfEmiratesIdExists(
+                pinfoObj.PersonEmiratesIDNumber,
+                patientId,
+                pinfoObj.PersonLastName,
+                Convert.ToDateTime(pinfoObj.PersonBirthDate),
+                Convert.ToInt32(pinfoObj.FacilityId));
+            if (isExists)
+            {
+                return Json(new { patientId, status = "duplicate" }, JsonRequestBehavior.AllowGet);
+            }
+
+            // Check for duplicate Patient's Email
+            if (!string.IsNullOrEmpty(pinfo.PersonEmailId))
+            {
+                isExists = _piService.CheckForDuplicateEmail(pinfo.PersonEmailId, patientId);
                 if (isExists)
                 {
-                    return Json(new { patientId, status = "duplicate" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { patientId, status = "duplicateemail" }, JsonRequestBehavior.AllowGet);
                 }
+            }
 
-                // Check for duplicate Patient's Email
-                if (!string.IsNullOrEmpty(pinfo.PersonEmailId))
+            using (var trans = new TransactionScope())
+            {
+                try
                 {
-                    isExists = bal.CheckForDuplicateEmail(pinfo.PersonEmailId, patientId);
-                    if (isExists)
+                    patientId = _piService.AddUpdatePatientInfo(pinfoObj);
+                    if (patientId > 0)
                     {
-                        return Json(new { patientId, status = "duplicateemail" }, JsonRequestBehavior.AllowGet);
-                    }
-                }
+                        var statusMessage = string.Empty;
 
-                using (var trans = new TransactionScope())
-                {
-                    try
-                    {
-                        patientId = bal.AddUpdatePatientInfo(pinfoObj);
-                        if (patientId > 0)
+                        // Save / Updates Patient's Phone Details
+                        var phone = new PatientPhone
                         {
-                            var statusMessage = string.Empty;
+                            PatientID = patientId,
+                            PhoneNo = pinfo.PersonPhoneNumber,
+                            PhoneType = (int)PhoneType.MobilePhone,
+                            IsPrimary = true,
+                            IsdontContact = false,
+                            IsDeleted = false,
+                            CreatedDate = currentDateTime,
+                            CreatedBy = 9999
+                        };
 
-                            // Save / Updates Patient's Phone Details
-                            var phone = new PatientPhone
-                            {
-                                PatientID = patientId,
-                                PhoneNo = pinfo.PersonPhoneNumber,
-                                PhoneType = (int)PhoneType.MobilePhone,
-                                IsPrimary = true,
-                                IsdontContact = false,
-                                IsDeleted = false,
-                                CreatedDate = currentDateTime,
-                                CreatedBy = 9999
-                            };
+                        var phoneId = SavePatientPhoneData(phone);
+                        if (phoneId <= 0)
+                        {
+                            statusMessage = "phoneerror";
+                        }
 
-                            var phoneId = SavePatientPhoneData(phone);
-                            if (phoneId <= 0)
-                            {
-                                statusMessage = "phoneerror";
-                            }
+                        // Save / Updates Patient's Login Details
+                        var personLoginDetails = new PatientLoginDetailCustomModel()
+                        {
+                            Email =
+                                pinfo.PersonEmailId,
+                            PatientId = patientId,
+                            FacilityId =
+                                pinfo.FacilityId,
+                            CorporateId =
+                                pinfo.CorporateId,
+                            CreatedBy = 9999,
+                            CreatedDate = currentDateTime,
+                            PatientPortalAccess = true
+                        };
+                        var loginId = SavePatientSecuritySettings(personLoginDetails);
+                        if (loginId <= 0)
+                        {
+                            statusMessage = "logindetailerror";
+                        }
 
-                            // Save / Updates Patient's Login Details
-                            var personLoginDetails = new PatientLoginDetailCustomModel()
-                            {
-                                Email =
-                                    pinfo.PersonEmailId,
-                                PatientId = patientId,
-                                FacilityId =
-                                    pinfo.FacilityId,
-                                CorporateId =
-                                    pinfo.CorporateId,
-                                CreatedBy = 9999,
-                                CreatedDate = currentDateTime,
-                                PatientPortalAccess =true
-                            };
-                            var loginId = SavePatientSecuritySettings(personLoginDetails);
-                            if (loginId <= 0)
-                            {
-                                statusMessage = "logindetailerror";
-                            }
-
-                            if (loginId > 0 && phoneId > 0)
-                            {
-                                trans.Complete();
-                            }
-                            else
-                            {
-                                return Json(new { patientId, status = statusMessage }, JsonRequestBehavior.AllowGet);
-                            }
+                        if (loginId > 0 && phoneId > 0)
+                        {
+                            trans.Complete();
+                        }
+                        else
+                        {
+                            return Json(new { patientId, status = statusMessage }, JsonRequestBehavior.AllowGet);
                         }
                     }
-                    catch (Exception )
-                    {
-                        return Json(new { patientId, status = "error" }, JsonRequestBehavior.AllowGet);
-                    }
                 }
-                return Json(new { patientId, status = "success" }, JsonRequestBehavior.AllowGet);
+                catch (Exception)
+                {
+                    return Json(new { patientId, status = "error" }, JsonRequestBehavior.AllowGet);
+                }
             }
+            return Json(new { patientId, status = "success" }, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
