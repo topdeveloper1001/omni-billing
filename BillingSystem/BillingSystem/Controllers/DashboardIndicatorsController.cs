@@ -19,10 +19,12 @@ namespace BillingSystem.Controllers
     public class DashboardIndicatorsController : BaseController
     {
         private readonly IFacilityStructureService _fsService;
+        private readonly IDashboardIndicatorDataService _diService;
 
-        public DashboardIndicatorsController(IFacilityStructureService fsService)
+        public DashboardIndicatorsController(IFacilityStructureService fsService, IDashboardIndicatorDataService diService)
         {
             _fsService = fsService;
+            _diService = diService;
         }
 
         /// <summary>
@@ -136,10 +138,8 @@ namespace BillingSystem.Controllers
                     //Add by shashank to check the Special case for the Indicator i.e. is the Target/Budget is static for indicator 
                     //.... Should only Call for Dashboard type = Budget (Externalvalue1='1')
                     if (!string.IsNullOrEmpty(model.IndicatorNumber) && model.ExternalValue4.ToLower() == "true")
-                    {
-                        using (var ibal = new DashboardIndicatorDataBal())
-                            ibal.SetStaticBudgetTargetIndciators(model);
-                    }
+                        _diService.SetStaticBudgetTargetIndciators(model);
+
 
                     bal.UpdateIndicatorsOtherDetail(model);
 
@@ -176,38 +176,30 @@ namespace BillingSystem.Controllers
                         model.CreatedBy = userId;
                         model.CreatedDate = currentDate;
                     }
-                    using (var dashboardIndicatorDataBal = new DashboardIndicatorDataBal())
+                    switch (model.IsActive)
                     {
-                        switch (model.IsActive)
-                        {
-                            case 0:
-                                dashboardIndicatorDataBal.BulkInactiveDashboardIndicatorData(model.IndicatorNumber,
-                                    Helpers.GetSysAdminCorporateID());
-                                break;
-                            default:
-                                dashboardIndicatorDataBal.BulkActiveDashboardIndicatorData(model.IndicatorNumber,
-                                    Helpers.GetSysAdminCorporateID());
-                                break;
-                        }
+                        case 0:
+                            _diService.BulkInactiveDashboardIndicatorData(model.IndicatorNumber,
+                                Helpers.GetSysAdminCorporateID());
+                            break;
+                        default:
+                            _diService.BulkActiveDashboardIndicatorData(model.IndicatorNumber,
+                                Helpers.GetSysAdminCorporateID());
+                            break;
                     }
-                    using (var oDashboardIndicatorDataBal = new DashboardIndicatorDataBal())
-                    {
-                        oDashboardIndicatorDataBal.GenerateIndicatorEffects(model);
-                    }
+
+                    _diService.GenerateIndicatorEffects(model);
+
                     list = bal.SaveDashboardIndicatorsV1(model);
 
                     //Add by shashank to check the Special case for the Indicator i.e. is the Target/Budget is static for indicator 
                     //.... Should only Call for Dashboard type = Budget (Externalvalue1='1')
                     if (!string.IsNullOrEmpty(model.IndicatorNumber) && model.ExternalValue4.ToLower() == "true")
-                    {
-                        using (var ibal = new DashboardIndicatorDataBal())
-                            ibal.SetStaticBudgetTargetIndciators(model);
-                    }
-                    using (var oDashboardIndicatorDataBal = new DashboardIndicatorDataBal())
-                    {
-                        oDashboardIndicatorDataBal.GenerateIndicatorEffects(model);
-                        oDashboardIndicatorDataBal.UpdateCalculateIndicatorUpdate(model);
-                    }
+                        _diService.SetStaticBudgetTargetIndciators(model);
+
+                    _diService.GenerateIndicatorEffects(model);
+                    _diService.UpdateCalculateIndicatorUpdate(model);
+
                     //Call the AddDashboardIndicators Method to Add / Update current DashboardIndicators
                     var orderByExpression = HtmlExtensions.GetOrderByExpression<DashboardIndicatorsCustomModel>("Dashboard");
                     list = HtmlExtensions.OrderByDir<DashboardIndicatorsCustomModel>(list, "ASC", orderByExpression);
@@ -281,10 +273,7 @@ namespace BillingSystem.Controllers
                     //Update Operation of current DashboardIndicators
                     isDeleted = bal.DeleteIndicator(model);
                     //return deleted ID of current DashboardIndicators as Json Result to the Ajax Call.
-                    using (var dashboardIndicatorDataBal = new DashboardIndicatorDataBal())
-                    {
-                        dashboardIndicatorDataBal.BulkInactiveDashboardIndicatorData(model.IndicatorNumber, Helpers.GetSysAdminCorporateID());
-                    }
+                    _diService.BulkInactiveDashboardIndicatorData(model.IndicatorNumber, Helpers.GetSysAdminCorporateID());
 
                     bal.UpdateIndicatorsOtherDetail(model);
                 }

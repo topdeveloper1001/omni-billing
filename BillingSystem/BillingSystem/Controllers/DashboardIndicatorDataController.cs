@@ -1,4 +1,4 @@
-﻿using BillingSystem.Bal.BusinessAccess;
+﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
@@ -17,6 +17,13 @@ namespace BillingSystem.Controllers
 {
     public class DashboardIndicatorDataController : BaseController
     {
+        private readonly IDashboardIndicatorDataService _service;
+
+        public DashboardIndicatorDataController(IDashboardIndicatorDataService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the DashboardIndicatorData View in the Model DashboardIndicatorData such as DashboardIndicatorDataList, list of countries etc.
         /// </summary>
@@ -25,22 +32,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the DashboardIndicatorData BAL object
-            using (var bal = new DashboardIndicatorDataBal())
+            //Get the Entity list
+            var list = _service.GetDashboardIndicatorDataList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+
+            //Intialize the View Model i.e. DashboardIndicatorDataView which is binded to Main View Index.cshtml under DashboardIndicatorData
+            var viewModel = new DashboardIndicatorDataView
             {
-                //Get the Entity list
-                var list = bal.GetDashboardIndicatorDataList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+                DashboardIndicatorDataList = list,
+                CurrentDashboardIndicatorData = new DashboardIndicatorData()
+            };
 
-                //Intialize the View Model i.e. DashboardIndicatorDataView which is binded to Main View Index.cshtml under DashboardIndicatorData
-                var viewModel = new DashboardIndicatorDataView
-                {
-                    DashboardIndicatorDataList = list,
-                    CurrentDashboardIndicatorData = new DashboardIndicatorData()
-                };
-
-                //Pass the View Model in ActionResult to View DashboardIndicatorData
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View DashboardIndicatorData
+            return View(viewModel);
         }
 
         /// <summary>
@@ -61,48 +64,18 @@ namespace BillingSystem.Controllers
             {
                 model.CorporateId = Helpers.GetSysAdminCorporateID();
                 model.IsActive = true;
-                using (var bal = new DashboardIndicatorDataBal())
+                if (model.ID == 0)
                 {
-                    if (model.ID == 0)
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddDashboardIndicatorData Method to Add / Update current DashboardIndicatorData
-                    list = bal.SaveDashboardIndicatorData(model);
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
                 }
+
+                //Call the AddDashboardIndicatorData Method to Add / Update current DashboardIndicatorData
+                list = _service.SaveDashboardIndicatorData(model);
             }
             //Pass the ActionResult with List of DashboardIndicatorDataViewModel object to Partial View DashboardIndicatorDataList
             return PartialView(PartialViews.DashboardIndicatorDataList, list);
         }
-
-        ///// <summary>
-        ///// Get the details of the current DashboardIndicatorData in the view model by ID
-        ///// </summary>
-        ///// <param name="id">The identifier.</param>
-        ///// <param name="type"></param>
-        ///// <returns></returns>
-        //public PartialViewResult GetDashboardIndicatorDataDetails(int id, int type)
-        //{
-        //    if (type == 1)
-        //    {
-        //        var model = new DashboardIndicatorData { IsActive = true, ID = 0 };
-        //        if (id > 0)
-        //        {
-        //            using (var bal = new DashboardIndicatorDataBal())
-        //            {
-        //                //Call the AddDashboardIndicatorData Method to Add / Update current DashboardIndicatorData
-        //                model = bal.GetDashboardIndicatorDataById(id);
-        //            }
-        //        }
-        //        //Pass the ActionResult with the current DashboardIndicatorDataViewModel object as model to PartialView DashboardIndicatorDataAddEdit
-        //        return PartialView(PartialViews.DashboardIndicatorAddEdit, model);
-        //    }
-        //    //Pass the ActionResult with the current DashboardIndicatorDataViewModel object as model to PartialView DashboardIndicatorDataAddEdit
-        //    return PartialView(PartialViews.DashboardIndicatorImport);
-        //}
-
 
         /// <summary>
         /// Get the details of the current DashboardIndicatorData in the view model by ID
@@ -114,11 +87,7 @@ namespace BillingSystem.Controllers
         {
             var model = new DashboardIndicatorData { IsActive = true, ID = 0 };
             if (type == 1 && id > 0)
-            {
-                //Call the AddDashboardIndicatorData Method to Add / Update current DashboardIndicatorData
-                using (var bal = new DashboardIndicatorDataBal())
-                    model = bal.GetDashboardIndicatorDataById(id);
-            }
+                model = _service.GetCurrentById(id);
 
             //Pass the ActionResult with the current DashboardIndicatorDataViewModel object as model to PartialView DashboardIndicatorDataAddEdit
             return Json(model, JsonRequestBehavior.AllowGet);
@@ -131,26 +100,22 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDashboardIndicatorData(int id)
         {
-            using (var bal = new DashboardIndicatorDataBal())
+            //Get DashboardIndicatorData model object by current DashboardIndicatorData ID
+            var model = _service.GetCurrentById(id);
+
+            var list = new List<DashboardIndicatorDataCustomModel>();
+
+            //Check If DashboardIndicatorData model is not null
+            if (model != null)
             {
-                //Get DashboardIndicatorData model object by current DashboardIndicatorData ID
-                var model = bal.GetDashboardIndicatorDataById(id);
-                //var userId = Helpers.GetLoggedInUserId();
-                //var currentDate = Helpers.GetInvariantCultureDateTime();
-                var list = new List<DashboardIndicatorDataCustomModel>();
+                model.IsActive = false;
 
-                //Check If DashboardIndicatorData model is not null
-                if (model != null)
-                {
-                    model.IsActive = false;
-
-                    //Update Operation of current DashboardIndicatorData
-                    list = bal.SaveDashboardIndicatorData(model);
-                    //return deleted ID of current DashboardIndicatorData as Json Result to the Ajax Call.
-                }
-                //Pass the ActionResult with List of DashboardIndicatorDataViewModel object to Partial View DashboardIndicatorDataList
-                return PartialView(PartialViews.DashboardIndicatorDataList, list);
+                //Update Operation of current DashboardIndicatorData
+                list = _service.SaveDashboardIndicatorData(model);
+                //return deleted ID of current DashboardIndicatorData as Json Result to the Ajax Call.
             }
+            //Pass the ActionResult with List of DashboardIndicatorDataViewModel object to Partial View DashboardIndicatorDataList
+            return PartialView(PartialViews.DashboardIndicatorDataList, list);
         }
 
         /// <summary>
@@ -161,16 +126,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindIndicatorsDataByOrder(string sort, string sortdir)
         {
-            using (var bal = new DashboardIndicatorDataBal())
-            {
-                //Get the Entity list
-                var list = bal.GetDashboardIndicatorDataList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
-                //Intialize the View Model i.e. DashboardIndicatorsView which is binded to Main View Index.cshtml under DashboardIndicators
-                var orderByExpression = HtmlExtensions.GetOrderByExpression<DashboardIndicatorDataCustomModel>(sort);
-                var data = HtmlExtensions.OrderByDir<DashboardIndicatorDataCustomModel>(list, sortdir, orderByExpression);
-                //Pass the View Model in ActionResult to View DashboardIndicators
-                return PartialView(PartialViews.DashboardIndicatorDataList, data);
-            }
+            // Get the Entity list
+            var list = _service.GetDashboardIndicatorDataList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+
+            //Intialize the View Model i.e. DashboardIndicatorsView which is binded to Main View Index.cshtml under DashboardIndicators
+            var orderByExpression = HtmlExtensions.GetOrderByExpression<DashboardIndicatorDataCustomModel>(sort);
+            var data = HtmlExtensions.OrderByDir(list, sortdir, orderByExpression);
+
+            //Pass the View Model in ActionResult to View DashboardIndicators
+            return PartialView(PartialViews.DashboardIndicatorDataList, data);
         }
 
         #region Import Dashboard Indicator Data
@@ -267,14 +231,11 @@ namespace BillingSystem.Controllers
                                 foreach (var item in getFiles)
                                     System.IO.File.Delete(item);
 
-                                using (var bal = new DashboardIndicatorDataBal())
+                                var result = _service.BulkSaveDashboardIndicatorData(list, Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID());
+                                if (result.Count == 0)
                                 {
-                                    var result = bal.BulkSaveDashboardIndicatorData(list, Helpers.GetDefaultFacilityId(), Helpers.GetSysAdminCorporateID());
-                                    if (result.Count == 0)
-                                    {
-                                        ViewBag.ImportStatus = result.Count == 0 ? -1 : 1;
-                                        Session[SessionEnum.TempFile.ToString()] = null;
-                                    }
+                                    ViewBag.ImportStatus = result.Count == 0 ? -1 : 1;
+                                    Session[SessionEnum.TempFile.ToString()] = null;
                                 }
                             }
                         }
