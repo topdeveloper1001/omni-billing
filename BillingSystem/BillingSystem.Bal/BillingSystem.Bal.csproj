@@ -95,6 +95,8 @@
     <Compile Include="BusinessAccess\DashboardBudgetService.cs" />
     <Compile Include="BusinessAccess\DashboardService.cs" />
     <Compile Include="BusinessAccess\FacilityStructureService.cs" />
+    <Compile Include="Interfaces\IDashboardIndicatorDataService.cs" />
+    <Compile Include="Interfaces\IDashboardDisplayOrderService.cs" />
     <Compile Include="Interfaces\IBillingSystemParametersService.cs" />
     <Compile Include="Interfaces\ICarePlanService.cs" />
     <Compile Include="Interfaces\ICarePlanTaskService.cs" />
@@ -153,8 +155,8 @@
     <Compile Include="BusinessAccess\HolidayPlannerBal.cs" />
     <Compile Include="BusinessAccess\HolidayPlannerDetailsBal.cs" />
     <Compile Include="BusinessAccess\PatientEvaluationBal.cs" />
-    <Compile Include="BusinessAccess\DashboardDisplayOrderBal.cs" />
-    <Compile Include="BusinessAccess\DashboardIndicatorDataBal.cs" />
+    <Compile Include="BusinessAccess\DashboardDisplayOrderService.cs" />
+    <Compile Include="BusinessAccess\DashboardIndicatorDataService.cs" />
     <Compile Include="BusinessAccess\DashboardIndicatorsBal.cs" />
     <Compile Include="BusinessAccess\DashboardParametersBal.cs" />
     <Compile Include="BusinessAccess\DashboardRemarkBal.cs" />
@@ -281,8 +283,6 @@
     <Compile Include="Mapper\Common.cs" />
     <Compile Include="Mapper\PreSchedulingLinkMapper.cs" />
     <Compile Include="Mapper\SchedulingMapper.cs" />
-    <Compile Include="Mapper\DashboardDisplayOrderMapper.cs" />
-    <Compile Include="Mapper\DashboardIndicatorDataMapper.cs" />
     <Compile Include="Mapper\DashboardIndicatorsMapper.cs" />
     <Compile Include="Mapper\DashboardParametersMapper.cs" />
     <Compile Include="Mapper\DashboardRemarkMapper.cs" />
