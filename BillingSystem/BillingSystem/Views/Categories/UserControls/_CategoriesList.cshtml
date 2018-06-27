@@ -1,0 +1,47 @@
+﻿@using System.Web.Helpers
+@using BillingSystem.Model
+@model System.Collections.Generic.List<Categories>
+
+<div class="form">
+    <div class="table-responsive">
+        @if (Model != null && Model.Count > 0)
+        {
+            var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContent", canPage: false);
+            <div id="gridContent">
+                @grid.GetHtml("table table_scroll12", "gridHead", "gridFooter", "gridRow", "gridAltRow", columns: grid.Columns(
+                                
+                                  grid.Column("ProdCatNumber", "Category Number"),
+                                grid.Column("ProdCat", "Category Name" ),
+                                grid.Column("ProdSubcat", "Subcategory" ),
+                                grid.Column("ProdSubcat2", "Subcategory2" ),
+                                grid.Column("ProdSubcat3", "Subcategory3" ),
+                                 
+                
+                grid.Column(header: "Action", format: @<text>
+                <a href="#" onclick="EditCategory('@item.Id')" style="float: left; margin-right: 7px; width: 15px;">
+                    <img src="../images/edit.png" /></a>
+                                                           &nbsp;
+                <a href="javascript:void(0);" title="Delete Category" onclick="return OpenConfirmPopup('@item.Id','Delete Category','',DeleteCategory,null); " style="float: left; width: 15px;">
+                    <img src="@Url.Content("~/images/delete.png")" />
+                </a>
+                </text>)
+                                ))
+            </div>            
+        }
+        else
+        {
+
+            <h2>No Record found</h2>
+        }
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('.table_scroll12').fixedHeaderTable({ cloneHeadToFoot: true, altClass: 'odd', autoShow: true });
+        SetGridSorting(SortCategoriesGrid, "#gridContent");
+
+    });
+</script>
+
+
+

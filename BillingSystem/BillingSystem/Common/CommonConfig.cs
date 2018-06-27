@@ -203,6 +203,14 @@ namespace BillingSystem.Common
             "{0}/_AppointmentTypesAddEdit",
             CommonConfig.UserControlPath);
 
+        public static readonly string CategoriesList = string.Format(
+            "{0}/_CategoriesList",
+            CommonConfig.UserControlPath);
+
+        public static readonly string CategoriesAddEdit = string.Format(
+            "{0}/_CategoriesAddEdit",
+            CommonConfig.UserControlPath);
+
         public static readonly string FacilityDepartmentListView = string.Format(
            "{0}/_FacilityDepartmentListView",
            CommonConfig.UserControlPath);

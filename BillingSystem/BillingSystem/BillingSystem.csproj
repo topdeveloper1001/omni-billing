@@ -312,6 +312,7 @@
     <Compile Include="Common\WebClientWrapper.cs" />
     <Compile Include="Common\WebRequestWrapper.cs" />
     <Compile Include="Controllers\ActiveEncounterController.cs" />
+    <Compile Include="Controllers\CategoriesController.cs" />
     <Compile Include="Controllers\AppointmentTypesController.cs" />
     <Compile Include="Controllers\AssignWorkQueueController.cs" />
     <Compile Include="Controllers\ATCCodesController.cs" />
@@ -491,6 +492,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>JornalEntryAccDataSet.xsd</DependentUpon>
     </Compile>
+    <Compile Include="Models\CategoriesView.cs" />
     <Compile Include="Models\ClinicianAppointmentTypesView.cs" />
     <Compile Include="Models\ActiveEncounter.cs" />
     <Compile Include="Models\ActiveEncounterCustomView.cs" />
@@ -3220,6 +3222,9 @@
     <Content Include="Views\BillingModifier\index.cshtml" />
     <Content Include="Views\PlaceOfService\index.cshtml" />
     <Content Include="Views\ActiveEncounter\UserControls\_AdministerOrdersinEncounter.cshtml" />
+    <Content Include="Views\Categories\CategoriesMain.cshtml" />
+    <Content Include="Views\Categories\UserControls\_CategoriesAddEdit.cshtml" />
+    <Content Include="Views\Categories\UserControls\_CategoriesList.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

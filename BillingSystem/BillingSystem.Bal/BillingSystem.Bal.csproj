@@ -84,6 +84,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessAccess\CategoriesBal.cs" />
     <Compile Include="BusinessAccess\BillingModifierBal.cs" />
     <Compile Include="BusinessAccess\ClinicianAppointmentTypesBal.cs" />
     <Compile Include="BusinessAccess\ClinicianRosterBal.cs" />
