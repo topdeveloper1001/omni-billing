@@ -11,7 +11,7 @@ namespace BillingSystem.Models
     {
      
         public Categories CurrentCategory { get; set; }
-        public List<Categories> CategoriesList { get; set; }
+        public List<CategoriesCustomModel> CategoriesList { get; set; }
 
     }
 }

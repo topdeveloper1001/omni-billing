@@ -1,12 +1,8 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CategoriesController.cs" company="">
-//   OmniHealthcare
-// </copyright>
-// <summary>
-//   Categories and Subcategories controller
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿using System.Web.Mvc;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Models;
 namespace BillingSystem.Controllers
 {
     using System.Web.Mvc;
@@ -20,26 +16,31 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class CategoriesController : BaseController
     {
+
+        private readonly ICategoriesService _service;
+
+        public CategoriesController(ICategoriesService service)
+        {
+            _service = service;
+        }
         #region Public Methods and Operators
 
         /// <summary>
         ///     Bind all the Categories list
         /// </summary>
-        /// <returns>action result with the partial view containing the AppointmentTypes list object</returns>
+        /// <returns>action result with the partial view containing the Categories list object</returns>
         [HttpPost]
         public ActionResult BindCategoriesList()
         {
             
-            // Initialize the AppointmentTypes BAL object
-            using (var categoriesBal = new CategoriesBal())
-            {
-                // Get categories list
-                var cateogiresList = categoriesBal.GetCategoriesData();
+            
+            // Get categories list
+            var cateogiresList = _service.GetCategoriesData();
 
 
-                // Pass the ActionResult with List of CategoriesViewModel object to Partial View CategoriesList
-                return PartialView(PartialViews.CategoriesList, cateogiresList);
-            }
+            // Pass the ActionResult with List of CategoriesViewModel object to Partial View CategoriesList
+            return PartialView(PartialViews.CategoriesList, cateogiresList);
+            
         }
 
 
@@ -55,23 +56,22 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteCategory(int id)
         {
-            using (var bal = new CategoriesBal())
+            
+            // Get currentCategory model object by current currentCategory ID
+            var currentCategory = _service.GetCategoryById(id);
+
+            // Check If currentCategory model is not null
+            if (currentCategory != null)
             {
-                // Get currentCategory model object by current currentCategory ID
-                var currentCategory = bal.GetCategoryById(id);
 
-                // Check If currentCategory model is not null
-                if (currentCategory != null)
-                {
-
-                    // Update Operation of current currentCategory
-                    int result = bal.DeleteCategoriesData(currentCategory);
+                // Update Operation of current currentCategory
+                int result = _service.DeleteCategoriesData(currentCategory);
 
 
-                    // return deleted ID of current Category as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                // return deleted ID of current Category as Json Result to the Ajax Call.
+                return Json(result);
             }
+            
 
             // Return the Json result as Action Result back JSON Call Success
             return Json(null);
@@ -88,14 +88,13 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetCategory(int id)
         {
-            using (var bal = new CategoriesBal())
-            {
-                // Call the AddCategories Method to Add / Update current Categories
-                Categories currentCategory = bal.GetCategoryById(id);
+            
+            // Call the AddCategories Method to Add / Update current Categories
+            Categories currentCategory = _service.GetCategoryById(id);
 
-                // Pass the ActionResult with the current CategoriesViewModel object as model to PartialView CategoriesAddEdit
-                return PartialView(PartialViews.CategoriesAddEdit, currentCategory);
-            }
+            // Pass the ActionResult with the current CategoriesViewModel object as model to PartialView CategoriesAddEdit
+            return PartialView(PartialViews.CategoriesAddEdit, currentCategory);
+            
         }
 
         /// <summary>
@@ -109,11 +108,8 @@ namespace BillingSystem.Controllers
         public ActionResult CategoriesMain()
         {
 
-            // Initialize the Categories BAL object
-            var categoriesBal = new CategoriesBal();
-
             // Get the Entity list
-            var categoriesList = categoriesBal.GetCategoriesData();
+            var categoriesList = _service.GetCategoriesData();
 
             // Intialize the View Model i.e. CategoriesView which is binded to Main View Index.cshtml under Categories
             var cateogiresView = new CategoriesView
@@ -134,7 +130,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult ResetCategoriesForm()
         {
-            // Intialize the new object of AppointmentTypes ViewModel
+            // Intialize the new object of Categories ViewModel
             var categoriesViewModel = new Categories();
 
             // Pass the View Model as CategoriesViewModel to PartialView CategoriesAddEdit just to update the AddEdit partial view.
@@ -160,27 +156,25 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new CategoriesBal())
+                var isExist = _service.CheckDuplicateCategory(model.Id, model.ProdCatNumber, model.ProdCat);
+
+                if (isExist)
+                    return Json("-1");
+
+                if (model.Id > 0)
                 {
-                    var isExist = bal.CheckDuplicateCategory(model.Id, model.ProdCatNumber, model.ProdCat);
-
-                    if (isExist)
-                        return Json("-1");
-
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        model.CraetedDate = Helpers.GetInvariantCultureDateTime();
-                        model.CreatedBy = userId;
-                    }
-
-                    // Call the AddCategories Method to Add / Update current Categories
-                    newId = bal.SaveCategories(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                    model.CreatedBy = userId;
+                }
+
+                // Call the AddCategories Method to Add / Update current Categories
+                newId = _service.SaveCategories(model);
+                
             }
 
             return Json(newId);
@@ -190,22 +184,18 @@ namespace BillingSystem.Controllers
         public ActionResult GetCategoriesData(int id)
         {
 
-            using (var category = new CategoriesBal())
+            var currentCategory = _service.GetCategoryById(id);
+            var jsonResult = new
             {
+                currentCategory.Id,
+                currentCategory.ProdCatNumber,
+                currentCategory.ProdCat,
+                currentCategory.ProdSubcat,
+                currentCategory.ProdSubcat2,
+                currentCategory.ProdSubcat3
 
-                var currentCategory = category.GetCategoryById(id);
-                var jsonResult = new
-                {
-                    currentCategory.Id,
-                    currentCategory.ProdCatNumber,
-                    currentCategory.ProdCat,
-                    currentCategory.ProdSubcat,
-                    currentCategory.ProdSubcat2,
-                    currentCategory.ProdSubcat3
-
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
 
 
         }

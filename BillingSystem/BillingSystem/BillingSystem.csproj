@@ -2265,6 +2265,7 @@
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-zh_TW.js" />
     <Content Include="Scripts\ActiveEncounter\ActiveEncounter.js" />
     <Content Include="Scripts\ActiveEncounter\UnclosedEncounters.js" />
+    <Content Include="Scripts\Categories\CategoriesScript.js" />
     <Content Include="Scripts\AppointmentTypes\AppointmentTypesScript.js" />
     <Content Include="Scripts\AssignWorkQueue\AssignWorkQueue.js" />
     <Content Include="Scripts\ATCCodes\ATCCodesScript.js" />
@@ -3017,6 +3018,7 @@
     <Content Include="SQL Scripts\Release 5.1\5 - Update PROC SprocGetPatientSummaryTabData 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.1\6 - Update PROC SprocGetPatientInfoView 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\1 - Update PROC SprocGetDashboardDisplayOrders 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\3 - new PROC SPROC_GetCategories 27 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\2 - new PROC SprocGetDashboardIndicatorData 27 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\1 - Update PROC iSprocGetBookedAppointments 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\10 - Update PROC SPROC_GetPaitentFutureOrder 28 March 2018.sql" />

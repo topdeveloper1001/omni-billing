@@ -20,7 +20,7 @@ namespace BillingSystem.Model
 
         public int? CreatedBy { get; set; }
 
-        public DateTime? CraetedDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
 
         public int? ModifiedBy { get; set; }
 

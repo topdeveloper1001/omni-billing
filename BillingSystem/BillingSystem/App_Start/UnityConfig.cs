@@ -23,7 +23,8 @@ namespace BillingSystem
             // register all your components with the container here
             // it is NOT necessary to register your controllers
 
-            container.RegisterType<IAppointmentTypesService, AppointmentTypesService>(); 
+            container.RegisterType<IAppointmentTypesService, AppointmentTypesService>();
+            container.RegisterType<ICategoriesService, CategoriesService>();
             container.RegisterType<IATCCodesService, ATCCodesService>(); 
             container.RegisterType<IAuditLogService, AuditLogService>(); 
             container.RegisterType<IAuthorizationService, AuthorizationService>(); 
@@ -61,6 +62,7 @@ namespace BillingSystem
 
             container.RegisterType<DbContext, BillingEntities>(new PerThreadLifetimeManager());
 
+            container.RegisterType<ICategoriesService, CategoriesService>();
 
             DependencyResolver.SetResolver(new UnityDependencyResolver(container));
 

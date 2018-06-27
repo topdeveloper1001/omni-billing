@@ -84,7 +84,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BusinessAccess\CategoriesBal.cs" />
+    <Compile Include="BusinessAccess\CategoriesService.cs" />
     <Compile Include="BusinessAccess\BaseBal.cs" />
     <Compile Include="BusinessAccess\BillingModifierService.cs" />
     <Compile Include="BusinessAccess\ClinicianAppointmentTypesService.cs" />
@@ -95,6 +95,7 @@
     <Compile Include="BusinessAccess\DashboardBudgetService.cs" />
     <Compile Include="BusinessAccess\DashboardService.cs" />
     <Compile Include="BusinessAccess\FacilityStructureService.cs" />
+    <Compile Include="Interfaces\ICategoriesService.cs" />
     <Compile Include="Interfaces\IDashboardIndicatorDataService.cs" />
     <Compile Include="Interfaces\IDashboardDisplayOrderService.cs" />
     <Compile Include="Interfaces\IBillingSystemParametersService.cs" />

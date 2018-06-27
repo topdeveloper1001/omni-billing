@@ -22,15 +22,15 @@ namespace BillingSystem.Repository.GenericRepository
             _context = context;
         }
 
-        public List<Categories> GetCategoriesData()
+        public List<CategoriesCustomModel> GetCategoriesData()
         {
             try
             {
                 if (_context != null)
                 {
-                    var spName = string.Format("EXEC {0}", StoredProcedures.SPORC_GetCategories);
+                    var spName = string.Format("EXEC {0}", StoredProcedures.SPROC_GetCategories);
                     
-                    IEnumerable<Categories> result = _context.Database.SqlQuery<Categories>(spName, null);
+                    IEnumerable<CategoriesCustomModel> result = _context.Database.SqlQuery<CategoriesCustomModel>(spName);
                     return result.ToList();
                 }
                 return null;
