@@ -10,19 +10,20 @@ namespace BillingSystem.Model.Migrations
             CreateTable(
                 "dbo.Categories",
                 c => new
-                {
-                    Id = c.Long(nullable: false, identity: true),
-                    ProdCatNumber = c.String(nullable: false, maxLength: 12),
-                    ProdCat = c.String(nullable: false, maxLength: 40),
-                    ProdSubcat = c.String(maxLength: 40),
-                    ProdSubcat2 = c.String(maxLength: 40),
-                    ProdSubcat3 = c.String(maxLength: 40),
-                    CreatedBy = c.Long(nullable: false),
-                    CreatedDate = c.DateTime(nullable: false),
-                    ModifiedBy = c.Long(),
-                    ModifiedDate = c.DateTime(),
-                })
+                    {
+                        Id = c.Int(nullable: false, identity: true),
+                        ProdCatNumber = c.String(maxLength: 12),
+                        ProdCat = c.String(maxLength: 40),
+                        ProdSubcat = c.String(maxLength: 40),
+                        ProdSubcat2 = c.String(maxLength: 40),
+                        ProdSubcat3 = c.String(maxLength: 40),
+                        CreatedBy = c.Int(),
+                        CreatedDate = c.DateTime(),
+                        ModifiedBy = c.Int(),
+                        ModifiedDate = c.DateTime(),
+                    })
                 .PrimaryKey(t => t.Id);
+            
         }
         
         public override void Down()

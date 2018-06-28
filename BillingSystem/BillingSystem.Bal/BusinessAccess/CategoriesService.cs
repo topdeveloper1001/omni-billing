@@ -102,10 +102,11 @@ namespace BillingSystem.Bal.BusinessAccess
         public List<CategoriesCustomModel> GetCategoriesData()
         {
             var spName = string.Format("EXEC {0}", StoredProcedures.SPROC_GetCategories);
-
+            
             IEnumerable<CategoriesCustomModel> result = _context.Database.SqlQuery<CategoriesCustomModel>(spName);
+                                    
             return result.ToList();
-
+            
             //return _repository.GetAll().ToList();
 
         }
