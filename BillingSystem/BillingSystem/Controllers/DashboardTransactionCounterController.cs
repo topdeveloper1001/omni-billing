@@ -23,7 +23,7 @@ namespace BillingSystem.Controllers
         public ActionResult DashboardTransactionCounterMain()
         {
             //Initialize the DashboardTransactionCounter BAL object
-            var dashboardTransactionCounterBal = new DashboardTransactionCounterBal();
+            var dashboardTransactionCounterBal = new DashboardTransactionCounterService();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime(facilityid);
@@ -59,7 +59,7 @@ namespace BillingSystem.Controllers
         {
            
             //Initialize the DashboardTransactionCounter BAL object
-            using (var dashboardTransactionCounterBal = new DashboardTransactionCounterBal())
+            using (var dashboardTransactionCounterBal = new DashboardTransactionCounterService())
             {
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
@@ -94,7 +94,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DashboardTransactionCounterBal())
+                using (var bal = new DashboardTransactionCounterService())
                 {
                     if (model.CounterId > 0)
                     {
@@ -122,7 +122,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDashboardTransactionCounter(int id)
         {
-            using (var bal = new DashboardTransactionCounterBal())
+            using (var bal = new DashboardTransactionCounterService())
             {
                 //Call the AddDashboardTransactionCounter Method to Add / Update current DashboardTransactionCounter
                 var currentDashboardTransactionCounter = bal.GetDashboardTransactionCounterById(id);
@@ -139,7 +139,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDashboardTransactionCounter(int id)
         {
-            using (var bal = new DashboardTransactionCounterBal())
+            using (var bal = new DashboardTransactionCounterService())
             {
                 //Get DashboardTransactionCounter model object by current DashboardTransactionCounter ID
                 var currentDashboardTransactionCounter = bal.GetDashboardTransactionCounterById(id);
@@ -177,7 +177,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindDashboardData(int id)
         {
-            using (var bal=new DashboardTransactionCounterBal())
+            using (var bal=new DashboardTransactionCounterService())
             {
                 var current = bal.GetDashboardTransactionCounterById(id);
                 var jsonData = new

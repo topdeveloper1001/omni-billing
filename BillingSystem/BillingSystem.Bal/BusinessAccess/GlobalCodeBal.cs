@@ -661,26 +661,6 @@ namespace BillingSystem.Bal.BusinessAccess
             }
         }
 
-        public List<int> GetDefaultMonthAndYearByFacilityId(int facilityId, int corporateId)
-        {
-            var currentDateTime = GetInvariantCultureDateTime(facilityId);
-            var result = new List<int>();
-            using (var rep = UnitOfWork.IndicatorDataCheckListRepository)
-            {
-                var current =
-                    rep.Where(
-                        f => f.FacilityId == facilityId && f.CorporateId == corporateId && f.Year == currentDateTime.Year)
-                        .FirstOrDefault();
-
-                if (current != null)
-                {
-                    result.Add(Convert.ToInt32(current.ExternalValue1));        //Default Year
-                    result.Add(Convert.ToInt32(current.ExternalValue2));        //Default Month
-                }
-            }
-            return result;
-        }
-
         /// <summary>
         /// Gets all global codes.
         /// </summary>

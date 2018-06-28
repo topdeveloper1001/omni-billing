@@ -14,7 +14,14 @@ namespace BillingSystem.Controllers
     public class DashboardTargetsController : BaseController
     {
         private readonly ICorporateService _cService;
+        private readonly IDashboardTargetsService _service;
 
+
+        public DashboardTargetsController(ICorporateService cService, IDashboardTargetsService service)
+        {
+            _service = service;
+            _cService = cService;
+        }
 
         /// <summary>
         /// Get the details of the DashboardTargets View in the Model DashboardTargets such as DashboardTargetsList, list of countries etc.
@@ -22,22 +29,17 @@ namespace BillingSystem.Controllers
         /// <returns>returns the actionresult in the form of current object of the Model DashboardTargets to be passed to View DashboardTargets</returns>
         public ActionResult Index()
         {
-            //Initialize the DashboardTargets BAL object
-            using (var bal = new DashboardTargetsBal())
+            var list = _service.GetDashboardTargetsList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+
+            //Intialize the View Model i.e. DashboardTargetsView which is binded to Main View Index.cshtml under DashboardTargets
+            var viewModel = new DashboardTargetsView
             {
-                //Get the Entity list
-                var list = bal.GetDashboardTargetsList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+                DashboardTargetsList = list,
+                CurrentDashboardTargets = new DashboardTargets { IsActive = true }
+            };
 
-                //Intialize the View Model i.e. DashboardTargetsView which is binded to Main View Index.cshtml under DashboardTargets
-                var viewModel = new DashboardTargetsView
-                {
-                    DashboardTargetsList = list,
-                    CurrentDashboardTargets = new DashboardTargets { IsActive = true }
-                };
-
-                //Pass the View Model in ActionResult to View DashboardTargets
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View DashboardTargets
+            return View(viewModel);
         }
 
         /// <summary>
@@ -55,22 +57,19 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DashboardTargetsBal())
+                if (model.TargetId > 0)
                 {
-                    if (model.TargetId > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddDashboardTargets Method to Add / Update current DashboardTargets
-                    list = bal.SaveDashboardTargets(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                //Call the AddDashboardTargets Method to Add / Update current DashboardTargets
+                list = _service.SaveDashboardTargets(model);
             }
 
             //Pass the ActionResult with List of DashboardTargetsViewModel object to Partial View DashboardTargetsList
@@ -83,14 +82,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDashboardTargetsDetails(int id)
         {
-            using (var bal = new DashboardTargetsBal())
-            {
-                //Call the AddDashboardTargets Method to Add / Update current DashboardTargets
-                var current = bal.GetDashboardTargetsById(id);
+            var current = _service.GetDashboardTargetsById(id);
 
-                //Pass the ActionResult with the current DashboardTargetsViewModel object as model to PartialView DashboardTargetsAddEdit
-                return Json(current);
-            }
+            //Pass the ActionResult with the current DashboardTargetsViewModel object as model to PartialView DashboardTargetsAddEdit
+            return Json(current);
         }
 
         /// <summary>
@@ -100,23 +95,19 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteDashboardTargets(int id)
         {
             var list = new List<DashboardTargetsCustomModel>();
-            using (var bal = new DashboardTargetsBal())
+            var model = _service.GetDashboardTargetsById(id);
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDate = Helpers.GetInvariantCultureDateTime();
+
+            //Check If DashboardTargets model is not null
+            if (model != null)
             {
-                //Get DashboardTargets model object by current DashboardTargets ID
-                var model = bal.GetDashboardTargetsById(id);
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDate = Helpers.GetInvariantCultureDateTime();
+                model.IsActive = false;
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDate;
 
-                //Check If DashboardTargets model is not null
-                if (model != null)
-                {
-                    model.IsActive = false;
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDate;
-
-                    //Update Operation of current DashboardTargets
-                    list = bal.SaveDashboardTargets(model);
-                }
+                //Update Operation of current DashboardTargets
+                list = _service.SaveDashboardTargets(model);
             }
 
             //Pass the ActionResult with List of DashboardTargetsViewModel object to Partial View DashboardTargetsList
@@ -128,7 +119,7 @@ namespace BillingSystem.Controllers
         //    using (var bal = new DashboardTargetsBal())
         //    {
         //        //Get the Entity list
-        //        var list = bal.GetDashboardTargetsList(corporateId, facilityId);
+        //        var list = _service.GetDashboardTargetsList(corporateId, facilityId);
         //        return PartialView(PartialViews.DashboardTargetsList, list);
         //    }
         //}
@@ -213,23 +204,15 @@ namespace BillingSystem.Controllers
 
         private string GetTargetsListInString(int corporateId, int facilityId)
         {
-            using (var bal = new DashboardTargetsBal())
-            {
-                //Get the Entity list
-                var list = bal.GetDashboardTargetsList(corporateId, facilityId);
-                var result = RenderPartialViewToStringBase(PartialViews.DashboardTargetsList, list);
-                return result;
-            }
+            var list = _service.GetDashboardTargetsList(corporateId, facilityId);
+            var result = RenderPartialViewToStringBase(PartialViews.DashboardTargetsList, list);
+            return result;
         }
 
         public ActionResult SortDahboardTarget(int corporateId, int facilityId)
         {
-            using (var bal = new DashboardTargetsBal())
-            {
-                var list = bal.GetDashboardTargetsList(corporateId, facilityId);
-                return PartialView(PartialViews.DashboardTargetsList, list);
-
-            }
+            var list = _service.GetDashboardTargetsList(corporateId, facilityId);
+            return PartialView(PartialViews.DashboardTargetsList, list);
         }
     }
 }

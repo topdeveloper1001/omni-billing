@@ -27,10 +27,13 @@ namespace BillingSystem.Controllers
     public class XMLDashboardController : BaseController
     {
         private readonly IDashboardBudgetService _dbService;
+        private readonly IDashboardRemarkService _drService;
 
-        public XMLDashboardController(IDashboardBudgetService dbService)
+
+        public XMLDashboardController(IDashboardBudgetService dbService, IDashboardRemarkService drService)
         {
             _dbService = dbService;
+            _drService = drService;
         }
 
         // GET: /XMLDashboard/
@@ -58,45 +61,42 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var facilitybal = new FacilityBal();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
-            using (var bal = new DashboardRemarkBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                Convert.ToInt32(12));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                    Convert.ToInt32(12));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                }
-                var dashboardview = new XMLBillScrubberDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 12,
-                    Title = Helpers.ExternalDashboardTitleView("11"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                    Section10RemarksList = section10RemarksList,
-                };
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
             }
+            var dashboardview = new XMLBillScrubberDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 12,
+                Title = Helpers.ExternalDashboardTitleView("11"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+                Section10RemarksList = section10RemarksList,
+            };
+            return View(dashboardview);
         }
 
 

@@ -34,5 +34,6 @@ namespace BillingSystem.Bal.Interfaces
         int UpdateUser(Users user);
         string UserFacilities(IEnumerable<UserRole> userRoles);
         string UserRoles(IEnumerable<UserRole> roles);
+        string GetNameByUserId(int id);
     }
 }

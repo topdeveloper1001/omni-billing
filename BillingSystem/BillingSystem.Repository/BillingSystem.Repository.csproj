@@ -123,17 +123,11 @@
     <Compile Include="GenericRepository\HolidayPlannerRepository.cs" />
     <Compile Include="GenericRepository\PatientEvaluationRepository.cs" />
     <Compile Include="GenericRepository\TPFileXMLRepository.cs" />
-    <Compile Include="GenericRepository\DashboardDisplayOrderRepository.cs" />
-    <Compile Include="GenericRepository\DashboardIndicatorDataRepository.cs" />
-    <Compile Include="GenericRepository\DashboardIndicatorsRepository.cs" />
-    <Compile Include="GenericRepository\DashboardParametersRepository.cs" />
     <Compile Include="GenericRepository\DashboardRemarkRepository.cs" />
     <Compile Include="GenericRepository\DrugAllergyLogRepository.cs" />
     <Compile Include="GenericRepository\DrugInstructionAndDosingRepository.cs" />
     <Compile Include="GenericRepository\DrugInteractionsRepository.cs" />
     <Compile Include="GenericRepository\FacilityDepartmentRepository.cs" />
-    <Compile Include="GenericRepository\IndicatorDataCheckListRepository.cs" />
-    <Compile Include="GenericRepository\ManualDashboardRepository.cs" />
     <Compile Include="GenericRepository\PatientInfoChangesQueueRepository.cs" />
     <Compile Include="GenericRepository\PatientLoginDetailRepository.cs" />
     <Compile Include="GenericRepository\ProjectDashboardRepository.cs" />
@@ -143,7 +137,6 @@
     <Compile Include="GenericRepository\ProjectTaskTargetsRepository.cs" />
     <Compile Include="GenericRepository\SurgeryOperatingRoomRepository.cs" />
     <Compile Include="GenericRepository\JournalEntrySupportRepository.cs" />
-    <Compile Include="GenericRepository\DashboardBudgetRepository.cs" />
     <Compile Include="GenericRepository\DashboardTargetsRepository.cs" />
     <Compile Include="GenericRepository\DashboardTransactionCounterRepository.cs" />
     <Compile Include="GenericRepository\DischargeSummaryDetailRepository.cs" />

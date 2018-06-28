@@ -41,8 +41,13 @@ namespace BillingSystem.Controllers
         private readonly ICountryService _cService;
         private readonly ICorporateService _coService;
         private readonly ICityService _ctService;
+        private readonly IIndicatorDataCheckListService _iService;
 
-        public HomeController(IAppointmentTypesService atService, IAuditLogService adService, IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service, IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService, IBillingSystemParametersService bspService, ICPTCodesService cptService, IUsersService uService, ICountryService cService, ICorporateService coService, ICityService ctService)
+        public HomeController(IAppointmentTypesService atService, IAuditLogService adService, IBillHeaderService bhService
+            , IATCCodesService atcService, IBedRateCardService service, IPatientInfoService piService
+            , IFacilityStructureService fsService, IEncounterService eService, IBillingSystemParametersService bspService
+            , ICPTCodesService cptService, IUsersService uService, ICountryService cService
+            , ICorporateService coService, ICityService ctService, IIndicatorDataCheckListService iService)
         {
             _atService = atService;
             _adService = adService;
@@ -58,6 +63,7 @@ namespace BillingSystem.Controllers
             _cService = cService;
             _coService = coService;
             _ctService = ctService;
+            _iService = iService;
         }
 
         /// <summary>
@@ -2362,7 +2368,7 @@ namespace BillingSystem.Controllers
                     }));
                 }
 
-                var defaults = bal.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
+                var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
                 if (defaults.Count > 0)
                 {
                     defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
@@ -3911,7 +3917,7 @@ namespace BillingSystem.Controllers
             var result = ExcelExportHelper.ExportExcel(excelData);
             return result;
         }
-        private  DataTable GetBillingCodesToExport(string codeType, string sText, string tn, out string columns)
+        private DataTable GetBillingCodesToExport(string codeType, string sText, string tn, out string columns)
         {
             var codeTableNo = string.Empty;
             List<ExportCodesData> data = null;
@@ -3971,35 +3977,35 @@ namespace BillingSystem.Controllers
                     reader.Close();
                     stream.Close();
 
-                        var codeTableNo = string.Empty;
-                        switch (codeType.ToLower())
-                        {
-                            case "cpt":
-                                codeTableNo = Helpers.DefaultCptTableNumber;
-                                break;
-                            case "hcpcs":
-                                codeTableNo = Helpers.DefaultHcPcsTableNumber;
-                                break;
-                            case "drug":
-                                codeTableNo = Helpers.DefaultDrugTableNumber;
-                                break;
-                            case "drg":
-                                codeTableNo = Helpers.DefaultDrgTableNumber;
-                                break;
-                            case "diagnosis":
-                                codeTableNo = Helpers.DefaultDiagnosisTableNumber;
-                                break;
-                            default:
-                                break;
-                        }
+                    var codeTableNo = string.Empty;
+                    switch (codeType.ToLower())
+                    {
+                        case "cpt":
+                            codeTableNo = Helpers.DefaultCptTableNumber;
+                            break;
+                        case "hcpcs":
+                            codeTableNo = Helpers.DefaultHcPcsTableNumber;
+                            break;
+                        case "drug":
+                            codeTableNo = Helpers.DefaultDrugTableNumber;
+                            break;
+                        case "drg":
+                            codeTableNo = Helpers.DefaultDrgTableNumber;
+                            break;
+                        case "diagnosis":
+                            codeTableNo = Helpers.DefaultDiagnosisTableNumber;
+                            break;
+                        default:
+                            break;
+                    }
 
-                        var status = (int)ExcelImportResultCodes.Initialized;
-                        var dt = Helpers.FillDataTableToImport(dsResult.Tables[0], codeType, out status);
+                    var status = (int)ExcelImportResultCodes.Initialized;
+                    var dt = Helpers.FillDataTableToImport(dsResult.Tables[0], codeType, out status);
 
-                        if (status == (int)ExcelImportResultCodes.Success)
-                            result = _cptService.ImportAndSaveCodesToDatabase(codeType, Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), codeTableNo, string.Empty, Helpers.GetLoggedInUserId(), dt);
-                        else
-                            return status;
+                    if (status == (int)ExcelImportResultCodes.Success)
+                        result = _cptService.ImportAndSaveCodesToDatabase(codeType, Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), codeTableNo, string.Empty, Helpers.GetLoggedInUserId(), dt);
+                    else
+                        return status;
                 }
             }
             return result ? 1 : 0;
@@ -4008,13 +4014,13 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetCountriesWithDefault()
         {
-                var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
-                var defaultCountry = Helpers.GetDefaultCountryCode;
+            var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
+            var defaultCountry = Helpers.GetDefaultCountryCode;
 
-                //var countryId = defaultCountry > 0 ? list.Where(a => a.CodeValue == Convert.ToString(defaultCountry))
-                //    .Select(s => s.CountryID).FirstOrDefault() : 0;
-                var jsonData = new { list, defaultCountry };
-                return Json(jsonData);
+            //var countryId = defaultCountry > 0 ? list.Where(a => a.CodeValue == Convert.ToString(defaultCountry))
+            //    .Select(s => s.CountryID).FirstOrDefault() : 0;
+            var jsonData = new { list, defaultCountry };
+            return Json(jsonData);
         }
 
 

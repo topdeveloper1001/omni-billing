@@ -19,7 +19,7 @@ namespace BillingSystem.Bal.BusinessAccess
         private DrugIntractionsMapper DrugIntractionsMapper { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DashboardIndicatorsBal" /> class.
+        /// Initializes a new instance of the <see cref="DashboardIndicatorsService" /> class.
         /// </summary>
         public DrugInteractionsBal()
         {
