@@ -83,6 +83,7 @@
     <Compile Include="Common\DbContextFactory.cs" />
     <Compile Include="Common\ExtensionMethods.cs" />
     <Compile Include="Common\GenericHelper.cs" />
+    <Compile Include="GenericRepository\TechnicalSpecificationsRepository.cs" />
     <Compile Include="GenericRepository\CategoriesRepository.cs" />
     <Compile Include="GenericRepository\BillingModifierRepository.cs" />
     <Compile Include="GenericRepository\FavoriteClinicianRepository.cs" />

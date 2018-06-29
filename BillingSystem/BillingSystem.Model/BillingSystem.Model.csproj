@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomModel\AlergyView.cs" />
+    <Compile Include="CustomModel\TechnicalSpecificationsCustomModel.cs" />
     <Compile Include="CustomModel\CategoriesCustomModel.cs" />
     <Compile Include="CustomModel\BillingModifierCustomModel.cs" />
     <Compile Include="CustomModel\ClinicianAppTypesCustomModel.cs" />
@@ -279,12 +280,21 @@
     <Compile Include="Migrations\201806271239190_Categories.Designer.cs">
       <DependentUpon>201806271239190_Categories.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201806281455408_TechnicalSpecifications.cs" />
+    <Compile Include="Migrations\201806281455408_TechnicalSpecifications.Designer.cs">
+      <DependentUpon>201806281455408_TechnicalSpecifications.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201806290916287_AddFieldsTechnicalSpecifications.cs" />
+    <Compile Include="Migrations\201806290916287_AddFieldsTechnicalSpecifications.Designer.cs">
+      <DependentUpon>201806290916287_AddFieldsTechnicalSpecifications.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\Appointment.cs" />
     <Compile Include="Model\AppointmentTypes.cs" />
     <Compile Include="Model\ATCCodes.cs" />
     <Compile Include="Model\BaseEntity.cs" />
     <Compile Include="Model\BillingModifier.cs" />
+    <Compile Include="Model\TechnicalSpecifications.cs" />
     <Compile Include="Model\Categories.cs" />
     <Compile Include="Model\ClinicianAppointmentType.cs" />
     <Compile Include="Model\ClinicianRoster.cs" />
@@ -482,6 +492,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201806271239190_Categories.resx">
       <DependentUpon>201806271239190_Categories.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806281455408_TechnicalSpecifications.resx">
+      <DependentUpon>201806281455408_TechnicalSpecifications.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806290916287_AddFieldsTechnicalSpecifications.resx">
+      <DependentUpon>201806290916287_AddFieldsTechnicalSpecifications.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -211,6 +211,14 @@ namespace BillingSystem.Common
             "{0}/_CategoriesAddEdit",
             CommonConfig.UserControlPath);
 
+        public static readonly string TechnicalSpecificationsList = string.Format(
+            "{0}/_TechnicalSpecificationsList",
+            CommonConfig.UserControlPath);
+
+        public static readonly string TechnicalSpecificationsAddEdit = string.Format(
+            "{0}/_TechnicalSpecificationsAddEdit",
+            CommonConfig.UserControlPath);
+
         public static readonly string FacilityDepartmentListView = string.Format(
            "{0}/_FacilityDepartmentListView",
            CommonConfig.UserControlPath);

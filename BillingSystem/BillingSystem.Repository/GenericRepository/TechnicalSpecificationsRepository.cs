@@ -11,26 +11,29 @@ using BillingSystem.Model.EntityDto;
 
 namespace BillingSystem.Repository.GenericRepository
 {
-    public class CategoriesRepository : GenericRepository<Categories>
+    public class TechnicalSpecificationsRepository : GenericRepository<TechnicalSpecifications>
     {
         private readonly DbContext _context;
 
-        public CategoriesRepository(BillingEntities context)
+        public TechnicalSpecificationsRepository(BillingEntities context)
             : base(context)
         {
             AutoSave = true;
             _context = context;
         }
 
-        public List<CategoriesCustomModel> GetCategoriesData()
+        public List<TechnicalSpecificationsCustomModel> GetTechnicalSpecificationsData(int corporateId, int facilityId)
         {
             try
             {
                 if (_context != null)
                 {
-                    var spName = string.Format("EXEC {0}", StoredProcedures.SprocGetCategories);
-                    
-                    IEnumerable<CategoriesCustomModel> result = _context.Database.SqlQuery<CategoriesCustomModel>(spName);
+                    var spName = string.Format("EXEC {0} @FacilityId,@CorporateId", StoredProcedures.SprocGetTechnicalSpecifications);
+                    var sqlParameters = new SqlParameter[2];
+
+                    sqlParameters[0] = new SqlParameter("FacilityId", facilityId);
+                    sqlParameters[1] = new SqlParameter("CorporateId", corporateId);
+                    IEnumerable<TechnicalSpecificationsCustomModel> result = _context.Database.SqlQuery<TechnicalSpecificationsCustomModel>(spName, sqlParameters);
                     return result.ToList();
                 }
                 return null;

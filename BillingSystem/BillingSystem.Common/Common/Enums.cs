@@ -599,7 +599,8 @@ namespace BillingSystem.Common.Common
         SPROC_GetScrubberEditTrack,
         SPORC_GetAppointmentTypes,
 
-        SPROC_GetCategories,
+        SprocGetCategories,
+        SprocGetTechnicalSpecifications,
         /*Added by Amit Jain for Reports in Review Expected Payment Screen
          */
         SPROC_REP_ExpectedPaymentInsNotPaid,

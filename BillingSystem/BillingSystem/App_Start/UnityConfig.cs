@@ -25,6 +25,7 @@ namespace BillingSystem
 
             container.RegisterType<IAppointmentTypesService, AppointmentTypesService>();
             container.RegisterType<ICategoriesService, CategoriesService>();
+            container.RegisterType<ITechnicalSpecificationsService, TechnicalSpecificationsService>();
             container.RegisterType<IATCCodesService, ATCCodesService>(); 
             container.RegisterType<IAuditLogService, AuditLogService>(); 
             container.RegisterType<IAuthorizationService, AuthorizationService>(); 
@@ -61,8 +62,6 @@ namespace BillingSystem
             }));
 
             container.RegisterType<DbContext, BillingEntities>(new PerThreadLifetimeManager());
-
-            container.RegisterType<ICategoriesService, CategoriesService>();
 
             DependencyResolver.SetResolver(new UnityDependencyResolver(container));
 

@@ -45,6 +45,7 @@ namespace BillingSystem.Model
         public DbSet<ClinicianAppointmentType> ClinicianAppointmentType { get; set; }
         public DbSet<AppointmentTypes> AppointmentTypes { get; set; }
         public DbSet<Categories> Categories { get; set; }
+        public DbSet<TechnicalSpecifications> TechnicalSpecifications { get; set; }
         public DbSet<ATCCodes> ATCCodes { get; set; }
         public DbSet<AuditLog> AuditLog { get; set; }
         public DbSet<AuditLogArchived> AuditLogArchived { get; set; }

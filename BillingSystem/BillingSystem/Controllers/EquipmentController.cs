@@ -94,6 +94,36 @@ namespace BillingSystem.Controllers
             }
         }
 
+        /// <summary>
+        /// Bind all the equipment list for dropdown list
+        /// </summary>
+        /// <returns>
+        /// action result with the partial view containing the facility list object
+        /// </returns>
+        [HttpPost]
+        public ActionResult BindEquipmentListForDropDown(string facilityId)
+        {
+            var eqDropDownList = new List<DropdownListData>();
+            //Initialize the Facility Communicator object
+            using (var equipmentBal = new EquipmentBal())
+            {
+                //Get the facilities list
+                //var equipmentList = equipmentBal.GetEquipmentList();
+                var equipmentList = equipmentBal.GetEquipmentList(false, facilityId);
+
+                if (equipmentList.Count > 0)
+                {
+                    eqDropDownList.AddRange(equipmentList.Select(item => new DropdownListData
+                    {
+                        Text = item.EquipmentName,
+                        Value = Convert.ToString(item.EquipmentMasterId),
+                    }));
+                }
+
+                return Json(eqDropDownList);
+            }
+        }
+
         public ActionResult BindDisabledRecords(bool showIsDisabled, string facilityId)
         {
             using (var equipmentBal = new EquipmentBal())

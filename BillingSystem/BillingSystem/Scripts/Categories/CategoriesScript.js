@@ -94,7 +94,7 @@ function EditCategory(id) {
     });
     $.ajax({
         type: "POST",
-        url: '/Categories/GetCategory',
+        url: '/Categories/GetCategoriesData',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

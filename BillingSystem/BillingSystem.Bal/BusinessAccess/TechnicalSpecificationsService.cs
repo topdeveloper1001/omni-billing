@@ -15,13 +15,13 @@ namespace BillingSystem.Bal.BusinessAccess
     /// <summary>
     /// The Categories bal.
     /// </summary>
-    public class CategoriesService : ICategoriesService
+    public class TechnicalSpecificationsService : ITechnicalSpecificationsService
     {
 
-        private readonly IRepository<Categories> _repository;
+        private readonly IRepository<TechnicalSpecifications> _repository;
         private readonly BillingEntities _context;
         
-        public CategoriesService(IRepository<Categories> repository, BillingEntities context)
+        public TechnicalSpecificationsService(IRepository<TechnicalSpecifications> repository, BillingEntities context)
         {
             _repository = repository;
             _context = context;
@@ -34,9 +34,9 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns>
-        /// The <see cref="Categories" />.
+        /// The <see cref="TechnicalSpecifications" />.
         /// </returns>
-        public Categories GetCategoryById(int id)
+        public TechnicalSpecifications GetTechnicalSpecificationById(int id)
         {
             var model = _repository.Where(x => x.Id == id).FirstOrDefault();
             return model;
@@ -50,7 +50,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns>
         /// The <see cref="int" />.
         /// </returns>
-        public int SaveCategories(Categories model)
+        public int SaveTechnicalSpecifications(TechnicalSpecifications model)
         {
             if (model.Id > 0)
             {
@@ -68,7 +68,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         }
 
-        public int DeleteCategoriesData(Categories model)
+        public int DeleteTechnicalSpecificationsData(TechnicalSpecifications model)
         {
             if (model.Id > 0)
             {
@@ -82,33 +82,47 @@ namespace BillingSystem.Bal.BusinessAccess
         /// Checks the type of the duplicate appointment.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        /// <param name="prodCatNum">The category number.</param>
-        /// <param name="prodCat">The category name.</param>
+        /// <param name="itemID">The Item number.</param>
         /// <returns></returns>
-        public bool CheckDuplicateCategory(int id, string prodCatNum, string prodCat)
+        public bool CheckDuplicateTechnicalSpecification(int id, long itemID, int? corporateId, int? facilityId)
         { 
-                var isExists = _repository.Where(model => model.Id != id && model.ProdCatNumber.Trim().ToLower().Equals(prodCatNum) && model.ProdCat.Trim().ToLower().Equals(prodCat))
+                var isExists = _repository.Where(model => model.Id != id && model.ItemID == itemID 
+                && model.CorporateId == corporateId && model.FacilityId == facilityId)
                         .Any();
                 return isExists;
              
         }
 
+        /// <summary>
+        /// Gets the technical specifications by facility identifier.
+        /// </summary>
+        /// <param name="facilityId">The facility identifier.</param>
+        /// <returns></returns>
+        public List<TechnicalSpecifications> GetTechnicalSpecificationsByFacilityId(int facilityId)
+        {
+            var list = _repository.Where(x => x.FacilityId == facilityId).ToList();
+            return list;
+
+        }
 
         /// <summary>
-        /// Gets the appointment types data.
+        /// Gets the TechnicalSpecifications data.
         /// </summary>
 
         /// <returns></returns>
-        public List<CategoriesCustomModel> GetCategoriesData()
+        public List<TechnicalSpecificationsCustomModel> GetTechnicalSpecificationsData(int corporateId, int facilityId)
         {
-            var spName = string.Format("EXEC {0}", StoredProcedures.SprocGetCategories);
+            var spName = string.Format("EXEC {0} @FacilityId,@CorporateId", StoredProcedures.SprocGetTechnicalSpecifications);
+            var sqlParameters = new SqlParameter[2];
+
+            sqlParameters[0] = new SqlParameter("FacilityId", facilityId);
+            sqlParameters[1] = new SqlParameter("CorporateId", corporateId);
+
             
-            IEnumerable<CategoriesCustomModel> result = _context.Database.SqlQuery<CategoriesCustomModel>(spName);
-                                    
+            IEnumerable<TechnicalSpecificationsCustomModel> result = _context.Database.SqlQuery<TechnicalSpecificationsCustomModel>(spName, sqlParameters);
+            
             return result.ToList();
             
-            //return _repository.GetAll().ToList();
-
         }
         
         #endregion
