@@ -61,7 +61,7 @@ namespace BillingSystem
             var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
             if (objSession != null)
             {
-                using (var bal = new LoginTrackingBal())
+                using (var bal = new LoginTrackingService())
                     bal.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
             }
             Session.RemoveAll();

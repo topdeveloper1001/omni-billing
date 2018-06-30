@@ -42,7 +42,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindDRGCodesList()
         {
             // Initialize the DRGCodes Communicator object
-            using (var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
             {
                 // Get the facilities list
                 List<DRGCodes> drgCodesList = drgCodesBal.GetDrgCodes();
@@ -72,7 +72,7 @@ namespace BillingSystem.Controllers
             int takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
 
             // Initialize the DRGCodes Communicator object
-            using (var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
             {
                 // Get the facilities list
                 List<DRGCodes> drgCodesList =
@@ -100,7 +100,7 @@ namespace BillingSystem.Controllers
         public ActionResult DRGCodes()
         {
             // Initialize the DRGCodes Communicator object
-            var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber);
+            var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
 
             // Get the facilities list
             // var drgCodesList = drgCodesBal.GetDrgCodes();
@@ -129,7 +129,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteDRGCodes(CommonModel model)
         {
-            using (var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
             {
                 // Get DRGCodes model object by current DRGCodes ID
                 DRGCodes currentDrgCodes = drgCodesBal.GetDrgCodesById(Convert.ToInt32(model.Id));
@@ -188,7 +188,7 @@ namespace BillingSystem.Controllers
 
             rowIndex++;
 
-            using (var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
             {
                 // Get the facilities list
                 List<DRGCodes> onjDrgCodesData = searchText != null
@@ -246,7 +246,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetDRGCodes(DRGCodes model)
         {
-            using (var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
             {
                 // Call the AddDRGCodes Method to Add / Update current DRGCodes
                 DRGCodes currentDrgCodes = drgCodesBal.GetDrgCodesById(Convert.ToInt32(model.DRGCodesId));
@@ -296,7 +296,7 @@ namespace BillingSystem.Controllers
         public JsonResult RebindBindDRGCodesList(int blockNumber, string tableNumber)
         {
             int recordCount = Helpers.DefaultRecordCount;
-            using (var drgCodesBal = new DRGCodesBal(tableNumber))
+            using (var drgCodesBal = new DRGCodesService(tableNumber))
             {
                 List<DRGCodes> list = drgCodesBal.GetDrgCodesListOnDemand(blockNumber, recordCount);
                 var jsonResult =
@@ -337,7 +337,7 @@ namespace BillingSystem.Controllers
             // Check if DRGCodesViewModel 
             if (drgCodesModel != null)
             {
-                using (var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+                using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
                 {
                     //drgCodesModel.IsActive = true;
                     drgCodesModel.IsDeleted = false;
@@ -369,7 +369,7 @@ namespace BillingSystem.Controllers
             int takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
 
             // Initialize the DRGCodes Communicator object
-            using (var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
             {
                 // Get the facilities list
                 List<DRGCodes> drgCodesList =

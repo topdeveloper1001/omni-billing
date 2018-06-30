@@ -30,7 +30,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPreSchedulingLinkList()
         {
             // Initialize the PreSchedulingLink BAL object
-            using (var preSchedulingLinkBal = new PreSchedulingLinkBal())
+            using (var preSchedulingLinkBal = new PreSchedulingLinkService())
             {
                 var cId = Helpers.GetDefaultCorporateId();
                 var fId = Helpers.GetDefaultFacilityId();
@@ -54,7 +54,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePreSchedulingLink(int id)
         {
-            using (var bal = new PreSchedulingLinkBal())
+            using (var bal = new PreSchedulingLinkService())
             {
                 // Get PreSchedulingLink model object by current PreSchedulingLink ID
                 var currentPreSchedulingLink = bal.GetPreSchedulingLinkById(id);
@@ -77,7 +77,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPreSchedulingLink(int id)
         {
-            using (var bal = new PreSchedulingLinkBal())
+            using (var bal = new PreSchedulingLinkService())
             {
                 // Call the AddPreSchedulingLink Method to Add / Update current PreSchedulingLink
                 var currentPreSchedulingLink = bal.GetPreSchedulingLinkById(id);
@@ -98,7 +98,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             // Initialize the PreSchedulingLink BAL object
-            var preSchedulingLinkBal = new PreSchedulingLinkBal();
+            var preSchedulingLinkBal = new PreSchedulingLinkService();
 
             var cId = Helpers.GetDefaultCorporateId();
             var fId = Helpers.GetDefaultFacilityId();
@@ -152,7 +152,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PreSchedulingLinkBal())
+                using (var bal = new PreSchedulingLinkService())
                 {
                     if (model.Id > 0)
                     {

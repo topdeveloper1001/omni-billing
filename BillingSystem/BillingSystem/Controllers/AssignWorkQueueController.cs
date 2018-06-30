@@ -27,7 +27,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index()
         {
-            var scrubReportBal = new ScrubReportBal();
+            var scrubReportBal = new ScrubReportService();
 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();

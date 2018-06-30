@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         public ActionResult InsurancePolices()
         {
             //Initialize the InsurancePolices Communicator object
-            using (var bal = new InsurancePolicesBal())
+            using (var bal = new InsurancePolicesService())
             {
                 var list = bal.GetInsurancePolicyListByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
 
@@ -40,7 +40,7 @@ namespace BillingSystem.Controllers
         public ActionResult ListView()
         {
 
-            using (var bal = new InsurancePolicesBal())
+            using (var bal = new InsurancePolicesService())
             {
                 var vm = bal.GetInsurancePolicyListByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
                 return PartialView("UserControls/_PolicesList", vm);
@@ -56,7 +56,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveInsurancePolices(InsurancePolices model)
         {
-            using (var bal = new InsurancePolicesBal())
+            using (var bal = new InsurancePolicesService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -90,7 +90,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetInsurancePolicesById(int id)
         {
-            using (var insurancePolicesBal = new InsurancePolicesBal())
+            using (var insurancePolicesBal = new InsurancePolicesService())
             {
                 //Call the AddInsurancePolices Method to Add / Update current InsurancePolices
                 var current = insurancePolicesBal.GetInsurancePolicyById(id);
@@ -128,7 +128,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteInsurancePolices(int policyId)
         {
             var list = Enumerable.Empty<InsurancePolicyCustomModel>();
-            using (var bal = new InsurancePolicesBal())
+            using (var bal = new InsurancePolicesService())
             {
                 //Get InsurancePolices model object by current InsurancePolices ID
                 var m = bal.GetInsurancePolicyById(policyId);
@@ -157,7 +157,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetInsurancePlanByCompany(int companyId)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new InsurancePolicesBal())
+            using (var bal = new InsurancePolicesService())
             {
                 var list2 = bal.GetInsurancePlanByCompanyId(companyId);
                 if (list2.Count > 0)
@@ -182,7 +182,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult ValidatePolicyNamePolicyNumber(string policyName, string policyNumber, int id, int insuranceCompanyId, int planId)
         {
-            using (var bal = new InsurancePolicesBal())
+            using (var bal = new InsurancePolicesService())
             {
                 var result = bal.ValidatePolicyNamePolicyNumber(policyName, policyNumber, id);
                 return Json(result, JsonRequestBehavior.AllowGet);
@@ -196,7 +196,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPolicyNameById(int id)
         {
-            using (var bal = new InsurancePolicesBal())
+            using (var bal = new InsurancePolicesService())
             {
                 var result = bal.GetInsurancePolicyById(id);
                 return Json(result != null ? result.PolicyName : string.Empty);
@@ -206,7 +206,7 @@ namespace BillingSystem.Controllers
         public JsonResult BindMcContracts()
         {
             var list = new List<DropdownListData>();
-            using (var bal = new McContractBal())
+            using (var bal = new McContractService())
             {
                 var corporateId = Helpers.GetDefaultCorporateId();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -225,7 +225,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetInsurancePoliceData()
         {
-            using (var policeBal = new InsurancePolicesBal())
+            using (var policeBal = new InsurancePolicesService())
             {
                 var list = policeBal.GetInsurancePolicyList();
                 return PartialView(PartialViews.PolicesList, list);

@@ -18,7 +18,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the GlobalCode Bal
-            using (var bal = new GlobalCodeCategoryMasterBal())
+            using (var bal = new GlobalCodeCategoryMasterService())
             {
                 var viewData = new GlobalCodeCategoryMasterView
                 {
@@ -43,7 +43,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult GetGlobalCodeCategoryList()
         {
-            var bal = new GlobalCodeCategoryMasterBal();
+            var bal = new GlobalCodeCategoryMasterService();
             return PartialView(PartialViews.GlobalCodeCategoryMasterList, bal.GetAllGlobalCodeCategories());
         }
 
@@ -56,9 +56,9 @@ namespace BillingSystem.Controllers
         public ActionResult EditGlobalCategoryCode(int GlobalCodeCategoryId)
         {
             //Initialize the GlobalCode Bal
-            var globalCodeCategoryMasterBal = new GlobalCodeCategoryMasterBal();
+            var globalCodeCategoryMasterBal = new GlobalCodeCategoryMasterService();
             // var currentGCCMaster = globalCodeCategoryMasterBal.GetGlobalCategoriesByGlobalCodeCategoryId(GlobalCodeCategoryId);
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
             var cId = Helpers.GetDefaultCorporateId();
             var viewData = new GlobalCodeCategoryMasterView
             {
@@ -77,7 +77,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public int AddUpdateGlobalCodeCategory(GlobalCodeCategory m)
         {
-            var bal = new GlobalCodeCategoryMasterBal();
+            var bal = new GlobalCodeCategoryMasterService();
             m.FacilityNumber = Convert.ToString(Helpers.GetDefaultFacilityId());
             if (m.GlobalCodeCategoryID > 0)
             {
@@ -100,7 +100,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteGlobalCodeCategory(int globalCodeCategoryId)
         {
-            var bal = new GlobalCodeCategoryMasterBal();
+            var bal = new GlobalCodeCategoryMasterService();
             var m = bal.GetGlobalCategoriesByGlobalCodeCategoryId(globalCodeCategoryId);
             m.IsDeleted = true;
             m.DeletedBy = Helpers.GetLoggedInUserId();
@@ -138,7 +138,7 @@ namespace BillingSystem.Controllers
         public ActionResult OrderCategory()
         {
             //Initialize the GlobalCode Bal
-            var globalCodeCategoryMasterBal = new GlobalCodeCategoryMasterBal();
+            var globalCodeCategoryMasterBal = new GlobalCodeCategoryMasterService();
             var objGlobalCodeCategoryMasterView = new GlobalCodeCategoryMasterView
             {
                 GCC = new GlobalCodeCategory { IsActive = true },
@@ -153,7 +153,7 @@ namespace BillingSystem.Controllers
         //Function to get globalcode list for OrderCategory
         public ActionResult GetGlobalCodeCatByExternalValue()
         {
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesByExternalValue("0");
                 return Json(list);
@@ -167,7 +167,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult GetGlobalCodeCategoryListOrderType()
         {
-            var bal = new GlobalCodeCategoryMasterBal();
+            var bal = new GlobalCodeCategoryMasterService();
             return PartialView(PartialViews.OrderCategoryTypeList, bal.GetAllGlobalCodeCategoriesByOrderType(OrderType.CPT.ToString(), Convert.ToString(Helpers.GetDefaultFacilityId())));
         }
 
@@ -181,7 +181,7 @@ namespace BillingSystem.Controllers
         public JsonResult EditGlobalCategoryCodeOrderType(int GlobalCodeCategoryId)
         {
             //Initialize the GlobalCode Bal
-            var bal = new GlobalCodeCategoryMasterBal();
+            var bal = new GlobalCodeCategoryMasterService();
             var m = bal.GetGlobalCategoriesByGlobalCodeCategoryId(GlobalCodeCategoryId);
             var jsonData = new { m, SaveText = ResourceKeyValues.GetKeyValue("update") };
             return Json(jsonData, JsonRequestBehavior.AllowGet);
@@ -195,7 +195,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteGlobalCodeCategoryOrderType(int globalCodeCategoryId)
         {
-            var bal = new GlobalCodeCategoryMasterBal();
+            var bal = new GlobalCodeCategoryMasterService();
             var m = bal.GetGlobalCategoriesByGlobalCodeCategoryId(globalCodeCategoryId);
             m.IsDeleted = true;
             m.DeletedBy = Helpers.GetLoggedInUserId();
@@ -213,7 +213,7 @@ namespace BillingSystem.Controllers
         public ActionResult ResetGlobalCodeCategoryFormOrderType()
         {
             //Initialize the GlobalCode Bal
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
             var cId = Helpers.GetDefaultCorporateId();
             var objGlobalCodeCategoryMasterView = new GlobalCodeCategoryMasterView
             {
@@ -227,7 +227,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult BindOrderTypeCategories()
         {
-            using (var bal = new GlobalCodeCategoryMasterBal())
+            using (var bal = new GlobalCodeCategoryMasterService())
             {
                 var list = bal.GetOrderTypeCategoriesByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), true);
 

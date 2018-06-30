@@ -36,7 +36,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public async Task<ActionResult> Index()
         {
-            var bal = new PhysicianBal();
+            var bal = new PhysicianService();
 
             var facilityId = Helpers.GetDefaultFacilityId();
             var list = await bal.GetFacultyList(facilityId, Helpers.GetLoggedInUserId());
@@ -58,7 +58,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public async Task<ActionResult> BindPhysicianList()
         {
-            var bal = new PhysicianBal();
+            var bal = new PhysicianService();
             var facilityId = Helpers.GetDefaultFacilityId();
             var physicianList = await bal.GetFacultyList(facilityId, Helpers.GetLoggedInUserId());
             return PartialView(PartialViews.PhysicianList, physicianList);
@@ -75,7 +75,7 @@ namespace BillingSystem.Controllers
 
             if (vm != null)
             {
-                var bal = new PhysicianBal();
+                var bal = new PhysicianService();
                 var isExists = bal.CheckDuplicateEmpNo(Convert.ToInt32(vm.PhysicianEmployeeNumber), vm.Id);
                 if (isExists)
                     return Json("-1");
@@ -125,7 +125,7 @@ namespace BillingSystem.Controllers
                 var deletedId = Convert.ToInt32(id);
 
                 var vm = new PhysicianViewModel { Id = deletedId, IsDeleted = true, DeletedBy = Helpers.GetLoggedInUserId(), DeletedDate = Helpers.GetInvariantCultureDateTime() };
-                var bal = new PhysicianBal();
+                var bal = new PhysicianService();
 
                 deletedId = bal.AddUpdatePhysician(vm);
 
@@ -147,7 +147,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetPhysician(int physicianId)
         {
-            var bal = new PhysicianBal();
+            var bal = new PhysicianService();
             var current = bal.GetPhysicianCModelById(physicianId);
             var json = new
             {
@@ -182,7 +182,7 @@ namespace BillingSystem.Controllers
         /// <returns>Json String</returns>
         public ActionResult GetFacilityName(string facilityId)
         {
-            var bal = new FacilityBal();
+            var bal = new FacilityService();
             var name = bal.GetFacilityNameById(Convert.ToInt32(facilityId));
             return Json(name);
         }
@@ -203,7 +203,7 @@ namespace BillingSystem.Controllers
         /// <returns>Json List</returns>
         public ActionResult GetFacilities()
         {
-            var bal = new FacilityBal();
+            var bal = new FacilityService();
             var cId = Helpers.GetSysAdminCorporateID();
             var facilityList = bal.GetFacilitiesByCorpoarteId(cId);
             var list = facilityList.Select(item => new SelectListItem { Text = item.FacilityName, Value = item.FacilityId.ToString() }).ToList();
@@ -217,7 +217,7 @@ namespace BillingSystem.Controllers
         /// <returns>Json List</returns>
         public ActionResult BindPhysicianddlList()
         {
-            var bal = new PhysicianBal();
+            var bal = new PhysicianService();
             var facilityId = Helpers.GetDefaultFacilityId();
             var physicianList = bal.GetFacilityPhysicians(facilityId);
             return Json(physicianList);
@@ -237,7 +237,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult BindUsersType()
         {
-            using (var fRole = new FacilityRoleBal())
+            using (var fRole = new FacilityRoleService())
             {
                 var list = new List<DropdownListData>();
                 var corporateId = Helpers.GetSysAdminCorporateID();
@@ -263,7 +263,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPhysicianListByPatientId(int patientId)
         {
-            var list = new PhysicianBal().GetPhysicianListByPatientId(patientId);
+            var list = new PhysicianService().GetPhysicianListByPatientId(patientId);
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
@@ -276,7 +276,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult BindPhysicianBySpeciality(int facilityId, string specialityId)
         {
-            var list = new PhysicianBal().BindPhysicianBySpeciality(facilityId, specialityId);
+            var list = new PhysicianService().BindPhysicianBySpeciality(facilityId, specialityId);
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
@@ -296,7 +296,7 @@ namespace BillingSystem.Controllers
             var facilityListView = string.Empty;
 
             //Get Facilities data
-            using (var fBal = new FacilityBal())
+            using (var fBal = new FacilityService())
             {
                 fList = fBal.GetFacilitiesForDashboards(fId, cId, Helpers.GetLoggedInUserIsAdmin());
 
@@ -316,7 +316,7 @@ namespace BillingSystem.Controllers
             }
 
             //Get License Types and Specialties Data
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
             {
                 var results = gcBal.GetListByCategoriesRange(categories, facilityId: Convert.ToString(Helpers.GetDefaultFacilityId()));
                 if (results.Count > 0)
@@ -360,7 +360,7 @@ namespace BillingSystem.Controllers
             var ltList = new List<DropdownListData>();
 
             //Get License Types and Specialties Data
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
                 ltList = gcBal.GetGCodesListByCategoryValue("1104", value, string.Empty);
 
             return Json(ltList, JsonRequestBehavior.AllowGet);

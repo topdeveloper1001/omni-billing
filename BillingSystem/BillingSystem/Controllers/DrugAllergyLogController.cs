@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the DrugAllergyLog BAL object
-            using (var bal = new DrugAllergyLogBal())
+            using (var bal = new DrugAllergyLogService())
             {
 
                 //Get the Entity list
@@ -57,7 +57,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DrugAllergyLogBal())
+                using (var bal = new DrugAllergyLogService())
                 {
                     if (model.Id > 0)
                     {
@@ -94,7 +94,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DrugAllergyLogBal())
+                using (var bal = new DrugAllergyLogService())
                 {
                     model.OrderBy = userId;
                     model.OrderedDate = currentDate;
@@ -117,7 +117,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDrugAllergyLogDetails(int id)
         {
-            using (var bal = new DrugAllergyLogBal())
+            using (var bal = new DrugAllergyLogService())
             {
                 //Call the AddDrugAllergyLog Method to Add / Update current DrugAllergyLog
                 var current = bal.GetDrugAllergyLogById(id);
@@ -133,7 +133,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDrugAllergyLog(int id)
         {
-            using (var bal = new DrugAllergyLogBal())
+            using (var bal = new DrugAllergyLogService())
             {
                 //Get DrugAllergyLog model object by current DrugAllergyLog ID
                 var model = bal.GetDrugAllergyLogById(id);

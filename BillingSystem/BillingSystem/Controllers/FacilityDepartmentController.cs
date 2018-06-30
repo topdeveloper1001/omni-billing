@@ -100,7 +100,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteFacilityDepartment(int id)
         {
             var list = new List<FacilityDepartmentCustomModel>();
-            using (var bal = new FacilityDepartmentBal())
+            using (var bal = new FacilityDepartmentService())
             {
                 // Get FacilityDepartment model object by current FacilityDepartment ID
                 FacilityDepartment model = bal.GetFacilityDepartmentById(id);
@@ -140,7 +140,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetFacilityDepartmentDetails(int id)
         {
-            using (var bal = new FacilityDepartmentBal())
+            using (var bal = new FacilityDepartmentService())
             {
                 // Call the AddFacilityDepartment Method to Add / Update current FacilityDepartment
                 FacilityDepartment current = bal.GetFacilityDepartmentById(id);
@@ -158,7 +158,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetFacilityDepartments(bool showInActive)
         {
-            using (var bal = new FacilityDepartmentBal())
+            using (var bal = new FacilityDepartmentService())
             {
                 int facilityid = Helpers.GetDefaultFacilityId();
                 int corporateid = Helpers.GetSysAdminCorporateID();
@@ -180,7 +180,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             // Initialize the FacilityDepartment BAL object
-            using (var bal = new FacilityDepartmentBal())
+            using (var bal = new FacilityDepartmentService())
             {
                 int facilityid = Helpers.GetDefaultFacilityId();
                 int corporateid = Helpers.GetSysAdminCorporateID();
@@ -222,7 +222,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new FacilityDepartmentBal())
+                using (var bal = new FacilityDepartmentService())
                 {
                     model.CorporateId = corporateid;
                     model.FacilityId = facilityid;

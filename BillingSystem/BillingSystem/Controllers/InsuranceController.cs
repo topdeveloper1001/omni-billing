@@ -28,7 +28,7 @@ namespace BillingSystem.Controllers
         public ActionResult InsuranceCompany()
         {
             //Initialize the InsuranceCompany Communicator object
-            using (var bal = new InsuranceCompanyBal())
+            using (var bal = new InsuranceCompanyService())
             {
                 //Get the facilities list
                 var list = bal.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
@@ -55,7 +55,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindInsuranceCompanyList(bool showIsActive)
         {
             //Initialize the InsuranceCompany Communicator object
-            using (var bal = new InsuranceCompanyBal())
+            using (var bal = new InsuranceCompanyService())
             {
                 //Get the insurance list
                 var list = bal.GetInsuranceCompanies(showIsActive, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
@@ -80,7 +80,7 @@ namespace BillingSystem.Controllers
             //Check if InsuranceCompanyViewModel 
             if (m != null)
             {
-                using (var insuranceCompanyBal = new InsuranceCompanyBal())
+                using (var insuranceCompanyBal = new InsuranceCompanyService())
                 {
                     var userId = Helpers.GetLoggedInUserId();
                     var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -112,7 +112,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetInsuranceCompany(int id)
         {
-            using (var insuranceCompanyBal = new InsuranceCompanyBal())
+            using (var insuranceCompanyBal = new InsuranceCompanyService())
             {
                 //Call the AddInsuranceCompany Method to Add / Update current InsuranceCompany
                 var currentInsuranceCompany = insuranceCompanyBal.GetInsuranceCompanyById(id);
@@ -129,9 +129,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteInsuranceCompany(int id)
         {
-            using (var insuranceCompanyBal = new InsuranceCompanyBal())
+            using (var insuranceCompanyBal = new InsuranceCompanyService())
             {
-                using (var planBal = new InsurancePlansBal())
+                using (var planBal = new InsurancePlansService())
                 {
                     var IsExist = planBal.GetInsurancePlanByCompanyId(id);
                     if (IsExist)
@@ -141,7 +141,7 @@ namespace BillingSystem.Controllers
                 }
                 //Get InsuranceCompany model object by current InsuranceCompany ID
                 var currentInsuranceCompany = insuranceCompanyBal.GetInsuranceCompanyById(id);
-                var patientInsuranceBal = new PatientInsuranceBal();
+                var patientInsuranceBal = new PatientInsuranceService();
 
                 if (patientInsuranceBal.IsInsuranceComapnyInUse(id))
                     return Json(0);
@@ -187,7 +187,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ValidateInsuranceCompanyNameInsuranceCompanyLicenseNumber(string insuranceCompanyName, string insuranceCompanyLicenseNumber, int id)
         {
-            using (var insuranceCompanyBal = new InsuranceCompanyBal())
+            using (var insuranceCompanyBal = new InsuranceCompanyService())
             {
                 var result = insuranceCompanyBal.ValidateInsuranceCompanyNameInsuranceCompanyLicenseNumber(insuranceCompanyName, insuranceCompanyLicenseNumber, id);
                 return Json(result);
@@ -197,7 +197,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetInsuranceCompaniesDropdownData()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new InsuranceCompanyBal())
+            using (var bal = new InsuranceCompanyService())
             {
                 var result = bal.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
                 if (result.Count > 0)
@@ -214,7 +214,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetInsurancePayerId(int id)
         {
-            using (var bal = new InsuranceCompanyBal())
+            using (var bal = new InsuranceCompanyService())
             {
                 var result = bal.GetPayerId(id);
                 return Json(result, JsonRequestBehavior.AllowGet);
@@ -228,7 +228,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExportToPDF(bool showInActive)
         {
-            using (var bal = new InsuranceCompanyBal())
+            using (var bal = new InsuranceCompanyService())
             {
                 Response.AddHeader("Content-Type", "application/vnd.ms-excel");
                 var list = bal.GetInsuranceCompanies(showInActive, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
@@ -288,7 +288,7 @@ namespace BillingSystem.Controllers
             row.CreateCell(6).SetCellValue("Email Address");
 
             rowIndex++;
-            using (var iBal = new InsuranceCompanyBal())
+            using (var iBal = new InsuranceCompanyService())
             {
                 //Get the facilities list
                 var objCompany = iBal.GetInsuranceCompanies(showInActive, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());

@@ -189,9 +189,9 @@ namespace BillingSystem.Controllers
         public ActionResult DischargePartialView(int? patientId, int? encounterId)
         {
             // Initialize the PatientDischargeSummary BAL object
-            using (var bal = new PatientDischargeSummaryBal())
+            using (var bal = new PatientDischargeSummaryService())
             {
-                var daignosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+                var daignosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
                 var diagnosislist = daignosisBal.GetDiagnosisList(
                     Convert.ToInt32(patientId),
                     Convert.ToInt32(encounterId));
@@ -201,17 +201,17 @@ namespace BillingSystem.Controllers
                     diagnosislist = diagnosislist.OrderByDescending(d => d.CreatedDate).ToList();
                 }
 
-                var mdeicalNotesBal = new MedicalNotesBal();
+                var mdeicalNotesBal = new MedicalNotesService();
                 var complicationsList =
                     mdeicalNotesBal.GetMedicalNotesByPatientIdEncounterId(
                         Convert.ToInt32(patientId),
                         Convert.ToInt32(encounterId)).Where(x => x.MedicalNotes.MarkedComplication).ToList();
-                var medicalVitalsBal = new MedicalVitalBal();
+                var medicalVitalsBal = new MedicalVitalService();
                 var labTestsList = medicalVitalsBal.GetCustomMedicalVitalsByPidEncounterId(
                     Convert.ToInt32(patientId),
                     Convert.ToInt32(MedicalRecordType.Vitals),
                     Convert.ToInt32(encounterId));
-                var openorderBal = new OpenOrderBal(
+                var openorderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -221,7 +221,7 @@ namespace BillingSystem.Controllers
                 var openOrdersList = openorderBal.GetAllOrdersByEncounterId(Convert.ToInt32(encounterId));
                 var patientDischargeSummary = bal.GetPatientDischargeSummaryByEncounterId(Convert.ToInt32(patientId));
 
-                var dischargeDetailBal = new DischargeSummaryDetailBal();
+                var dischargeDetailBal = new DischargeSummaryDetailService();
 
                 // Intialize the View Model i.e. PatientDischargeSummaryView which is binded to Main View Index.cshtml under PatientDischargeSummary
                 var dischargeView = new PatientDischargeSummaryView
@@ -316,7 +316,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult UpdateDischargeDetails(PatientDischargeSummary model)
         {
-            using (var bal = new PatientDischargeSummaryBal())
+            using (var bal = new PatientDischargeSummaryService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -347,7 +347,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult AddDischargeSummaryDetail(DischargeSummaryDetail model)
         {
-            using (var bal = new DischargeSummaryDetailBal())
+            using (var bal = new DischargeSummaryDetailService())
             {
                 var result = bal.SaveDischargeSummaryDetail(model);
                 switch (model.AssociatedTypeId)
@@ -374,7 +374,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteDischargeDetail(int id, string typeId)
         {
-            using (var bal = new DischargeSummaryDetailBal())
+            using (var bal = new DischargeSummaryDetailService())
             {
                 var result = bal.DeleteDischargeDetail(id, typeId);
                 return this.PartialView(PartialViews.DischargeDetailsListView, result);
@@ -392,7 +392,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckDuplicateSummaryDetail(DischargeSummaryDetail model)
         {
-            using (var bal = new DischargeSummaryDetailBal())
+            using (var bal = new DischargeSummaryDetailService())
             {
                 var result = bal.CheckIfRecordAlreadyAdded(model.AssociatedId, model.AssociatedTypeId);
                 return this.Json(result);
@@ -415,7 +415,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortMedicareActiveProblem(int? patientId, int? encounterId)
         {
-            using (var bal = new DischargeSummaryDetailBal())
+            using (var bal = new DischargeSummaryDetailService())
             {
                 var activeMedicalProblemsList =
                     bal.GetDischargeSummaryDetailListByTypeId(
@@ -440,7 +440,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortFollowsUp(int? patientId, int? encounterId)
         {
-            using (var bal = new DischargeSummaryDetailBal())
+            using (var bal = new DischargeSummaryDetailService())
             {
                 var followsUpList =
                     bal.GetDischargeSummaryDetailListByTypeId(
@@ -465,7 +465,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortPatientInstruction(int? patientId, int? encounterId)
         {
-            using (var bal = new DischargeSummaryDetailBal())
+            using (var bal = new DischargeSummaryDetailService())
             {
                 var patientInstructions =
                     bal.GetDischargeSummaryDetailListByTypeId(
@@ -490,7 +490,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortDiagnosisGrid(int? patientId, int? encounterId)
         {
-            var daignosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            var daignosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
             var diagnosislist = daignosisBal.GetDiagnosisList(Convert.ToInt32(patientId), Convert.ToInt32(encounterId));
             var viewpath = string.Format("../Summary/{0}", PartialViews.EHRDiagnosisList);
             return this.PartialView(viewpath, diagnosislist);
@@ -505,7 +505,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindDischargeEncounterOrderListSorted(int patientId, int encId)
         {
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -533,7 +533,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortProceduresPerformedGrid(int? encounterId)
         {
-            var openorderBal = new OpenOrderBal(
+            var openorderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -558,7 +558,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortLabTest(int? patientId, int? encounterId)
         {
-            var medicalVitalsBal = new MedicalVitalBal();
+            var medicalVitalsBal = new MedicalVitalService();
             var labTestsList = medicalVitalsBal.GetCustomMedicalVitalsByPidEncounterId(
                 Convert.ToInt32(patientId),
                 Convert.ToInt32(MedicalRecordType.Vitals),
@@ -575,7 +575,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindDischargeOpenOrderBySort(int patientId, int encId)
         {
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -604,7 +604,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindDischargeMedicationBySort(int patientId, int encId)
         {
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,

@@ -46,7 +46,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindMedicalRecordList(int patientId)
         {
             //Initialize the MedicalRecord BAL object
-            using (var medicalRecordBal = new MedicalRecordBal())
+            using (var medicalRecordBal = new MedicalRecordService())
             {
                 //Get the facilities list
                 var medicalRecordList = medicalRecordBal.GetAlergyRecords(patientId, Convert.ToInt32(Common.Common.MedicalRecordType.Allergies));
@@ -71,7 +71,7 @@ namespace BillingSystem.Controllers
             //Check if MedicalRecordViewModel 
             if (medicalRecordModel != null)
             {
-                using (var medicalRecordBal = new MedicalRecordBal())
+                using (var medicalRecordBal = new MedicalRecordService())
                 {
                     medicalRecordModel.MedicalRecordType = Convert.ToInt32(Common.Common.MedicalRecordType.Allergies);
                     medicalRecordModel.CorporateID = Helpers.GetSysAdminCorporateID();
@@ -106,7 +106,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMedicalRecord(int MedicalRecordID)
         {
-            using (var medicalRecordBal = new MedicalRecordBal())
+            using (var medicalRecordBal = new MedicalRecordService())
             {
                 //Call the AddMedicalRecord Method to Add / Update current MedicalRecord
                 var currentMedicalRecord = medicalRecordBal.GetMedicalRecordById(MedicalRecordID);
@@ -126,7 +126,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMedicalRecord(int MedicalRecordID)
         {
-            using (var medicalRecordBal = new MedicalRecordBal())
+            using (var medicalRecordBal = new MedicalRecordService())
             {
                 //Get MedicalRecord model object by current MedicalRecord ID
                 var currentMedicalRecord = medicalRecordBal.GetMedicalRecordById(MedicalRecordID);
@@ -170,7 +170,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAlergyType()
         {
-            var objGlobalCodeCategoryBal = new GlobalCodeCategoryBal();
+            var objGlobalCodeCategoryBal = new GlobalCodeCategoryService();
             var lstGlobalCodeCategories = objGlobalCodeCategoryBal.GetGlobalCodeCategoriesRange(Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.AlergyStartRange),
                 Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.AlergyEndRange));
             return Json(lstGlobalCodeCategories);
@@ -183,8 +183,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAlergies(string GlobalCodeCategoryValue)
         {
-            var objGlobalCodeCategoryBal = new GlobalCodeCategoryBal();
-            var objGlobalCodeBal = new GlobalCodeBal();
+            var objGlobalCodeCategoryBal = new GlobalCodeCategoryService();
+            var objGlobalCodeBal = new GlobalCodeService();
             var lstGlobalCodes = objGlobalCodeBal.GetGCodesListByCategoryValue(GlobalCodeCategoryValue);
             return Json(lstGlobalCodes);
         }
@@ -216,7 +216,7 @@ namespace BillingSystem.Controllers
                     a.CreatedDate = currentDate;
                 });
 
-                var bal = new MedicalRecordBal();
+                var bal = new MedicalRecordService();
                 var i = bal.SaveMedicalRecords(list, patientId, encounterId, userId, cId, fId);
                 return Json(i);
             }
@@ -234,7 +234,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMedicalRecordByPatientEncounter(int patientID, int encounterID)
         {
-            var objMedicalRecordBal = new MedicalRecordBal();
+            var objMedicalRecordBal = new MedicalRecordService();
             //var medicalRecords = objMedicalRecordBal.GetAlergyRecordsByPatientIdEncounterId(Convert.ToInt32(patienID), Convert.ToInt32(encounterID));
             var medicalRecords = objMedicalRecordBal.GetAlergyRecordsByPatientIdEncounterId(patientID, encounterID);
             //List<int?> GlobalCodes = (from q in medicalRecords select q.GlobalCode).ToList();
@@ -250,7 +250,7 @@ namespace BillingSystem.Controllers
         {
             using (var transScope = new TransactionScope())
             {
-                using (var bal = new MedicalRecordBal(Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber))
+                using (var bal = new MedicalRecordService(Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber))
                 {
                     if (deletedId > 0)
                         bal.DeleteMedicalRecordById(deletedId);

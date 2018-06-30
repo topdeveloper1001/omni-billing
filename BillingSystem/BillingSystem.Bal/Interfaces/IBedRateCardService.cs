@@ -13,6 +13,5 @@ namespace BillingSystem.Bal.Interfaces
         List<BedRateCardCustomModel> GetBedRateCardsList(string serviceCodeTableNumber);
         List<BedRateCardCustomModel> GetBedRateCardsList(string serviceCodeTableNumber, int corporateId, int facilityId);
         IEnumerable<BedRateCardCustomModel> GetBedRateCardsListByBedType(string bedTypeid, bool nonChargeable);
-        DateTime GetInvariantCultureDateTime(int facilityid);
-    }
+     }
 }

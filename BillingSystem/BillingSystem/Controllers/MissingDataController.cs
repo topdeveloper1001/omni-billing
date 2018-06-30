@@ -21,7 +21,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index()
         {
-            var bal = new MissingDataBal();
+            var bal = new MissingDataService();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             var missingDatalist = bal.GetXMLMissingData(corporateid, facilityId);
@@ -45,7 +45,7 @@ namespace BillingSystem.Controllers
         {
             var userId = Helpers.GetLoggedInUserId();
             var billheaderObj = _eService.GetEncounterEndCheck(encounterId, userId);
-            var bal = new MissingDataBal();
+            var bal = new MissingDataService();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             var billHeaderList = bal.GetAllXMLBillHeaderList(corporateid, facilityId);

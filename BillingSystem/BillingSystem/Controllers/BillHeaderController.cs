@@ -179,7 +179,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new ErrorMasterBal())
+                using (var bal = new ErrorMasterService())
                 {
                     var list = bal.GetSearchedDenialsList(text);
                     var filteredList =
@@ -506,7 +506,7 @@ namespace BillingSystem.Controllers
                 var xml = Helpers.GetXML(completePath);
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingBal())
+                    using (var bal = new XMLBillingService())
                     {
                         var result = bal.RemittanceXMLParser(xml, savedFileName, true, corporateId, facilityId);
                         var msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
@@ -562,7 +562,7 @@ namespace BillingSystem.Controllers
         { 
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var data = _service.SendEClaimsByPayer(Helpers.GetDefaultFacilityId(), payerId, billHeaderIds);
-                using (var xmlBilling = new XMLBillingBal())
+                using (var xmlBilling = new XMLBillingService())
                 {
                     var xmlFileId = xmlBilling.GetLatestXFileHeaderId();
                     var filePath = string.Format(

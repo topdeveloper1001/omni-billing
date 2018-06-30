@@ -34,7 +34,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindHolidayPlannerDetailsList()
         {
             // Initialize the HolidayPlannerDetails BAL object
-            using (var holidayPlannerDetailsBal = new HolidayPlannerDetailsBal())
+            using (var holidayPlannerDetailsBal = new HolidayPlannerDetailsService())
             {
                 // Get the facilities list
                 var holidayPlannerDetailsList =
@@ -57,7 +57,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteHolidayPlannerDetails(int id)
         {
-            using (var bal = new HolidayPlannerDetailsBal())
+            using (var bal = new HolidayPlannerDetailsService())
             {
                 // Get HolidayPlannerDetails model object by current HolidayPlannerDetails ID
                 var currentHolidayPlannerDetails = bal.GetHolidayPlannerDetailsByID(id);
@@ -93,7 +93,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetHolidayPlannerDetails(int id)
         {
-            using (var bal = new HolidayPlannerDetailsBal())
+            using (var bal = new HolidayPlannerDetailsService())
             {
                 // Call the AddHolidayPlannerDetails Method to Add / Update current HolidayPlannerDetails
                 HolidayPlannerDetails currentHolidayPlannerDetails = bal.GetHolidayPlannerDetailsByID(id);
@@ -114,7 +114,7 @@ namespace BillingSystem.Controllers
         public ActionResult HolidayPlannerDetailsMain()
         {
             // Initialize the HolidayPlannerDetails BAL object
-            var holidayPlannerDetailsBal = new HolidayPlannerDetailsBal();
+            var holidayPlannerDetailsBal = new HolidayPlannerDetailsService();
 
             // Get the Entity list
             var holidayPlannerDetailsList =
@@ -167,7 +167,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new HolidayPlannerDetailsBal())
+                using (var bal = new HolidayPlannerDetailsService())
                 {
                     if (model.Id > 0)
                     {
@@ -189,7 +189,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteHolidayPlannerEvent(int id)
         {
             bool isDeleted = false;
-            using (var bal = new HolidayPlannerDetailsBal())
+            using (var bal = new HolidayPlannerDetailsService())
             {
                 isDeleted = bal.DeleteHolidayEvent(id);
             }

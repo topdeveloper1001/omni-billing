@@ -85,7 +85,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientSchedular(List<SchedularTypeCustomModel> filters)
         {
-            using (var schedularbal = new SchedulingBal())
+            using (var schedularbal = new SchedulingService())
             {
                 var listtoReturn = new List<SchedulingCustomModel>();
                 //var selectedStatusList = filters[0].StatusType;
@@ -111,7 +111,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult LoadPatientSchedulngData(string selectedDate, int patientId)
         {
-            using (var schedularbal = new SchedulingBal())
+            using (var schedularbal = new SchedulingService())
             {
                 var listtoReturn = new List<SchedulingCustomModel>();
                 if (patientId > 0)
@@ -160,18 +160,18 @@ namespace BillingSystem.Controllers
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
 
-                using (var oSchedulingBal = new SchedulingBal())
+                using (var oSchedulingBal = new SchedulingService())
                 {
                     var token = CommonConfig.GenerateLoginCode(8, false);
                     string physicianDeptid;
                     if (!string.IsNullOrEmpty(model[0].PhysicianId))
                     {
-                        var physicianBal = new PhysicianBal().GetPhysicianById(Convert.ToInt32(model[0].PhysicianId));
+                        var physicianBal = new PhysicianService().GetPhysicianById(Convert.ToInt32(model[0].PhysicianId));
                         physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
                     }
                     else
                     {
-                        var physicianBal = new PhysicianBal().GetPhysicianById(Convert.ToInt32(model[0].AssociatedId));
+                        var physicianBal = new PhysicianService().GetPhysicianById(Convert.ToInt32(model[0].AssociatedId));
                         physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
                     }
 
@@ -196,7 +196,7 @@ namespace BillingSystem.Controllers
                     // Add the patient phone number
                     if (patientid > 0)
                     {
-                        var patientPhone = new PatientPhoneBal().GetPatientPersonalPhoneByPateintId(patientid);
+                        var patientPhone = new PatientPhoneService().GetPatientPersonalPhoneByPateintId(patientid);
                         var patientPhonenumber = patientPhone ?? new PatientPhone
                         {
                             CreatedBy = Helpers.GetLoggedInUserId(),
@@ -208,11 +208,11 @@ namespace BillingSystem.Controllers
                             IsDeleted = false
                         };
                         patientPhonenumber.PhoneNo = model[0].PatientPhoneNumber;
-                        new PatientPhoneBal().SavePatientPhone(patientPhonenumber);
+                        new PatientPhoneService().SavePatientPhone(patientPhonenumber);
                     }
 
                     // }
-                    new PatientLoginDetailBal().UpdatePatientEmailId(
+                    new PatientLoginDetailService().UpdatePatientEmailId(
                         model[0].AssociatedId != 0 ? Convert.ToInt32(model[0].AssociatedId) : Convert.ToInt32(patientid),
                         model[0].PatientEmailId);
 
@@ -395,7 +395,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<TypeOfProcedureCustomModel> GetOtherProceduresByEventParentId(string eventparentId, DateTime scheduleFrom)
         {
-            using (var schedulingBal = new SchedulingBal())
+            using (var schedulingBal = new SchedulingService())
             {
                 var schdulingList = schedulingBal.GetOtherProceduresByEventParentId(eventparentId, scheduleFrom);
                 return schdulingList;

@@ -32,7 +32,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPaymentTypeDetailList()
         {
             // Initialize the PaymentTypeDetail BAL object
-            using (var paymentTypeDetailBal = new PaymentTypeDetailBal())
+            using (var paymentTypeDetailBal = new PaymentTypeDetailService())
             {
                 // Get the facilities list
                 var paymentTypeDetailList = paymentTypeDetailBal.GetPaymentTypeDetail();
@@ -53,7 +53,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePaymentTypeDetail(int id)
         {
-            using (var bal = new PaymentTypeDetailBal())
+            using (var bal = new PaymentTypeDetailService())
             {
                 // Get PaymentTypeDetail model object by current PaymentTypeDetail ID
                 var currentPaymentTypeDetail = bal.GetPaymentTypeDetailById(id);
@@ -90,7 +90,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPaymentTypeDetail(int id)
         {
-            using (var bal = new PaymentTypeDetailBal())
+            using (var bal = new PaymentTypeDetailService())
             {
                 // Call the AddPaymentTypeDetail Method to Add / Update current PaymentTypeDetail
                 PaymentTypeDetail currentPaymentTypeDetail = bal.GetPaymentTypeDetailById(id);
@@ -111,7 +111,7 @@ namespace BillingSystem.Controllers
         public ActionResult PaymentTypeDetailMain()
         {
             // Initialize the PaymentTypeDetail BAL object
-            var paymentTypeDetailBal = new PaymentTypeDetailBal();
+            var paymentTypeDetailBal = new PaymentTypeDetailService();
 
             // Get the Entity list
             var paymentTypeDetailList = paymentTypeDetailBal.GetPaymentTypeDetail();
@@ -161,7 +161,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PaymentTypeDetailBal())
+                using (var bal = new PaymentTypeDetailService())
                 {
                     if (model.Id > 0)
                     {

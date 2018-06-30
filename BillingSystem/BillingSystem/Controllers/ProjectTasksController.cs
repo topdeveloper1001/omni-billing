@@ -18,7 +18,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetProjectTasksDetails(int id)
         {
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
             {
                 //Call the AddProjectTasks Method to Add / Update current ProjectTasks
                 var current = bal.GetProjectTasksById(id);

@@ -163,7 +163,7 @@ namespace BillingSystem.Controllers
 
         protected List<DropdownListData> GetGlobaCodesByCategories(IEnumerable<string> categories)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
                 return bal.GetListByCategoriesRange(categories);
         }
 
@@ -172,7 +172,7 @@ namespace BillingSystem.Controllers
 
         protected List<DropdownListData> GetDefaultFacilityList(int corporateId)
         {
-            using (var bal = new FacilityBal())
+            using (var bal = new FacilityService())
                 return bal.GetFacilityDropdownData(corporateId, 0);
         }
 

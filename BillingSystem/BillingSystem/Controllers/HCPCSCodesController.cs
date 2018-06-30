@@ -209,7 +209,7 @@ namespace BillingSystem.Controllers
         public ActionResult HCPCSCodes()
         {
             //Initialize the HCPCSCodes Communicator object
-            var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber);
+            var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber);
 
             //Get the facilities list
             var hcpcsCodesList = hcpcsCodesBal.GetHCPCSCodesListOnDemand(1, Helpers.DefaultRecordCount);
@@ -229,7 +229,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortHCPCSCodes()
         {
             var viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
-            var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber);
+            var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber);
             var hcpcsCodesList = hcpcsCodesBal.GetHCPCSCodesListOnDemand(1, Helpers.DefaultRecordCount);
             var hcpcsCodesView = new HCPCSCodesView
             {
@@ -253,7 +253,7 @@ namespace BillingSystem.Controllers
             //Check if HCPCSCodesViewModel 
             if (HCPCSCodesModel != null)
             {
-                using (var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+                using (var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
                 {
                     if (HCPCSCodesModel.HCPCSCodesId > 0)
                     {
@@ -286,7 +286,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindHCPCSCodesList()
         {
             //Initialize the HCPCSCodes Communicator object
-            using (var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+            using (var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
             {
                 //Get the facilities list
                 var hcpcsCodesList = hcpcsCodesBal.GetHCPCSCodes();
@@ -305,7 +305,7 @@ namespace BillingSystem.Controllers
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
             //Initialize the HCPCSCodes Communicator object
-            using (var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+            using (var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
             {
                 //Get the facilities list
                 var hcpcsCodesList =
@@ -329,7 +329,7 @@ namespace BillingSystem.Controllers
         public JsonResult RebindBindHCPCSCodesList(int blockNumber,string tableNumber)
         {
             var recordCount = Helpers.DefaultRecordCount;
-            using (var hcpcsCodesBal = new HCPCSCodesBal(tableNumber))
+            using (var hcpcsCodesBal = new HCPCSCodesService(tableNumber))
             {
                 var list = hcpcsCodesBal.GetHCPCSCodesListOnDemand(blockNumber, recordCount);
                 var jsonResult = new
@@ -348,7 +348,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetHCPCSCodes(string id)
         {
-            using (var bal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+            using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
             {
                 var current = bal.GetHCPCSCodesById(Convert.ToInt32(id));
                 return PartialView(PartialViews.HCPCSCodesAddEdit, current);
@@ -375,7 +375,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteHCPCSCodes(CommonModel model)
         {
-            using (var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+            using (var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
             {
                 //Get HCPCSCodes model object by current HCPCSCodes ID
                 var currentHcpcsCodes = hcpcsCodesBal.GetHCPCSCodesById(Convert.ToInt32(model.Id));
@@ -409,7 +409,7 @@ namespace BillingSystem.Controllers
             var startRange = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.HCPCSCodestartRange);
             var finishRange = Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.HCPCSCodesFinishRange);
 
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesRange(startRange, finishRange);
                 return Json(list);
@@ -584,7 +584,7 @@ namespace BillingSystem.Controllers
 
             rowIndex++;
 
-            using (var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+            using (var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
             {
                 //Get the facilities list
                
@@ -632,7 +632,7 @@ namespace BillingSystem.Controllers
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
             //Initialize the HCPCSCodes Communicator object
-            using (var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+            using (var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
             {
                 //Get the facilities list
                 var hcpcsCodesList =
@@ -650,7 +650,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetHCPCSCodesOnEdit(string id)
         {
-            using (var bal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+            using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
             {
                 var current = bal.GetHCPCSCodesById(Convert.ToInt32(id));
                 var jsonData = new

@@ -56,7 +56,7 @@ namespace BillingSystem.Controllers
             var section10RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId

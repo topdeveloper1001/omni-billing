@@ -192,8 +192,8 @@ namespace BillingSystem.Bal.BusinessAccess
         public int AddUpdateUser(Users m, int roleId)
         {
             int result;
-            var userRolebal = new UserRoleBal();
-            var facilityRoleBal = new FacilityRoleBal();
+            var userRolebal = new UserRoleService();
+            var facilityRoleBal = new FacilityRoleService();
             using (var transScope = new TransactionScope())
             {
                 var encryptPassword = EncryptDecrypt.GetEncryptedData(m.Password, "");
@@ -443,7 +443,7 @@ namespace BillingSystem.Bal.BusinessAccess
                         if (ids.All(fac => fac != f.FacilityId))
                         {
                             ids.Add(f.FacilityId);
-                            using (var facBal = new FacilityBal())
+                            using (var facBal = new FacilityService())
                             {
                                 if (string.IsNullOrEmpty(facilityNames))
                                     facilityNames = facBal.GetFacilityNameById(f.FacilityId);

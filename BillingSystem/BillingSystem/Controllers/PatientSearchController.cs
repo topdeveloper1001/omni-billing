@@ -107,7 +107,7 @@ namespace BillingSystem.Controllers
 
             if (objPatientInfoData.Count > 0)
             {
-                using (var rolebal = new RoleTabsBal())
+                using (var rolebal = new RoleTabsService())
                 {
                     var roleId = Helpers.GetDefaultRoleId();
                     objPatientInfoData[0].EhrViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
@@ -226,7 +226,7 @@ namespace BillingSystem.Controllers
 
             if (objPatientInfoData.Count > 0)
             {
-                using (var rolebal = new RoleTabsBal())
+                using (var rolebal = new RoleTabsService())
                 {
                     var roleId = Helpers.GetDefaultRoleId();
                     objPatientInfoData[0].PatientInfoAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("Register new patient", ControllerAccess.PatientInfo.ToString(), ActionNameAccess.RegisterPatient.ToString(), Convert.ToInt32(roleId));
@@ -288,7 +288,7 @@ namespace BillingSystem.Controllers
 
             if (objPatientInfoData.Count > 0)
             {
-                using (var rolebal = new RoleTabsBal())
+                using (var rolebal = new RoleTabsService())
                 {
                     var roleId = Helpers.GetDefaultRoleId();
                     objPatientInfoData[0].EhrViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));

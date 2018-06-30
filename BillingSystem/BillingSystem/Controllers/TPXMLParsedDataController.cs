@@ -21,7 +21,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the TPXMLParsedData BAL object
-            using (var bal = new TPXMLParsedDataBal())
+            using (var bal = new TPXMLParsedDataService())
             {
                 //Get the Entity list
 

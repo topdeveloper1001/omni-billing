@@ -26,7 +26,7 @@ namespace BillingSystem.Controllers
         public ActionResult LabTestResultMain()
         {
             //Initialize the LabTestResult BAL object
-            var labTestResultBal = new LabTestResultBal();
+            var labTestResultBal = new LabTestResultService();
             var facilityid = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
             //Get the Entity list
@@ -53,7 +53,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabTestResultList()
         {
             //Initialize the LabTestResult BAL object
-            using (var labTestResultBal = new LabTestResultBal())
+            using (var labTestResultBal = new LabTestResultService())
             {
                 //Get the facilities list
                 var labTestResultList = labTestResultBal.GetLabTestResult();
@@ -81,7 +81,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new LabTestResultBal())
+                using (var bal = new LabTestResultService())
                 {
                     model.FacilityId = facilityid;
                     model.CorporateId = corporateId;
@@ -109,7 +109,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetLabTestResult(int id)
         {
-            using (var bal = new LabTestResultBal())
+            using (var bal = new LabTestResultService())
             {
                 //Call the AddLabTestResult Method to Add / Update current LabTestResult
                 var currentLabTestResult = bal.GetLabTestResultByID(id);
@@ -126,7 +126,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteLabTestResult(int id)
         {
-            using (var bal = new LabTestResultBal())
+            using (var bal = new LabTestResultService())
             {
                 //Get LabTestResult model object by current LabTestResult ID
                 var currentLabTestResult = bal.GetLabTestResultByID(id);
@@ -256,7 +256,7 @@ namespace BillingSystem.Controllers
             row.CreateCell(14).SetCellValue("Bad To");
             rowIndex++;
             //Initialize the LabTestResult BAL object
-            using (var labTestResultBal = new LabTestResultBal())
+            using (var labTestResultBal = new LabTestResultService())
             {
                 //Get the facilities list
                 var labTestResultList = labTestResultBal.GetLabTestResult();

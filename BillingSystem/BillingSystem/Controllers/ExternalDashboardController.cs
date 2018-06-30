@@ -59,11 +59,11 @@ namespace BillingSystem.Controllers
             var defaultMonth = currentdt.Month;
 
             //Get Facility data
-            using (var bal = new FacilityBal())
+            using (var bal = new FacilityService())
                 fList = bal.GetFacilitiesForDashboards(facilityId, corporateid, Helpers.GetLoggedInUserIsAdmin());
 
             //Get Region Type, Facility Types and Months data
-            using (var gBal = new GlobalCodeBal())
+            using (var gBal = new GlobalCodeService())
             {
                 var list = gBal.GetListByCategoriesRange(categories);
                 ftList = list.Where(f => f.ExternalValue1.Equals("4242")).ToList();
@@ -462,7 +462,7 @@ namespace BillingSystem.Controllers
             #endregion
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
                 ? loggedinfacilityId
@@ -720,7 +720,7 @@ namespace BillingSystem.Controllers
             #endregion
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                 ? loggedinfacilityId
@@ -891,7 +891,7 @@ namespace BillingSystem.Controllers
 
         private List<ProjectsCustomModel> GetExecutiveKeyPerformanceList(int facilityId)
         {
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
             {
                 var list = bal.GetProjectsForExecKpiDashboard(Helpers.GetSysAdminCorporateID(), facilityId);
                 if (list.Count > 0)
@@ -943,7 +943,7 @@ namespace BillingSystem.Controllers
                 var section1RemarksList = new List<DashboardRemarkCustomModel>();
                 var section2RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -1069,7 +1069,7 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -1298,7 +1298,7 @@ namespace BillingSystem.Controllers
         public ActionResult CamFinancialMGTDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -1512,7 +1512,7 @@ namespace BillingSystem.Controllers
             var section10RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -1736,7 +1736,7 @@ namespace BillingSystem.Controllers
             //var section3RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -1801,7 +1801,7 @@ namespace BillingSystem.Controllers
                 var section5RemarksList = new List<DashboardRemarkCustomModel>();
                 var section6RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -1860,7 +1860,7 @@ namespace BillingSystem.Controllers
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -1955,7 +1955,7 @@ namespace BillingSystem.Controllers
 
             #region KPI Dashboard Filtered Data Section
             var loggedinfacilityId = Convert.ToInt32(facilityID);
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                 ? loggedinfacilityId
@@ -2027,7 +2027,7 @@ namespace BillingSystem.Controllers
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -2075,7 +2075,7 @@ namespace BillingSystem.Controllers
         public ActionResult FinancialMGTDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -2129,7 +2129,7 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -2177,7 +2177,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -3052,7 +3052,7 @@ namespace BillingSystem.Controllers
         public ActionResult ProjectsDashboardFilters(int? facilityID, int facilityType, int segment, string userId)
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -3067,7 +3067,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetProjectTaskComments(int taskId)
         {
 
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
             {
                 var comments = bal.GetProjectTaskCommentById(taskId);
                 return Json(comments, JsonRequestBehavior.AllowGet);
@@ -3181,7 +3181,7 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -3239,7 +3239,7 @@ namespace BillingSystem.Controllers
                 var section5RemarksList = new List<DashboardRemarkCustomModel>();
                 var section6RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -3298,7 +3298,7 @@ namespace BillingSystem.Controllers
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
 
             var currentDateTime = _eService.GetInvariantCultureDateTime(loggedinfacilityId);
             var currentYear = currentDateTime.Year;
@@ -3370,7 +3370,7 @@ namespace BillingSystem.Controllers
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -3418,7 +3418,7 @@ namespace BillingSystem.Controllers
         public ActionResult FinancialMGTDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -3472,7 +3472,7 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -3517,7 +3517,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -5256,7 +5256,7 @@ namespace BillingSystem.Controllers
 
         private List<ProjectsCustomModel> GetProjectsDashboardData(int facilityId, string responsibleUserId)
         {
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
             {
                 var list = bal.GetProjectsDashboardData(Helpers.GetSysAdminCorporateID(), facilityId, responsibleUserId);
                 if (list.Count > 0)
@@ -5284,7 +5284,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboard1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
@@ -5341,7 +5341,7 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -5391,7 +5391,7 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboard1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId

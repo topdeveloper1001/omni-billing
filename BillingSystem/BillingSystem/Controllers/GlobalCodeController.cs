@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobaCodeById(int id)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var result = bal.GetGlobalCodeCustomById(id);
                 var jsonResult = new
@@ -100,7 +100,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindGlobalCodeCategories()
         {
             var list = new List<DropdownListData>();
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var result = bal.GetGlobalCodeCategories();
                 if (result.Count > 0)
@@ -123,7 +123,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMaxSortOrderAndGlobalCodeValueByCategoryValue(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var gcc = bal.GetMaxGlobalCodeByCategoryValue(categoryValue);
 
@@ -154,7 +154,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<GlobalCodeCustomModel> GlobalCodesList(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetAllGlobalCodes(categoryValue);
                 return list;
@@ -169,7 +169,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public int AddUpdateGlobalCode(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -192,7 +192,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteGlobalCode(int globalCodeId)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
             objGlobalCode.IsDeleted = true;
             objGlobalCode.DeletedBy = Helpers.GetLoggedInUserId();
@@ -206,7 +206,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetGlobalCodesDropdownDataByExternalValue1(string globalCodeValue, string parentCategory)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 //var current = bal.GetGlobalCodeByCategoryAndCodeValue(parentCategory, globalCodeValue);
                 //int category;
@@ -239,7 +239,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetDashboardSectionsData(string globalCodeValue, string parentCategory)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var current = bal.GetGlobalCodeByCategoryAndCodeValue(parentCategory, globalCodeValue);
                 int category;
@@ -262,7 +262,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public int AddOrderTypeCategory(GlobalCodes m)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             m.FacilityNumber = Convert.ToString(Helpers.GetDefaultFacilityId());
             if (m.GlobalCodeID > 0)
             {
@@ -292,7 +292,7 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
 
             //Initialize the GlobalCode Bal
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var list = globalCodeBal.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, 1, Helpers.DefaultRecordCount, false, true, facilityId: facilityId);
 
@@ -313,7 +313,7 @@ namespace BillingSystem.Controllers
             var recordCount = Helpers.DefaultRecordCount;
             var facilityId = Helpers.GetDefaultFacilityId();
             //Initialize the GlobalCode Bal
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = !string.IsNullOrEmpty(gcc)
                     ? bal.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, false, true, facilityId: facilityId)
@@ -342,7 +342,7 @@ namespace BillingSystem.Controllers
             var recordCount = Helpers.DefaultRecordCount;
             var facilityId = Helpers.GetDefaultFacilityId();
 
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = !string.IsNullOrEmpty(gcc)
                     ? bal.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: facilityId)
@@ -361,7 +361,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOrderSubCategory(string id)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var globalCode = bal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(id));
                 return PartialView(PartialViews.AddUpdateOrderSubCategory, globalCode);
@@ -370,7 +370,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetOrderSubCategoryDetail(string id)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var globalCode = bal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(id));
                 var jsonResult = new
@@ -408,7 +408,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteOrderSubCategory(string globalCodeId)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var m = bal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(globalCodeId));
                 if (m != null)
@@ -446,7 +446,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult CheckDuplicateSubCategory(string GlobalCodeName, int GlobalCodeId, string GlobalCodeCategoryValue)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
             var isExist = globalCodeBal.CheckDuplicateGlobalCodeName(GlobalCodeName, GlobalCodeId, GlobalCodeCategoryValue, fn);
             return Json(isExist, JsonRequestBehavior.AllowGet);
@@ -456,7 +456,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrderSubCategoriesByExternalValue(string startRange, string endRange)
         {
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesByExternalValue(fn);
                 return Json(list);
@@ -476,7 +476,7 @@ namespace BillingSystem.Controllers
         public ActionResult AllergyMaster()
         {
             //Initialize the GlobalCode Bal
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var list = globalCodeBal.GetGlobalCodesByCategoriesRange(8101, 8999);
 
@@ -500,7 +500,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteAllergy(int globalCodeId)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var gCode = bal.GetGlobalCodeByGlobalCodeId(globalCodeId);
                 if (gCode != null)
@@ -522,7 +522,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindAllergyList()
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetGlobalCodesByCategoriesRange(8101, 8999);
                 return PartialView(PartialViews.AllergyMasterListView, list);
@@ -537,7 +537,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCurrentAllergy(int id)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var globalCode = bal.GetGlobalCodeByGlobalCodeId(id);
                 return PartialView(PartialViews.AllergyMasterAddEdit, globalCode);
@@ -561,7 +561,7 @@ namespace BillingSystem.Controllers
         #region Correction Codes View
         public ActionResult CorrectionCodesView()
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var globalCodeView = new GlobalCodeView
                 {
@@ -578,7 +578,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateCorrectionCode(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -598,7 +598,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteCorrectionCode(int globalCodeId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
                 objGlobalCode.IsDeleted = true;
@@ -619,7 +619,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult FrequencyView()
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var categoryValue = Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString();
                 var mxGlobalCodeValue = Convert.ToInt32(bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
@@ -644,7 +644,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateFrequency(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var userId = Helpers.GetLoggedInUserId();
             var currentDate = Helpers.GetInvariantCultureDateTime();
             if (objGlobalCode.GlobalCodeID > 0)
@@ -675,7 +675,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFrequency(int globalCodeId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
                 objGlobalCode.IsDeleted = true;
@@ -697,7 +697,7 @@ namespace BillingSystem.Controllers
                 maxValue = 5;
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                using (var bal = new GlobalCodeBal())
+                using (var bal = new GlobalCodeService())
                 {
                     var mxGlobalCodeValue = Convert.ToInt32(bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
                     var categoryName = bal.GetGlobalCategoryNameById(categoryValue);
@@ -730,7 +730,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateRecord(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var userId = Helpers.GetLoggedInUserId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
             if (objGlobalCode.GlobalCodeID > 0)
@@ -755,7 +755,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteRecord(int globalCodeId, string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.DeleteGlobalCodeById(globalCodeId, category);
                 var categoryName = bal.GetGlobalCategoryNameById(category);
@@ -771,7 +771,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult SetMaxGlobalCodeValue(string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var maxValue = bal.GetMaxGlobalCodeValueByCategory(category);
                 return Json(maxValue + 1);
@@ -780,7 +780,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult ShowDeletedRecords(string category, bool showDeleted)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.ShowDeletedRecordsByCategoryValue(category, showDeleted);
                 return PartialView(PartialViews.GenericListView, list);
@@ -793,7 +793,7 @@ namespace BillingSystem.Controllers
             {
                 text = text.ToLower().Trim();
                 List<GlobalCodeCategory> list;
-                using (var bal = new GlobalCodeCategoryBal())
+                using (var bal = new GlobalCodeCategoryService())
                     list = bal.GetSearchedCategories(text, typeId);
 
                 if (list.Count > 0)
@@ -811,7 +811,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetRecordsByCategoryValue(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetGCodesListByCategoryValue(categoryValue);
                 return PartialView(PartialViews.LabTestCodesListView, list);
@@ -820,7 +820,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult ShowInActiveRecords(string category, bool showInActive)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.ShowInActiveRecordsByCategoryValue(category, showInActive);
                 var categoryName = bal.GetGlobalCategoryNameById(category);
@@ -840,10 +840,10 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                using (var bal = new GlobalCodeBal())
+                using (var bal = new GlobalCodeService())
                 {
                     var mxGlobalCodeValue = Convert.ToInt32(bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
-                    var gccBal = new GlobalCodeCategoryBal();
+                    var gccBal = new GlobalCodeCategoryService();
                     var gcc = gccBal.GetGlobalCodeCategoryByValue(categoryValue);
                     var globalCodeView = new GlobalCodeView
                     {
@@ -874,7 +874,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateRecordGenericExternal(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -900,7 +900,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteRecordGenericExternal(int globalCodeId, string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.DeleteGlobalCodeById(globalCodeId, category);
                 var view = new GlobalCodeView
@@ -914,7 +914,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult ShowInActiveRecordsInExternalView(string category, bool showInActive)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.ShowInActiveRecordsByCategoryValue(category, showInActive);
                 var view = new GlobalCodeView
@@ -931,7 +931,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateLabTestCode(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -951,7 +951,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteLabTestCode(int globalCodeId, string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.DeleteRecordAndGetGlobalCodesList(globalCodeId, category);
                 return PartialView(PartialViews.LabTestCodesListView, list);
@@ -961,7 +961,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateLabTestCodeCustom(List<GlobalCodeSaveModel> objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             foreach (var globalCodeSaveModel in objGlobalCode)
             {
                 var categoryType = objGlobalCode.FirstOrDefault();
@@ -1017,7 +1017,7 @@ namespace BillingSystem.Controllers
             }
             else
             {
-                using (var bal = new GlobalCodeBal())
+                using (var bal = new GlobalCodeService())
                 {
                     var gcCategory = (GlobalCodeCategoryValue)Enum.Parse(typeof(GlobalCodeCategoryValue), category);
                     switch (gcCategory)
@@ -1048,7 +1048,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult VitalsView()
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.Vitals));
                 var viewData = new GlobalCodeView
@@ -1070,7 +1070,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult CheckDuplicateVital(int id, string categoryValue, string value, string unitOfMeasure)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var isExist = globalCodeBal.CheckDuplicateVital(id, categoryValue, value, unitOfMeasure);
             return Json(isExist);
         }
@@ -1083,7 +1083,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult SaveVitals(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -1124,7 +1124,7 @@ namespace BillingSystem.Controllers
                 GlobalCodeValue = string.Empty,
                 GlobalCodeID = 0
             };
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var current = bal.GetGlobalCodeByFacilityAndCategoryForSecurityparameter(categoryValue, facilityNumber);
                 if (current != null)
@@ -1141,7 +1141,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult SaveSecurityParameters(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var userId = Helpers.GetLoggedInUserId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
@@ -1177,7 +1177,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDetailsByFacilityNumber(string category, string facilityNumber)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var categoryValue = !string.IsNullOrEmpty(category) ? category : "2121";
                 var maxValue = bal.GetMaxGlobalCodeValueByCategory(categoryValue, facilityNumber);
@@ -1200,7 +1200,7 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetDefaultCorporateId();
             var facilityNumber = Helpers.GetDefaultFacilityNumber();
-            using (var facBal = new FacilityBal())
+            using (var facBal = new FacilityService())
             {
                 var facilities = facBal.GetFacilities(cId);
                 if (facilities.Count > 0)
@@ -1244,7 +1244,7 @@ namespace BillingSystem.Controllers
         {
             var facilityNumber = Helpers.GetDefaultFacilityNumber();
 
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var maxValue = bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
                 var viewData = new GlobalCodeView
@@ -1274,7 +1274,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult SaveSubCategory(GlobalCodes model)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var userId = Helpers.GetLoggedInUserId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
@@ -1311,7 +1311,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult RebindList(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetSubCategoriesList(categoryValue);
                 return PartialView(PartialViews.DashboardSubCategoriesList, list);
@@ -1319,7 +1319,7 @@ namespace BillingSystem.Controllers
         }
         public ActionResult RebindListBySubCategory1Value(string categoryValue, string selectedValue)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetSubCategoriesListBySubCategory1Value(categoryValue, selectedValue);
                 return PartialView(PartialViews.DashboardSubCategoriesList, list);
@@ -1327,7 +1327,7 @@ namespace BillingSystem.Controllers
         }
         public ActionResult ChangeSubCategory(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var maxNumber = bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
                 return Json(maxNumber, JsonRequestBehavior.AllowGet);
@@ -1341,7 +1341,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetSubCategoryDetails(int id)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var result = bal.GetGlobalCodeCustomById(id);
                 var jsonResult = new
@@ -1393,7 +1393,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult IndicatorSettings()
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var model = bal.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
@@ -1403,7 +1403,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetIndicatorSettings(string corporateId)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var result = bal.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
                 return Json(result, JsonRequestBehavior.AllowGet);
@@ -1419,7 +1419,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ActiveInActive(bool showInActive)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var list = globalCodeBal.GetActiveInActiveRecord(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString(), showInActive);
             return PartialView(PartialViews.FrequencyListView, list);
         }
@@ -1427,7 +1427,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult ActiveInActiveVital(bool showInActive)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.Vitals));
                 var list = globalCodeBal.GetActiveInActiveRecord(gcCategoryValue, showInActive);
@@ -1438,7 +1438,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetGenericTypeData(string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetAllGlobalCodes(category);
                 var categoryName = bal.GetGlobalCategoryNameById(category);
@@ -1456,7 +1456,7 @@ namespace BillingSystem.Controllers
         {
             var recordCount = Helpers.DefaultRecordCount;
             var fn = Helpers.GetDefaultFacilityId();
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = !string.IsNullOrEmpty(gcc)
                     ? bal.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: fn)
@@ -1467,7 +1467,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetDepartmentTypeList(string categoryId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var list = globalCodeBal.GetAllGlobalCodes(categoryId);
                 var view = new GlobalCodeView
@@ -1486,7 +1486,7 @@ namespace BillingSystem.Controllers
         #region Licence Type
         public ActionResult LicenceType()
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.LicenceType));
                 var viewData = new GlobalCodeView
@@ -1501,7 +1501,7 @@ namespace BillingSystem.Controllers
         public ActionResult SaveLicenceType(GlobalCodes objGlobalCode)
         {
             var gcCategoryValue = Convert.ToString((int)GlobalCodeCategoryValue.LicenceType);
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -1541,7 +1541,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteLicenceType(int globalCodeId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
                 objGlobalCode.IsDeleted = true;
@@ -1556,7 +1556,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetLicenseTypeData()
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString((int)GlobalCodeCategoryValue.LicenceType);
                 var list = globalCodeBal.GetAllGlobalCodes(gcCategoryValue);

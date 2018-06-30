@@ -17,7 +17,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the ErrorMaster BAL object
-            var errorMasterBal = new ErrorMasterBal();
+            var errorMasterBal = new ErrorMasterService();
 
             var cId = Helpers.GetDefaultCorporateId();
             var fId = Helpers.GetDefaultFacilityId();
@@ -43,7 +43,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindErrorMasterList(bool? showInActive)
         {
             //Initialize the ErrorMaster BAL object
-            using (var bal = new ErrorMasterBal())
+            using (var bal = new ErrorMasterService())
             {
                 //Get the facilities list
                 var errorMasterList = bal.GetErrorListByCorporateAndFacilityId(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId(), showInActive);
@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
             //Check if ErrorMasterViewModel 
             if (model != null)
             {
-                using (var errorMasterBal = new ErrorMasterBal())
+                using (var errorMasterBal = new ErrorMasterService())
                 {
                     if (model.ErrorMasterID > 0)
                     {
@@ -99,7 +99,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetErrorMaster(int ErrorMasterID)
         {
-            using (var errorMasterBal = new ErrorMasterBal())
+            using (var errorMasterBal = new ErrorMasterService())
             {
                 //Call the AddErrorMaster Method to Add / Update current ErrorMaster
                 var currentErrorMaster = errorMasterBal.GetErrorMasterById(ErrorMasterID);
@@ -116,7 +116,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteErrorMaster(int ErrorMasterID)
         {
-            using (var bal = new ErrorMasterBal())
+            using (var bal = new ErrorMasterService())
             {
                 //Get ErrorMaster model object by current ErrorMaster ID
                 var currentErrorMaster = bal.GetErrorMasterById(ErrorMasterID);
@@ -160,7 +160,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDenialCodeById(int ErrorMasterID)
         {
-            using (var errorMasterBal = new ErrorMasterBal())
+            using (var errorMasterBal = new ErrorMasterService())
             {
                 //Call the AddErrorMaster Method to Add / Update current ErrorMaster
                 var currentErrorMaster = errorMasterBal.GetErrorMasterById(ErrorMasterID);

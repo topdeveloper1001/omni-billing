@@ -43,7 +43,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindXFileHeaderList()
         {
             // Initialize the XFileHeader BAL object
-            using (var xmlBillingBal = new XMLBillingBal())
+            using (var xmlBillingBal = new XMLBillingService())
             {
                 var coporateId = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
@@ -81,7 +81,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteXFileHeader(int XFileHeaderID)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
+            using (var xFileHeaderBal = new XMLBillingService())
             {
                 // Get XFileHeader model object by current XFileHeader ID
                 var currentXFileHeader = xFileHeaderBal.GetXFileHeaderByID(Convert.ToInt32(XFileHeaderID));
@@ -115,7 +115,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetXFileHeader(int XFileHeaderID)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
+            using (var xFileHeaderBal = new XMLBillingService())
             {
                 // Call the AddXFileHeader Method to Add / Update current XFileHeader
                 var currentXFileHeader = xFileHeaderBal.GetXFileHeaderByID(Convert.ToInt32(XFileHeaderID));
@@ -159,7 +159,7 @@ namespace BillingSystem.Controllers
             // Check if XFileHeaderViewModel 
             if (XFileHeaderModel != null)
             {
-                using (var xFileHeaderBal = new XMLBillingBal())
+                using (var xFileHeaderBal = new XMLBillingService())
                 {
                     if (XFileHeaderModel.FileID > 0)
                     {
@@ -212,7 +212,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public string ViewFile(int id)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
+            using (var xFileHeaderBal = new XMLBillingService())
             {
                 var xmlString = xFileHeaderBal.GetFormattedXmlStringByXFileId(id);
 
@@ -239,7 +239,7 @@ namespace BillingSystem.Controllers
         public ActionResult XMLBillingMain()
         {
             // Initialize the XFileHeader BAL object
-            var xmlBillingBal = new XMLBillingBal();
+            var xmlBillingBal = new XMLBillingService();
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateid = Helpers.GetSysAdminCorporateID();
 
@@ -260,7 +260,7 @@ namespace BillingSystem.Controllers
 
         public FileResult ExportToXml(int id)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
+            using (var xFileHeaderBal = new XMLBillingService())
             {
                 const string xmlDec = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>";
                 var xmlObject = xFileHeaderBal.GetXmlStringById(id);

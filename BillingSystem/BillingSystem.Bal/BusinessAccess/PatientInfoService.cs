@@ -24,21 +24,8 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<PatientPhone> _phRepository;
         private readonly IRepository<PatientLoginDetail> _plRepository;
         private readonly IRepository<PatientInsurance> _pinRepository;
+        private readonly IRepository<DocumentsTemplates> _dtRepository;
         private readonly BillingEntities _context;
-
-        public PatientInfoService(IRepository<Authorization> aurepository, IRepository<Encounter> eRepository, IRepository<PatientInfo> repository, IRepository<Facility> fRepository, IRepository<MaxValues> mvRepository, IRepository<Corporate> cRepository, IRepository<PatientPhone> phRepository, IRepository<PatientLoginDetail> plRepository, IRepository<PatientInsurance> pinRepository, BillingEntities context)
-        {
-            _aurepository = aurepository;
-            _eRepository = eRepository;
-            _repository = repository;
-            _fRepository = fRepository;
-            _mvRepository = mvRepository;
-            _cRepository = cRepository;
-            _phRepository = phRepository;
-            _plRepository = plRepository;
-            _pinRepository = pinRepository;
-            _context = context;
-        }
 
         private string GetCorporateNameFromId(int corpId)
         {
@@ -117,18 +104,15 @@ namespace BillingSystem.Bal.BusinessAccess
                  * On: 17112014
                  * Purpose: Made changes in the code of fetching the Patient's Profile Image. 
                  */
-                using (var docBal = new DocumentsTemplatesBal())
+                var profileImage = _dtRepository.Where(d => d.AssociatedType == Convert.ToInt32(AttachmentType.ProfilePicture) && (d.AssociatedID != null && d.AssociatedID == model.PatientID) && (d.IsDeleted == null || d.IsDeleted == false)).FirstOrDefault();// GetDocumentByTypeAndPatientId(, model.PatientID);
+                if (profileImage != null)
                 {
-                    var profileImage = docBal.GetDocumentByTypeAndPatientId(Convert.ToInt32(AttachmentType.ProfilePicture), model.PatientID);
-                    if (profileImage != null)
-                    {
-                        vm.ProfilePicImagePath = profileImage.FilePath;
-                        vm.DocumentTemplateId = profileImage.DocumentsTemplatesID;
-                    }
-                    else
-                        vm.ProfilePicImagePath = "/images/BlankProfilePic.png";
-
+                    vm.ProfilePicImagePath = profileImage.FilePath;
+                    vm.DocumentTemplateId = profileImage.DocumentsTemplatesID;
                 }
+                else
+                    vm.ProfilePicImagePath = "/images/BlankProfilePic.png";
+
             }
             else
             {
@@ -257,7 +241,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         }
 
-        public string GetFacilityNameByFacilityId(int facilityId)
+        private string GetFacilityNameByFacilityId(int facilityId)
         {
             var m = _fRepository.GetSingle(facilityId);
             return m != null ? m.FacilityName : string.Empty;

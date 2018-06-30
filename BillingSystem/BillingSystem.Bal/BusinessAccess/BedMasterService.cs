@@ -16,23 +16,28 @@ namespace BillingSystem.Bal.BusinessAccess
     {
         private readonly IRepository<UBedMaster> _repository;
         private readonly IRepository<BedRateCard> _brRepository;
-        private readonly IRepository<FacilityStructure> _fRepository;
+        private readonly IRepository<FacilityStructure> _fsRepository;
         private readonly IRepository<MappingPatientBed> _mpRepository;
         private readonly IRepository<ServiceCode> _sRepository;
+        private readonly IRepository<Facility> _fRepository;
+        private readonly IRepository<GlobalCodes> _gRepository;
 
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public BedMasterService(IRepository<UBedMaster> repository, IRepository<BedRateCard> brRepository, IRepository<FacilityStructure> fRepository, IRepository<MappingPatientBed> mpRepository, IRepository<ServiceCode> sRepository, BillingEntities context, IMapper mapper)
+        public BedMasterService(IRepository<UBedMaster> repository, IRepository<BedRateCard> brRepository, IRepository<FacilityStructure> fsRepository, IRepository<MappingPatientBed> mpRepository, IRepository<ServiceCode> sRepository, IRepository<Facility> fRepository, IRepository<GlobalCodes> gRepository, BillingEntities context, IMapper mapper)
         {
             _repository = repository;
             _brRepository = brRepository;
-            _fRepository = fRepository;
+            _fsRepository = fsRepository;
             _mpRepository = mpRepository;
             _sRepository = sRepository;
+            _fRepository = fRepository;
+            _gRepository = gRepository;
             _context = context;
             _mapper = mapper;
         }
+
 
 
         /// <summary>
@@ -81,17 +86,11 @@ namespace BillingSystem.Bal.BusinessAccess
             var m = _repository.Where(x => x.FacilityStructureId == id).FirstOrDefault();
             return m ?? new UBedMaster();
         }
-
-        //private DateTime? GetExpectedEndDate(string bedid)
-        //{
-        //    var mappingPatientBed = new MappingPatientBedBal();
-        //    var mappingPatientBedObj = mappingPatientBed.GetAllMappingPatientBedById(bedid);
-        //    return mappingPatientBedObj == null ? null : mappingPatientBed.GetAllMappingPatientBedById(bedid).ExpectedEndDate;
-        //}
+         
 
         private string GetBedNameFromFacilityStructure(int facilityStructureId)
         {
-            var list = _fRepository.Where(f => f.FacilityStructureId == facilityStructureId).FirstOrDefault();
+            var list = _fsRepository.Where(f => f.FacilityStructureId == facilityStructureId).FirstOrDefault();
             return list != null ? list.FacilityStructureName : string.Empty;
 
         }
@@ -101,7 +100,7 @@ namespace BillingSystem.Bal.BusinessAccess
             var m = GetBedMasterById(bedId);
             if (m != null)
             {
-                var list = _fRepository.Where(f => f.FacilityStructureId == m.FacilityStructureId).FirstOrDefault();
+                var list = _fsRepository.Where(f => f.FacilityStructureId == m.FacilityStructureId).FirstOrDefault();
                 return list != null ? list.FacilityStructureName : string.Empty;
             }
             return string.Empty;
@@ -121,7 +120,7 @@ namespace BillingSystem.Bal.BusinessAccess
                 {
                     var fsId = Convert.ToInt32(bedMaster.FacilityStructureId);
 
-                    var fsStructure = _fRepository.Where(f => f.FacilityStructureId == fsId).FirstOrDefault();
+                    var fsStructure = _fsRepository.Where(f => f.FacilityStructureId == fsId).FirstOrDefault();
                     if (fsStructure != null)
                         bedName = fsStructure.FacilityStructureName;
 
@@ -161,22 +160,32 @@ namespace BillingSystem.Bal.BusinessAccess
             var lstBedMaster = new List<BedMasterCustomModel>();
             var bedList = _repository.GetAll().Where(x => (x.IsDeleted == null || !(bool)x.IsDeleted) && x.IsActive && x.FacilityId == facilityId).ToList();
 
-            var facBal = new FacilityBal();
-            var globalBal = new GlobalCodeBal();
-
+            var fName = _fRepository.Get(facilityId).FacilityName;
+ 
             lstBedMaster.AddRange(bedList.Select(item => new BedMasterCustomModel
             {
                 BedMaster = item,
-                FacilityName = facBal.GetFacilityNameById(Convert.ToInt32(item.FacilityId)),
-                BedTypeName =
-                    globalBal.GetNameByGlobalCodeValueAndCategoryValue(
-                        Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.Bedtypes).ToString(),
-                        Convert.ToString(item.BedType)),
+                FacilityName = fName,// GetFacilityNameById(Convert.ToInt32(item.FacilityId)),
+                BedTypeName = GetNameByGlobalCodeValueAndCategoryValue(
+                    Convert.ToInt32(Common.Common.GlobalCodeCategoryValue.Bedtypes).ToString(),
+                    Convert.ToString(item.BedType)),
                 BedName = GetBedNameFromFacilityStructure(Convert.ToInt32(item.FacilityStructureId))
             }));
 
             return lstBedMaster;
 
+        }
+        private string GetNameByGlobalCodeValueAndCategoryValue(string categoryValue, string globalCodeValue)
+        {
+            if (!string.IsNullOrEmpty(categoryValue) && !string.IsNullOrEmpty(globalCodeValue))
+            {
+                var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
+                && c.GlobalCodeValue.Equals(globalCodeValue)).FirstOrDefault();
+
+                if (globalCode != null)
+                    return globalCode.GlobalCodeName;
+            }
+            return string.Empty;
         }
 
         public string GetOverRideBedTypeByInPatientEncounterId(string encounterId)
@@ -217,7 +226,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="facilityId">The facility identifier.</param>
         /// <param name="corporateid">The corporateid.</param>
         /// <returns></returns>
-        public List<FacilityBedStructureCustomModel> GetBedStrutureForFacility(int facilityId, int corporateid,string ServiceCodeTableNumber)
+        public List<FacilityBedStructureCustomModel> GetBedStrutureForFacility(int facilityId, int corporateid, string ServiceCodeTableNumber)
         {
             var spName = string.Format("EXEC {0} @pCorporateID, @pFacilityID", StoredProcedures.SPROC_GetDBBedStruture);
             var sqlParameters = new SqlParameter[2];

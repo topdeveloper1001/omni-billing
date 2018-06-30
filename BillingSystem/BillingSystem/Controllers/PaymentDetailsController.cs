@@ -44,7 +44,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPaymentDetails(int BillHeaderId)
         {
             var vm = new PaymentDetailsCustomModel();
-            var billPaymentBal = new PaymentBal();
+            var billPaymentBal = new PaymentService();
             var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
             var insurencePayment = billPaymentObj.Where(x => x.PayType == 100).ToList();
             var patientPayment = billPaymentObj.Where(x => x.PayType == 500).ToList();
@@ -112,7 +112,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPaymentDetailsList(int BillHeaderId)
         {
-            var billPaymentBal = new PaymentBal();
+            var billPaymentBal = new PaymentService();
             var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
             var insurencePayment = billPaymentObj.Where(x => x.PayType == 100).ToList();
             return PartialView("UserControls/_PaymentDetailList", insurencePayment);
@@ -125,7 +125,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetManualPaymentDetailsList(int BillHeaderId)
         {
-            var billPaymentBal = new PaymentBal();
+            var billPaymentBal = new PaymentService();
             var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
             var insurencePayment = billPaymentObj.Where(x => x.PayType == 500).ToList();
             return PartialView("UserControls/_PaymentDetailManualList", insurencePayment);
@@ -138,9 +138,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetXActivitiesList(int BillHeaderId)
         {
-            var billPaymentBal = new PaymentBal();
+            var billPaymentBal = new PaymentService();
             var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
-            var xactivitiesBal = new XactivityBal();
+            var xactivitiesBal = new XactivityService();
             var xActivitesList = xactivitiesBal.GetXactivityByClaimId(BillHeaderId);
             var xActivitesCustomList = xActivitesList.Where(t2 => billPaymentObj.Any(t1 => t2.ActivityID == t1.PayActivityID)).ToList();
             var xActivitesMergePayment = new List<XActivityCustomModel>();

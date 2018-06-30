@@ -36,7 +36,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            var gcBal = new GlobalCodeBal();
+            var gcBal = new GlobalCodeService();
             var facilityEquipmentList = gcBal.GetRoomEquipmentALLList(Helpers.GetDefaultFacilityId().ToString());
             var viewtoRetrun = new RoomEquipmentView()
                                    {
@@ -54,7 +54,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityEquipments(int coporateId, int facilityId)
         {
-            using (var equipmentBal = new EquipmentBal())
+            using (var equipmentBal = new EquipmentService())
             {
                 var facilityEquipmentList = equipmentBal.GetEquipmentList(false, facilityId.ToString());
                 return PartialView(PartialViews.FacilityEquipmentListView, facilityEquipmentList);
@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRoomEquipments(int facilityId, int roomId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var facilityEquipmentList = globalCodeBal.GetRoomEquipmentList(facilityId.ToString(), roomId.ToString());
                 var selectedObjects = facilityEquipmentList != null
@@ -90,7 +90,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SaveRoomEquipments(List<GlobalCodes> globalCodeObj)
         {
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
             {
                 foreach (var item in globalCodeObj)
                 {
@@ -113,7 +113,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteEquipment(int globalCodeid, string facilityNumber)
         {
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
             {
                 var objToReturn = gcBal.DeleteGlobalCode(globalCodeid, facilityNumber);
                 return PartialView(PartialViews.RoomEquipmentList, objToReturn);

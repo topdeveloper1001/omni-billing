@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         public ActionResult MedicalVitalMain()
         {
             //Initialize the MedicalVital BAL object
-            var MedicalVitalBal = new MedicalVitalBal();
+            var MedicalVitalBal = new MedicalVitalService();
 
             //Get the Entity list
             var MedicalVitalList = MedicalVitalBal.GetMedicalVital();
@@ -48,7 +48,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindMedicalVitalList(int PatientID)
         {
             //Initialize the MedicalNotes BAL object
-            using (var medicalVitalBal = new MedicalVitalBal())
+            using (var medicalVitalBal = new MedicalVitalService())
             {
                 var medicalVitalType = Convert.ToInt32(Common.Common.MedicalRecordType.Vitals);
                 //Get the facilities list
@@ -83,7 +83,7 @@ namespace BillingSystem.Controllers
                 medicalVitalModel.CorporateID = corporateId;
                 medicalVitalModel.CommentBy = userId;
                 medicalVitalModel.CommentDate = Helpers.GetInvariantCultureDateTime();
-                using (var medicalVitalBal = new MedicalVitalBal())
+                using (var medicalVitalBal = new MedicalVitalService())
                 {
                     if (medicalVitalModel.MedicalVitalID > 0)
                     {
@@ -138,7 +138,7 @@ namespace BillingSystem.Controllers
                         CreatedBy = userid,
                         CreatedDate = Helpers.GetInvariantCultureDateTime()
                     }).ToList();
-                var moduleaccessbal = new MedicalVitalBal();
+                var moduleaccessbal = new MedicalVitalService();
                 moduleaccessbal.AddUpdateModuleAccess(objListModuleAccessPermission);
                 return Json(1);
             }
@@ -159,7 +159,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabTestList(int PatientID, int Encounterid)
         {
             //Initialize the MedicalNotes BAL object
-            using (var medicalVitalBal = new MedicalVitalBal())
+            using (var medicalVitalBal = new MedicalVitalService())
             {
                 var medicalVitalType = Convert.ToInt32(Common.Common.MedicalRecordType.LabTest);
                 //Get the facilities list
@@ -178,7 +178,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMedicalVital(int MedicalVitalID)
         {
-            using (var MedicalVitalBal = new MedicalVitalBal())
+            using (var MedicalVitalBal = new MedicalVitalService())
             {
                 //Call the AddMedicalVital Method to Add / Update current MedicalVital
                 var currentMedicalVital = MedicalVitalBal.GetMedicalVitalByID(Convert.ToInt32(MedicalVitalID));
@@ -198,7 +198,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMedicalVital(int MedicalVitalID)
         {
-            using (var MedicalVitalBal = new MedicalVitalBal())
+            using (var MedicalVitalBal = new MedicalVitalService())
             {
                 //Get MedicalVital model object by current MedicalVital ID
                 var currentMedicalVital = MedicalVitalBal.GetMedicalVitalByID(Convert.ToInt32(MedicalVitalID));
@@ -294,7 +294,7 @@ namespace BillingSystem.Controllers
         public IEnumerable<Result> GetChartData(string chartObject, int patientId, int displayTypeId, DateTime selectedDate, string ResultType)
         {
             List<Result> objList = new List<Result>();
-            var medicalVitalBal = new MedicalVitalBal();
+            var medicalVitalBal = new MedicalVitalService();
             List<MedicalVitalCustomModel> medicalVitalList = new List<MedicalVitalCustomModel>();
             medicalVitalList = medicalVitalBal.GetMedicalVitalsChartData(patientId, displayTypeId, selectedDate);
             medicalVitalList = medicalVitalList.Where(x => x.VitalName == chartObject).ToList();
@@ -336,7 +336,7 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(tillDate))
                 selectedTillDate = Convert.ToDateTime(tillDate);
 
-            using (var bal = new MedicalVitalBal())
+            using (var bal = new MedicalVitalService())
             {
                 var chartData = bal.GetMedicalVitalChart2(vitalCode, patientId, selectedFrom, selectedTillDate).ToDataSourceResult(request);
                 var jsonResult = Json(chartData, JsonRequestBehavior.AllowGet);
@@ -364,7 +364,7 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(tillDate))
                 selectedTillDate = Convert.ToDateTime(tillDate);
 
-            using (var bal = new MedicalVitalBal())
+            using (var bal = new MedicalVitalService())
             {
                 var chartData = bal.GetMedicalVitalChart2(vitalCode, patientId, selectedFrom, selectedTillDate);
                 var objToReturn = new

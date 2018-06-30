@@ -16,7 +16,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetDataByFacilityId(long fId)
         {
-            using (var bal = new SchedulingParametersBal())
+            using (var bal = new SchedulingParametersService())
             {
                 //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
                 var data = bal.GetDataByFacilityId(fId);
@@ -46,7 +46,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null
             if (vm != null)
             {
-                using (var bal = new SchedulingParametersBal())
+                using (var bal = new SchedulingParametersService())
                 {
                     vm.IsActive = true;
                     if (vm.Id > 0)

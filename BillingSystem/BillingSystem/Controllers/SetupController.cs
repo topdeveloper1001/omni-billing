@@ -27,7 +27,7 @@ namespace BillingSystem.Controllers
 
             if (!string.IsNullOrEmpty(cv))
             {
-                using (var bal = new GlobalCodeBal())
+                using (var bal = new GlobalCodeService())
                 {
                     var list = bal.GetGlobalCodesByCategory(cv, Helpers.GetSysAdminCorporateID(),
                         Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0, out long mxGlobalCodeValue, true, isFacilityPassed: true);
@@ -83,7 +83,7 @@ namespace BillingSystem.Controllers
             var cName = string.Empty;
             var list = new List<GlobalCodeCustomModel>();
 
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 //Save 
                 bal.AddUpdateGlobalCodes(model);
@@ -108,7 +108,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteRecord(int globalCodeId, string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
 
                 bal.DeleteGlobalCodeById(globalCodeId, category, false);
@@ -128,7 +128,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult SetMaxGlobalCodeValue(string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var maxValue = bal.GetMaxGlobalCodeValueByCategory(category);
                 return Json(maxValue + 1);
@@ -137,7 +137,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult ShowDeletedRecords(string category, bool showDeleted)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetGlobalCodesByCategory(category, Helpers.GetSysAdminCorporateID(),
                     Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0, out long mxGlobalCodeValue, showDeleted, isFacilityPassed: true);
@@ -151,7 +151,7 @@ namespace BillingSystem.Controllers
             {
                 text = text.ToLower().Trim();
                 List<GlobalCodeCategory> list;
-                using (var bal = new GlobalCodeCategoryBal())
+                using (var bal = new GlobalCodeCategoryService())
                     list = bal.GetSearchedCategories(text, typeId);
 
                 if (list.Count > 0)
@@ -169,7 +169,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetRecordsByCategoryValue(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetGCodesListByCategoryValue(categoryValue);
                 return PartialView(PartialViews.LabTestCodesListView, list);
@@ -178,7 +178,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult ShowInActiveRecords(string category, bool inActiveStatus)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetGlobalCodesByCategory(category, Helpers.GetSysAdminCorporateID(),
                     Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0, out long mxGlobalCodeValue, !inActiveStatus, isFacilityPassed: true);
@@ -195,7 +195,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetGenericTypeData(string category)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetGlobalCodesByCategory(category, Helpers.GetSysAdminCorporateID(),
                     Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), 0, out long mxGlobalCodeValue, true, isFacilityPassed: true);

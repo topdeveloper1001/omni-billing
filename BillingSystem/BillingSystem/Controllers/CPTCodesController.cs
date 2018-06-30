@@ -269,7 +269,7 @@ namespace BillingSystem.Controllers
             var startRange = Convert.ToInt32(GlobalCodeCategoryValue.CPTCodestartRange);
             var finishRange = Convert.ToInt32(GlobalCodeCategoryValue.CPTCodesFinishRange);
 
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesRange(startRange, finishRange);
                 return Json(list);

@@ -37,7 +37,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPatientCarePlanList()
         {
             // Initialize the PatientCarePlan BAL object
-            using (var patientCarePlanBal = new PatientCarePlanBal())
+            using (var patientCarePlanBal = new PatientCarePlanService())
             {
                 // Get the facilities list
                 var patientCarePlanList = patientCarePlanBal.GetPatientCarePlan();
@@ -58,7 +58,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePatientCarePlan(int id)
         {
-            using (var bal = new PatientCarePlanBal())
+            using (var bal = new PatientCarePlanService())
             {
                 // Get PatientCarePlan model object by current PatientCarePlan ID
                 var currentPatientCarePlan = bal.GetPatientCarePlanById(id);
@@ -95,7 +95,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPatientCarePlan(int id)
         {
-            using (var bal = new PatientCarePlanBal())
+            using (var bal = new PatientCarePlanService())
             {
                 // Call the AddPatientCarePlan Method to Add / Update current PatientCarePlan
                 PatientCarePlan currentPatientCarePlan = bal.GetPatientCarePlanById(id);
@@ -116,7 +116,7 @@ namespace BillingSystem.Controllers
         public ActionResult PatientCarePlanMain()
         {
             // Initialize the PatientCarePlan BAL object
-            var patientCarePlanBal = new PatientCarePlanBal();
+            var patientCarePlanBal = new PatientCarePlanService();
 
             // Get the Entity list
             var patientCarePlanList = patientCarePlanBal.GetPatientCarePlan();

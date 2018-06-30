@@ -242,10 +242,9 @@ namespace BillingSystem.Bal.BusinessAccess
         public string GetFacilityStructureBreadCrumbs(int facilityStructureId, string facilityid, string ParentId)
         {
             var _facilityStructureId = string.Empty;
-            using (var facilityBal = new FacilityBal())
-            {
-                _facilityStructureId = facilityBal.GetFacilityNameById(Convert.ToInt32(facilityid));
-            }
+
+            _facilityStructureId = _fRepository.Get(Convert.ToInt32(facilityid)).FacilityName;
+
 
             switch (facilityStructureId)
             {

@@ -23,7 +23,7 @@ namespace BillingSystem.Controllers
         public ActionResult MCRulesTableMain()
         {
             //Initialize the MCRulesTable BAL object
-            using (var bal = new MCRulesTableBal())
+            using (var bal = new MCRulesTableService())
             {
                 //Get the Entity list
                 var list = bal.GetMCRulesTableList();
@@ -57,7 +57,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new MCRulesTableBal())
+                using (var bal = new MCRulesTableService())
                 {
                     if (model.ManagedCareRuleId > 0)
                     {
@@ -87,7 +87,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetMCRulesTableDetails(int id)
         {
-            using (var bal = new MCRulesTableBal())
+            using (var bal = new MCRulesTableService())
             {
                 //Call the AddMCRulesTable Method to Add / Update current MCRulesTable
                 var current = bal.GetMCRulesTableByID(id);
@@ -103,7 +103,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMCRulesTable(int id)
         {
-            using (var bal = new MCRulesTableBal())
+            using (var bal = new MCRulesTableService())
             {
                 var corporateId = Helpers.GetDefaultCorporateId();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -119,7 +119,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult MaxRuleStepNumber(int RuleSetNumber)
         {
-            using (var mcruleStepBal = new MCRulesTableBal())
+            using (var mcruleStepBal = new MCRulesTableService())
             {
                 var mcrulestepMaxNumber = mcruleStepBal.GetMaxRuleStepNumber(RuleSetNumber);
                 return Json(mcrulestepMaxNumber, JsonRequestBehavior.AllowGet);
@@ -136,8 +136,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindRuleStepList(int McContractID)
         {
-            var mcruleStepBal = new MCRulesTableBal();
-            var mcContractBal = new McContractBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var mcruleStepBal = new MCRulesTableService();
+            var mcContractBal = new McContractService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var mcContractobj = mcContractBal.GetMcContractDetail(McContractID);
             //Get the Entity list
             var mcruleStepList = mcruleStepBal.GetMcRulesListByRuleSetId(Convert.ToInt32(mcContractobj.MCCode));
@@ -147,7 +147,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindRuleStepListObj(int McContractID)
         {
-            var mcruleStepBal = new MCRulesTableBal();
+            var mcruleStepBal = new MCRulesTableService();
             //Get the Entity list
             var mcruleStepList = mcruleStepBal.GetMcRulesListByRuleSetId(McContractID);
             //Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList

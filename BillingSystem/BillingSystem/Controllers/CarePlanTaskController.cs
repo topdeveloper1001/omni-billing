@@ -240,7 +240,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult BindUsersType()
         {
-            using (var fRole = new FacilityRoleBal())
+            using (var fRole = new FacilityRoleService())
             {
                 var list = new List<DropdownListData>();
                 var corporateId = Helpers.GetSysAdminCorporateID();
@@ -273,7 +273,7 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            using (var roleBal = new RoleBal())
+            using (var roleBal = new RoleService())
             {
                 var roles = roleBal.GetRolesByCorporateIdFacilityId(
                     Convert.ToInt32(corporateId),

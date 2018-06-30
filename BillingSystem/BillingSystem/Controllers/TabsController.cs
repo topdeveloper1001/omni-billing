@@ -23,7 +23,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the Tabs BAL object
-            var tabsBal = new TabsBal();
+            var tabsBal = new TabsService();
 
             //Get the Entity list
             var list = tabsBal.GetAllTabList(true, Helpers.GetLoggedInUserId());
@@ -46,7 +46,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindTabsList(bool showIsActive)
         {
             //Initialize the Tabs BAL object
-            using (var tabsBal = new TabsBal())
+            using (var tabsBal = new TabsService())
             {
                 //Get the facilities list
                 var tabsList = new List<TabsCustomModel>(); //tabsBal.GetAllTabList(showIsActive, Helpers.GetLoggedInUserId());
@@ -59,7 +59,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetTListJson()
         {
             //Initialize the Tabs BAL object
-            var tabsBal = new TabsBal();
+            var tabsBal = new TabsService();
 
             //Get the Entity list
             var list = tabsBal.GetAllTabList(true,Helpers.GetLoggedInUserId());
@@ -81,7 +81,7 @@ namespace BillingSystem.Controllers
         {
             var pView = string.Empty;
             var rId = Helpers.GetDefaultRoleId();
-            using (var b = new TabsBal())
+            using (var b = new TabsService())
             {
                 var result = b.SaveTab(model, Convert.ToInt64(rId), Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
 
@@ -93,7 +93,7 @@ namespace BillingSystem.Controllers
                     if (Session[SessionNames.SessionClass.ToString()] != null && result.TabsByRole.Any())
                     {
                         var s = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                        using (var bal = new TabsBal())
+                        using (var bal = new TabsService())
                             s.MenuSessionList = result.TabsByRole;
                     }
                 }
@@ -147,7 +147,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabById(string tabId)
         {
-            using (var tabsBal = new TabsBal())
+            using (var tabsBal = new TabsService())
             {
                 //Call the AddTabs Method to Add / Update current Tabs
                 var currentTabs = tabsBal.GetTabByTabId(Convert.ToInt32(tabId));
@@ -164,7 +164,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteTabs(string tabId)
         {
-            using (var tabsBal = new TabsBal())
+            using (var tabsBal = new TabsService())
             {
                 //Get Tabs model object by current Tabs ID
                 var model = tabsBal.GetTabByTabId(Convert.ToInt32(tabId));
@@ -211,7 +211,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetParentTabs()
         {
             //Initialize the Tabs BAL object
-            using (var tabsBal = new TabsBal())
+            using (var tabsBal = new TabsService())
             {
                 //Get the facilities list
                 var list = tabsBal.GetAllTabs();
@@ -230,7 +230,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckIfDuplicateRecordExists(string name, string tabId, string parentTabId)
         {
-            using (var bal = new TabsBal())
+            using (var bal = new TabsService())
             {
                 var result = bal.CheckIfDuplicateRecordExists(name, string.IsNullOrEmpty(tabId) ? 0 : Convert.ToInt32(tabId), string.IsNullOrEmpty(parentTabId) ? 0 : Convert.ToInt32(parentTabId));
                 return Json(result);
@@ -246,7 +246,7 @@ namespace BillingSystem.Controllers
         {
             if (tabId > 0)
             {
-                using (var bal = new TabsBal())
+                using (var bal = new TabsService())
                 {
                     var maxTabOrder = bal.GetMaxTabOrderByParentTabId(tabId);
                     return Json(maxTabOrder);
@@ -276,7 +276,7 @@ namespace BillingSystem.Controllers
             if (Session[SessionNames.SessionClass.ToString()] != null)
             {
                 var s = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                using (var bal = new TabsBal())
+                using (var bal = new TabsService())
                     s.MenuSessionList = bal.GetTabsByRole(s.UserName, s.RoleId);
 
             }

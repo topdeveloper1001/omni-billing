@@ -33,7 +33,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindMedicalNecessityList()
         {
             // Initialize the MedicalNecessity BAL object
-            using (var medicalNecessityBal = new MedicalNecessityBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var medicalNecessityBal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
             {
                 // Get the facilities list
                 List<MedicalNecessityCustomModel> medicalNecessityList = medicalNecessityBal.GetMedicalNecessity();
@@ -54,7 +54,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteMedicalNecessity(int id)
         {
-            using (var bal = new MedicalNecessityBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
             {
                 // Get MedicalNecessity model object by current MedicalNecessity ID
                 var currentMedicalNecessity = bal.GetMedicalNecessityById(id);
@@ -89,7 +89,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetMedicalNecessity(int id)
         {
-            using (var bal = new MedicalNecessityBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
             {
                 // Call the AddMedicalNecessity Method to Add / Update current MedicalNecessity
                 MedicalNecessity currentMedicalNecessity = bal.GetMedicalNecessityById(id);
@@ -110,7 +110,7 @@ namespace BillingSystem.Controllers
         public ActionResult MedicalNecessityMain()
         {
             // Initialize the MedicalNecessity BAL object
-            var medicalNecessityBal = new MedicalNecessityBal(Helpers.DefaultDiagnosisTableNumber);
+            var medicalNecessityBal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber);
 
             // Get the Entity list
             List<MedicalNecessityCustomModel> medicalNecessityList = medicalNecessityBal.GetMedicalNecessity();
@@ -160,7 +160,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new MedicalNecessityBal(Helpers.DefaultDiagnosisTableNumber))
+                using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
                 {
                     if (model.Id > 0)
                     {
@@ -179,7 +179,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetMedicalNecesstiyById(int id)
         {
-            var bal = new MedicalNecessityBal(Helpers.DefaultDiagnosisTableNumber);
+            var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber);
             MedicalNecessity currentMedicalNecessity = bal.GetMedicalNecessityById(id);
             var jsonData = new
             {
@@ -194,7 +194,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetSearchData(string text)
         {
-            using (var bal = new MedicalNecessityBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
             {
                 var list = bal.GetMedicalNecessity();
                 var newList = list.Where(x => x.Description.ToLower().Trim().Contains(text)).ToList();

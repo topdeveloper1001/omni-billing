@@ -37,7 +37,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetXPaymentFileXML(int id)
         {
-            using (var bal = new XPaymentFileXMLBal())
+            using (var bal = new XPaymentFileXMLService())
             {
                 // Call the AddXPaymentFileXML Method to Add / Update current XPaymentFileXML
                 XPaymentFileXML currentXPaymentFileXml = bal.GetXPaymentFileXMLByID(id);
@@ -79,7 +79,7 @@ namespace BillingSystem.Controllers
         public ActionResult XPaymentFileXMLMain(int claimId)
         {
             // Initialize the XPaymentFileXML BAL object
-            var xPaymentFileXmlBal = new XPaymentFileXMLBal();
+            var xPaymentFileXmlBal = new XPaymentFileXMLService();
 
             // Get the Entity list
             List<XPaymentFileXMLCustomModel> xPaymentFileXmlList =

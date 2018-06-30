@@ -27,7 +27,7 @@ namespace BillingSystem.Controllers
         public ActionResult XclaimMain(int? claimid, int? encid, int? Pid)
         {
             //Initialize the Xclaim BAL object
-            var xclaimBal = new XclaimBal();
+            var xclaimBal = new XclaimService();
             var facilityid = Helpers.GetDefaultFacilityId();
             //Get the Entity list
             var xclaimList = xclaimBal.GetXclaim(facilityid.ToString());
@@ -59,7 +59,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindXclaimList()
         {
             //Initialize the Xclaim BAL object
-            using (var xclaimBal = new XclaimBal())
+            using (var xclaimBal = new XclaimService())
             {
                 var facilityid = Helpers.GetDefaultFacilityId();
                 //Get the facilities list
@@ -86,7 +86,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new XclaimBal())
+                using (var bal = new XclaimService())
                 {
                     if (model.ClaimID > 0)
                     {
@@ -107,7 +107,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetXclaim(int id)
         {
-            using (var bal = new XclaimBal())
+            using (var bal = new XclaimService())
             {
                 //Call the AddXclaim Method to Add / Update current Xclaim
                 var currentXclaim = bal.GetXclaimByID(id);
@@ -124,7 +124,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteXclaim(int id)
         {
-            using (var bal = new XclaimBal())
+            using (var bal = new XclaimService())
             {
                 //Get Xclaim model object by current Xclaim ID
                 var currentXclaim = bal.GetXclaimByID(id);
@@ -170,7 +170,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetXClaimList(string pid, Int64 eid, Int64 claimid)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            using (var bal = new XclaimBal())
+            using (var bal = new XclaimService())
             {
                 var facilityId = Helpers.GetDefaultFacilityId().ToString();
                 var claimlist = corporateId == 6
@@ -188,7 +188,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetClaimsByEncounterId(Int64 encounterid)
         {
-            using (var bal = new XclaimBal())
+            using (var bal = new XclaimService())
             {
                 var list = new List<DropdownListData>();
                 //Call the AddXclaim Method to Add / Update current Xclaim
@@ -211,7 +211,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ApplyCharges()
         {
-            using (var bal = new XclaimBal())
+            using (var bal = new XclaimService())
             {
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
@@ -228,7 +228,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public string ViewFile(int id)
         {
-            var xPaymentFileXmlBal = new XPaymentFileXMLBal();
+            var xPaymentFileXmlBal = new XPaymentFileXMLService();
             // Get the Entity list
             var xPaymentFileXmlfirstObj = xPaymentFileXmlBal.GetFirstXPaymentFileXML(id);
             return xPaymentFileXmlfirstObj;
@@ -241,7 +241,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ApplyChargesonFile(int fileid)
         {
-            using (var bal = new XclaimBal())
+            using (var bal = new XclaimService())
             {
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();

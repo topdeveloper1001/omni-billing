@@ -58,7 +58,7 @@ namespace BillingSystem.Controllers
         public ActionResult SaveOperatingRoomData(OperatingRoomView vm)
         {
             List<OperatingRoomCustomModel> list;
-            using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var model = vm.OperatingRoom != null && Convert.ToDecimal(vm.OperatingRoom.CalculatedHours) > 0
                     ? vm.OperatingRoom
@@ -103,7 +103,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOperatingRoomList(int type, int encounterId, int patientId)
         {
-            using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var list = bal.GetOperatingRoomsList(type, encounterId, patientId);
                 return PartialView(PartialViews.OperatingRoomsList, list);
@@ -117,7 +117,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetOperatingRoomDetails(int id)
         {
-            using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var result = bal.GetOperatingRoomDetail(id);
                 if (result != null)
@@ -150,7 +150,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteOperatingRoomData(int id)
         {
             List<OperatingRoomCustomModel> list;
-            using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var model = bal.GetOperatingRoomDetail(id);
                 var userId = Helpers.GetLoggedInUserId();
@@ -175,7 +175,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult CheckDuplicateRecord(OperatingRoom model)
         {
-            using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var result = bal.CheckDuplicateRecord(model);
                 return Json(result, JsonRequestBehavior.AllowGet);
@@ -190,7 +190,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult LoadSurgerySection(int patientId, int encounterId)
         {
-            using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var list1 = bal.GetOperatingRoomsList((int)OperatingRoomTypes.Surgery, encounterId, patientId);
                 var list2 = bal.GetOperatingRoomsList((int)OperatingRoomTypes.Anesthesia, encounterId, patientId);
@@ -229,7 +229,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortOperatingRoomData(int encounterId,int patientId)
         {
-           using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber,Helpers.DefaultDiagnosisTableNumber))
+           using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber,Helpers.DefaultDiagnosisTableNumber))
             {
               
                 List<OperatingRoomCustomModel> list;
@@ -247,7 +247,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortAnastsiaRoomData(int encounterId, int patientId)
         {
-            using (var bal = new OperatingRoomBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new OperatingRoomService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 List<OperatingRoomCustomModel> list;
                 list = bal.GetOperatingRoomsList(2, encounterId, patientId);

@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         public ActionResult Denial()
         {
             //Initialize the Denial Communicator object
-            var denialBal = new DenialBal();
+            var denialBal = new DenialService();
 
             //Get the facilities list
             //var denialList = denialBal.GetDenial();
@@ -53,7 +53,7 @@ namespace BillingSystem.Controllers
             //Check if DenialViewModel 
             if (model != null)
             {
-                using (var denialBal = new DenialBal())
+                using (var denialBal = new DenialService())
                 {
                     if (model.DenialSetNumber > 0)
                     {
@@ -78,7 +78,7 @@ namespace BillingSystem.Controllers
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
             //Initialize the Denial Communicator object
-            using (var denialBal = new DenialBal())
+            using (var denialBal = new DenialService())
             {
                 //Get the facilities list
                 var denialList = denialBal.BindDenialCodes(takeValue).ToList();
@@ -95,7 +95,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDenial(string id)
         {
-            using (var bal = new DenialBal())
+            using (var bal = new DenialService())
             {
                 var current = bal.GetDenialById(Convert.ToInt32(id));
                 return PartialView(PartialViews.DenialAddEdit, current);
@@ -122,7 +122,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDenial(CommonModel model)
         {
-            using (var denialBal = new DenialBal())
+            using (var denialBal = new DenialService())
             {
                 //Get Denial model object by current Denial ID
                 var currentDenial = denialBal.GetDenialById(Convert.ToInt32(model.Id));
@@ -152,7 +152,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAuthorizationDenialsCode()
         {
-            using (var denialBal = new DenialBal())
+            using (var denialBal = new DenialService())
             {
                 var facilities = denialBal.GetAuthorizationDenialsCode();
                 if (facilities.Count > 0)
@@ -272,7 +272,7 @@ namespace BillingSystem.Controllers
             denialtable.Columns.Add("DenialEndDate", typeof(string));
 
 
-            var denialBal = new DenialBal();
+            var denialBal = new DenialService();
             //Get the facilities list
 
             var objDenialData = searchText != null ? denialBal.GetFilteredDenialCodes(searchText) : denialBal.GetDenial();
@@ -348,7 +348,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new DenialBal())
+                using (var bal = new DenialService())
                 {
                     var list = bal.GetFilteredDenialCodes(text);
                     var filteredList = list.Select(item => new
@@ -376,7 +376,7 @@ namespace BillingSystem.Controllers
         {
             var categories = new List<string> { "5202", "5203" };
             List<DropdownListData> list;
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
                 list = bal.GetListByCategoriesRange(categories);
 
             var jsonResult = new
@@ -391,7 +391,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetDenialCodesData(int id)
         {
-            using (var bal = new DenialBal())
+            using (var bal = new DenialService())
             {
                 var current = bal.GetDenialById(Convert.ToInt32(id));
                 var jsonData = new
@@ -419,7 +419,7 @@ namespace BillingSystem.Controllers
         public JsonResult RebindDenialCodeList(int blockNumber)
         {
             var recordCount = Helpers.DefaultRecordCount;
-            using (var bal = new DenialBal())
+            using (var bal = new DenialService())
             {
                 var list = bal.GetListOnDemand(blockNumber, recordCount);
                 var jsonResult = new

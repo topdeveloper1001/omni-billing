@@ -647,7 +647,7 @@ namespace BillingSystem.Common
         /// </returns>
         public static int GetCorporateIdByFacilityId(int facilityId)
         {
-            using (var facilitybal = new FacilityBal())
+            using (var facilitybal = new FacilityService())
             {
                 var facilityObj = facilitybal.GetFacilityById(facilityId);
                 return facilityObj != null ? Convert.ToInt32(facilityObj.CorporateID) : 0;
@@ -813,7 +813,7 @@ namespace BillingSystem.Common
             {
                 var facilityId =
                     (HttpContext.Current.Session[SessionNames.SessionClass.ToString()] as SessionClass).FacilityId;
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var facilityObj = facilitybal.GetFacilityById(facilityId);
                 var isFacilityDefaultCorporateFacility = facilityObj.LoggedInID != 0;
                 if (isFacilityDefaultCorporateFacility)
@@ -855,7 +855,7 @@ namespace BillingSystem.Common
         public static DateTime GetInvariantCultureDateTime()
         {
             var facilityid = GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var facilityObj = facilitybal.GetFacilityTimeZoneById(facilityid);
             var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
             var utcTime = DateTime.Now.ToUniversalTime();
@@ -871,7 +871,7 @@ namespace BillingSystem.Common
 
         public static DateTime GetInvariantCultureDateTime(int fId)
         {
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var facilityObj = facilitybal.GetFacilityTimeZoneById(fId);
             var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
             var utcTime = DateTime.Now.ToUniversalTime();
@@ -989,7 +989,7 @@ namespace BillingSystem.Common
         /// </returns>
         public static List<DropdownListData> GetPhysiciansByUserRole(int userTypeId)
         {
-            using (var pBal = new PhysicianBal())
+            using (var pBal = new PhysicianService())
             {
                 var list = new List<DropdownListData>();
                 var usersList = pBal.GetDistinctUsersByUserTypeId(

@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the DrugInstructionAndDosing BAL object
-            using (var bal = new DrugInstructionAndDosingBal())
+            using (var bal = new DrugInstructionAndDosingService())
             {
                 //Get the Entity list
                 var list = bal.GetDrugInstructionAndDosingList();
@@ -56,7 +56,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DrugInstructionAndDosingBal())
+                using (var bal = new DrugInstructionAndDosingService())
                 {
                     if (model.Id > 0)
                     {
@@ -86,7 +86,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDrugInstructionAndDosingList()
         {
-            using (var bal=new DrugInstructionAndDosingBal())
+            using (var bal=new DrugInstructionAndDosingService())
             {
                 var list = bal.GetDrugInstructionAndDosingList();
                 return PartialView(PartialViews.DrugInstructionAndDosingList, list);
@@ -101,7 +101,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDrugInstructionAndDosingDetails(int id)
         {
-            using (var bal = new DrugInstructionAndDosingBal())
+            using (var bal = new DrugInstructionAndDosingService())
             {
                 //Call the AddDrugInstructionAndDosing Method to Add / Update current DrugInstructionAndDosing
                 var current = bal.GetDrugInstructionAndDosingById(id);
@@ -118,7 +118,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDrugInstructionAndDosing(int id)
         {
-            using (var bal = new DrugInstructionAndDosingBal())
+            using (var bal = new DrugInstructionAndDosingService())
             {
                 //Get DrugInstructionAndDosing model object by current DrugInstructionAndDosing ID
                 var model = bal.GetDrugInstructionAndDosingById(id);

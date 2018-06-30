@@ -109,7 +109,7 @@ namespace BillingSystem.Controllers
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
             int useridnotnull = userId == null ? 0 : Convert.ToInt32(userId);
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             if (isAll)
@@ -247,7 +247,7 @@ namespace BillingSystem.Controllers
             // var dtTill = Helpers.ParseValueToInvariantDateTime(tillDate);
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             DateTime tillDateNew = tillDate ?? Helpers.GetInvariantCultureDateTime();
             int useridNew = userId ?? 0;
             PdfResult pdf = null;
@@ -407,7 +407,7 @@ namespace BillingSystem.Controllers
                     "attachment; filename={0}",
                     reportingType + "-" + CurrentDateTime.ToShortDateString() + ".xls"));
 
-            using (var bal = new ReportingBal())
+            using (var bal = new ReportingService())
             {
                 int corporateid = Helpers.GetSysAdminCorporateID();
                 int facilityid = Helpers.GetDefaultFacilityId();
@@ -603,16 +603,16 @@ namespace BillingSystem.Controllers
 
                     case ReportingType.ErrorSummary:
                         List<ScrubHeaderCustomModel> errorSummaryList =
-                            new ScrubReportBal().GetErrorSummaryByRuleCode(corporateid, facilityid, fromDate, tillDate);
+                            new ScrubReportService().GetErrorSummaryByRuleCode(corporateid, facilityid, fromDate, tillDate);
                         return PartialView(PartialViews.ErrorSummary, errorSummaryList);
 
                     case ReportingType.ErrorDetail:
                         List<ScrubHeaderCustomModel> errorList =
-                            new ScrubReportBal().GetErrorDetailByRuleCode(corporateid, facilityid, fromDate, tillDate);
+                            new ScrubReportService().GetErrorDetailByRuleCode(corporateid, facilityid, fromDate, tillDate);
                         return PartialView(PartialViews.ErrorDetail, errorList);
 
                     case ReportingType.ScrubbeSummary:
-                        List<ScrubHeaderCustomModel> scrubList = new ScrubReportBal().GetScrubSummaryList(
+                        List<ScrubHeaderCustomModel> scrubList = new ScrubReportService().GetScrubSummaryList(
                             corporateid,
                             facilityid,
                             fromDate,
@@ -666,7 +666,7 @@ namespace BillingSystem.Controllers
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
             DateTime selecteddate = date ?? Helpers.GetInvariantCultureDateTime();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<AgingReportCustomModel> ageingReportData = bal.GetAgeingReport(
                 corporateid,
                 facilityid,
@@ -710,7 +710,7 @@ namespace BillingSystem.Controllers
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
             DateTime selecteddate = date ?? Helpers.GetInvariantCultureDateTime();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<ReconcilationReportCustomModel> reconciliationReportData = bal.GetReconciliationReport(
                 corporateid,
                 facilityid,
@@ -768,7 +768,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetRevenueReportByPatientId(int patientId)
         {
-            using (var bal = new ReportingBal())
+            using (var bal = new ReportingService())
             {
                 List<RevenueForecast> revenueReport = bal.GetRevenueForecastFacilityByPatient(patientId);
                 return PartialView(PartialViews.RevenueForecastFacilityViewByPatient, revenueReport);
@@ -788,7 +788,7 @@ namespace BillingSystem.Controllers
         {
             BillHeaderCustomModel billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
             int facilityId = billheaderObj.FacilityID ?? Helpers.GetDefaultFacilityId();
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
             Facility facilityObj = facilityBal.GetFacilityById(facilityId);
 
             int patientId = billheaderObj.PatientID ?? 0;
@@ -826,7 +826,7 @@ namespace BillingSystem.Controllers
 
             BillHeaderCustomModel billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
             int facilityId = billheaderObj.FacilityID ?? Helpers.GetDefaultFacilityId();
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
             Facility facilityObj = facilityBal.GetFacilityById(facilityId);
 
             int patientId = billheaderObj.PatientID ?? 0;
@@ -869,7 +869,7 @@ namespace BillingSystem.Controllers
         {
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<LoginTrackingCustomModel> userLoginList = bal.GetUserLoginActivityDetailList(userid, tillDate);
             return PartialView(PartialViews.UserLoginActivityView, userLoginList);
         }
@@ -891,7 +891,7 @@ namespace BillingSystem.Controllers
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
             DateTime selecteddate = date ?? Helpers.GetInvariantCultureDateTime();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<AgingReportCustomModel> ageingReportData = bal.GetPatientAgeingPayorWise(
                 corporateid,
                 facilityid,
@@ -929,7 +929,7 @@ namespace BillingSystem.Controllers
             int payorId)
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
@@ -1034,7 +1034,7 @@ namespace BillingSystem.Controllers
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
             int corporateId = Helpers.GetSysAdminCorporateID();
-            using (var bal = new ReportingBal())
+            using (var bal = new ReportingService())
             {
                 switch (reportingType)
                 {
@@ -1085,7 +1085,7 @@ namespace BillingSystem.Controllers
             int departmentId)
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<PhysicianDepartmentUtilizationCustomModel> departmentUtilization =
                 bal.GetDepartmentUtilizationReport(corporateId, fromDate, tillDate, 2, facilityId, 0, departmentId);
             return PartialView(PartialViews.DepartmentUtilization, departmentUtilization);
@@ -1109,7 +1109,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFutureChargeReport(DateTime? fromDate, DateTime? tillDate, int facilityId)
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<FutureOpenOrderCustomModel> futureChargeReport = bal.GetFutureChargeReport(
                 corporateId,
                 fromDate,
@@ -1130,7 +1130,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPhysiciansByCorporateAndFacility(int facilityId)
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new PhysicianBal();
+            var bal = new PhysicianService();
 
             // Need to change later and get the list by type.
             List<Physician> physicianList = bal.GetPhysicianByCorporateIdandfacilityId(corporateId, facilityId);
@@ -1162,11 +1162,11 @@ namespace BillingSystem.Controllers
             int facilityId)
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
-            using (var bal = new ReportingBal())
+            using (var bal = new ReportingService())
             {
                 int corporateId = Helpers.GetSysAdminCorporateID();
                 facilityId = facilityId != 0 ? facilityId : Helpers.GetDefaultFacilityId();
-                var scrubReportBal = new ScrubReportBal();
+                var scrubReportBal = new ScrubReportService();
                 switch (reportingType)
                 {
                     case ReportingType.ScrubbeSummary:
@@ -1359,7 +1359,7 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingId);
             var rpTitle = Helpers.ReportingTitleView(Convert.ToString(reportingId));
             try
@@ -1416,7 +1416,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ErrorSummary:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ErrorSummary.rdlc");
-                        var scrubList = new ScrubReportBal().GetErrorSummaryByRuleCode(
+                        var scrubList = new ScrubReportService().GetErrorSummaryByRuleCode(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1425,7 +1425,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ErrorDetail:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ErrorDetail.rdlc");
-                        var scrubErrorDetailList = new ScrubReportBal().GetErrorDetailByRuleCode(
+                        var scrubErrorDetailList = new ScrubReportService().GetErrorDetailByRuleCode(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1436,7 +1436,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ScrubbeSummary:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ScrubSummary.rdlc");
-                        var scrubbersummary = new ScrubReportBal().GetScrubSummaryList(
+                        var scrubbersummary = new ScrubReportService().GetScrubSummaryList(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1887,7 +1887,7 @@ namespace BillingSystem.Controllers
         {
             int fID = Helpers.GetDefaultFacilityId();
             int cID = Helpers.GetSysAdminCorporateID();
-            using (var xmlbal = new XmlReportingBal())
+            using (var xmlbal = new XmlReportingService())
             {
                 List<XmlReportingBatchReport> listToReturn = xmlbal.GetBatchReort(cID, fID);
                 return PartialView(PartialViews.XMLBillingBatchReport, listToReturn);
@@ -1920,7 +1920,7 @@ namespace BillingSystem.Controllers
         {
             int fID = Helpers.GetDefaultFacilityId();
             int cID = Helpers.GetSysAdminCorporateID();
-            using (var xmlbal = new XmlReportingBal())
+            using (var xmlbal = new XmlReportingService())
             {
                 List<XmlReportingInitialClaimErrorReport> listToReturn = xmlbal.GetInitialClaimErrorReport(
                     cID,
@@ -1956,7 +1956,7 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<AuditLogCustomModel> passwordChangeLogs = bal.GetPasswordChangeLog_SP(
                 fromDate,
                 tillDate,
@@ -1990,7 +1990,7 @@ namespace BillingSystem.Controllers
             int facilityid = Helpers.GetDefaultFacilityId();
 
             // corporateId = Helpers.GetDefaultCorporateId();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int useridnotnull = userId == null ? 0 : Convert.ToInt32(userId);
 
             corporateId = Helpers.GetDefaultCorporateId();
@@ -2025,7 +2025,7 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             if (isAll)
             {
                 userId = 0;
@@ -2061,7 +2061,7 @@ namespace BillingSystem.Controllers
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
 
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
                                            ? Convert.ToDecimal(departmentNumber)
@@ -2096,7 +2096,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortCollectionLogtGrid(DateTime fromDate, DateTime tillDate, bool isAll)
         {
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             List<ScrubEditTrackCustomModel> correctionLogReport = bal.GetBillEditCorrectionLogs(
@@ -2125,7 +2125,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortClaimTransReportGrid(DateTime fromDate, DateTime tillDate, int displayby)
         {
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
@@ -2152,7 +2152,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortRevenuForcastReportGrid(DateTime fromDate, DateTime tillDate)
         {
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
@@ -2181,7 +2181,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult JournalEntrySupportReportGrid(DateTime fromDate, DateTime tillDate, int displayby)
         {
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
@@ -2201,7 +2201,7 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             List<DenialReportCustomModel> denialreportDetail = bal.GetDenialCodesReport(
                 corporateId,
                 facilityid,
@@ -2225,7 +2225,7 @@ namespace BillingSystem.Controllers
             string departmentNumber,
             int payorId)
         {
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
@@ -2256,7 +2256,7 @@ namespace BillingSystem.Controllers
             string departmentNumber,
             int payorId)
         {
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
@@ -2288,7 +2288,7 @@ namespace BillingSystem.Controllers
             string departmentNumber,
             int payorId)
         {
-            var bal = new ReportingBal();
+            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)

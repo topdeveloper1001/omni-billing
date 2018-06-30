@@ -71,7 +71,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime(facilityId);
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -117,7 +117,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindMedicalVitalsTabData(int patientId)
         {
-            using (var medicalVitals = new MedicalVitalBal())
+            using (var medicalVitals = new MedicalVitalService())
             {
                 var medicalvitals = medicalVitals.GetCustomMedicalVitals(patientId, (int)MedicalRecordType.Vitals);
 
@@ -152,7 +152,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabOrdersListByPhysician(string orderType, int orderStatus, int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -189,10 +189,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindAllPhysicianNurseTaskTabs(int patientId, int type, int encounterid)
         {
-            using (var medicalnotesbal = new MedicalNotesBal())
+            using (var medicalnotesbal = new MedicalNotesService())
             {
                 using (
-                    var orderbal = new OpenOrderBal(
+                    var orderbal = new OpenOrderService(
                         Helpers.DefaultCptTableNumber,
                         Helpers.DefaultServiceCodeTableNumber,
                         Helpers.DefaultDrgTableNumber,
@@ -211,7 +211,7 @@ namespace BillingSystem.Controllers
                     var openOrdersList = orderbal.GetPhysicianOrders(encounterid, OrderStatus.Open.ToString());
                     var closedOrdersList = orderbal.GetPhysicianOrders(encounterid, OrderStatus.Closed.ToString());
                     using (
-                        var orderActivityBal = new OrderActivityBal(
+                        var orderActivityBal = new OrderActivityService(
                             Helpers.DefaultCptTableNumber,
                             Helpers.DefaultServiceCodeTableNumber,
                             Helpers.DefaultDrgTableNumber,
@@ -220,7 +220,7 @@ namespace BillingSystem.Controllers
                             Helpers.DefaultDiagnosisTableNumber))
                     {
                         // var activitesobj = orderActivityBal.GetOrderActivitiesByEncounterId(encounterid);
-                        var opNurseAssessmentList = new DocumentsTemplatesBal().GetNurseDocuments(
+                        var opNurseAssessmentList = new DocumentsTemplatesService().GetNurseDocuments(
                             patientId,
                             encounterid);
                         var activitesobj1 = orderActivityBal.GetPCActivitiesByEncounterId(encounterid);
@@ -246,7 +246,7 @@ namespace BillingSystem.Controllers
                                 == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
                                 .OrderBy(x => x.OrderScheduleDate)
                                 .ToList();
-                        var medicalVitals = new MedicalVitalBal();
+                        var medicalVitals = new MedicalVitalService();
                         var medicalvitals = medicalVitals.GetCustomMedicalVitals(
                             patientId,
                             Convert.ToInt32(MedicalRecordType.Vitals));
@@ -301,7 +301,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindMedicalHistoryAllergyData(int patientId, int encounterid)
         {
-            var mhBal = new MedicalHistoryBal(Helpers.DefaultDrugTableNumber);
+            var mhBal = new MedicalHistoryService(Helpers.DefaultDrugTableNumber);
             //var gccBal = new GlobalCodeCategoryBal();
             //var gcBal = new GlobalCodeBal();
             //var gcList = new List<GlobalCodes>();
@@ -355,7 +355,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime(facilityId);
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -403,7 +403,7 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -424,7 +424,7 @@ namespace BillingSystem.Controllers
             var openOrderActivityList = new List<OrderActivityCustomModel>();
 
             using (
-                var orderActivityBal = new OrderActivityBal(
+                var orderActivityBal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -470,7 +470,7 @@ namespace BillingSystem.Controllers
             }
             var patientId = orderBal.GetPatientIdByEncounterId(Convert.ToInt32(encounterId));
             var futureOrdersList =
-                new FutureOpenOrderBal(
+                new FutureOpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -562,7 +562,7 @@ namespace BillingSystem.Controllers
         public ActionResult AddPhysicianOrder1(OpenOrder order)
         {
             using (
-                var encounterComm = new OpenOrderBal(
+                var encounterComm = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -623,7 +623,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult AdministerCarePlanActivity(int careplanActivityId, int encounterid)
         {
-            var carePlanActivityBal = new PatientCareActivitiesBal();
+            var carePlanActivityBal = new PatientCareActivitiesService();
             var isUpdated = carePlanActivityBal.AddUptdatePatientCareActivity(
                 careplanActivityId,
                 Helpers.GetDefaultFacilityId(),
@@ -632,7 +632,7 @@ namespace BillingSystem.Controllers
             // ... Send 3 as status for Administring the activity
             if (isUpdated != -1)
             {
-                var getClosedOrderActivities = new OrderActivityBal().GetPCClosedActivitiesByEncounterId(encounterid);
+                var getClosedOrderActivities = new OrderActivityService().GetPCClosedActivitiesByEncounterId(encounterid);
                 return PartialView(PartialViews.OrderClosedActivityScheduleList, getClosedOrderActivities);
             }
 
@@ -647,7 +647,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CancelCarePlanActivity(int careplanActivityId, int encounterid)
         {
-            var carePlanActivityBal = new PatientCareActivitiesBal();
+            var carePlanActivityBal = new PatientCareActivitiesService();
             var isUpdated = carePlanActivityBal.AddUptdatePatientCareActivity(
                 careplanActivityId,
                 Helpers.GetDefaultFacilityId(),
@@ -656,7 +656,7 @@ namespace BillingSystem.Controllers
             // ... Send 9 as status for canceling the activity
             if (isUpdated != -1)
             {
-                var getClosedOrderActivities = new OrderActivityBal().GetPCClosedActivitiesByEncounterId(encounterid);
+                var getClosedOrderActivities = new OrderActivityService().GetPCClosedActivitiesByEncounterId(encounterid);
                 return PartialView(PartialViews.OrderClosedActivityScheduleList, getClosedOrderActivities);
             }
 
@@ -675,7 +675,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindClosedActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -707,7 +707,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindClosedOrders(int encounterId)
         {
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -736,7 +736,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterClosedActivityList(int encounterId, int type)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -783,7 +783,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterClosedActivityPCList(int encounterId, int type)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -831,7 +831,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterClosedOrdersByType(int encounterId, int type)
         {
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -878,7 +878,7 @@ namespace BillingSystem.Controllers
             int encounterId)
         {
             List<DiagnosisCustomModel> listOfOrders;
-            using (var dbal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber)) listOfOrders = dbal.GetDiagnosisList(patientId, encounterId);
+            using (var dbal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber)) listOfOrders = dbal.GetDiagnosisList(patientId, encounterId);
             if (listOfOrders.Count > 0)
             {
                 listOfOrders = listOfOrders.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
@@ -899,7 +899,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterLabOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -930,7 +930,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterOpenActivityList(int encounterId, int type)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -977,7 +977,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterOpenActivityPCList(int encounterId, int type)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1024,7 +1024,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterOpenOrdersByType(int encounterId, int type)
         {
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1058,7 +1058,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1088,7 +1088,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterOrderListSorted(string sort, string sortdir, int encounterId, int type)
         {
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1117,7 +1117,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterPharmacyOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1145,7 +1145,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterRadOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1190,10 +1190,10 @@ namespace BillingSystem.Controllers
             var nurseAssessmentfrom = _eService.GetNurseAssessmentData(encounterid, patientId);
 
             //Get Medical Notes 
-            var medicalnotesbal = new MedicalNotesBal();
+            var medicalnotesbal = new MedicalNotesService();
             var notesList = medicalnotesbal.GetCustomMedicalNotes(patientId, type);
 
-            using (var orderbal = new OpenOrderBal(Helpers.DefaultCptTableNumber,
+            using (var orderbal = new OpenOrderService(Helpers.DefaultCptTableNumber,
                          Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber,
                          Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
@@ -1232,11 +1232,11 @@ namespace BillingSystem.Controllers
                 // ################### Get Order Activities ##################
 
                 //Get Medical Vitals...
-                var medicalVitals = new MedicalVitalBal();
+                var medicalVitals = new MedicalVitalService();
                 var medicalvitals = medicalVitals.GetCustomMedicalVitals(patientId, Convert.ToInt32(MedicalRecordType.Vitals));
 
                 //Get Nurse Assessment Forms and Other Docs....
-                var docsBal = new DocumentsTemplatesBal();
+                var docsBal = new DocumentsTemplatesService();
                 var opNurseAssessmentList = docsBal.GetNurseDocuments(patientId, encounterid);
 
                 var medicalnotesview = new MedicalNotesView
@@ -1276,7 +1276,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindOpenOrderActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1314,7 +1314,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPhyFavOrdersBySort(string sort, string sortdir, int encounterId)
         {
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1348,7 +1348,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPhyMostOrdersBySort(string sort, string sortdir, int encounterId)
         {
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1382,7 +1382,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPhysicianFavDiagnosisListSorted(string sort, string sortdir, int encounterId)
         {
-            var favDiagnosisBal = new FavoritesBal(
+            var favDiagnosisBal = new FavoritesService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1430,7 +1430,7 @@ namespace BillingSystem.Controllers
             int encounterId)
         {
             List<DiagnosisCustomModel> listOfOrders;
-            using (var dbal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber)) listOfOrders = dbal.GetPreviousDiagnosisList(patientId, encounterId);
+            using (var dbal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber)) listOfOrders = dbal.GetPreviousDiagnosisList(patientId, encounterId);
             if (listOfOrders.Count > 0)
             {
                 listOfOrders = listOfOrders.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
@@ -1451,7 +1451,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindRadClosedActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1484,7 +1484,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindRadClosedOrders(int encounterId)
         {
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1513,7 +1513,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindRadOpenActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1545,7 +1545,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindSummaryNotes(int patientId)
         {
-            using (var medicalnotesbal = new MedicalNotesBal())
+            using (var medicalnotesbal = new MedicalNotesService())
             {
                 var patientSummaryNotes = medicalnotesbal.GetMedicalNotesByPatientId(patientId);
                 var view = "../MedicalNotes/" + PartialViews.MedicalNotesListPatientSummary;
@@ -1563,10 +1563,10 @@ namespace BillingSystem.Controllers
         public ActionResult CancelOrderActivity(int OpenOrderActivityId)
         {
             // ... Send 9 as status for canceling the activity
-            var encounterId = new OrderActivityBal().CloseOrderActivity(OpenOrderActivityId); // Returns EncounterId for Binding of List --------- Changes Done by Abhishek 11 June 2018
+            var encounterId = new OrderActivityService().CloseOrderActivity(OpenOrderActivityId); // Returns EncounterId for Binding of List --------- Changes Done by Abhishek 11 June 2018
 
 
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1610,7 +1610,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckCodeForFav(string codeid)
         {
-            var openOrder = new OpenOrderBal(
+            var openOrder = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1621,7 +1621,7 @@ namespace BillingSystem.Controllers
             var orderCode = openOrder.GetOrderIdByOrderCode(userid, codeid);
             if (orderCode != 0)
             {
-                var userDefDescBal = new FavoritesBal();
+                var userDefDescBal = new FavoritesService();
                 var isFav = userDefDescBal.GetFavoriteByCodeIdPhyId(orderCode.ToString(), userid);
                 if (isFav != null)
                 {
@@ -1658,7 +1658,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckDurgAllergy(string ordercode, int patientId, int encounterId)
         {
-            var openOrderBal = new OpenOrderBal(
+            var openOrderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1681,7 +1681,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckIfAnyPrimaryDiagnosisExists(int encounterId)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var primaryDiagnosisId = bal.CheckIfAnyDiagnosisExists(encounterId);
                 return Json(primaryDiagnosisId);
@@ -1700,7 +1700,7 @@ namespace BillingSystem.Controllers
         public ActionResult CheckMulitpleOpenActivites(int orderId)
         {
             using (
-                var openOrderBaL = new OpenOrderBal(
+                var openOrderBaL = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1725,7 +1725,7 @@ namespace BillingSystem.Controllers
         public ActionResult EditLabOpenOrderActivity(int OpenOrderActivityId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1750,7 +1750,7 @@ namespace BillingSystem.Controllers
         public ActionResult EditLabSpecimanOpenOrderActivity(int OpenOrderActivityId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1775,7 +1775,7 @@ namespace BillingSystem.Controllers
         public ActionResult EditOpenOrderActivity(int OpenOrderActivityId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1799,7 +1799,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetCodeCustomValueById(int id)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var globalCode =
                     bal.GetGlobalCodeByCategoryAndCodeValue(
@@ -1821,7 +1821,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetCodeValueById(int id)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var globalCode = bal.GetGlobalCodeByGlobalCodeId(id);
                 var value = globalCode != null ? globalCode.GlobalCodeName : string.Empty;
@@ -1843,7 +1843,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public PartialViewResult GetEmList(int eId, int pId)
         {
-            using (var bal = new PatientEvaluationBal())
+            using (var bal = new PatientEvaluationService())
             {
                 var list = bal.ListPatientEvaluation(pId, eId);
                 return PartialView(PartialViews.EvaluationList, list);
@@ -1863,7 +1863,7 @@ namespace BillingSystem.Controllers
         {
             var fId = Helpers.GetDefaultFacilityId();
             var cList = new List<GlobalCodeCategory>();
-            var bal = new OpenOrderBal(
+            var bal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -1913,7 +1913,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetFavoriteByCodeId(string codeId)
         {
-            using (var bal = new FavoritesBal())
+            using (var bal = new FavoritesService())
             {
                 var fav = bal.GetFavoriteByCodeId(codeId);
                 if (fav != null)
@@ -1942,7 +1942,7 @@ namespace BillingSystem.Controllers
         {
             var list = new List<OpenOrderCustomModel>();
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -1965,7 +1965,7 @@ namespace BillingSystem.Controllers
         {
             string value;
             var categoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType));
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var gc = bal.GetGlobalCodeByCategoryAndCodeValue(categoryValue, frequencyCodeId);
                 value = gc != null ? gc.ExternalValue6 : string.Empty;
@@ -1986,7 +1986,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetLabSpecimanOrder(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2017,7 +2017,7 @@ namespace BillingSystem.Controllers
         {
             var list = new List<OpenOrderCustomModel>();
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2039,7 +2039,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOpenOrderActivityDetailById(int id)
         {
-            using (var bal = new OpenOrderActivityScheduleBal())
+            using (var bal = new OpenOrderActivityScheduleService())
             {
                 var model = bal.GetOpenOrderActivityScheduleById(id);
                 return PartialView(PartialViews.AddressAddEdit, model);
@@ -2058,7 +2058,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetOpenOrderDetailByOrderId(int orderId)
         {
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2106,14 +2106,14 @@ namespace BillingSystem.Controllers
                     var cptcodeslist = _cptService.GetCPTCodes(Helpers.DefaultCptTableNumber);
                     return Json(cptcodeslist);
                 case 2:
-                    var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber);
+                    var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber);
                     var hcpcsCodeslist = hcpcsCodesBal.GetHCPCSCodes();
                     return Json(hcpcsCodeslist);
                 case 3:
                     return Json(null);
                 case 4:
                 case 5:
-                    var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber);
+                    var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
                     var drgCodeslist = drgCodesBal.GetDrgCodes();
                     return Json(drgCodeslist);
             }
@@ -2132,7 +2132,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOrderCodesBySubCategory(int subCategoryId)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 // Get Sub-category Details from table Global Codes
                 var subCategory = bal.GetGlobalCodeByGlobalCodeId(subCategoryId);
@@ -2168,7 +2168,7 @@ namespace BillingSystem.Controllers
                             };
                         return Json(jsonResult, JsonRequestBehavior.AllowGet);
                     case OrderType.HCPCS:
-                        using (var cbal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+                        using (var cbal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
                         {
                             var result1 = cbal.GetHCPCSCodes();
                             var filteredList1 = result1.Select(
@@ -2195,7 +2195,7 @@ namespace BillingSystem.Controllers
                     case OrderType.DRG:
                         break;
                     case OrderType.DRUG:
-                        using (var dbal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                        using (var dbal = new DrugService(Helpers.DefaultDrugTableNumber))
                         {
                             var result2 = dbal.GetDrugList();
                             var filteredList2 = result2.Select(
@@ -2238,7 +2238,7 @@ namespace BillingSystem.Controllers
         [System.Web.Mvc.HttpPost]
         public ActionResult GetOrderDetailById(string orderId)
         {
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -2267,7 +2267,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOrderDetails(int orderId)
         {
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -2294,14 +2294,14 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOrderDetailsByActivityId(int orderActivityId)
         {
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
                 Helpers.DefaultDrugTableNumber,
                 Helpers.DefaultHcPcsTableNumber,
                 Helpers.DefaultDiagnosisTableNumber);
-            var orderActivitybal = new OrderActivityBal(
+            var orderActivitybal = new OrderActivityService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -2333,7 +2333,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrdersTabData(int encounterId)
         {
             var userId = Helpers.GetLoggedInUserId();
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -2346,7 +2346,7 @@ namespace BillingSystem.Controllers
             var closedOrderActivityList = new List<OrderActivityCustomModel>();
             var openOrderActivityList = new List<OrderActivityCustomModel>();
             using (
-                var orderActivityBal = new OrderActivityBal(
+                var orderActivityBal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2422,7 +2422,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPatientNotes(int patientId)
         {
-            using (var bal = new MedicalNotesBal())
+            using (var bal = new MedicalNotesService())
             {
                 var patientSummaryNotes = bal.GetMedicalNotesByPatientId(patientId);
                 return PartialView(PartialViews.MedicalNotesListPatientSummary, patientSummaryNotes);
@@ -2440,11 +2440,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPharmacyOrderCodesBySubCategory(int subCategoryId)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 // Get Sub-category Details from table Global Codes
                 var subCategory = bal.GetGlobalCodeByGlobalCodeId(subCategoryId);
-                using (var dbal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                using (var dbal = new DrugService(Helpers.DefaultDrugTableNumber))
                 {
                     /*
                      * Earlier it was fetching the Orders based on 
@@ -2500,7 +2500,7 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(text))
             {
                 using (
-                    var bal = new OpenOrderBal(
+                    var bal = new OpenOrderService(
                         Helpers.DefaultCptTableNumber,
                         Helpers.DefaultServiceCodeTableNumber,
                         Helpers.DefaultDrgTableNumber,
@@ -2520,7 +2520,7 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(text))
             {
                 using (
-                    var bal = new OpenOrderBal(
+                    var bal = new OpenOrderService(
                         Helpers.DefaultCptTableNumber,
                         Helpers.DefaultServiceCodeTableNumber,
                         Helpers.DefaultDrgTableNumber,
@@ -2556,7 +2556,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetSpecimanString(string orderCode)
         {
             using (
-                var openOrderBaL = new OrderActivityBal(
+                var openOrderBaL = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2586,7 +2586,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public bool IsAlreadyFav(int userid, string codeId, string categoryId)
         {
-            using (var bal = new FavoritesBal())
+            using (var bal = new FavoritesService())
             {
                 return bal.CheckIfAlreadyFav(userid, codeId, categoryId);
             }
@@ -2680,7 +2680,7 @@ namespace BillingSystem.Controllers
         {
             var result = -1;
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2727,7 +2727,7 @@ namespace BillingSystem.Controllers
         {
             var result = -1;
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2747,7 +2747,7 @@ namespace BillingSystem.Controllers
                 model.FacilityID = facilityId;
                 if (model.OrderActivityID > 0)
                 {
-                    var objOrderActivityBal = new OrderActivityBal();
+                    var objOrderActivityBal = new OrderActivityService();
                     var obj = objOrderActivityBal.GetOrderActivityByID(model.OrderActivityID);
                     model.ModifiedBy = userId;
                     model.ModifiedDate = currentdatetime;
@@ -2809,7 +2809,7 @@ namespace BillingSystem.Controllers
                 if (!openorderactivties)
                 {
                     using (
-                        var ordersBal = new OpenOrderBal(
+                        var ordersBal = new OpenOrderService(
                             Helpers.DefaultCptTableNumber,
                             Helpers.DefaultServiceCodeTableNumber,
                             Helpers.DefaultDrgTableNumber,
@@ -2852,7 +2852,7 @@ namespace BillingSystem.Controllers
                 var userId = Helpers.GetLoggedInUserId();
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2953,7 +2953,7 @@ namespace BillingSystem.Controllers
         public ActionResult UpdateLabOrderActvityStatus(int OrderActivityID)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -2986,7 +2986,7 @@ namespace BillingSystem.Controllers
         public ActionResult ShowGeneratedBarCode(string orderActivityId)
         {
             //string retValue;
-            using (var bal = new OrderActivityBal())
+            using (var bal = new OrderActivityService())
             {
                 //var bc = bal.GetOrderActivityByID(Convert.ToInt32(orderActivityId));
                 //retValue = bc.BarCodeHtml;
@@ -3035,7 +3035,7 @@ namespace BillingSystem.Controllers
         {
             // var EncounterId = 100220141;
             using (
-                var encounterComm = new OpenOrderBal(
+                var encounterComm = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -3495,7 +3495,7 @@ namespace BillingSystem.Controllers
                 EncounterID = Convert.ToInt32(data.EncounterId),
                 ExternalValue3 = "4950"
             };
-            var oDocumentsTemplatesBal = new DocumentsTemplatesBal();
+            var oDocumentsTemplatesBal = new DocumentsTemplatesService();
             oDocumentsTemplatesBal.AddUpdateDocumentTempate(oDocumentsTemplates);
             if (System.IO.File.Exists(serverPath + "/AssessmentForm/" + data.FileName))
             {
@@ -3576,7 +3576,7 @@ namespace BillingSystem.Controllers
                 EncounterID = Convert.ToInt32(data.EncounterId)
                 //ExternalValue3 = "4950"
             };
-            var oDocumentsTemplatesBal = new DocumentsTemplatesBal();
+            var oDocumentsTemplatesBal = new DocumentsTemplatesService();
             oDocumentsTemplatesBal.AddUpdateDocumentTempate(oDocumentsTemplates);
             if (System.IO.File.Exists(serverPath + "/EvaluationForm/" + data.EnmFileName))
             {
@@ -3710,7 +3710,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortEncounterGrid(int patientId)
         {
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -3732,7 +3732,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortDiagnosisGrid(int patientId, int encId)
         {
             using (
-                var diagnosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+                var diagnosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var diagnosisList = diagnosisBal.GetDiagnosisList(patientId, encId);
                 return PartialView(PartialViews.PatientDiagnosisList, diagnosisList);
@@ -3748,7 +3748,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortPatientOpenOrders(int patientId, int encId)
         {
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -3769,7 +3769,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPatientMedicalVital(int pId)
         {
-            var medicalVitals = new MedicalVitalBal();
+            var medicalVitals = new MedicalVitalService();
             var medicalvitals = medicalVitals.GetCustomMedicalVitals(pId, Convert.ToInt32(MedicalRecordType.Vitals));
             return PartialView(PartialViews.PatientMedicalVitalList, medicalvitals);
         }
@@ -3785,7 +3785,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortPatientAllergiesList(int patientId)
         {
-            var medicalRecordbal = new MedicalRecordBal();
+            var medicalRecordbal = new MedicalRecordService();
             var viewpath = string.Format("../MedicalRecord/{0}", PartialViews.AlergiesList);
             var allergiesList = medicalRecordbal.GetAlergyRecords(
                 patientId,
@@ -3808,7 +3808,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortAllergiesList(int patientId)
         {
-            var medicalRecordbal = new MedicalRecordBal();
+            var medicalRecordbal = new MedicalRecordService();
             var viewpath = string.Format("../MedicalRecord/{0}", PartialViews.AlergiesList);
             var allergiesList = medicalRecordbal.GetAlergyRecords(
                 patientId,
@@ -3830,7 +3830,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortCurrentNotesbyPhysician(int patientId, int encounterId)
         {
-            var medicalnotesbal = new MedicalNotesBal();
+            var medicalnotesbal = new MedicalNotesService();
             var viewpath = string.Format("../MedicalNotes/{0}", PartialViews.MedicalNotesListPatientSummary);
             var currentEncounterId = encounterId;
             var patientSummaryNotes = medicalnotesbal.GetMedicalNotesByPatientIdEncounterId(
@@ -3854,7 +3854,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortCurrentOrderGrid(int patientId, int encounterId)
         {
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -3881,7 +3881,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortLabClosedOrderList(int encounterid)
         {
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -3913,7 +3913,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortLabOpenOrderList(int encounterid)
         {
             using (
-                var orderbal = new OpenOrderBal(
+                var orderbal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -3952,7 +3952,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortMedicalNotesInNurseTab(int patientId, int type, int currentEncounterId)
         {
-            using (var medicalnotesbal = new MedicalNotesBal())
+            using (var medicalnotesbal = new MedicalNotesService())
             {
                 // var notesList = medicalnotesbal.GetCustomMedicalNotes(patientId,
                 // type == Convert.ToInt32(NotesUserType.Physician)
@@ -3977,7 +3977,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortMedicalVital(int pId)
         {
-            var medicalVitals = new MedicalVitalBal();
+            var medicalVitals = new MedicalVitalService();
             var medicalvitals = medicalVitals.GetCustomMedicalVitals(pId, Convert.ToInt32(MedicalRecordType.Vitals));
             var viewpath = String.Format("../MedicalVital/{0}", PartialViews.MedicalVitalList);
             return PartialView(viewpath, medicalvitals);
@@ -3997,7 +3997,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortNoteType(int patientId, int type)
         {
-            using (var medicalnotesbal = new MedicalNotesBal())
+            using (var medicalnotesbal = new MedicalNotesService())
             {
                 // Updated by Krishna on Sep 22, 2015
                 var notesList = medicalnotesbal.GetCustomMedicalNotes(
@@ -4025,7 +4025,7 @@ namespace BillingSystem.Controllers
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4050,7 +4050,7 @@ namespace BillingSystem.Controllers
             var pid = Convert.ToInt32(patientId);
             var eid = Convert.ToInt32(encounterId);
             using (
-                var bal = new DiagnosisBal(
+                var bal = new DiagnosisService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4077,7 +4077,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortLabSpecimanOpenOrderList(int encounterid)
         {
             using (
-                var orderActivityBal = new OrderActivityBal(
+                var orderActivityBal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4107,7 +4107,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortLabClosedOrderActivityList(int encounterid)
         {
             using (
-                var orderActivityBal = new OrderActivityBal(
+                var orderActivityBal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4144,7 +4144,7 @@ namespace BillingSystem.Controllers
         public ActionResult SortLabOrdersListByPhysician(string orderType, int orderStatus, int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4183,7 +4183,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortMedicalHistoryList(int encounterId, int patientid)
         {
-            using (var bal = new MedicalHistoryBal(Helpers.DefaultDrugTableNumber))
+            using (var bal = new MedicalHistoryService(Helpers.DefaultDrugTableNumber))
             {
                 var list = bal.GetMedicalHistory(patientid, encounterId);
                 var viewpath = string.Format("../MedicalHistory/{0}", PartialViews.MedicalHistoryList);
@@ -4198,7 +4198,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPhysiciansAllorders(int encounterid)
         {
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -4224,7 +4224,7 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -4247,7 +4247,7 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -4265,7 +4265,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPhysicianAllSearch(int encounterid)
         {
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -4289,7 +4289,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortDiagnosisTabGrid(int? patientId, int? encounterId)
         {
-            var daignosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            var daignosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
             var diagnosislist = daignosisBal.GetDiagnosisList(Convert.ToInt32(patientId), Convert.ToInt32(encounterId));
             return PartialView(PartialViews.DiagnosisListEHR, diagnosislist);
         }
@@ -4519,7 +4519,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOrderDetailJsonById(string orderId)
         {
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -4557,7 +4557,7 @@ namespace BillingSystem.Controllers
         {
             // var EncounterId = 100220141;
             using (
-                var futureOpenOrderBal = new FutureOpenOrderBal(
+                var futureOpenOrderBal = new FutureOpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4604,7 +4604,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPatientFutureOrder(int patientId)
         {
             using (
-                var futureOpenOrderBal = new FutureOpenOrderBal(
+                var futureOpenOrderBal = new FutureOpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4625,7 +4625,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFutureOpenOrders(int patientId)
         {
             using (
-                var futureOpenOrderBal = new FutureOpenOrderBal(
+                var futureOpenOrderBal = new FutureOpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4655,7 +4655,7 @@ namespace BillingSystem.Controllers
 
             var orderId = AddOpenOrder(order); // ---- Add orders
             var tabid = Convert.ToInt32(order.TabId);
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -4679,7 +4679,7 @@ namespace BillingSystem.Controllers
             var openOrderActivityList = new List<OrderActivityCustomModel>();
             var labWaitingSpecimenList = new List<OrderActivityCustomModel>();
             using (
-                var orderActivityBal = new OrderActivityBal(
+                var orderActivityBal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4731,7 +4731,7 @@ namespace BillingSystem.Controllers
             }
             var patientId = orderBal.GetPatientIdByEncounterId(Convert.ToInt32(order.EncounterID));
             var futureOrdersList =
-                new FutureOpenOrderBal(
+                new FutureOpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -4799,7 +4799,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult BindOrdersGrid(int encounterId, int type)
         {
-            using (var openOrdersbal = new OpenOrderBal(
+            using (var openOrdersbal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
                     Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
@@ -5056,7 +5056,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDataByCategories()
         {
-            using (var gbal = new GlobalCodeBal())
+            using (var gbal = new GlobalCodeService())
             {
                 var categories = new[] { "1024", "3102", "1011", "2305", "963" };
                 var list = gbal.GetListByCategoriesRange(categories);
@@ -5084,7 +5084,7 @@ namespace BillingSystem.Controllers
         public JsonResult CancelOpenOrder(int cancelOrderId)
         {
             using (
-                var openorderBal = new OpenOrderBal(
+                var openorderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -5130,7 +5130,7 @@ namespace BillingSystem.Controllers
             string Dtype)
         {
             UserDefinedDescriptions model = null;
-            using (var bal = new FavoritesBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
+            using (var bal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
                     Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 if (id > 0) model = bal.GetFavoriteById(id);
@@ -5157,7 +5157,7 @@ namespace BillingSystem.Controllers
                 var result = bal.AddToFavorites(model, isFavorite);
                 if (Dtype != "true")
                 {
-                    var ordersBal = new OpenOrderBal(
+                    var ordersBal = new OpenOrderService(
                         Helpers.DefaultCptTableNumber,
                         Helpers.DefaultServiceCodeTableNumber,
                         Helpers.DefaultDrgTableNumber,
@@ -5210,9 +5210,9 @@ namespace BillingSystem.Controllers
         public ActionResult GetDiagnosisCodes(int patientId)
         {
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
             var list = bal.GetAllDiagnosisCodes(facilityId);
-            var diagnosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            var diagnosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
             var ClientDiagnosislst = diagnosisBal.GetDiagnosisList(patientId).ToList();
             if (ClientDiagnosislst.Count > 0)
             {
@@ -5511,7 +5511,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabClosedActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -5544,7 +5544,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabClosedOrders(int encounterId)
         {
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -5573,7 +5573,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabOpenActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -5606,7 +5606,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabOpenOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -5646,11 +5646,11 @@ namespace BillingSystem.Controllers
             var openActivities = new List<OrderActivityCustomModel>();
             var closedActivities = new List<OrderActivityCustomModel>();
 
-            using (var medicalVitals = new MedicalVitalBal())
+            using (var medicalVitals = new MedicalVitalService())
                 vitals = medicalVitals.GetCustomMedicalVitals(patientId, Convert.ToInt32(MedicalRecordType.LabTest), encounterid);
 
 
-            using (var orderbal = new OpenOrderBal(Helpers.DefaultCptTableNumber,
+            using (var orderbal = new OpenOrderService(Helpers.DefaultCptTableNumber,
                         Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber,
                         Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
@@ -5738,7 +5738,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPharmacyClosedActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -5771,7 +5771,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPharmacyClosedOrders(int encounterId)
         {
             using (
-                var bal = new OpenOrderBal(
+                var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -5800,7 +5800,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPharmacyOpenActivityList(int encounterId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -5833,7 +5833,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPharmacyOpenOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderBal(
+            var encounterOrderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -5943,7 +5943,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPharmacyTabData(int patientId, int encounterid)
         {
             using (
-                var orderbal = new OpenOrderBal(
+                var orderbal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -6058,7 +6058,7 @@ namespace BillingSystem.Controllers
         public JsonResult PharamacyOrderActivityAdministered(int orderId)
         {
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -6083,7 +6083,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindNurseAssessmentList(int patientId, int encounterid)
         {
-            var list = new DocumentsTemplatesBal().GetNurseDocuments(patientId, encounterid).ToList();
+            var list = new DocumentsTemplatesService().GetNurseDocuments(patientId, encounterid).ToList();
             // Pass the View Model in ActionResult to View PatientCarePlan
             return PartialView(PartialViews.NurseEnteredList, list);
         }
@@ -6147,7 +6147,7 @@ namespace BillingSystem.Controllers
                 EncounterID = Convert.ToInt32(data.EncounterId)
                 //ExternalValue3 = "4950"
             };
-            var oDocumentsTemplatesBal = new DocumentsTemplatesBal();
+            var oDocumentsTemplatesBal = new DocumentsTemplatesService();
             oDocumentsTemplatesBal.AddUpdateDocumentTempate(oDocumentsTemplates);
             if (System.IO.File.Exists(serverPath + "/AssessmentForm/" + data.EnmFileName))
             {
@@ -6172,7 +6172,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindCarePlanTaskData(string careId, string patientId, int encounterId)
         {
-            var cBal = new PatientCarePlanBal();
+            var cBal = new PatientCarePlanService();
             var careTaskList = cBal.BindCarePlanTaskData(careId, patientId, encounterId);
             if (careTaskList.Count > 0)
             {
@@ -6212,7 +6212,7 @@ namespace BillingSystem.Controllers
         public ActionResult PatientCarePlanMain(int patientId, int encounterid)
         {
             // Initialize the PatientCarePlan BAL object
-            var patientCarePlanBal = new PatientCarePlanBal();
+            var patientCarePlanBal = new PatientCarePlanService();
 
             // Get the Entity list
             var patientCarePlanList =
@@ -6245,7 +6245,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPatientCarePlanList(int patientId, int encounterId)
         {
             // Initialize the PatientCarePlan BAL object
-            using (var patientCarePlanBal = new PatientCarePlanBal())
+            using (var patientCarePlanBal = new PatientCarePlanService())
             {
                 // Get the facilities list
                 var patientCarePlanList =
@@ -6269,7 +6269,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePatientCarePlan(int id)
         {
-            using (var bal = new PatientCarePlanBal())
+            using (var bal = new PatientCarePlanService())
             {
                 // Get PatientCarePlan model object by current PatientCarePlan ID
                 var currentPatientCarePlan = bal.GetPatientCarePlanById(id);
@@ -6306,7 +6306,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPatientCarePlanData(int id)
         {
-            using (var bal = new PatientCarePlanBal())
+            using (var bal = new PatientCarePlanService())
             {
                 var currentCarePlanTask = bal.GetPatientCarePlanById(id);
 
@@ -6373,7 +6373,7 @@ namespace BillingSystem.Controllers
                 newId = _cpService.SaveCarePlanTaskCustomModel(model);
 
                 // var cModel = bal.GetCarePlanTaskById(Convert.ToInt32(model.TaskNumber));
-                var pcBal = new PatientCarePlanBal();
+                var pcBal = new PatientCarePlanService();
                 var listoadd = new List<PatientCarePlan>();
 
                 var patinetCareModel = new PatientCarePlan
@@ -6411,7 +6411,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SavePatientCarePlan(List<PatientCarePlan> model)
         {
-            var pBal = new PatientCarePlanBal();
+            var pBal = new PatientCarePlanService();
             // Initialize the newId variable 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
@@ -6422,7 +6422,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PatientCarePlanBal())
+                using (var bal = new PatientCarePlanService())
                 {
                     foreach (var patientCarePlan in model)
                     {
@@ -6477,7 +6477,7 @@ namespace BillingSystem.Controllers
             var isPrimary = true;
 
             using (
-                var bal = new DiagnosisBal(
+                var bal = new DiagnosisService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -6573,14 +6573,14 @@ namespace BillingSystem.Controllers
         /// </returns>
         private bool UpdateCurrentOpenOrderActivties(int orderid)
         {
-            var orderActivityBal = new OrderActivityBal(
+            var orderActivityBal = new OrderActivityService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
                 Helpers.DefaultDrugTableNumber,
                 Helpers.DefaultHcPcsTableNumber,
                 Helpers.DefaultDiagnosisTableNumber);
-            var orderbal = new OpenOrderBal(
+            var orderbal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -6634,7 +6634,7 @@ namespace BillingSystem.Controllers
         private int AddOpenOrder(OpenOrderCustomModel order)
         {
             using (
-                var encounterComm = new OpenOrderBal(
+                var encounterComm = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -6683,7 +6683,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindOrderAdministratorOrder()
         {
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
            Helpers.DefaultCptTableNumber,
            Helpers.DefaultServiceCodeTableNumber,
            Helpers.DefaultDrgTableNumber,
@@ -6722,7 +6722,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult ApprovePharmacyOrderOld(int id, string type, string comment)
         {
-            var bal = new OpenOrderBal(
+            var bal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -6744,7 +6744,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult ApprovePharmacyOrder(int id, string type, string comment, int encounterId, int categoryId)
         {
-            var bal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
+            var bal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
                             Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
 
             var vm = bal.ApprovePharmacyOrder(id, type, comment, encounterId, true, categoryId, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
@@ -6805,7 +6805,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult PhysicianOrNurseTabData(int patientId, int type, int encounterid)
         {
-            using (var oBal = new OpenOrderBal(
+            using (var oBal = new OpenOrderService(
                         Helpers.DefaultCptTableNumber,
                         Helpers.DefaultServiceCodeTableNumber,
                         Helpers.DefaultDrgTableNumber,
@@ -6882,7 +6882,7 @@ namespace BillingSystem.Controllers
         public ActionResult AddPhysicianOrderNew(OpenOrderCustomModel order)
         {
             var tabid = Convert.ToInt32(order.TabId);
-            var orderBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
+            var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
                 Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
 
             //Add / Update Order Details 
@@ -6945,7 +6945,7 @@ namespace BillingSystem.Controllers
         {
             var result = -1;
             using (
-                var bal = new OrderActivityBal(
+                var bal = new OrderActivityService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -6964,7 +6964,7 @@ namespace BillingSystem.Controllers
                 model.FacilityID = facilityId;
                 if (model.OrderActivityID > 0)
                 {
-                    var objOrderActivityBal = new OrderActivityBal();
+                    var objOrderActivityBal = new OrderActivityService();
                     var obj = objOrderActivityBal.GetOrderActivityByID(model.OrderActivityID);
                     model.ModifiedBy = userId;
                     model.ModifiedDate = currentdatetime;
@@ -7026,7 +7026,7 @@ namespace BillingSystem.Controllers
                 if (!openorderactivties)
                 {
                     using (
-                        var ordersBal = new OpenOrderBal(
+                        var ordersBal = new OpenOrderService(
                             Helpers.DefaultCptTableNumber,
                             Helpers.DefaultServiceCodeTableNumber,
                             Helpers.DefaultDrgTableNumber,
@@ -7074,7 +7074,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrderTypeCategoriesInSummary(string startRange, string endRange)
         {
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesByExternalValue(fn);
                 return Json(list);
@@ -7083,7 +7083,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrderTypeCategoriesInSummaryNew(string externalValue = "")
         {
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesByExternalValue(fn);
                 if (externalValue != "0")
@@ -7103,7 +7103,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetOrderTypeSubCategories(string categoryId)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
                 var globalCodes = bal.GetGlobalCodesByCategoryValue(categoryId, fn);
@@ -7155,7 +7155,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetCodesBySubCategory(string subCategoryValue, string gcc, string orderCodeType, long startRange, long endRange)
         {
 
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var tableNumber = string.Empty;
                 switch (orderCodeType)
@@ -7220,7 +7220,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult BindSummaryTabData(long pId, long? eId)
         {
-            var oBal = new OpenOrderBal();
+            var oBal = new OpenOrderService();
             var vm = oBal.GetPatientSummaryDataOnLoad(eId ?? 0, pId);
 
             if (vm != null)
@@ -7278,7 +7278,7 @@ namespace BillingSystem.Controllers
             var vmData = new PatientSummaryView { ExternalLinkId = sTab, PatientId = patientId };
 
             using (
-                var orderBal = new OpenOrderBal(
+                var orderBal = new OpenOrderService(
                     Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber,
@@ -7296,14 +7296,14 @@ namespace BillingSystem.Controllers
                 if (sTab == 0)
                 {
                     var enList = orderBal.GetEncountersListByPatientId(patientId);
-                    using (var medicalRecordbal = new MedicalRecordBal())
+                    using (var medicalRecordbal = new MedicalRecordService())
                     {
-                        using (var medicalnotesbal = new MedicalNotesBal())
+                        using (var medicalnotesbal = new MedicalNotesService())
                         {
-                            using (var medicalVitals = new MedicalVitalBal())
+                            using (var medicalVitals = new MedicalVitalService())
                             {
                                 using (
-                                    var diagnosisBal = new DiagnosisBal(
+                                    var diagnosisBal = new DiagnosisService(
                                         Helpers.DefaultDiagnosisTableNumber,
                                         Helpers.DefaultDrgTableNumber))
                                 {
@@ -7405,7 +7405,7 @@ namespace BillingSystem.Controllers
 
 
 
-            using (var bal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
+            using (var bal = new DiagnosisService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 viewData = bal.GetDiagnosisTabData(pid, eid, userid, Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
@@ -7512,7 +7512,7 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,
@@ -7590,7 +7590,7 @@ namespace BillingSystem.Controllers
             var encounterId = order.EncounterID;
             var orderId = AddOpenOrder(order); // ---- Add orders
             var tabid = Convert.ToInt32(order.TabId);
-            var orderBal = new OpenOrderBal(
+            var orderBal = new OpenOrderService(
                 Helpers.DefaultCptTableNumber,
                 Helpers.DefaultServiceCodeTableNumber,
                 Helpers.DefaultDrgTableNumber,

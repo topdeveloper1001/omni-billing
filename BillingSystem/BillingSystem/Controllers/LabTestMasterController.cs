@@ -23,7 +23,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the GlobalCode Bal
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var cptcodeList = new List<CPTCodesCustomModel>();
                 var labTestRange = globalCodeBal.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
@@ -90,7 +90,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindLabTestList()
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var cptcodeList = new List<CPTCodesCustomModel>();
                 var labTestRange = globalCodeBal.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());

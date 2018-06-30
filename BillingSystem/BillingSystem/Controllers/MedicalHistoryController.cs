@@ -36,7 +36,7 @@ namespace BillingSystem.Controllers
             //Check if MedicalHistoryViewModel 
             if (model != null)
             {
-                using (var bal = new MedicalHistoryBal(Helpers.DefaultDrugTableNumber))
+                using (var bal = new MedicalHistoryService(Helpers.DefaultDrugTableNumber))
                 {
                     var userId = Helpers.GetLoggedInUserId();
                     var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -75,7 +75,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetMedicalHistory(int medicalRecordId)
         {
-            using (var bal = new MedicalHistoryBal(Helpers.DefaultDrugTableNumber))
+            using (var bal = new MedicalHistoryService(Helpers.DefaultDrugTableNumber))
             {
                 //Call the AddMedicalHistory Method to Add / Update current MedicalHistory
                 var vm = bal.GetMedicalHistoryById(medicalRecordId);

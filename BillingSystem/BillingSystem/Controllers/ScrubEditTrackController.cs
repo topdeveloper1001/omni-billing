@@ -19,7 +19,7 @@ namespace BillingSystem.Controllers
         public ActionResult ScrubEditTrackMain()
         {
             //Initialize the ScrubEditTrack BAL object
-            var scrubEditTrackBal = new ScrubEditTrackBal();
+            var scrubEditTrackBal = new ScrubEditTrackService();
 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
@@ -47,7 +47,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindScrubEditTrackList()
         {
             //Initialize the ScrubEditTrack BAL object
-            using (var scrubEditTrackBal = new ScrubEditTrackBal())
+            using (var scrubEditTrackBal = new ScrubEditTrackService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -75,7 +75,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new ScrubEditTrackBal())
+                using (var bal = new ScrubEditTrackService())
                 {
                     if (model.ScrubEditTrackID > 0)
                     {
@@ -96,7 +96,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetScrubEditTrack(int id)
         {
-            using (var bal = new ScrubEditTrackBal())
+            using (var bal = new ScrubEditTrackService())
             {
                 //Call the AddScrubEditTrack Method to Add / Update current ScrubEditTrack
                 var currentScrubEditTrack = bal.GetScrubEditTrackByID(id);
@@ -113,7 +113,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteScrubEditTrack(int id)
         {
-            using (var bal = new ScrubEditTrackBal())
+            using (var bal = new ScrubEditTrackService())
             {
                 //Get ScrubEditTrack model object by current ScrubEditTrack ID
                 var currentScrubEditTrack = bal.GetScrubEditTrackByID(id);
@@ -156,7 +156,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetScrubEditTrackList()
         {
             //Initialize the ScrubEditTrack BAL object
-            using (var scrubEditTrackBal = new ScrubEditTrackBal())
+            using (var scrubEditTrackBal = new ScrubEditTrackService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();

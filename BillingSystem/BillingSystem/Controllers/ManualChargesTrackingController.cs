@@ -37,7 +37,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             // Initialize the ManualChargesTracking BAL object
-            using (var bal = new ManualChargesTrackingBal())
+            using (var bal = new ManualChargesTrackingService())
             {
                 int facilityid = Helpers.GetDefaultFacilityId();
                 int corporateid = Helpers.GetSysAdminCorporateID();
@@ -72,7 +72,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindReport(DateTime fromDate, DateTime tilldate)
         {
-            using (var bal = new ManualChargesTrackingBal())
+            using (var bal = new ManualChargesTrackingService())
             {
                 int facilityid = Helpers.GetDefaultFacilityId();
                 int corporateid = Helpers.GetSysAdminCorporateID();
@@ -106,7 +106,7 @@ namespace BillingSystem.Controllers
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
             this.Response.AddHeader("Content-Type", "application/vnd.ms-excel");
-            using (var bal = new ManualChargesTrackingBal())
+            using (var bal = new ManualChargesTrackingService())
             {
                 string firstdayOfMOnth = currentDateTime.Year + "/" + currentDateTime.Month + "/01";
                 DateTime fromdateval = fromDate ?? Convert.ToDateTime(firstdayOfMOnth);
@@ -142,7 +142,7 @@ namespace BillingSystem.Controllers
         {
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
-            using (var bal = new ManualChargesTrackingBal())
+            using (var bal = new ManualChargesTrackingService())
             {
                 string firstdayOfMOnth = currentDateTime + "/" + currentDateTime + "/01";
                 DateTime fromdateval = fromDate ?? Convert.ToDateTime(firstdayOfMOnth);

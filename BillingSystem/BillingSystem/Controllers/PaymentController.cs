@@ -46,7 +46,7 @@ namespace BillingSystem.Controllers
         {
             int facilityId = Helpers.GetDefaultFacilityId();
             int corporateId = Helpers.GetSysAdminCorporateID();
-            using (var paymentBal = new PaymentBal())
+            using (var paymentBal = new PaymentService())
             {
                 bool applyPaymnetManual = paymentBal.ApplyManualPayment(corporateId, facilityId);
                 return this.Json(applyPaymnetManual);
@@ -70,7 +70,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPaymentList(int? patientId, int? encounterId, int? billHeaderId)
         {
-            using (var bal = new PaymentBal())
+            using (var bal = new PaymentService())
             {
                 int corporateId = Helpers.GetDefaultCorporateId();
                 int facilityId = Helpers.GetDefaultFacilityId();
@@ -97,10 +97,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPaymentDetail(int paymentId)
         {
-            using (var bal = new PaymentBal())
+            using (var bal = new PaymentService())
             {
                 PaymentCustomModel result = bal.GetPaymentById(paymentId);
-                var paymentBal = new PaymentTypeDetailBal();
+                var paymentBal = new PaymentTypeDetailService();
                 var paymentList = paymentBal.GetPaymentTypeDetailByPaymentId(paymentId) != null ? paymentBal.GetPaymentTypeDetailByPaymentId(paymentId) : new PaymentTypeDetail();
 
                 if (result == null)
@@ -154,7 +154,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index(int? patientId, int? encounterId, int? billHeaderId)
         {
-            using (var bal = new PaymentBal())
+            using (var bal = new PaymentService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -286,10 +286,10 @@ namespace BillingSystem.Controllers
 
         public ActionResult SaveManualPayment(PaymentCustomModel m)
         {
-            var pdBal = new PaymentTypeDetailBal();
+            var pdBal = new PaymentTypeDetailService();
             var ptd = new PaymentTypeDetail();
 
-            using (var bal = new PaymentBal())
+            using (var bal = new PaymentService())
             {
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
                 var userId = Helpers.GetLoggedInUserId();
@@ -378,7 +378,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult SaveAndApplyManualPayments(PaymentCustomModel vm)
         {
-            using (var bal = new PaymentBal())
+            using (var bal = new PaymentService())
             {
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
                 var userId = Helpers.GetLoggedInUserId();
@@ -403,7 +403,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetPaymentsRelatedData(long billHeaderId, long? patientId, long? eId, string billNo, long? payId)
         {
-            using (var bal = new PaymentBal())
+            using (var bal = new PaymentService())
             {
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
                 var userId = Helpers.GetLoggedInUserId();

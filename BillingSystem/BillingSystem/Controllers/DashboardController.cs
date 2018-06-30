@@ -336,7 +336,7 @@ namespace BillingSystem.Controllers
                                               .ToList()
             };
 
-            using (var bal = new RoleTabsBal())
+            using (var bal = new RoleTabsService())
             {
                 var roleId = Helpers.GetDefaultRoleId();
                 activeEncounter.EncounterViewAccessible = (bal.CheckIfTabNameAccessibleToGivenRole(
@@ -831,7 +831,7 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
             var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
-            using (var bal = new ReportingBal())
+            using (var bal = new ReportingService())
             {
                 var currentMonthdate = currentDateTime;
                 var firstDayOfMonth = new DateTime(currentMonthdate.Year, 1, 1);

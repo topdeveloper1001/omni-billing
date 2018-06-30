@@ -233,7 +233,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckCorporateExist(int Id)
         {
-            using (var facilityRoleBal = new FacilityRoleBal())
+            using (var facilityRoleBal = new FacilityRoleService())
             {
                 var result = facilityRoleBal.CheckCorporateExist(Id);
                 return Json(result);

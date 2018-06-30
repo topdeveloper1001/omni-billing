@@ -23,8 +23,8 @@ namespace BillingSystem.Controllers
         public ActionResult RuleStepView(int? ruleMasterId)
         {
             // Initialize the RuleStep BAL object
-            var ruleStepBal = new RuleStepBal();
-            var rulemasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber);
+            var ruleStepBal = new RuleStepService();
+            var rulemasterBal = new RuleMasterService(Helpers.DefaultBillEditRuleTableNumber);
 
             // Get the Entity list
             var ruleStepList = ruleStepBal.GetRuleStepsList(Convert.ToInt32(ruleMasterId));
@@ -65,7 +65,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindRuleStepList(int ruleMasterId)
         {
             // Initialize the RuleStep BAL object
-            using (var ruleStepBal = new RuleStepBal())
+            using (var ruleStepBal = new RuleStepService())
             {
                 // Get the facilities list
                 var ruleStepList = ruleStepBal.GetRuleStepsList(ruleMasterId);
@@ -88,7 +88,7 @@ namespace BillingSystem.Controllers
             var newId = -1;
             var list = new List<RuleStepCustomModel>();
             var userId = Helpers.GetLoggedInUserId();
-            using (var ruleStepMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
+            using (var ruleStepMasterBal = new RuleMasterService(Helpers.DefaultBillEditRuleTableNumber))
             {
                 // Get the facilities list
                 var ruleMasterStepObj = ruleStepMasterBal.GetRuleMasterCustomModelById(model.RuleMasterID);
@@ -96,7 +96,7 @@ namespace BillingSystem.Controllers
                 // Check if Model is not null 
                 if (model != null)
                 {
-                    using (var bal = new RuleStepBal())
+                    using (var bal = new RuleStepService())
                     {
                         if (model.RuleStepID > 0)
                         {
@@ -137,7 +137,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRuleStep(int id)
         {
-            using (var bal = new RuleStepBal())
+            using (var bal = new RuleStepService())
             {
                 // Call the AddRuleStep Method to Add / Update current RuleStep
                 var currentRuleStep = bal.GetRuleStepByID(id);
@@ -163,7 +163,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteRuleStep(int id)
         {
-            using (var bal = new RuleStepBal())
+            using (var bal = new RuleStepService())
             {
                 // Get RuleStep model object by current RuleStep ID
                 var currentRuleStep = bal.GetRuleStepByID(id);
@@ -242,7 +242,7 @@ namespace BillingSystem.Controllers
 
             var categories = new List<string> { "14000", "14100", "14200", "14101", "14102" };
             var lst = new List<string>() { "1", "2", "4", "5", "6", "7" };
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 list = bal.GetListByCategoriesRange(categories);
                 var dataTypes = list.Where(a => a.ExternalValue1.Trim().Contains("14000")).OrderBy(n => n.Text).ToList();
@@ -272,7 +272,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetErrorsList()
         {
             var list = new List<DropdownListData>();
-            using (var bal = new ErrorMasterBal())
+            using (var bal = new ErrorMasterService())
             {
                 var corporateId = Helpers.GetDefaultCorporateId();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -291,7 +291,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetRuleMasterById(int ruleMasterId)
         {
             //Initialize the RuleStep BAL object
-            using (var ruleStepMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
+            using (var ruleStepMasterBal = new RuleMasterService(Helpers.DefaultBillEditRuleTableNumber))
             {
                 //Get the facilities list
                 var ruleStepList = ruleStepMasterBal.GetRuleMasterCustomModelById(ruleMasterId);
@@ -308,7 +308,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRuleStepNumber(int ruleMasterId)
         {
-            using (var ruleStepBal = new RuleStepBal())
+            using (var ruleStepBal = new RuleStepService())
             {
                 var rulestepMaxNumber = ruleStepBal.GetMaxRuleStepNumber(ruleMasterId);
                 
@@ -323,7 +323,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPreviewRuleStepResult(int ruleMasterId)
         {
-            using (var ruleStepBal = new RuleStepBal())
+            using (var ruleStepBal = new RuleStepService())
             {
                 var ruleStepPreviewString = ruleStepBal.GetPreviewRuleStepResult(ruleMasterId);
                 return Json(ruleStepPreviewString, JsonRequestBehavior.AllowGet);

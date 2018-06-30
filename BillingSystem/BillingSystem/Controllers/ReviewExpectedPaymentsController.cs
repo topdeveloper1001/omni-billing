@@ -20,7 +20,7 @@ namespace BillingSystem.Controllers
         // GET: /ReviewExpectedPayments/
         public ActionResult Index()
         {
-            using (var bal = new PaymentBal())
+            using (var bal = new PaymentService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -56,7 +56,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientAccountSummary(int PatientID)
         {
-            using (var paymentBal = new PaymentBal())
+            using (var paymentBal = new PaymentService())
             {
                 var applyPaymnetManual = paymentBal.GetPatientAccountStatement(PatientID);
                 return PartialView("UserControls/_PatienAccountSummary", applyPaymnetManual);
@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetNotReceivedPaymentList()
         {
-            using (var paymentBal = new PaymentBal())
+            using (var paymentBal = new PaymentService())
             {
                 var corpoarteId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -84,7 +84,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetUnMatchedPaymentList()
         {
-            using (var paymentBal = new PaymentBal())
+            using (var paymentBal = new PaymentService())
             {
                 var corpoarteId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -98,7 +98,7 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new PaymentBal();
+            var bal = new PaymentService();
             var expectedPaymentInsNotPaidList = bal.GetExpectedPaymentInsNotPaid(corporateId, facilityId);
             return PartialView(PartialViews.ExpectedPaymentInsNotPaidListView, expectedPaymentInsNotPaidList);
         }
@@ -106,7 +106,7 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new PaymentBal();
+            var bal = new PaymentService();
             var expectedPaymentPatientVarList = bal.GetExpectedPaymentPatientVar(corporateId, facilityId);
             return PartialView(PartialViews.ExpectedPaymentPatientVarListView, expectedPaymentPatientVarList);
         }

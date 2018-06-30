@@ -26,12 +26,12 @@ namespace BillingSystem.Controllers
         public ActionResult DrugMain()
         {
             //Initialize the Drug BAL object
-            var DrugBal = new DrugBal(Helpers.DefaultDrugTableNumber);
+            var DrugService = new DrugService(Helpers.DefaultDrugTableNumber);
 
             //Get the Entity list
-            //var DrugList = DrugBal.GetDrugList();
+            //var DrugList = DrugService.GetDrugList();
 
-            var DrugList = DrugBal.GetDrugListOnDemand(1, Helpers.DefaultRecordCount, "Active");
+            var DrugList = DrugService.GetDrugListOnDemand(1, Helpers.DefaultRecordCount, "Active");
 
             //Intialize the View Model i.e. DrugView which is binded to Main View Index.cshtml under Drug
             var DrugView = new DrugView
@@ -55,7 +55,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindDrugList(string ViewVal)
         {
             //Initialize the Drug BAL object
-            using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+            using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
             {
                 //Get the facilities list
                 var list = bal.GetDrugListByDrugView(ViewVal);
@@ -75,7 +75,7 @@ namespace BillingSystem.Controllers
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
             //Initialize the Drug BAL object
-            using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+            using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
             {
                 //Get the facilities list
                 var list = bal.GetDrugListByDrugView(viewVal).OrderByDescending(f => f.Id).Take(takeValue).ToList(); ;
@@ -105,10 +105,10 @@ namespace BillingSystem.Controllers
             //Check if DrugViewModel 
             if (DrugModel != null)
             {
-                using (var DrugBal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                using (var DrugService = new DrugService(Helpers.DefaultDrugTableNumber))
                 {
                     //Call the AddDrug Method to Add / Update current Drug
-                    newId = DrugBal.AddUptdateDrug(DrugModel);
+                    newId = DrugService.AddUptdateDrug(DrugModel);
                 }
             }
             return Json(newId);
@@ -121,10 +121,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDrug(int id)
         {
-            using (var DrugBal = new DrugBal(Helpers.DefaultDrugTableNumber))
+            using (var DrugService = new DrugService(Helpers.DefaultDrugTableNumber))
             {
                 //Call the AddDrug Method to Add / Update current Drug
-                var currentDrug = DrugBal.GetDrugByID(id);
+                var currentDrug = DrugService.GetDrugByID(id);
 
                 //If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
                 //ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
@@ -137,7 +137,7 @@ namespace BillingSystem.Controllers
         public JsonResult RebindBindDrugList(int blockNumber, string viewVal, string tableNumber)
         {
             var recordCount = Helpers.DefaultRecordCount;
-            using (var bal = new DrugBal(tableNumber))
+            using (var bal = new DrugService(tableNumber))
             {
                 var list = bal.GetDrugListOnDemand(blockNumber, recordCount, viewVal);
                 var jsonResult = new
@@ -156,16 +156,16 @@ namespace BillingSystem.Controllers
         ///// <returns></returns>
         //public ActionResult DeleteDrug(Drug DrugModel)
         //{
-        //    using (var DrugBal = new DrugBal(Helpers.GetCurrentTableNumber,Helpers.GetCurrentTableDescription))
+        //    using (var DrugService = new DrugService(Helpers.GetCurrentTableNumber,Helpers.GetCurrentTableDescription))
         //    {
         //        //Get Drug model object by current Drug ID
-        //        var currentDrug = DrugBal.GetDrugByID(Convert.ToInt32(DrugModel.Id));
+        //        var currentDrug = DrugService.GetDrugByID(Convert.ToInt32(DrugModel.Id));
 
         //        //Check If Drug model is not null
         //        if (currentDrug != null)
         //        {
         //            //Update Operation of current Drug
-        //            var result = DrugBal.AddUptdateDrug(currentDrug);
+        //            var result = DrugService.AddUptdateDrug(currentDrug);
 
         //            //return deleted ID of current Drug as Json Result to the Ajax Call.
         //            return Json(result);
@@ -197,10 +197,10 @@ namespace BillingSystem.Controllers
         public ActionResult BindDrugListCustom(string ViewVal)
         {
             //Initialize the Drug BAL object
-            using (var drugBal = new DrugBal(Helpers.DefaultDrugTableNumber))
+            using (var DrugService = new DrugService(Helpers.DefaultDrugTableNumber))
             {
                 //Get the facilities list
-                var list = drugBal.GetDrugListByDrugView(ViewVal);
+                var list = DrugService.GetDrugListByDrugView(ViewVal);
                 var viewData = new DrugView
                 {
                     CurrentDrug = new Drug(),
@@ -214,7 +214,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetSearchedDrugCodes(string text)
         {
-            using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+            using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
             {
                 var result = bal.GetFilteredDrugCodes(text);
                 var filteredList = result.Select(item => new
@@ -267,10 +267,10 @@ namespace BillingSystem.Controllers
 
 
         //    rowIndex++;
-        //    using (var drugBal = new DrugBal(Helpers.DefaultDrugTableNumber))
+        //    using (var DrugService = new DrugService(Helpers.DefaultDrugTableNumber))
         //    {
         //        //Get the facilities list
-        //        var objDrugData = drugBal.GetDrugList();
+        //        var objDrugData = DrugService.GetDrugList();
         //        //Get the facilities list
         //        var cellStyle = workbook.CreateCellStyle();
         //        cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
@@ -369,10 +369,10 @@ namespace BillingSystem.Controllers
 
 
             rowIndex++;
-            using (var drugBal = new DrugBal(Helpers.DefaultDrugTableNumber))
+            using (var DrugService = new DrugService(Helpers.DefaultDrugTableNumber))
             {
                 //Get the facilities list
-                var objDrugData = searchText != null ? drugBal.ExportFilteredDrugCodes(searchText, tableNumber) : drugBal.GetDrugList();
+                var objDrugData = searchText != null ? DrugService.ExportFilteredDrugCodes(searchText, tableNumber) : DrugService.GetDrugList();
                 //Get the facilities list
                 var cellStyle = workbook.CreateCellStyle();
                 cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
@@ -452,9 +452,9 @@ namespace BillingSystem.Controllers
 
                     stream.Close();
 
-                    using (var oDrugBal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                    using (var oDrugService = new DrugService(Helpers.DefaultDrugTableNumber))
                     {
-                        returnStr = oDrugBal.ImportDrugCodesToDB(dsResult.Tables[0], Helpers.GetLoggedInUserId(),
+                        returnStr = oDrugService.ImportDrugCodesToDB(dsResult.Tables[0], Helpers.GetLoggedInUserId(),
                             Helpers.DefaultDrugTableNumber, "6");
                     }
                 }

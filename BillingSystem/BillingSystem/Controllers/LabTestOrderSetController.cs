@@ -19,7 +19,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the LabTestOrderSet BAL object
-            using (var bal = new LabTestOrderSetBal())
+            using (var bal = new LabTestOrderSetService())
             {
                 //Get the Entity list
                 var list = bal.GetLabOrderSetList();
@@ -47,7 +47,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabTestOrderSetList()
         {
             //Initialize the LabTestOrderSet BAL object
-            using (var bal = new LabTestOrderSetBal())
+            using (var bal = new LabTestOrderSetService())
             {
                 //Get the facilities list
                 var list = bal.GetLabOrderSetList();
@@ -72,7 +72,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new LabTestOrderSetBal())
+                using (var bal = new LabTestOrderSetService())
                 {
                     if (model.Id > 0)
                     {
@@ -97,7 +97,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetLabTestOrderSet(int id)
         {
-            using (var bal = new LabTestOrderSetBal())
+            using (var bal = new LabTestOrderSetService())
             {
                 //Call the AddLabTestOrderSet Method to Add / Update current LabTestOrderSet
                 var current = bal.GetDetailById(id);
@@ -114,7 +114,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteLabTestOrderSet(int id)
         {
-            using (var bal = new LabTestOrderSetBal())
+            using (var bal = new LabTestOrderSetService())
             {
                 //Get LabTestOrderSet model object by current LabTestOrderSet ID
                 var currentLabTestOrderSet = bal.GetDetailById(id);
@@ -144,7 +144,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult SortLabTestOrderList()
         {
-            using (var bal = new LabTestOrderSetBal())
+            using (var bal = new LabTestOrderSetService())
             {
                var list = bal.GetLabOrderSetList();
                 //return deleted ID of current LabTestOrderSet as Json Result to the Ajax Call.

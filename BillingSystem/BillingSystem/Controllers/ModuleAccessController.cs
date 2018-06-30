@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         [CheckRolesAuthorize("1")]
         public ActionResult Index()
         {
-            using (var mBal = new ModuleAccessBal())
+            using (var mBal = new ModuleAccessService())
             {
                 //Get the Entity list
                 var moduleAccessList = mBal.GetModuleAccess();
@@ -49,7 +49,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindModuleAccessList()
         {
             //Initialize the ModuleAccess BAL object
-            using (var moduleAccessBal = new TabsBal())
+            using (var moduleAccessBal = new TabsService())
             {
                 var moduleAccessList = moduleAccessBal.GetTabsOnModuleAccessLoad(Helpers.GetLoggedInUserId(), isActive: true);
 
@@ -91,7 +91,7 @@ namespace BillingSystem.Controllers
                 var cId = list != null && list.Any() ? list[0].CorporateID.Value : Helpers.GetSysAdminCorporateID();
                 var fId = list != null && list.Any() ? list[0].FacilityID.Value : Helpers.GetDefaultFacilityId();
 
-                using (var bal = new ModuleAccessBal())
+                using (var bal = new ModuleAccessService())
                     result = bal.Save(dt, cId, fId, Helpers.GetInvariantCultureDateTime(), Helpers.GetLoggedInUserId());
 
                 return Json(result);
@@ -109,7 +109,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetModuleAccess(int moduleAccessId)
         {
-            using (var moduleAccessBal = new ModuleAccessBal())
+            using (var moduleAccessBal = new ModuleAccessService())
             {
                 //Call the AddModuleAccess Method to Add / Update current ModuleAccess
                 var currentModuleAccess = moduleAccessBal.GetModuleAccessByID(Convert.ToInt32(moduleAccessId));
@@ -129,7 +129,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteModuleAccess(int moduleAccessId)
         {
-            using (var moduleAccessBal = new ModuleAccessBal())
+            using (var moduleAccessBal = new ModuleAccessService())
             {
                 //Get ModuleAccess model object by current ModuleAccess ID
                 var currentModuleAccess = moduleAccessBal.GetModuleAccessByID(Convert.ToInt32(moduleAccessId));
@@ -174,7 +174,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetCorporateModulesByCorporateID(int coporateId)
         {
             var tabsList = new List<TabsCustomModel>();
-            using (var objTabsBal = new TabsBal())
+            using (var objTabsBal = new TabsService())
             {
                 tabsList = objTabsBal.GetParentCorporateFacilityTabList(coporateId, 0);
             }
@@ -191,7 +191,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetModulesAccessByCorporateIDFacilityID(int coporateId, int facilityId)
         {
-            var objmoduleAccessBal = new ModuleAccessBal();
+            var objmoduleAccessBal = new ModuleAccessService();
             //  var loggedinUserid = Helpers.GetLoggedInUserId();
             var selectedTabs = objmoduleAccessBal.GetModulesAccessList(coporateId, facilityId);
             return Json(selectedTabs);
@@ -206,7 +206,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindParentTabsList()
         {
             //Initialize the ModuleAccess BAL object
-            using (var moduleAccessBal = new TabsBal())
+            using (var moduleAccessBal = new TabsService())
             {
                 var moduleAccessList = moduleAccessBal.GetAllTabList(true, Helpers.GetLoggedInUserId());
                 

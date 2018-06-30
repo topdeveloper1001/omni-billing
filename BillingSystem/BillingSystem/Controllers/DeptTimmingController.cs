@@ -34,7 +34,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindDeptTimmingList()
         {
             // Initialize the DeptTimming BAL object
-            using (var deptTimmingBal = new DeptTimmingBal())
+            using (var deptTimmingBal = new DeptTimmingService())
             {
                 // Get the facilities list
                 var deptTimmingList = deptTimmingBal.GetDeptTimming();
@@ -55,7 +55,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteDeptTimming(int id)
         {
-            using (var bal = new DeptTimmingBal())
+            using (var bal = new DeptTimmingService())
             {
                 // Get DeptTimming model object by current DeptTimming ID
                 var currentDeptTimming = bal.GetDeptTimmingById(id);
@@ -89,7 +89,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetDeptTimming(int id)
         {
-            using (var bal = new DeptTimmingBal())
+            using (var bal = new DeptTimmingService())
             {
                 // Call the AddDeptTimming Method to Add / Update current DeptTimming
                 DeptTimming currentDeptTimming = bal.GetDeptTimmingById(id);
@@ -110,7 +110,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeptTimmingMain()
         {
             // Initialize the DeptTimming BAL object
-            var deptTimmingBal = new DeptTimmingBal();
+            var deptTimmingBal = new DeptTimmingService();
 
             // Get the Entity list
             var deptTimmingList = deptTimmingBal.GetDeptTimming();
@@ -160,7 +160,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DeptTimmingBal())
+                using (var bal = new DeptTimmingService())
                 {
                     if (model.DeptTimmingId > 0)
                     {

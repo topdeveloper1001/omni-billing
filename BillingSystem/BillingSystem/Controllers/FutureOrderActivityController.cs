@@ -34,7 +34,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindFutureOrderActivityList()
         {
             // Initialize the FutureOrderActivity BAL object
-            using (var FutureOrderActivityBal = new FutureOrderActivityBal())
+            using (var FutureOrderActivityBal = new FutureOrderActivityService())
             {
                 // Get the facilities list
                 var FutureOrderActivityList = FutureOrderActivityBal.GetFutureOrderActivity();
@@ -56,7 +56,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteFutureOrderActivity(int id)
         {
-            using (var bal = new FutureOrderActivityBal())
+            using (var bal = new FutureOrderActivityService())
             {
                 // Get FutureOrderActivity model object by current FutureOrderActivity ID
                 var currentFutureOrderActivity = bal.GetFutureOrderActivityById(id);
@@ -93,7 +93,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetFutureOrderActivity(int id)
         {
-            using (var bal = new FutureOrderActivityBal())
+            using (var bal = new FutureOrderActivityService())
             {
                 // Call the AddFutureOrderActivity Method to Add / Update current FutureOrderActivity
                 FutureOrderActivity currentFutureOrderActivity = bal.GetFutureOrderActivityById(id);
@@ -115,7 +115,7 @@ namespace BillingSystem.Controllers
         public ActionResult FutureOrderActivityMain()
         {
             // Initialize the FutureOrderActivity BAL object
-            var FutureOrderActivityBal = new FutureOrderActivityBal();
+            var FutureOrderActivityBal = new FutureOrderActivityService();
 
             // Get the Entity list
             var FutureOrderActivityList = FutureOrderActivityBal.GetFutureOrderActivity();
@@ -166,7 +166,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new FutureOrderActivityBal())
+                using (var bal = new FutureOrderActivityService())
                 {
                     if (model.FutureOrderActivityID > 0)
                     {

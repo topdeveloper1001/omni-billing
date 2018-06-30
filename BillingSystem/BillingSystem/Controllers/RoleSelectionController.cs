@@ -48,10 +48,10 @@ namespace BillingSystem.Controllers
         private List<RoleSelectionCustomModel> GetUserRoles(int userid)
         {
             var userroleList = new List<RoleSelectionCustomModel>();
-            var userroleBal = new UserRoleBal();
-            var roleBal = new RoleBal();
-            var facilityRole = new FacilityRoleBal();
-            var facility = new FacilityBal();
+            var userroleBal = new UserRoleService();
+            var roleBal = new RoleService();
+            var facilityRole = new FacilityRoleService();
+            var facility = new FacilityService();
             var roles = userroleBal.GetUserRolesByUserId(userid);
             foreach (var role in roles)
             {
@@ -95,7 +95,7 @@ namespace BillingSystem.Controllers
 
                 objSession.MenuSessionList = _uService.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
 
-                using (var rtBal = new RoleTabsBal())
+                using (var rtBal = new RoleTabsService())
                 {
                     objSession.IsPatientSearchAccessible = rtBal.CheckIfTabNameAccessibleToGivenRole("Patient Lookup",
                         ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
@@ -147,7 +147,7 @@ namespace BillingSystem.Controllers
                 // Changed by Shashank ON : 5th May 2015 : To add the Module access level Security when user log in via Facility and Corporate 
                 objSession.MenuSessionList = _uService.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
             }
-            using (var facilitybal = new FacilityBal())
+            using (var facilitybal = new FacilityService())
             {
                 var facilityObj = facilitybal.GetFacilityByFacilityId(facilityId);
                 var timezoneValue = facilityObj.FacilityTimeZone;

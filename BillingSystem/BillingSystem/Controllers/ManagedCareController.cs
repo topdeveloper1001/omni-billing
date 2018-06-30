@@ -18,7 +18,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the ManagedCare BAL object
-            var managedCareBal = new ManagedCareBal();
+            var managedCareBal = new ManagedCareService();
 
             //Get the Entity list
             var corporateId = Helpers.GetDefaultCorporateId();
@@ -45,7 +45,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindManagedCareList()
         {
             //Initialize the ManagedCare BAL object
-            using (var managedCareBal = new ManagedCareBal())
+            using (var managedCareBal = new ManagedCareService())
             {
                 //Get the facilities list
                 var corporateId = Helpers.GetDefaultCorporateId();
@@ -75,7 +75,7 @@ namespace BillingSystem.Controllers
             //Check if ManagedCareViewModel 
             if (model != null)
             {
-                using (var bal = new ManagedCareBal())
+                using (var bal = new ManagedCareService())
                 {
                     model.CorporateID = corporateId;
                     model.FacilityID = facilityId;
@@ -104,7 +104,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetManagedCare(int managedCareId)
         {
-            using (var managedCareBal = new ManagedCareBal())
+            using (var managedCareBal = new ManagedCareService())
             {
                 //Call the AddManagedCare Method to Add / Update current ManagedCare
                 var currentManagedCare = managedCareBal.GetManagedCareByID(Convert.ToInt32(managedCareId));
@@ -124,7 +124,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteManagedCare(int managedCareId)
         {
-            using (var managedCareBal = new ManagedCareBal())
+            using (var managedCareBal = new ManagedCareService())
             {
                 //Get ManagedCare model object by current ManagedCare ID
                 var currentManagedCare = managedCareBal.GetManagedCareByID(Convert.ToInt32(managedCareId));
@@ -167,7 +167,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindInsuranceCompanies()
         {
-            using (var insBal = new InsuranceCompanyBal())
+            using (var insBal = new InsuranceCompanyService())
             {
                 var list = insBal.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
                 return Json(list);
@@ -181,7 +181,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindInsurancePlansByCompanyId(int companyId)
         {
-            using (var insBal = new InsurancePlansBal())
+            using (var insBal = new InsurancePlansService())
             {
                 var list = insBal.GetInsurancePlansByCompanyId(companyId, CurrentDateTime);
                 return Json(list);

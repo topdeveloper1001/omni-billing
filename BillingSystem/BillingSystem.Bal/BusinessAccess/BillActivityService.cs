@@ -23,7 +23,6 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<Drug> _drugRepository;
         private readonly IRepository<ServiceCode> _sRepository;
         private readonly IRepository<DiagnosisCode> _dcRepository;
-
         private readonly BillingEntities _context;
 
         public BillActivityService(IRepository<BillActivity> repository, IRepository<BillHeader> bRepository, IRepository<GlobalCodes> gRepository, IRepository<CPTCodes> cRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, BillingEntities context)
@@ -39,40 +38,6 @@ namespace BillingSystem.Bal.BusinessAccess
             _dcRepository = dcRepository;
             _context = context;
         }
-
-        //public BillActivityBal(string cptTableNumber, string serviceCodeTableNumber, string drgTableNumber, string drugTableNumber, string hcpcsTableNumber, string diagnosisTableNumber)
-        //{
-        //    if (!string.IsNullOrEmpty(cptTableNumber))
-        //    {
-        //        CptTableNumber = cptTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(serviceCodeTableNumber))
-        //    {
-        //        ServiceCodeTableNumber = serviceCodeTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(drgTableNumber))
-        //    {
-        //        DrgTableNumber = drgTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(drugTableNumber))
-        //    {
-        //        DrugTableNumber = drugTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(hcpcsTableNumber))
-        //    {
-        //        HcpcsTableNumber = hcpcsTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(diagnosisTableNumber))
-        //    {
-        //        DiagnosisTableNumber = diagnosisTableNumber;
-        //    }
-        //}
-
         /// <summary>
         /// Gets the bill detail view.
         /// </summary>

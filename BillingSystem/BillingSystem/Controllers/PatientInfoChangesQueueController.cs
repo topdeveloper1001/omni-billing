@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the PatientInfoChangesQueue BAL object
-            using (var bal = new PatientInfoChangesQueueBal())
+            using (var bal = new PatientInfoChangesQueueService())
             {
                 //Get the Entity list
                 var list = bal.GetPatientInfoChangesQueueList();
@@ -56,7 +56,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PatientInfoChangesQueueBal())
+                using (var bal = new PatientInfoChangesQueueService())
                 {
                     if (model.Id > 0)
                     {
@@ -84,7 +84,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPatientInfoChangesQueueDetails(int id)
         {
-            using (var bal = new PatientInfoChangesQueueBal())
+            using (var bal = new PatientInfoChangesQueueService())
             {
                 //Call the AddPatientInfoChangesQueue Method to Add / Update current PatientInfoChangesQueue
                 var current = bal.GetPatientInfoChangesQueueByID(id);
@@ -101,7 +101,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeletePatientInfoChangesQueue(int id)
         {
-            using (var bal = new PatientInfoChangesQueueBal())
+            using (var bal = new PatientInfoChangesQueueService())
             {
                 //Get PatientInfoChangesQueue model object by current PatientInfoChangesQueue ID
                 var model = bal.GetPatientInfoChangesQueueByID(id);

@@ -55,9 +55,9 @@ namespace BillingSystem.Controllers
             {
                 rowExists = "1";
             }
-            using (var oPdfTemplates = new PDFTemplatesBal())
+            using (var oPdfTemplates = new PDFTemplatesService())
             {
-                using (var oPatientEvaluationBal = new PatientEvaluationBal())
+                using (var oPatientEvaluationBal = new PatientEvaluationService())
                 {
                     var evaluationSet = new PatientEvaluationSet
                     {
@@ -122,11 +122,11 @@ namespace BillingSystem.Controllers
             var currentDate = Helpers.GetInvariantCultureDateTime();
 
 
-            var pBal = new PDFTemplatesBal();
+            var pBal = new PDFTemplatesService();
             var sId = Convert.ToInt32(setId);
             var patientId = Convert.ToInt32(pId);
             using (
-                var orderBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
+                var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber,
                     Helpers.DefaultDiagnosisTableNumber))
             {
@@ -156,7 +156,7 @@ namespace BillingSystem.Controllers
                 List<OtherPatientForm> nursingAssessmentList;
                 List<OtherPatientForm> economicalHistory;
 
-                using (var bal = new PDFTemplatesBal())
+                using (var bal = new PDFTemplatesService())
                 {
                     var enId = Convert.ToInt32(currentEncounterId);
                     currentPatient = bal.GetPatientInfoByEncounterId(currentEncounterId);
@@ -213,7 +213,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetSignatureData(int ecounterId, int patinetId, string setId)
         {
-            using (var eBal = new PDFTemplatesBal())
+            using (var eBal = new PDFTemplatesService())
             {
                 var list = eBal.GetSignaturePathNurseForm(ecounterId, patinetId, setId);
                 return Json(list);

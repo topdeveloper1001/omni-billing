@@ -22,9 +22,9 @@ namespace BillingSystem.Controllers
         public ActionResult Index(Int32? fId)
         {
             //Initialize the Projects BAL object
-            using (var bal = new ProjectsBal())
+            using (var bal = new ProjectsService())
             {
-                var oProjectTargetsBal = new ProjectTargetsBal();
+                var oProjectTargetsBal = new ProjectTargetsService();
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 Session[SessionNames.SelectedFacilityId.ToString()] = fId ?? 17;
 
@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
                 model.CorporateId = corporateid;
                 //model.FacilityId = facilityid;
 
-                using (var bal = new ProjectsBal())
+                using (var bal = new ProjectsService())
                 {
                     if (model.ProjectId > 0)
                     {
@@ -97,7 +97,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetProjectsDetails(int id)
         {
-            using (var bal = new ProjectsBal())
+            using (var bal = new ProjectsService())
             {
                 //Call the AddProjects Method to Add / Update current Projects
                 var current = bal.GetProjectsById(id);
@@ -129,7 +129,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjects(int id)
         {
-            using (var bal = new ProjectsBal())
+            using (var bal = new ProjectsService())
             {
                 //var list = bal.DeleteProjects(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var list = bal.DeleteProjects(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
@@ -143,7 +143,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public PartialViewResult ProjectTargetsList()
         {
-            using (var bal = new ProjectTargetsBal())
+            using (var bal = new ProjectTargetsService())
             {
                 //var list = bal.GetProjectTargetsList(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var list = bal.GetProjectTargetsList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
@@ -157,7 +157,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ProjectTasksList(string userId)
         {
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
             {
                 //var list = bal.GetProjectTasksList(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var list = bal.GetProjectTasksList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId(), userId);
@@ -171,7 +171,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ProjectTaskTargetsList()
         {
-            using (var bal = new ProjectTaskTargetsBal())
+            using (var bal = new ProjectTaskTargetsService())
             {
                 //var list = bal.GetProjectTaskTargetsList(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var list = bal.GetProjectTaskTargetsList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
@@ -186,7 +186,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetProjectNumbers()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ProjectsBal())
+            using (var bal = new ProjectsService())
             {
                 //var projects = bal.GetProjectNumbers(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var projects = bal.GetProjectNumbers(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
@@ -222,7 +222,7 @@ namespace BillingSystem.Controllers
             var month = Convert.ToDateTime(model.ProjectDate).Month;
             model.ExternalValue2 = Convert.ToString(month);
 
-            using (var bal = new ProjectTargetsBal())
+            using (var bal = new ProjectTargetsService())
             {
                 if (model.Id > 0)
                 {
@@ -253,7 +253,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjectTargets(int id)
         {
-            using (var bal = new ProjectTargetsBal())
+            using (var bal = new ProjectTargetsService())
             {
                 //var list = bal.DeleteProjectTarget(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var list = bal.DeleteProjectTarget(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
@@ -270,7 +270,7 @@ namespace BillingSystem.Controllers
         /// <returns>returns the newly added or updated ID of ProjectTasks row</returns>
         public ActionResult SaveProjectTasks(ProjectTasks model)
         {
-            var bal = new ProjectTasksBal();
+            var bal = new ProjectTasksService();
             var list = new List<ProjectTasksCustomModel>();
 
             if (model != null)
@@ -316,7 +316,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjectTasks(int id, string userId)
         {
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
             {
                 //var list = bal.DeleteProjectTask(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var list = bal.DeleteProjectTask(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId(), userId);
@@ -335,7 +335,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult BindTargetCompletionValueDropDown(string categoryId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder);
             return Json(list);
         }
@@ -361,7 +361,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new ProjectTaskTargetsBal())
+                using (var bal = new ProjectTaskTargetsService())
                 {
                     if (model.Id > 0)
                     {
@@ -376,7 +376,7 @@ namespace BillingSystem.Controllers
 
                     //Call the AddProjectTaskTargets Method to Add / Update current ProjectTaskTargets
                     list = bal.SaveProjectTaskTargets(model);
-                    var oProjectTargetsBal = new ProjectTargetsBal();
+                    var oProjectTargetsBal = new ProjectTargetsService();
                     var val = oProjectTargetsBal.SaveMonthWiseValuesInProjectDashboard("", Convert.ToString(month),
                    Convert.ToString(model.CorporateId),
                    Convert.ToString(model.FacilityId), Convert.ToString(model.TaskNumber));
@@ -394,7 +394,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjectTaskTargets(int id)
         {
-            using (var bal = new ProjectTaskTargetsBal())
+            using (var bal = new ProjectTaskTargetsService())
             {
                 //var list = bal.DeleteProjectTaskTargets(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var list = bal.DeleteProjectTaskTargets(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
@@ -410,7 +410,7 @@ namespace BillingSystem.Controllers
         public JsonResult BindTaskNumbers()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
             {
                 //var tn = bal.GetTaskNumbers(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
                 var tn = bal.GetTaskNumbers(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
@@ -424,7 +424,7 @@ namespace BillingSystem.Controllers
         public JsonResult CheckDuplicateProjectNumber(string projectNumber, int projectId)
         {
             var isExists = true;
-            using (var bal = new ProjectsBal())
+            using (var bal = new ProjectsService())
                 isExists = bal.CheckDuplicateProjectNumber(projectNumber, projectId);
 
             return Json(isExists, JsonRequestBehavior.AllowGet);
@@ -434,7 +434,7 @@ namespace BillingSystem.Controllers
         public JsonResult CheckDuplicateTaskNumber(string projectNumber, string taskNumber, int taskId)
         {
             var isExists = true;
-            using (var bal = new ProjectTasksBal())
+            using (var bal = new ProjectTasksService())
                 isExists = bal.CheckDuplicateTaskNumber(projectNumber, taskNumber, taskId);
 
             return Json(isExists, JsonRequestBehavior.AllowGet);

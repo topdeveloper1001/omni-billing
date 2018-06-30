@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult InsurancePlans()
         {
-            using (var bal = new InsurancePlansBal())
+            using (var bal = new InsurancePlansService())
             {
                 //Get the facilities list
                 var list = bal.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
@@ -53,7 +53,7 @@ namespace BillingSystem.Controllers
             //Check if InsurancePlansViewModel 
             if (m != null)
             {
-                using (var bal = new InsurancePlansBal())
+                using (var bal = new InsurancePlansService())
                 {
                     if (m.InsurancePlanId > 0)
                     {
@@ -86,7 +86,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindInsurancePlansList(bool showIsActive)
         {
             //Initialize the InsurancePlans Communicator object
-            using (var bal = new InsurancePlansBal())
+            using (var bal = new InsurancePlansService())
             {
                 //Get the facilities list
                 var list = bal.GetInsurancePlanList(showIsActive, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
@@ -103,7 +103,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetInsurancePlanById(string id)
         {
-            using (var bal = new InsurancePlansBal())
+            using (var bal = new InsurancePlansService())
             {
                 var current = bal.GetInsurancePlanById(Convert.ToInt32(id));
                 return PartialView(PartialViews.insurancePlansAddEdit, current);
@@ -130,9 +130,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteInsurancePlans(CommonModel model)
         {
-            using (var insurancePlansBal = new InsurancePlansBal())
+            using (var insurancePlansBal = new InsurancePlansService())
             {
-                using (var policeBal = new InsurancePolicesBal())
+                using (var policeBal = new InsurancePolicesService())
                 {
                     var isExist = policeBal.CheckInsurancePolicyExist(Convert.ToInt32(model.Id));
                     if (isExist)
@@ -169,7 +169,7 @@ namespace BillingSystem.Controllers
         [AcceptVerbs(HttpVerbs.Post)]
         public ActionResult GetInsuranceCompanies()
         {
-            using (var bal = new InsuranceCompanyBal())
+            using (var bal = new InsuranceCompanyService())
             {
                 var list = bal.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
                 return Json(list);
@@ -185,7 +185,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ValidatePlanNamePlanNumber(string planName, string planNumber, int id, int insuranceCompanyId)
         {
-            using (var bal = new InsurancePlansBal())
+            using (var bal = new InsurancePlansService())
             {
                 var result = bal.CheckDuplicateInsurancePlan(planName, planNumber, id, insuranceCompanyId);
                 return Json(result);
@@ -199,7 +199,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPlanNameById(int id)
         {
-            using (var bal = new InsurancePlansBal())
+            using (var bal = new InsurancePlansService())
             {
                 var result = bal.GetInsurancePlanById(id);
                 return Json(result != null ? result.PlanName : string.Empty);
@@ -214,7 +214,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExportToPDF()
         {
-            using (var bal = new InsurancePlansBal())
+            using (var bal = new InsurancePlansService())
             {
                 Response.AddHeader("Content-Type", "application/vnd.ms-excel");
                 var list = bal.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
@@ -271,7 +271,7 @@ namespace BillingSystem.Controllers
             row.CreateCell(4).SetCellValue("End Date");
             row.CreateCell(5).SetCellValue("Description");
             rowIndex++;
-            using (var iBal = new InsurancePlansBal())
+            using (var iBal = new InsurancePlansService())
             {
                 //Get the facilities list
                 var objCompanyPlan = iBal.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());

@@ -33,16 +33,16 @@ namespace BillingSystem.Controllers
                     new { messageId = Convert.ToInt32(MessageType.ViewEM) });
 
             var patientId = Convert.ToInt32(pId);
-            using (var orderBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var enList = orderBal.GetEncountersListByPatientId(patientId);
-                using (var medicalRecordbal = new MedicalRecordBal()) //Updated by Shashank on Oct 28, 2014
+                using (var medicalRecordbal = new MedicalRecordService()) //Updated by Shashank on Oct 28, 2014
                 {
-                    using (var medicalnotesbal = new MedicalNotesBal()) //Updated by Shashank on Oct 28, 2014
+                    using (var medicalnotesbal = new MedicalNotesService()) //Updated by Shashank on Oct 28, 2014
                     {
-                        using (var medicalVitals = new MedicalVitalBal())
+                        using (var medicalVitals = new MedicalVitalService())
                         {
-                            using (var diagnosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+                            using (var diagnosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
                             {
                                 var currentEncounterId = (enList != null && enList.Any() &&
                                                           enList.First().EncounterEndTime == null)
@@ -74,7 +74,7 @@ namespace BillingSystem.Controllers
                                         primarydiagnosisId = diagnosisCustomModel.DiagnosisID;
                                     }
                                 }
-                                using (var orderActivityBal = new OrderActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+                                using (var orderActivityBal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
                                 {
                                     var encounterActivitesobj = orderActivityBal.GetOrderActivitiesByEncounterId(Convert.ToInt32(currentEncounterId));
                                     var encounterActivitesClosedListObj =
@@ -312,7 +312,7 @@ namespace BillingSystem.Controllers
         {
             //var eNumId = -1;
 
-            using (var bal = new PatientEvaluationBal())
+            using (var bal = new PatientEvaluationService())
             {
                 if (encounterId == 0 && rowExists == "0" && patientId > 0)
                 {
@@ -546,7 +546,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetSignatureData(int ecounterId, int patinetId, string setId)
         {
-            using (var eBal = new PatientEvaluationBal())
+            using (var eBal = new PatientEvaluationService())
             {
                 var list = eBal.GetSignaturePath(ecounterId, patinetId, setId);
                 return Json(list);
@@ -559,7 +559,7 @@ namespace BillingSystem.Controllers
         {
 
             var logedInUser = Helpers.GetLoggedInUserId();
-            using (var pEval = new PatientEvaluationBal())
+            using (var pEval = new PatientEvaluationService())
             {
                 var signedUser = pEval.GetCreatedByFromEvaluationSet(setId, patientId);
                 if (logedInUser == signedUser)
@@ -581,12 +581,12 @@ namespace BillingSystem.Controllers
                 return RedirectToAction(ActionResults.patientSearch, ControllerNames.patientSearch, new { messageId = Convert.ToInt32(MessageType.ViewEM) });
 
             var patientId = Convert.ToInt32(pId);
-            using (var orderBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var enList = orderBal.GetEncountersListByPatientId(patientId);
-                using (var medicalRecordbal = new MedicalRecordBal())
+                using (var medicalRecordbal = new MedicalRecordService())
                 {
-                    using (var medicalVitals = new MedicalVitalBal())
+                    using (var medicalVitals = new MedicalVitalService())
                     {
                         var currentEncounterId = (enList != null && enList.Any() &&
                                                   enList.First().EncounterEndTime == null)
@@ -605,7 +605,7 @@ namespace BillingSystem.Controllers
                         var orderStatus = OrderStatus.Open.ToString();
                         var openOrdersList = orderBal.GetPhysicianOrders(currentEncounterId, orderStatus);
 
-                        using (var bal = new OrderActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+                        using (var bal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
                         {
                             var encounterActivitesobj = bal.GetOrderActivitiesByEncounterId(Convert.ToInt32(currentEncounterId));
                             var encounterActivitesClosedListObj =
@@ -641,7 +641,7 @@ namespace BillingSystem.Controllers
                         var imageSource = string.Empty;
                         var evGcCategories = new[] { "4610", "4613", "4615", "4616", "4617", "4624", "4625", "4627", "4628", "4629" };
 
-                        using (var bal = new PatientDischargeSummaryBal())
+                        using (var bal = new PatientDischargeSummaryService())
                         {
 
                             var result = bal.GetPatientEvaluationData(patientId, Convert.ToInt32(currentEncounterId),

@@ -92,7 +92,7 @@ namespace BillingSystem.Controllers
             if (model != null && !string.IsNullOrEmpty(model.Password) && !string.IsNullOrEmpty(model.Email))
             {
                 var flag = true;
-                using (var pbal = new PatientLoginDetailBal())
+                using (var pbal = new PatientLoginDetailService())
                 {
                     var currentPatient = pbal.GetPatientLoginDetailsByEmail(model.Email);
                     if (currentPatient != null)
@@ -121,7 +121,7 @@ namespace BillingSystem.Controllers
 
                             if (flag)
                             {
-                                using (var bal = new LoginTrackingBal())
+                                using (var bal = new LoginTrackingService())
                                 {
                                     var loginTrackingVm = new LoginTracking
                                     {
@@ -156,12 +156,12 @@ namespace BillingSystem.Controllers
                                     objSession.RoleId = 0;
                                     objSession.RoleName = "Patient Access";
 
-                                    using (var tBal = new TabsBal())
+                                    using (var tBal = new TabsService())
                                         //objSession.MenuSessionList = tBal.GetPatientTabsList();
                                         objSession.MenuSessionList = tBal.GetPatientTabsListData(patientId);
 
 
-                                    using (var mBal = new ModuleAccessBal())
+                                    using (var mBal = new ModuleAccessService())
                                     {
                                         Session[SessionNames.SessoionModuleAccess.ToString()] =
                                                                         mBal.GetModulesAccessList(currentPatient.CorporateId, currentPatient.FacilityId);
@@ -188,7 +188,7 @@ namespace BillingSystem.Controllers
                                     var failedattempts = timespan.TotalMinutes < 30
                                         ? Convert.ToInt32(currentPatient.FailedLoginAttempts) + 1
                                         : 1;
-                                    using (var bal = new PatientLoginDetailBal())
+                                    using (var bal = new PatientLoginDetailService())
                                     {
                                         bal.UpdatePatientLoginFailedLog(patientId, failedattempts,
                                             Helpers.GetInvariantCultureDateTime());
@@ -234,7 +234,7 @@ namespace BillingSystem.Controllers
             //var _configdata = objSystemConfigurationWebCommunicator.getOfflineTime();
             var login = new Users();
 
-            var systemConfigurationBal = new SystemConfigurationBal();
+            var systemConfigurationBal = new SystemConfigurationService();
             var configdata = systemConfigurationBal.getOfflineTime();
             //Changes end here
 
@@ -276,7 +276,7 @@ namespace BillingSystem.Controllers
                         }
                     }
 
-                    var bal = new LoginTrackingBal();
+                    var bal = new LoginTrackingService();
                     if (flag)
                     {
                         ViewBag.check = LoginResponseTypes.Success.ToString();
@@ -350,7 +350,7 @@ namespace BillingSystem.Controllers
                                 objSession.RoleKey = cm.RoleKey;
 
 
-                                using (var facilitybal = new FacilityBal())
+                                using (var facilitybal = new FacilityService())
                                 {
                                     var facilityObj = facilitybal.GetFacilityByFacilityId(currentRole.FacilityId);
                                     var timezoneValue = facilityObj.FacilityTimeZone;
@@ -363,7 +363,7 @@ namespace BillingSystem.Controllers
                                         objSession.TimeZone = "0.0";
                                 }
 
-                                using (var rtBal = new RoleTabsBal())
+                                using (var rtBal = new RoleTabsService())
                                 {
                                     objSession.IsPatientSearchAccessible = rtBal.CheckIfTabNameAccessibleToGivenRole("Patient Lookup",
                                         ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
@@ -615,7 +615,7 @@ namespace BillingSystem.Controllers
             var userType = 1;
             if (objSession != null)
             {
-                using (var bal = new LoginTrackingBal())
+                using (var bal = new LoginTrackingService())
                     bal.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
                 userType = objSession.LoginUserType;
             }
@@ -638,7 +638,7 @@ namespace BillingSystem.Controllers
         [AcceptVerbs(HttpVerbs.Post)]
         public ActionResult GetStatesByCountryId(string countryId)
         {
-            var bal = new StateBal();
+            var bal = new StateService();
             var stateList = bal.GetStatesByCountryId(Convert.ToInt32(countryId));
             return Json(stateList);
         }
@@ -671,7 +671,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetAllGlobalCodeCategories()
         {
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategories();
                 return Json(list);
@@ -700,7 +700,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodeCategories(string startRange, string endRange)
         {
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
                 return Json(list);
@@ -716,7 +716,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetSubcategortCode(string startRange, string endRange)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var finalList = bal.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
                 if (finalList.Count > 0)
@@ -741,13 +741,13 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public JsonResult GetGlobalCodes(string categoryId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeName);
             return Json(list, JsonRequestBehavior.AllowGet);
         }
         public ActionResult GetGlobalCodesOrderByGlobalCodeId(string categoryId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeID);
             return Json(list);
         }
@@ -760,7 +760,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesOrderbyCode(string categoryId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => Convert.ToDecimal(x.GlobalCodeValue)).ToList();
             return Json(list);
         }
@@ -774,7 +774,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesOrderBy(string categoryId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder).ToList();
             return Json(list);
         }
@@ -788,7 +788,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesOrderbyName(string categoryId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => (x.GlobalCodeName)).ToList();
             return Json(list);
         }
@@ -803,7 +803,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetEncounterTypes(string categoryId, string patientTypeId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetEncounterTypesByPatientType(categoryId, patientTypeId);
             return Json(list);
         }
@@ -829,7 +829,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetFacilityNameById(string facilityNumber)
         {
-            using (var facilityBal = new FacilityBal())
+            using (var facilityBal = new FacilityService())
             {
                 if (string.IsNullOrEmpty(facilityNumber))
                 {
@@ -903,7 +903,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetRolesDropdownData(string corporateId)
         {
-            using (var roleBal = new RoleBal())
+            using (var roleBal = new RoleService())
             {
                 var roles = roleBal.GetRolesByCorporateId(Convert.ToInt32(corporateId));
                 if (roles.Count > 0)
@@ -928,7 +928,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetDistinctRolesDropdownData(string corporateId)
         {
-            using (var roleBal = new RoleBal())
+            using (var roleBal = new RoleService())
             {
                 var roles = roleBal.GetRolesByCorporateId(Convert.ToInt32(corporateId));
                 if (roles.Count > 0)
@@ -955,7 +955,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetRolesByFacilityDropdownData(string corporateId, string facilityId)
         {
-            using (var roleBal = new RoleBal())
+            using (var roleBal = new RoleService())
             {
                 var roles = roleBal.GetRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
                 if (roles.Count > 0)
@@ -981,7 +981,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRolesByCorporateFacilityDropdownData(string corporateId, string facilityId)
         {
-            using (var roleBal = new RoleBal())
+            using (var roleBal = new RoleService())
             {
                 var roles = roleBal.GetFacilityRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
                 if (roles.Count > 0)
@@ -1028,7 +1028,7 @@ namespace BillingSystem.Controllers
             switch (codeType)
             {
                 case SearchType.ServiceCode:
-                    using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+                    using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
                     {
                         var userid = Helpers.GetLoggedInUserId();
                         viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
@@ -1055,7 +1055,7 @@ namespace BillingSystem.Controllers
                     return PartialView(viewpath, viewData);
 
                 case SearchType.DRG:
-                    using (var bal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+                    using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
                     {
                         viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
                         var result3 = !string.IsNullOrEmpty(text) ? bal.GetDRGCodesFiltered(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultDrgTableNumber : tableNumber) : bal.GetDrgCodes();
@@ -1070,7 +1070,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, drgCodesView);
                     }
                 case SearchType.HCPCS:
-                    using (var bal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+                    using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
                     {
                         viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
                         //var result = !string.IsNullOrEmpty(text) ? bal.GetFilteredHCPCSCodes(text) : bal.GetHCPCSCodes();
@@ -1084,7 +1084,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, hcpcsCodesView);
                     }
                 case SearchType.Denial:
-                    using (var bal = new DenialBal())
+                    using (var bal = new DenialService())
                     {
                         //var viewpath = string.Format("../Denial/{0}", PartialViews.DenialList);
                         //var result = bal.GetFilteredDenialCodes(text);
@@ -1107,7 +1107,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, result5);
                     }
                 case SearchType.Diagnosis:
-                    using (var bal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+                    using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
                     {
                         viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
                         //var result = !string.IsNullOrEmpty(text) ? bal.GetFilteredDiagnosisCodes(text) : bal.GetDiagnosisCode();
@@ -1127,7 +1127,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, diagnosisCodeView);
                     }
                 case SearchType.DRUG:
-                    using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                    using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
                     {
                         viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
                         var result7 = !string.IsNullOrEmpty(text) ?
@@ -1168,7 +1168,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesByCategoriesRange(string startRange, string endRange)
         {
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var list = bal.GetGlobalCodesByCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
                 return Json(list);
@@ -1191,16 +1191,16 @@ namespace BillingSystem.Controllers
                     var cptcodeslist = _cptService.GetCPTCodes(Helpers.DefaultCptTableNumber);
                     return Json(cptcodeslist);
                 case OrderType.HCPCS:
-                    var hcpcsCodesBal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber);
+                    var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber);
                     var hcpcsCodeslist = hcpcsCodesBal.GetHCPCSCodes();
                     return Json(hcpcsCodeslist);
                 case OrderType.DRG:
-                    var drgCodesBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber);
+                    var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
                     var drgCodeslist = drgCodesBal.GetDrgCodes();
                     return Json(drgCodeslist);
                 case OrderType.DRUG:
-                    var drugBal = new DrugBal(Helpers.DefaultDrugTableNumber);
-                    var list = drugBal.GetDrugList();
+                    var DrugService = new DrugService(Helpers.DefaultDrugTableNumber);
+                    var list = DrugService.GetDrugList();
                     return Json(list);
             }
             return Json(null);
@@ -1214,7 +1214,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetMaxGlobalCodeValueByCategory(string categoryValue)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var maxId = bal.GetMaxGlobalCodeValueByCategory(categoryValue);
             return Json(maxId);
         }
@@ -1258,7 +1258,7 @@ namespace BillingSystem.Controllers
                         //return PartialView(viewpath, result);
                         return PartialView(viewpath, CPTCodesList);
                     case OrderType.DRG:
-                        using (var bal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+                        using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
                         {
                             viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
                             var result5 = bal.GetDrgCodes().Take(100).ToList();
@@ -1273,7 +1273,7 @@ namespace BillingSystem.Controllers
                             //return PartialView(viewpath, result);
                         }
                     case OrderType.HCPCS:
-                        using (var bal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+                        using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
                         {
                             viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
                             var result4 = bal.GetHCPCSCodes().Take(100).ToList();
@@ -1285,7 +1285,7 @@ namespace BillingSystem.Controllers
                             return PartialView(viewpath, HCPCSCodesList);
                         }
                     case OrderType.Orders:
-                        using (var bal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+                        using (var bal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
                         {
                             viewpath = string.Format("../Summary/{0}", PartialViews.OpenOrderListPatientSummary);
                             var result3 = bal.GetOrdersByPhysicianId(1).Take(100).ToList();
@@ -1293,7 +1293,7 @@ namespace BillingSystem.Controllers
                             return PartialView(viewpath, result3);
                         }
                     case OrderType.Diagnosis:
-                        using (var bal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+                        using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
                         {
                             viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
                             var result2 = bal.GetDiagnosisCode().Take(100).ToList();
@@ -1307,7 +1307,7 @@ namespace BillingSystem.Controllers
                             //return PartialView(viewpath, result);
                         }
                     case OrderType.DRUG:
-                        using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                        using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
                         {
                             viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
                             var result1 = bal.GetDrugList().Take(100).ToList();
@@ -1435,7 +1435,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetDrugDetailsByDrugCode(string drugCode)
         {
-            using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+            using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
             {
                 var drugObj = bal.GetDrugListbyDrugCode(drugCode);
                 return Json(drugObj, JsonRequestBehavior.AllowGet);
@@ -1511,7 +1511,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetCategoryLabtest(string labtrest)
         {
-            var gbal = new GlobalCodeBal();
+            var gbal = new GlobalCodeService();
             var golbalcodeObj = gbal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(labtrest));
             var list = _cptService.GetCodesByRange(Convert.ToInt32(golbalcodeObj.ExternalValue2), Convert.ToInt32(golbalcodeObj.ExternalValue3), Helpers.DefaultCptTableNumber);
             return Json(list);
@@ -1576,7 +1576,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesChilds(string globalcodeId)
         {
-            var bal = new GlobalCodeBal();
+            var bal = new GlobalCodeService();
             var list = bal.GetGlobalCodesByCategoryValue(globalcodeId).OrderBy(x => x.GlobalCodeID);
             return Json(list);
         }
@@ -1591,7 +1591,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFacilitiesbyCorporate(int corporateid)
         {
             var finalList = new List<DropdownListData>();
-            var bal = new FacilityBal();
+            var bal = new FacilityService();
             var list = bal.GetFacilitiesByCorporateId(corporateid).ToList().OrderBy(x => x.FacilityName).ToList();
             if (list.Count > 0)
             {
@@ -1778,7 +1778,7 @@ namespace BillingSystem.Controllers
 
             if (value <= 0)
             {
-                using (var bal = new GlobalCodeBal())
+                using (var bal = new GlobalCodeService())
                 {
                     var result = bal.GetGlobalCodeByFacilityAndCategory(globalCodeCategoryValue, Helpers.GetDefaultFacilityNumber());
                     value = result == null ? Convert.ToDecimal(0) : Convert.ToDecimal(result.GlobalCodeName);
@@ -1819,13 +1819,13 @@ namespace BillingSystem.Controllers
                 switch (codeType)
                 {
                     case OrderType.DRG:
-                        using (var bal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+                        using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
                         {
                             var result3 = bal.GetDrgDescriptionByCode(ordercode);
                             return Json(result3);
                         }
                     case OrderType.DRUG:
-                        using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                        using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
                         {
                             var result2 = bal.GetDRUGCodeDescription(ordercode);
                             return Json(result2);
@@ -1835,7 +1835,7 @@ namespace BillingSystem.Controllers
                         return Json(result);
 
                     case OrderType.BedCharges:
-                        using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+                        using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
                         {
                             var result1 = bal.GetServiceCodeDescription(ordercode);
                             return Json(result1);
@@ -1855,7 +1855,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetColumnForManagedCareTable(string tableId)
         {
-            var globalcodeBal = new GlobalCodeBal();
+            var globalcodeBal = new GlobalCodeService();
             var globalcodelist = globalcodeBal.GetGlobalCodesByCategoryValue("1017").Where(x => x.ExternalValue1 == tableId).OrderBy(x => x.GlobalCodeID).ToList();
             var globalcodeKeyColumnList = globalcodeBal.GetGlobalCodesByCategoryValue("1016").FirstOrDefault(x => x.GlobalCodeValue == tableId);
             var list = new List<DropdownListData>();
@@ -1957,7 +1957,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetFacilitiesDropdownDataWithFacilityNumber(int? corporateId)
         {
-            using (var facBal = new FacilityBal())
+            using (var facBal = new FacilityService())
             {
                 var facilities = facBal.GetFacilities(Convert.ToInt32(corporateId));
                 if (facilities.Count > 0)
@@ -1995,7 +1995,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetServiceCodesList()
         {
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 var finalList = bal.GetServiceCodes();
                 return Json(finalList, JsonRequestBehavior.AllowGet);
@@ -2012,7 +2012,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetServiceCodesByCodeMainValue(string codeMainValue, int rowCount)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 var result = bal.GetServiceCodesByCodeMainValue(codeMainValue, rowCount);
                 if (result.Count > 0)
@@ -2060,7 +2060,7 @@ namespace BillingSystem.Controllers
         public JsonResult SavePatientLoginDetails(PatientLoginDetailCustomModel vm)
         {
             int updatedId;
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
                 vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
@@ -2104,7 +2104,7 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
                 return Content(message);
 
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
                 vtoken = vtoken.ToLower().Trim();
                 var result = bal.GetPatientLoginDetailsByEmail(e);
@@ -2148,7 +2148,7 @@ namespace BillingSystem.Controllers
             PatientInfo patientm = null;
             PatientInfoCustomModel patientVm = null;
             var verficationTokenId = CommonConfig.GeneratePasswordResetToken(14, false);
-            using (var patientLoginbal = new PatientLoginDetailBal())
+            using (var patientLoginbal = new PatientLoginDetailService())
             {
                 var patientlogindetailcustomModel = patientLoginbal.GetPatientLoginDetailsByEmail(emailid);
 
@@ -2184,7 +2184,7 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
                 return Content(message);
 
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
                 vtoken = vtoken.ToLower().Trim();
                 var result = bal.GetPatientLoginDetailsByEmail(e);
@@ -2206,7 +2206,7 @@ namespace BillingSystem.Controllers
         {
             var message = string.Empty;
             var error = string.Empty;
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var patinetlogindetailObj = bal.GetPatientLoginDetailByPatientId(Convert.ToInt32(vm.PatientId));
@@ -2254,7 +2254,7 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("newpasswordemail");
             PatientInfoCustomModel patientVm = null;
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
                 patientVm = bal.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
 
             if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
@@ -2316,7 +2316,7 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetDefaultCorporateId();
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            using (var facBal = new FacilityBal())
+            using (var facBal = new FacilityService())
             {
                 var facilities = userisAdmin ? facBal.GetFacilitiesWithoutCorporateFacility(cId) : facBal.GetFacilitiesWithoutCorporateFacility(cId, Helpers.GetDefaultFacilityId());
                 if (facilities.Any())
@@ -2350,7 +2350,7 @@ namespace BillingSystem.Controllers
             var defaultMonth = currentDateTime.Month - 1;
 
             var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
             {
                 var glist = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
                 if (glist.Any())
@@ -2456,7 +2456,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetServiceCodeAndDescList()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 var finalList = bal.GetServiceCodes();
                 if (finalList.Count > 0)
@@ -2495,7 +2495,7 @@ namespace BillingSystem.Controllers
             {
                 if (session != null)
                 {
-                    var oFacilityBal = new FacilityBal();
+                    var oFacilityBal = new FacilityService();
                     var facilityName = oFacilityBal.GetFacilityNameByNumber(session.FacilityNumber);
                     msgBody = msgBody.Replace("{Patient}", oUsers.UserName)
                         .Replace("{Facility-Name}", Convert.ToString(facilityName)).Replace("{CodeValue}", oUsers.ResetToken);
@@ -2634,7 +2634,7 @@ namespace BillingSystem.Controllers
             var jsonObjreturn = false;
             if (objSession != null)
             {
-                using (var bal = new LoginTrackingBal())
+                using (var bal = new LoginTrackingService())
                     bal.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
                 userType = objSession.LoginUserType;
                 jsonObjreturn = true;
@@ -2732,7 +2732,7 @@ namespace BillingSystem.Controllers
                     return PartialView(viewpath, viewData);
 
                 case "4": // ---- HCPCS Code Value
-                    using (var bal = new HCPCSCodesBal(tableNumber))
+                    using (var bal = new HCPCSCodesService(tableNumber))
                     {
                         var finalList4 = bal.GetHCPCSCodesListOnDemand(1, Helpers.DefaultRecordCount); // --------- Get Service Codes for the table number
                         var viewData2 = new HCPCSCodesView
@@ -2748,7 +2748,7 @@ namespace BillingSystem.Controllers
                     }
 
                 case "5": // ---- DRUG Code Value
-                    using (var bal = new DrugBal(tableNumber))
+                    using (var bal = new DrugService(tableNumber))
                     {
                         var finalList3 = bal.GetDrugListOnDemand(1, Helpers.DefaultRecordCount, "Active"); // --------- Get Service Codes for the table number
                         var viewData1 = new DrugView
@@ -2764,7 +2764,7 @@ namespace BillingSystem.Controllers
                     }
 
                 case "8": // ---- Service Code Value
-                    using (var bal = new ServiceCodeBal(tableNumber))
+                    using (var bal = new ServiceCodeService(tableNumber))
                     {
                         // var finalList = bal.GetServiceCodes(); // --------- Get Service Codes for the table number
                         var serviceCodeList =
@@ -2783,7 +2783,7 @@ namespace BillingSystem.Controllers
                     }
 
                 case "9": // ---- DRG Code Value
-                    using (var bal = new DRGCodesBal(tableNumber))
+                    using (var bal = new DRGCodesService(tableNumber))
                     {
                         var finalList2 = bal.GetDrgCodesListOnDemand(1, Helpers.DefaultRecordCount); // --------- Get Service Codes for the table number
                         var drgCodesView = new DRGCodesView
@@ -2800,7 +2800,7 @@ namespace BillingSystem.Controllers
                     }
 
                 case "16": // ---- Diagnosis Code Value
-                    using (var bal = new DiagnosisCodeBal(tableNumber))
+                    using (var bal = new DiagnosisCodeService(tableNumber))
                     {
                         var finalList1 = bal.GetListOnDemand(1, Helpers.DefaultRecordCount); // --------- Get Service Codes for the table number
                         var drgCodesView = new DiagnosisCodeView
@@ -2816,7 +2816,7 @@ namespace BillingSystem.Controllers
                     }
 
                 case "19": // ---- Bill Edit Rule Value
-                    using (var bal = new RuleMasterBal(tableNumber))
+                    using (var bal = new RuleMasterService(tableNumber))
                     {
                         var list = bal.GetRuleMasterList();
                         viewpath = string.Format("../RuleMaster/{0}", PartialViews.RuleMasterList);
@@ -2841,7 +2841,7 @@ namespace BillingSystem.Controllers
             switch (codeType)
             {
                 case OrderType.DRG:
-                    using (var bal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+                    using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
                     {
                         foreach (var item in codeValues)
                         {
@@ -2852,7 +2852,7 @@ namespace BillingSystem.Controllers
                         return Json("true");
                     }
                 case OrderType.DRUG:
-                    using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                    using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
                     {
                         foreach (var item in codeValues)
                         {
@@ -2872,7 +2872,7 @@ namespace BillingSystem.Controllers
                     return Json("true");
 
                 case OrderType.BedCharges:
-                    using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+                    using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
                     {
                         foreach (var item in codeValues)
                         {
@@ -2883,7 +2883,7 @@ namespace BillingSystem.Controllers
                         return Json("true");
                     }
                 case OrderType.HCPCS:
-                    using (var bal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+                    using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
                     {
                         foreach (var item in codeValues)
                         {
@@ -2894,7 +2894,7 @@ namespace BillingSystem.Controllers
                         return Json("true");
                     }
                 case OrderType.Diagnosis:
-                    using (var bal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+                    using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
                     {
                         foreach (var item in codeValues)
                         {
@@ -2905,7 +2905,7 @@ namespace BillingSystem.Controllers
                         return Json("true");
                     }
                 case OrderType.BillEditRules:
-                    using (var bal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
+                    using (var bal = new RuleMasterService(Helpers.DefaultBillEditRuleTableNumber))
                     {
                         var list = codeValues.Select(i => int.Parse(i)).ToList();
                         var result = bal.DeleteMultipleRules(list);
@@ -3041,10 +3041,10 @@ namespace BillingSystem.Controllers
         private List<RoleSelectionCustomModel> GetUserRoles(int userid)
         {
             var userroleList = new List<RoleSelectionCustomModel>();
-            var userroleBal = new UserRoleBal();
-            var roleBal = new RoleBal();
-            var facilityRole = new FacilityRoleBal();
-            var facility = new FacilityBal();
+            var userroleBal = new UserRoleService();
+            var roleBal = new RoleService();
+            var facilityRole = new FacilityRoleService();
+            var facility = new FacilityService();
             var roles = userroleBal.GetUserRolesByUserId(userid);
             foreach (var role in roles)
             {
@@ -3083,7 +3083,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult BindUsersType(string corporateId, string facilityId)
         {
-            using (var fRole = new FacilityRoleBal())
+            using (var fRole = new FacilityRoleService())
             {
                 var list = new List<DropdownListData>();
                 var roleList = fRole.GetUserTypeRoleDropDown(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId), true);
@@ -3108,7 +3108,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCorporatePhysicians(string corporateId, string facilityId)
         {
-            using (var phyBal = new PhysicianBal())
+            using (var phyBal = new PhysicianService())
             {
                 var cId = string.IsNullOrEmpty(corporateId) ? Helpers.GetSysAdminCorporateID().ToString() : corporateId;
                 cId = string.IsNullOrEmpty(facilityId)
@@ -3129,7 +3129,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodesCheckListView(string ggcValue)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var globalCodelist = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "3").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
                 var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.StatusCheckBoxList);
@@ -3145,7 +3145,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodesAvailability(string ggcValue, string facilityId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var globalCodelist = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "1").ToList();
                 var holidayStatus = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "4").ToList();
@@ -3156,7 +3156,7 @@ namespace BillingSystem.Controllers
                           : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
                 var isAdmin = Helpers.GetLoggedInUserIsAdmin();
                 var userid = Helpers.GetLoggedInUserId();
-                var corporateUsers = new PhysicianBal().GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+                var corporateUsers = new PhysicianService().GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
                 var list = new
                 {
                     gClist = globalCodelist,
@@ -3192,7 +3192,7 @@ namespace BillingSystem.Controllers
                 : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
             var isAdmin = Helpers.GetLoggedInUserIsAdmin();
             var userid = Helpers.GetLoggedInUserId();
-            corporateUsers = new PhysicianBal().GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+            corporateUsers = new PhysicianService().GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
 
             var updatedList = new
             {
@@ -3211,7 +3211,7 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetDefaultCorporateId();
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            using (var facBal = new FacilityBal())
+            using (var facBal = new FacilityService())
             {
                 var facilities = userisAdmin ? facBal.GetFacilities(cId) : facBal.GetFacilities(cId, Helpers.GetDefaultFacilityId());
                 if (facilities.Any())
@@ -3239,7 +3239,7 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetSysAdminCorporateID();
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            using (var facBal = new FacilityBal())
+            using (var facBal = new FacilityService())
             {
                 var facilities = userisAdmin ? facBal.GetFacilities(cId) : facBal.GetFacilities(cId, Helpers.GetDefaultFacilityId());
                 if (facilities.Any())
@@ -3264,7 +3264,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFaciltyListTreeView()
         {
             // Initialize the Facility Communicator object
-            using (var facilityBal = new FacilityBal())
+            using (var facilityBal = new FacilityService())
             {
                 // Get the facilities list
                 var cId = Helpers.GetSysAdminCorporateID();
@@ -3348,7 +3348,7 @@ namespace BillingSystem.Controllers
             var list = new List<SchedulingCustomModel>();
             if (validRequest)
             {
-                using (var bal = new SchedulingBal())
+                using (var bal = new SchedulingService())
                 {
 
                     //Get the list of Scheduling Events of current Patient attending current Physician.
@@ -3366,7 +3366,7 @@ namespace BillingSystem.Controllers
                             a.ModifiedBy = patientId;
                             a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                         });
-                        using (var sBal = new SchedulingBal())
+                        using (var sBal = new SchedulingService())
                             validRequest = sBal.UpdateSchedulingEvents(list);
 
                         if (st == "2" && bit)//After Patient Approval Mail Will Be sent to Physician
@@ -3397,7 +3397,7 @@ namespace BillingSystem.Controllers
                         }
                         if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
                         {
-                            var email = new PatientLoginDetailBal().GetPatientEmail(patientId);
+                            var email = new PatientLoginDetailService().GetPatientEmail(patientId);
                             Helpers.SendAppointmentNotification(list, email,
                                         Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
                                         patientId, Convert.ToInt32(physicianId), 5);
@@ -3411,7 +3411,7 @@ namespace BillingSystem.Controllers
                                 appointmentType = app != null ? app.Name : string.Empty;
                                 item.AppointmentType = appointmentType;
                             }
-                            var email = new PatientLoginDetailBal().GetPatientEmail(patientId);
+                            var email = new PatientLoginDetailService().GetPatientEmail(patientId);
                             Helpers.SendAppointmentNotification(list, email,
                                         Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
                                         patientId, Convert.ToInt32(physicianId), 4);
@@ -3452,7 +3452,7 @@ namespace BillingSystem.Controllers
                         a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                     });
 
-                    using (var sBal = new SchedulingBal())
+                    using (var sBal = new SchedulingService())
                         success = sBal.UpdateSchedulingEvents(list);
                 }
             }
@@ -3570,7 +3570,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetFacilityPhycisian(int coporateId, int facilityId)
         {
-            using (var physicianBal = new PhysicianBal())
+            using (var physicianBal = new PhysicianService())
             {
                 var facilityphysicianList = physicianBal.GetFacilityPhysicians(facilityId);
                 return Json(facilityphysicianList, JsonRequestBehavior.AllowGet);
@@ -3584,7 +3584,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDepartmentTiming(int deptId)
         {
-            using (var deptTimming = new DeptTimmingBal())
+            using (var deptTimming = new DeptTimmingService())
             {
                 var deptTimingList = deptTimming.GetDeptTimmingByDepartmentId(deptId);
                 var listToReturn = new
@@ -3633,7 +3633,7 @@ namespace BillingSystem.Controllers
             cId = facilityId == 0
                 ? cId
                 : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-            corporateUsers = new PhysicianBal().GetCorporatePhysiciansPreScheduling(Convert.ToInt32(cId), Convert.ToInt32(facilityId));
+            corporateUsers = new PhysicianService().GetCorporatePhysiciansPreScheduling(Convert.ToInt32(cId), Convert.ToInt32(facilityId));
 
 
             var updatedList = new
@@ -3650,7 +3650,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodesCheckListViewPreScheduling(string ggcValue)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var globalCodelist = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "2" && x.ExternalValue1 != "3" && x.ExternalValue1 != "4").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
                 var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.StatusCheckBoxList);
@@ -3669,7 +3669,7 @@ namespace BillingSystem.Controllers
             switch (codeType)
             {
                 case SearchType.ServiceCode:
-                    using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+                    using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
                     {
                         tableNumber = Helpers.DefaultServiceCodeTableNumber;
                         var userid = Helpers.GetLoggedInUserId();
@@ -3698,7 +3698,7 @@ namespace BillingSystem.Controllers
                     };
                     return PartialView(viewpath, viewData);
                 case SearchType.DRG:
-                    using (var bal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+                    using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
                     {
                         tableNumber = Helpers.DefaultDrgTableNumber;
                         viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
@@ -3714,7 +3714,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, drgCodesView);
                     }
                 case SearchType.HCPCS:
-                    using (var bal = new HCPCSCodesBal(Helpers.DefaultHcPcsTableNumber))
+                    using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
                     {
                         tableNumber = Helpers.DefaultHcPcsTableNumber;
                         viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
@@ -3728,7 +3728,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, hcpcsCodesView);
                     }
                 case SearchType.Denial:
-                    using (var bal = new DenialBal())
+                    using (var bal = new DenialService())
                     {
                         viewpath = string.Format("../Denial/{0}", PartialViews.DenialList);
                         var result3 = !string.IsNullOrEmpty(text) ? bal.GetFilteredDenialCodes(text) : bal.GetDenial();
@@ -3742,7 +3742,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, result3);
                     }
                 case SearchType.Diagnosis:
-                    using (var bal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+                    using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
                     {
                         tableNumber = Helpers.DefaultDiagnosisTableNumber;
                         viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
@@ -3762,7 +3762,7 @@ namespace BillingSystem.Controllers
                         return PartialView(viewpath, diagnosisCodeView);
                     }
                 case SearchType.DRUG:
-                    using (var bal = new DrugBal(Helpers.DefaultDrugTableNumber))
+                    using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
                     {
                         tableNumber = Helpers.DefaultDrugTableNumber;
                         viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
@@ -3798,7 +3798,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetRolesByFacilityDropdownDataCustom()
         {
-            using (var roleBal = new RoleBal())
+            using (var roleBal = new RoleService())
             {
                 var roles = roleBal.GetRolesByCorporateIdFacilityId(Convert.ToInt32(Helpers.GetSysAdminCorporateID()), Convert.ToInt32(Helpers.GetDefaultFacilityId()));
                 if (roles.Count > 0)
@@ -3823,7 +3823,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetClinicalIDNumber()
         {
-            using (var physicianBal = new PhysicianBal())
+            using (var physicianBal = new PhysicianService())
             {
                 var physicians = physicianBal.GetPhysiciansListByFacilityId(Helpers.GetDefaultFacilityId());
                 if (physicians.Count > 0)
@@ -3843,7 +3843,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetGlobalCodeCatByExternalValue(string startRange, string endRange)
         {
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var list = bal.GetGlobalCodeCategoriesByExternalValue();
                 return Json(list);
@@ -3872,7 +3872,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult Download(int fileId)
         {
-            using (var bal = new DocumentsTemplatesBal())
+            using (var bal = new DocumentsTemplatesService())
             {
 
 

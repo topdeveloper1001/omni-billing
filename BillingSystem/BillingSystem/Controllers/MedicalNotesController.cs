@@ -47,7 +47,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindMedicalNotesList(int patientId, int notesUserTypeId)
         {
             //Initialize the MedicalNotes BAL object
-            using (var medicalNotesBal = new MedicalNotesBal())
+            using (var medicalNotesBal = new MedicalNotesService())
             {
                 //Get the facilities list
                 //var medicalNotesList = medicalNotesBal.GetMedicalNotes();
@@ -82,7 +82,7 @@ namespace BillingSystem.Controllers
                 medicalNotesModel.CorporateID = corporateId;
                 medicalNotesModel.NotesBy = userId;
                 medicalNotesModel.NotesDate = currentdateTime;
-                using (var medicalNotesBal = new MedicalNotesBal())
+                using (var medicalNotesBal = new MedicalNotesService())
                 {
                     if (medicalNotesModel.MedicalNotesID > 0)
                     {
@@ -108,7 +108,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMedicalNotes(int medicalNotesId)
         {
-            using (var medicalNotesBal = new MedicalNotesBal())
+            using (var medicalNotesBal = new MedicalNotesService())
             {
                 //Call the AddMedicalNotes Method to Add / Update current MedicalNotes
                 var currentMedicalNotes = medicalNotesBal.GetMedicalNotesById(Convert.ToInt32(medicalNotesId));
@@ -128,7 +128,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMedicalNotes(int medicalNotesId)
         {
-            using (var medicalNotesBal = new MedicalNotesBal())
+            using (var medicalNotesBal = new MedicalNotesService())
             {
                 //Get MedicalNotes model object by current MedicalNotes ID
                 var currentMedicalNotes = medicalNotesBal.GetMedicalNotesById(Convert.ToInt32(medicalNotesId));

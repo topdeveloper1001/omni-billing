@@ -47,7 +47,7 @@ namespace BillingSystem.Controllers
             {
                 var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
                     ? loggedinfacilityId
@@ -84,7 +84,7 @@ namespace BillingSystem.Controllers
             {
                 var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
+                var facilitybal = new FacilityService();
                 var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
@@ -394,7 +394,7 @@ namespace BillingSystem.Controllers
             var serverPath = Server.MapPath(virtualPath);
             var corporateId = Helpers.GetSysAdminCorporateID();
             int expiryDays;
-            using (var gBal = new GlobalCodeBal())
+            using (var gBal = new GlobalCodeService())
             {
                 var result = gBal.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
                 expiryDays = !string.IsNullOrEmpty(result.GlobalCodeName)
@@ -617,7 +617,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public IndicatorDataCheckList GetIsLockedProperties(int facilityId, int corporateId, int budgetType, int year)
         {
-            using (var bal = new IndicatorDataCheckListBal())
+            using (var bal = new IndicatorDataCheckListService())
             {
                 var ind = bal.GetIndicatorDataCheckListSingle(facilityId, corporateId, budgetType, year);
                 return ind;
@@ -652,7 +652,7 @@ namespace BillingSystem.Controllers
             var listYears = new List<DropdownListData>();
             List<DropdownListData> listFacilities;
 
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
                 list = bal.GetListByCategoriesRange(categories);
 
             /*-----------------Get Global Codes end here--------------------------*/
@@ -709,7 +709,7 @@ namespace BillingSystem.Controllers
 
             #region Get Facilities List
             /*-----------Get Facilities Data start here----------------------*/
-            using (var fBal = new FacilityBal())
+            using (var fBal = new FacilityService())
                 listFacilities = fBal.GetFacilitiesForDashboards(Convert.ToInt32(facilityid), corporateid,
                               Helpers.GetLoggedInUserIsAdmin());
             /*-----------Get Facilities Data end here----------------------*/

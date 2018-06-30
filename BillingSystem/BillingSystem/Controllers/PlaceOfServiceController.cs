@@ -10,12 +10,12 @@ namespace BillingSystem.Controllers
 {
     public class PlaceOfServiceController : BaseController
     {
-        private readonly PlaceOfServiceBal _bal;
+        private readonly PlaceOfServiceService _bal;
 
         public PlaceOfServiceController()
         {
             if (_bal == null)
-                _bal = new PlaceOfServiceBal();
+                _bal = new PlaceOfServiceService();
         }
 
         public ActionResult Index()

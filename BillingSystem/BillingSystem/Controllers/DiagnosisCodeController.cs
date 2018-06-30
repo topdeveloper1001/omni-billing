@@ -27,7 +27,7 @@ namespace BillingSystem.Controllers
         public ActionResult DiagnosisCodeMain()
         {
             //Initialize the DiagnosisCode BAL object
-            var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber);
+            var diagnosisCodeBal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber);
 
             //Get the Entity list
             var diagnosisCodeList = diagnosisCodeBal.GetListOnDemand(1, Helpers.DefaultRecordCount);
@@ -54,7 +54,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindDiagnosisCodeList()
         {
             //Initialize the DiagnosisCode BAL object
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var diagnosisCodeBal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
             {
                 //Get the facilities list
                 var diagnosisCodeList = diagnosisCodeBal.GetDiagnosisCode();
@@ -73,7 +73,7 @@ namespace BillingSystem.Controllers
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
             //Initialize the DiagnosisCode BAL object
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var diagnosisCodeBal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
             {
                 //Get the facilities list
                 var diagnosisCodeList = diagnosisCodeBal.GetDiagnosisCodeData(showInActive).OrderByDescending(i => i.DiagnosisTableNumberId).Take(takeValue).ToList();
@@ -90,7 +90,7 @@ namespace BillingSystem.Controllers
         public JsonResult RebindDiagnosisCodeList(int blockNumber, string tableNumber)
         {
             var recordCount = Helpers.DefaultRecordCount;
-            using (var bal = new DiagnosisCodeBal(tableNumber))
+            using (var bal = new DiagnosisCodeService(tableNumber))
             {
                 var list = bal.GetListOnDemand(blockNumber, recordCount);
                 var jsonResult = new
@@ -117,7 +117,7 @@ namespace BillingSystem.Controllers
             //Check if DiagnosisCodeViewModel 
             if (DiagnosisCodeModel != null)
             {
-                using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+                using (var diagnosisCodeBal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
                 {
                     if (DiagnosisCodeModel.DiagnosisTableNumberId > 0)
                     {
@@ -146,7 +146,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDiagnosisCode(int id)
         {
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var diagnosisCodeBal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
             {
                 //Call the AddDiagnosisCode Method to Add / Update current DiagnosisCode
                 var currentDiagnosisCode = diagnosisCodeBal.GetDiagnosisCodeByID(id);
@@ -166,7 +166,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDiagnosisCode(int id)
         {
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var diagnosisCodeBal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
             {
                 //Get DiagnosisCode model object by current DiagnosisCode ID
                 var currentDiagnosisCode = diagnosisCodeBal.GetDiagnosisCodeByID(id);
@@ -404,7 +404,7 @@ namespace BillingSystem.Controllers
 
 
             rowIndex++;
-            using (var diagnosisBal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var diagnosisBal = new DiagnosisService(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 //Get the facilities list
                 var objCptCodesData = searchText != null ? diagnosisBal.ExportFilteredDiagnosisCodes(searchText, tableNumber) : diagnosisBal.GetAllDiagnosisCodes(facilityId);

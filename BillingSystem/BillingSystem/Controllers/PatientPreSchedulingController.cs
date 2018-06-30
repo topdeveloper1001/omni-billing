@@ -48,7 +48,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindPatientPreSchedulingList()
         {
             // Initialize the PatientPreScheduling BAL object
-            using (var patientPreSchedulingBal = new PatientPreSchedulingBal())
+            using (var patientPreSchedulingBal = new PatientPreSchedulingService())
             {
                 // Get the facilities list
                 var patientPreSchedulingList = patientPreSchedulingBal.GetPatientPreScheduling();
@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePatientPreScheduling(int id)
         {
-            using (var bal = new PatientPreSchedulingBal())
+            using (var bal = new PatientPreSchedulingService())
             {
                 // Get PatientPreScheduling model object by current PatientPreScheduling ID
                 var currentPatientPreScheduling = bal.GetPatientPreSchedulingById(id);
@@ -106,7 +106,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPatientPreScheduling(int id)
         {
-            using (var bal = new PatientPreSchedulingBal())
+            using (var bal = new PatientPreSchedulingService())
             {
                 // Call the AddPatientPreScheduling Method to Add / Update current PatientPreScheduling
                 var currentPatientPreScheduling = bal.GetPatientPreSchedulingById(id);
@@ -129,7 +129,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index(int? CId, int? FId, int? msg)
         {
             // Pass the View Model in ActionResult to View PatientPreScheduling
-            var patientSchedularlinkBal = new PreSchedulingLinkBal();
+            var patientSchedularlinkBal = new PreSchedulingLinkService();
             var patientSchedulingObj = patientSchedularlinkBal.GetPreSchedulingLink(
                 Convert.ToInt32(CId),
                 Convert.ToInt32(FId));
@@ -159,7 +159,7 @@ namespace BillingSystem.Controllers
         {
             // Initialize the PatientPreScheduling BAL object
             List<PatientPreSchedulingCustomModel> patientPreSchedulingList;
-            using (var patientPreSchedulingBal = new PatientPreSchedulingBal())
+            using (var patientPreSchedulingBal = new PatientPreSchedulingService())
             {
                 patientPreSchedulingList = patientPreSchedulingBal.GetPatientPreScheduling();
             }
@@ -209,7 +209,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PatientPreSchedulingBal())
+                using (var bal = new PatientPreSchedulingService())
                 {
                     if (model.PatientPreSchedulingId > 0)
                     {
@@ -236,7 +236,7 @@ namespace BillingSystem.Controllers
             if (model != null && !string.IsNullOrEmpty(model.Password) && !string.IsNullOrEmpty(model.Email))
             {
                 var flag = true;
-                using (var pbal = new PatientLoginDetailBal())
+                using (var pbal = new PatientLoginDetailService())
                 {
                     var currentPatient = pbal.GetPatientLoginDetailsByEmail(model.Email);
                     if (currentPatient != null)
@@ -271,7 +271,7 @@ namespace BillingSystem.Controllers
 
                             if (flag)
                             {
-                                using (var bal = new LoginTrackingBal())
+                                using (var bal = new LoginTrackingService())
                                 {
                                     var loginTrackingVm = new LoginTracking
                                     {
@@ -313,9 +313,9 @@ namespace BillingSystem.Controllers
                                     objSession.RoleId = 0;
                                     objSession.RoleName = "Patient Scheduler";
 
-                                    using (var tBal = new TabsBal()) objSession.MenuSessionList = tBal.GetPatientTabsList();
+                                    using (var tBal = new TabsService()) objSession.MenuSessionList = tBal.GetPatientTabsList();
 
-                                    using (var mBal = new ModuleAccessBal())
+                                    using (var mBal = new ModuleAccessService())
                                     {
                                         Session[SessionNames.SessoionModuleAccess.ToString()] =
                                             mBal.GetModulesAccessList(
@@ -348,7 +348,7 @@ namespace BillingSystem.Controllers
                                                              ? Convert.ToInt32(
                                                                  currentPatient.FailedLoginAttempts) + 1
                                                              : 1;
-                                    using (var bal = new PatientLoginDetailBal())
+                                    using (var bal = new PatientLoginDetailService())
                                     {
                                         bal.UpdatePatientLoginFailedLog(
                                             patientId,
@@ -515,7 +515,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private int SavePatientPhoneData(PatientPhone model)
         {
-            using (var patientPhoneBal = new PatientPhoneBal())
+            using (var patientPhoneBal = new PatientPhoneService())
             {
                 var newId = patientPhoneBal.SavePatientPhone(model);
                 return newId;
@@ -531,7 +531,7 @@ namespace BillingSystem.Controllers
         {
             if (vm != null)
             {
-                using (var bal = new PatientLoginDetailBal())
+                using (var bal = new PatientLoginDetailService())
                 {
                     vm.TokenId = vm.DeleteVerificationToken
                         ? string.Empty
@@ -575,7 +575,7 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("patientportalemailVerification");
             PatientInfoCustomModel patientVm;
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
                 patientVm = bal.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
             }

@@ -20,7 +20,7 @@ namespace BillingSystem.Controllers
         public ActionResult XFileHeaderMain(int fileid)
         {
             //Initialize the XFileHeader BAL object
-            var xFileHeaderBal = new XFileHeaderBal();
+            var xFileHeaderBal = new XFileHeaderService();
 
             //Get the Entity list
             var xFileHeaderList = xFileHeaderBal.GetXFileHeader().Where(x => x.FileType.Equals("IN")).ToList();
@@ -44,7 +44,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindXFileHeaderList()
         {
             //Initialize the XFileHeader BAL object
-            using (var XFileHeaderBal = new XFileHeaderBal())
+            using (var XFileHeaderBal = new XFileHeaderService())
             {
                 //Get the facilities list
                 var XFileHeaderList = XFileHeaderBal.GetXFileHeader();
@@ -68,7 +68,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new XFileHeaderBal())
+                using (var bal = new XFileHeaderService())
                 {
                     if (model.FileID > 0)
                     {
@@ -89,7 +89,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetXFileHeader(int id)
         {
-            using (var bal = new XFileHeaderBal())
+            using (var bal = new XFileHeaderService())
             {
                 //Call the AddXFileHeader Method to Add / Update current XFileHeader
                 var currentXFileHeader = bal.GetXFileHeaderByID(id);
@@ -106,7 +106,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteXFileHeader(int id)
         {
-            using (var bal = new XFileHeaderBal())
+            using (var bal = new XFileHeaderService())
             {
                 //Get XFileHeader model object by current XFileHeader ID
                 var currentXFileHeader = bal.GetXFileHeaderByID(id);

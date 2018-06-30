@@ -31,7 +31,7 @@ namespace BillingSystem.Controllers
         public ActionResult XPaymentReturnMain(int claimid, int? encid, int? Pid)
         {
             //Initialize the XPaymentReturn BAL object
-            var xPaymentReturnBal = new XPaymentReturnBal();
+            var xPaymentReturnBal = new XPaymentReturnService();
 
             //Get the Entity list
             var corporateId = Helpers.GetSysAdminCorporateID();
@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindXPaymentReturnList()
         {
             //Initialize the XPaymentReturn BAL object
-            using (var XPaymentReturnBal = new XPaymentReturnBal())
+            using (var XPaymentReturnBal = new XPaymentReturnService())
             {
                 //Get the facilities list
                 var XPaymentReturnList = XPaymentReturnBal.GetXPaymentReturn();
@@ -93,7 +93,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new XPaymentReturnBal())
+                using (var bal = new XPaymentReturnService())
                 {
                     var getXpaymentObj = bal.GetXPaymentReturnModelByClaimId(Convert.ToInt32(model.ID));
                     foreach (var xPaymentReturn in getXpaymentObj)
@@ -117,7 +117,7 @@ namespace BillingSystem.Controllers
                                 var billheaderNewStatus = SetBillheaderStatus(billheaderObj.Status);
                                 if (!string.IsNullOrEmpty(billheaderNewStatus))
                                 {
-                                    var globalCodeBal = new GlobalCodeBal();
+                                    var globalCodeBal = new GlobalCodeService();
                                     var globalcodeObj =
                                         globalCodeBal.GetGCodesListByCategoryValue(
                                             Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString());
@@ -152,7 +152,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new XPaymentReturnBal())
+                using (var bal = new XPaymentReturnService())
                 {
                     var getXpaymentObj = bal.GetXPaymentModelReturnById(Convert.ToInt32(model.XPaymentReturnID));
                     getXpaymentObj.AADenialCode = model.AADenialCode;
@@ -173,7 +173,7 @@ namespace BillingSystem.Controllers
                             var billheaderNewStatus = SetBillheaderStatus(billheaderObj.Status);
                             if (!string.IsNullOrEmpty(billheaderNewStatus))
                             {
-                                var globalCodeBal = new GlobalCodeBal();
+                                var globalCodeBal = new GlobalCodeService();
                                 var globalcodeObj =
                                     globalCodeBal.GetGCodesListByCategoryValue(
                                         Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString());
@@ -199,7 +199,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetXPaymentReturn(int id)
         {
-            using (var bal = new XPaymentReturnBal())
+            using (var bal = new XPaymentReturnService())
             {
                 //Call the AddXPaymentReturn Method to Add / Update current XPaymentReturn
                 var currentXPaymentReturn = bal.GetXPaymentReturnById(id);
@@ -216,7 +216,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteXPaymentReturn(int id)
         {
-            using (var bal = new XPaymentReturnBal())
+            using (var bal = new XPaymentReturnService())
             {
                 //Get XPaymentReturn model object by current XPaymentReturn ID
                 var currentXPaymentReturn = bal.GetXPaymentReturnById(id);
@@ -262,7 +262,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GenerateRemittanceInfo(int claimId)
         {
-            using (var xpaymentBal = new XPaymentReturnBal())
+            using (var xpaymentBal = new XPaymentReturnService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -283,7 +283,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRemittanceInfoByClaimId(int claimId)
         {
-            using (var xpaymentBal = new XPaymentReturnBal())
+            using (var xpaymentBal = new XPaymentReturnService())
             {
                 var getGenratedPayments = xpaymentBal.GetXPaymentReturnByClaimId(claimId);
                 return PartialView(PartialViews.XPaymentHeader, getGenratedPayments.Any() ? getGenratedPayments.FirstOrDefault() : new XPaymentReturnCustomModel());
@@ -297,7 +297,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRemittanceInfoListByClaimId(int claimId)
         {
-            using (var xpaymentBal = new XPaymentReturnBal())
+            using (var xpaymentBal = new XPaymentReturnService())
             {
                 var getGenratedPayments = xpaymentBal.GetXPaymentReturnByClaimId(claimId);
                 return PartialView(PartialViews.XPaymentReturnList, getGenratedPayments);
@@ -310,7 +310,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GenerateRemittanceXmlFile()
         {
-            using (var xpaymentBal = new XPaymentReturnBal())
+            using (var xpaymentBal = new XPaymentReturnService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -327,7 +327,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private string SetBillheaderStatus(string currentStatus)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var globalcodeObj =
                 globalCodeBal.GetGCodesListByCategoryValue(
                     Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString());

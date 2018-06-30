@@ -33,9 +33,9 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the Facility Communicator object
-            var equipmentBal = new EquipmentBal();
+            var equipmentBal = new EquipmentService();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            var facilitybal = new FacilityService();
             var facilitynumber = facilitybal.GetFacilityNumberById(facilityid);
             //Get the facilities list
             //var equipmentList = equipmentBal.GetEquipmentList().ToList();
@@ -61,7 +61,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetEquipment(CommonModel model)
         {
-            using (var equipmentBal = new EquipmentBal())
+            using (var equipmentBal = new EquipmentService())
             {
                 //Call the AddFacility Method to Add / Update current equipment
                 // var currentequipment = equipmentBal.GetEquipmentById(Convert.ToInt32(model.Id));
@@ -83,7 +83,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEquipmentList(string facilityId)
         {
             //Initialize the Facility Communicator object
-            using (var equipmentBal = new EquipmentBal())
+            using (var equipmentBal = new EquipmentService())
             {
                 //Get the facilities list
                 //var equipmentList = equipmentBal.GetEquipmentList();
@@ -96,7 +96,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindDisabledRecords(bool showIsDisabled, string facilityId)
         {
-            using (var equipmentBal = new EquipmentBal())
+            using (var equipmentBal = new EquipmentService())
             {
                 var list = equipmentBal.GetEquipmentList(showIsDisabled, facilityId);
                 return PartialView(PartialViews.EquipmentList, list);
@@ -119,7 +119,7 @@ namespace BillingSystem.Controllers
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                using (var equipmentBal = new EquipmentBal())
+                using (var equipmentBal = new EquipmentService())
                 {
                     equipment.IsDeleted = false;
                     if (equipment.EquipmentMasterId > 0)
@@ -147,7 +147,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteEquipment(CommonModel model)
         {
-            using (var equipmentBal = new EquipmentBal())
+            using (var equipmentBal = new EquipmentService())
             {
                 //Get facility model object by current equipment ID
                 var currentequipment = equipmentBal.GetEquipmentByMasterId(Convert.ToInt32(model.Id));
@@ -197,7 +197,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetEquipmentsData(int id)
         {
 
-            using (var equipmentBal = new EquipmentBal())
+            using (var equipmentBal = new EquipmentService())
             {
 
                 var currentequipment = equipmentBal.GetEquipmentByMasterId(id);
@@ -245,7 +245,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindDeletedRecords(bool showIsDeleted, string facilityId)
         {
-            using (var equipmentBal = new EquipmentBal())
+            using (var equipmentBal = new EquipmentService())
             {
                 var list = equipmentBal.GetDeletedEquipmentList(showIsDeleted, facilityId);
                 return PartialView(PartialViews.EquipmentList, list);
@@ -257,7 +257,7 @@ namespace BillingSystem.Controllers
         {
             int eid = -1;
 
-            using (var eBal = new EquipmentBal())
+            using (var eBal = new EquipmentService())
             {
                 var list = eBal.GetEquipmentDataByMasterId(model.EquipmentMasterId);
                 foreach (var eq in list)

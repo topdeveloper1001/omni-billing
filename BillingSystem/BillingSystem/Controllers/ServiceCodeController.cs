@@ -53,7 +53,7 @@ namespace BillingSystem.Controllers
             int takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
 
             // Initialize the ServiceCode Communicator object
-            using (var serviceCodeBal = new ServiceCodeBal(tn))
+            using (var serviceCodeBal = new ServiceCodeService(tn))
             {
                 // Get the facilities list
                 var serviceCodeList =
@@ -81,7 +81,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteServiceCode(CommonModel model)
         {
-            using (var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var serviceCodeBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 // Get ServiceCode model object by current ServiceCode ID
                 ServiceCode currentServiceCode = serviceCodeBal.GetServiceCodeById(Convert.ToInt32(model.Id));
@@ -139,7 +139,7 @@ namespace BillingSystem.Controllers
             row.CreateCell(9).SetCellValue("Service Code Service Code Main");
             row.CreateCell(10).SetCellValue("Service Service Code Sub");
             rowIndex++;
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 // Get the facilities list
                 var objServiceCodesData = searchText != null
@@ -199,7 +199,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetServiceCode(string id)
         {
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 ServiceCode current = bal.GetServiceCodeById(Convert.ToInt32(id));
                 var jsonResult =
@@ -233,7 +233,7 @@ namespace BillingSystem.Controllers
             int startRange = Convert.ToInt32(GlobalCodeCategoryValue.ServiceCodeStartRange);
             int finishRange = Convert.ToInt32(GlobalCodeCategoryValue.ServiceCodeFinishRange);
 
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 List<GlobalCodeCategory> list = bal.GetGlobalCodeCategoriesRange(startRange, finishRange);
                 return this.Json(list);
@@ -253,7 +253,7 @@ namespace BillingSystem.Controllers
             int recordCount = Helpers.DefaultRecordCount;
 
             // var tableNumber = GetTableNumber(corporateId, facilityNumber);
-            using (var serviceCodeBal = new ServiceCodeBal(tableNumber))
+            using (var serviceCodeBal = new ServiceCodeService(tableNumber))
             {
                 List<ServiceCodeCustomModel> list = serviceCodeBal.GetServiceCodesListOnDemandCustom(blockNumber, recordCount);
                 var jsonResult =
@@ -279,7 +279,7 @@ namespace BillingSystem.Controllers
             // Check if ServiceCodeViewModel 
             if (model != null)
             {
-                using (var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+                using (var serviceCodeBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
                 {
                     if (model.ServiceCodeId > 0)
                     {
@@ -304,7 +304,7 @@ namespace BillingSystem.Controllers
         public ActionResult ServiceCode()
         {
             // Initialize the ServiceCode Communicator object
-            var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber);
+            var serviceCodeBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber);
 
             // Intialize the View Model i.e. ServiceCodeView which is binded to Main View Index.cshtml under ServiceCode
             var serviceCodeView = new ServiceCodeViewModel
@@ -323,7 +323,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetServiceCodesList()
         {
-            var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber);
+            var serviceCodeBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber);
             return this.Json(serviceCodeBal.GetServiceCodesList(), JsonRequestBehavior.AllowGet);
         }
 

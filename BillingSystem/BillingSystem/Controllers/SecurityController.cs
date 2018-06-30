@@ -99,8 +99,8 @@ namespace BillingSystem.Controllers
         private string GetRoleName(int userID)
         {
             string RoleName = string.Empty;
-            UserRoleBal objUserRoleBal = new UserRoleBal();
-            RoleBal objRolBal = new RoleBal();
+            UserRoleService objUserRoleBal = new UserRoleService();
+            RoleService objRolBal = new RoleService();
             var userRoles = objUserRoleBal.GetUserRolesByUserId(userID);
             if (userRoles.Count > 0)
             {
@@ -119,8 +119,8 @@ namespace BillingSystem.Controllers
         private int GetRoleId(int userID)
         {
             int RoleId = 0;
-            UserRoleBal objUserRoleBal = new UserRoleBal();
-            RoleBal objRolBal = new RoleBal();
+            UserRoleService objUserRoleBal = new UserRoleService();
+            RoleService objRolBal = new RoleService();
             var userRoles = objUserRoleBal.GetUserRolesByUserId(userID);
             if (userRoles.Count > 0)
             {
@@ -137,7 +137,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRolesUsers()
         {
-            var objRoleBal = new RoleBal();
+            var objRoleBal = new RoleService();
             var corporateId = Helpers.GetDefaultCorporateId();
             var facilityId = Helpers.GetDefaultFacilityId();
             var rolesList = objRoleBal.GetAllRolesByCorporateFacility(corporateId, facilityId);
@@ -351,7 +351,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Role()
         {
-            RoleBal objRoleBal = new RoleBal();
+            RoleService objRoleBal = new RoleService();
             var corporateId = Helpers.GetDefaultCorporateId();
             RoleView objRoleView = new RoleView
             {
@@ -374,7 +374,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRoles()
         {
-            RoleBal objRoleBal = new RoleBal();
+            RoleService objRoleBal = new RoleService();
             var corporateId = Helpers.GetDefaultCorporateId();
             List<Role> RolesList = objRoleBal.GetAllRoles(corporateId);
             return PartialView(PartialViews.RoleList, RolesList);
@@ -387,7 +387,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EditRole(int RoleID)
         {
-            RoleBal objRoleBal = new RoleBal();
+            RoleService objRoleBal = new RoleService();
             Role CurrentRole = objRoleBal.GetRoleById(RoleID);
             return PartialView(PartialViews.AddUpdateRole, CurrentRole);
         }
@@ -410,7 +410,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddRole(Role objRole)
         {
-            RoleBal objRoleBal = new RoleBal();
+            RoleService objRoleBal = new RoleService();
             if (objRole.RoleID > 0)
             {
                 objRole.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -437,7 +437,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteRole(int RoleId)
         {
-            RoleBal objRoleBal = new RoleBal();
+            RoleService objRoleBal = new RoleService();
             Role objRole = objRoleBal.GetRoleById(RoleId);
             objRole.IsDeleted = true;
             objRole.DeletedBy = Helpers.GetLoggedInUserId();
@@ -458,7 +458,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public bool CheckDuplicateRole(int RoleId, string RoleName)
         {
-            using (var objRoleBal = new RoleBal())
+            using (var objRoleBal = new RoleService())
             {
                 return objRoleBal.CheckDuplicateRole(RoleId, RoleName);
             }
@@ -472,7 +472,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckRoleExist(int Id)
         {
-            using (var objUserRoleBal = new UserRoleBal())
+            using (var objUserRoleBal = new UserRoleService())
             {
                 var result = objUserRoleBal.CheckRoleExist(Id);
                 return Json(result);
@@ -491,8 +491,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Screen()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
+            ScreenService objScreenBal = new ScreenService();
+            TabsService objTabsBal = new TabsService();
             ScreenView objScreenView = new ScreenView
             {
                 CurrentScreen = new Screen(),
@@ -508,7 +508,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetScreens()
         {
-            ScreenBal objScreenBal = new ScreenBal();
+            ScreenService objScreenBal = new ScreenService();
             List<Screen> ScreensList = objScreenBal.GetAllScreensList();
             return PartialView(PartialViews.ScreenList, ScreensList);
         }
@@ -520,8 +520,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EditScreen(int ScreenID)
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
+            ScreenService objScreenBal = new ScreenService();
+            TabsService objTabsBal = new TabsService();
             ScreenView objScreenView = new ScreenView
             {
                 CurrentScreen = objScreenBal.GetScreenDetailById(ScreenID),
@@ -536,8 +536,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAddUpdateScreen()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
+            ScreenService objScreenBal = new ScreenService();
+            TabsService objTabsBal = new TabsService();
             ScreenView objScreenView = new ScreenView { CurrentScreen = new Screen(), TabsList = objTabsBal.GetAllTabs() };
             return PartialView(PartialViews.AddUpdateScreen, objScreenView);
         }
@@ -550,7 +550,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddScreen(Screen objScreen)
         {
-            ScreenBal objScreenBal = new ScreenBal();
+            ScreenService objScreenBal = new ScreenService();
             if (objScreen.ScreenId > 0)
             {
                 objScreen.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -576,7 +576,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteScreen(int screenID)
         {
-            ScreenBal objScreenBal = new ScreenBal();
+            ScreenService objScreenBal = new ScreenService();
             Screen objScreen = objScreenBal.GetScreenDetailById(screenID);
             objScreen.IsDeleted = true;
             objScreen.DeletedBy = Helpers.GetLoggedInUserId();
@@ -597,8 +597,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Tab()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
+            ScreenService objScreenBal = new ScreenService();
+            TabsService objTabsBal = new TabsService();
             TabView objTabView = new TabView
             {
                 CurrentTab = new Tabs(),
@@ -615,7 +615,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabs()
         {
-            TabsBal objTabsBal = new TabsBal();
+            TabsService objTabsBal = new TabsService();
             List<Tabs> tabsList = objTabsBal.GetAllTabs();
             return PartialView(PartialViews.TabsList, tabsList);
         }
@@ -627,8 +627,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EditTab(int TabID)
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
+            ScreenService objScreenBal = new ScreenService();
+            TabsService objTabsBal = new TabsService();
             TabView objTabView = new TabView
             {
                 CurrentTab = objTabsBal.GetTabByTabId(TabID),
@@ -645,8 +645,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAddUpdateTab()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
+            ScreenService objScreenBal = new ScreenService();
+            TabsService objTabsBal = new TabsService();
             TabView objTabView = new TabView
             {
                 CurrentTab = new Tabs(),
@@ -664,7 +664,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddTab(Tabs objTab)
         {
-            TabsBal objTabsBal = new TabsBal();
+            TabsService objTabsBal = new TabsService();
             if (objTab.TabId > 0)
             {
                 objTab.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -690,7 +690,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteTab(int TabID)
         {
-            TabsBal objTabsBal = new TabsBal();
+            TabsService objTabsBal = new TabsService();
             Tabs objTab = objTabsBal.GetTabByTabId(TabID);
             objTab.IsDeleted = true;
             objTab.DeletedBy = Helpers.GetLoggedInUserId();
@@ -728,12 +728,12 @@ namespace BillingSystem.Controllers
                     objListRolePermission.Add(objRolePermission);
 
                 }
-                RolePermissionBal objRolePermissionBal = new RolePermissionBal();
+                RolePermissionService objRolePermissionBal = new RolePermissionService();
                 objRolePermissionBal.AddUpdateRolePermission(objListRolePermission);
 
 
-                RoleBal objRoleBal = new RoleBal();
-                ScreenBal objScreenBal = new ScreenBal();
+                RoleService objRoleBal = new RoleService();
+                ScreenService objScreenBal = new ScreenService();
 
                 RoleView objRoleView = new RoleView();
 
@@ -759,7 +759,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPermisssionsByRoleID(int RoleId)
         {
             RoleView objRoleView = new RoleView();
-            RolePermissionBal objRolePermissionBal = new RolePermissionBal();
+            RolePermissionService objRolePermissionBal = new RolePermissionService();
             List<RolePermissionInfo> objlstRolePermissionInfo = new List<RolePermissionInfo>();
             List<RolePermission> SelectedScreens = objRolePermissionBal.GetRolePermissionByRoleId(RoleId);
             objlstRolePermissionInfo = (from y in SelectedScreens
@@ -804,7 +804,7 @@ namespace BillingSystem.Controllers
                     CreatedDate = Helpers.GetInvariantCultureDateTime(),
                     IsActive = true
                 }).ToList();
-                var objUserRoleBal = new UserRoleBal();
+                var objUserRoleBal = new UserRoleService();
                 var updatedId = objUserRoleBal.AddUpdateUserRole(objListUserRole);
                 return Json(updatedId);
             }
@@ -823,7 +823,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetUserRolesByUserId(int userId, int corporateId, int facilityId)
         {
-            var objUserRoleBal = new UserRoleBal();
+            var objUserRoleBal = new UserRoleService();
             var objlstUserRole = new List<UserRole>();
             //objlstUserRole = objUserRoleBal.GetUserRolesByUserID(UserID);
             objlstUserRole = objUserRoleBal.GetUserRolesByCorporateFacilityAndUserId(userId, corporateId, facilityId);
@@ -838,7 +838,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAllRolesByCorporateAndFacility(int corporateId, int facilityId)
         {
-            using (var bal = new RoleBal())
+            using (var bal = new RoleService())
             {
                 var list = bal.GetAllRolesByCorporateFacility(corporateId, facilityId);
                 return Json(list, JsonRequestBehavior.AllowGet);
@@ -883,7 +883,7 @@ namespace BillingSystem.Controllers
             {
                 CurrentFacilityRole = new FacilityRoleCustomModel { IsActive = true },
             };
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
 
                 var facilityId = Helpers.GetDefaultFacilityId();
@@ -914,7 +914,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddUpdateFacilityRole(FacilityRole model)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var newId = 0;
                 var isExist = bal.CheckIfExists(model.RoleId, model.FacilityId, model.CorporateId, model.FacilityRoleId);
@@ -946,7 +946,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddUpdateFacilityRoleCustomModel(FacilityRoleCustomModel model)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var newId = 0;
                 var isExist = bal.CheckIfExists(model.RoleId, model.FacilityId, model.CorporateId, model.FacilityRoleId);
@@ -964,7 +964,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRoleById(string facilityRoleId)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 // var current = bal.GetFacilityRoleById(Convert.ToInt32(facilityRoleId));
                 var current = bal.GetFacilityRoleModelById(Convert.ToInt32(facilityRoleId));
@@ -998,7 +998,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRolesList()
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
                 var corporateId = Helpers.GetDefaultCorporateId();
@@ -1016,7 +1016,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFacilityRole(string id)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var current = bal.GetFacilityRoleById(Convert.ToInt32(id));
                 if (current != null)
@@ -1038,7 +1038,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityListByCorporateId(string corpId)
         {
-            using (var bal = new FacilityBal())
+            using (var bal = new FacilityService())
             {
                 var facilities = bal.GetFacilitiesByCorporateId(Convert.ToInt32(corpId));
                 if (facilities.Count > 0)
@@ -1072,7 +1072,7 @@ namespace BillingSystem.Controllers
         public ActionResult CheckIfFacilityRoleExists(string corpId, string facilityId, string roleId,
             string facilityRoleId, bool schedulingApplied)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 if (!schedulingApplied)
                 {
@@ -1099,7 +1099,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRolesCustomList(string corpId, string facilityId, string roleId)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var selectedFacilitid = facilityId;
                 facilityId =
@@ -1120,7 +1120,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetFacilityRolesCustomList1(string corpId, string facilityId, string roleId)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var selectedFacilitid = facilityId;
                 facilityId =
@@ -1158,7 +1158,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckIfFacilityRoleAssigned(string roleId, string facilityRoleId)
         {
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var isExists = bal.CheckIfRoleAssigned(Convert.ToInt32(roleId), Convert.ToInt32(facilityRoleId));
                 return Json(isExists);
@@ -1169,7 +1169,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetActiveInActiveFacilityRoleList(bool showInActive, string facilityId, string corporateId)
         {
             //var corpId = Helpers.GetSysAdminCorporateID();
-            using (var bal = new FacilityRoleBal())
+            using (var bal = new FacilityRoleService())
             {
                 var selectedFacilitid = facilityId;
                 facilityId =
@@ -1224,7 +1224,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddTabRolePermissions(List<RoleTabsCustomModel> objRoleTabsPermissionList)
         {
-            using (var bal = new RoleTabsBal())
+            using (var bal = new RoleTabsService())
             {
                 var dt = Helpers.ToDataTable(objRoleTabsPermissionList);
                 bal.AddUpdateRolePermissionSP(dt, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
@@ -1239,7 +1239,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabsPermisssionsByRoleId(int roleId)
         {
-            using (var bal = new RoleTabsBal())
+            using (var bal = new RoleTabsService())
             {
                 var list = bal.GetRoleTabsByRoleId(roleId);
                 return Json(list);
@@ -1253,7 +1253,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabsAssignedToFacility(int roleid)
         {
-            using (var facilityRole = new FacilityRoleBal())
+            using (var facilityRole = new FacilityRoleService())
             {
                 var facilityrole = facilityRole.GetFacilityRolesByRoleId(roleid).FirstOrDefault();
                 var corporateId = Helpers.GetDefaultCorporateId();
@@ -1264,7 +1264,7 @@ namespace BillingSystem.Controllers
                     corporateId = facilityrole.CorporateId;
                     facilityid = facilityrole.FacilityId;
                 }
-                var objTabsBal = new TabsBal();
+                var objTabsBal = new TabsService();
                 var tabList = objTabsBal.GetCorporateFacilityTabList(corporateId, facilityid, roleid).Where(t => t.CurrentTab.IsActive && !t.CurrentTab.IsDeleted)
                         .ToList();
                 //IEnumerable<TabsCustomModel> tabList;
@@ -1284,7 +1284,7 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetDefaultCorporateId();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var objTabsBal = new TabsBal();
+            var objTabsBal = new TabsService();
             //var tabList =
             //    objTabsBal.GetCorporateFacilityTabList(corporateId, facilityid, null)
             //        .Where(t => t.CurrentTab.IsActive && !t.CurrentTab.IsDeleted)
@@ -1302,7 +1302,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabsByCorporateAndFacility(int corporateId, int facilityId)
         {
-            using (var bal = new TabsBal())
+            using (var bal = new TabsService())
             {
                 var tabList = bal.GetTabsByCorporateAndFacilityId(facilityId, corporateId);
                 return PartialView(PartialViews.TabsTreeView, tabList);
@@ -1317,7 +1317,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetModulesAssignedToFacility(int corporateId, int facilityId)
         {
-            using (var moduleRoleBal = new ModuleAccessBal())
+            using (var moduleRoleBal = new ModuleAccessService())
             {
                 //var moduleAccessList =
                 //    moduleRoleBal.GetModulesAccessList(corporateId, facilityId)
@@ -1331,7 +1331,7 @@ namespace BillingSystem.Controllers
                 //var newlist = tabList.Where(
                 //    t => (moduleAccessList.Any(z => z.TabID == t.CurrentTab.TabId))).ToList();
                 IEnumerable<TabsCustomModel> newlist = new List<TabsCustomModel>();
-                using (var tBal = new TabsBal())
+                using (var tBal = new TabsService())
                 {
                     newlist = tBal.GetTabsListInRoleTabsView(Helpers.GetLoggedInUserId(), facilityId: facilityId, corporateId: corporateId, isDeleted: false, isActive: true);
                 }

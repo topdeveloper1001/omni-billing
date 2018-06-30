@@ -25,7 +25,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the Facility Communicator object
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
 
             //Get the facilities list
             var cId = Helpers.GetDefaultCorporateId();
@@ -51,7 +51,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetFListJson()
         {
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
             //Get the facilities list
             var cId = Helpers.GetDefaultCorporateId();
             //var facilityList = facilityBal.GetFacilities(cId);
@@ -76,7 +76,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindFaciltyList()
         {
             //Initialize the Facility Communicator object
-            using (var facilityBal = new FacilityBal())
+            using (var facilityBal = new FacilityService())
             {
                 //Get the facilities list
                 var cId = Helpers.GetDefaultCorporateId();
@@ -96,7 +96,7 @@ namespace BillingSystem.Controllers
         //[AcceptVerbs(HttpVerbs.Get)]
         public ActionResult GetFacility(int facilityId)
         {
-            using (var facilityBal = new FacilityBal())
+            using (var facilityBal = new FacilityService())
             {
                 //Call the AddFacility Method to Add / Update current facility
                 var currentFacility = facilityBal.GetFacilityById(facilityId);
@@ -151,7 +151,7 @@ namespace BillingSystem.Controllers
             {
                 var fId = model.FacilityId;
 
-                using (var bal = new FacilityBal())
+                using (var bal = new FacilityService())
                 {
                     var status = bal.CheckDuplicateFacilityNoAndLicenseNo(model.FacilityNumber, model.FacilityLicenseNumber,
                     model.FacilityId, model.CorporateID.Value);
@@ -224,7 +224,7 @@ namespace BillingSystem.Controllers
                     list = bal.AddUpdateFacility(currentFacility);
                 }
             }*/
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
             var cId = Helpers.GetDefaultCorporateId();
             facilityBal.DeleteFacilityData(Convert.ToString(facilityId));
             list = facilityBal.GetFacilityList(cId);
@@ -248,7 +248,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCorporateFacilities(int Id)
         {
-            using (var facilityBal = new FacilityBal())
+            using (var facilityBal = new FacilityService())
             {
                 var result = facilityBal.GetFacilitiesByCorporateIdWithoutCountries(Id).ToList().OrderBy(x => x.FacilityName).ToList();
                 return Json(result);
@@ -257,7 +257,7 @@ namespace BillingSystem.Controllers
 
         public static void CreateDefaultFacilityItems(int fId, string fName, int userId)
         {
-            using (var bal = new FacilityBal())
+            using (var bal = new FacilityService())
             {
                 bal.CreateDefaultFacilityItems(fId, fName, userId);
             }

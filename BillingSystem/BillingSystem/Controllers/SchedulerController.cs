@@ -57,7 +57,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetSchedularWithFilters(List<SchedularTypeCustomModel> filters)
         {
-            using (var schedularbal = new SchedulingBal())
+            using (var schedularbal = new SchedulingService())
             {
                 var listtoReturn = new List<SchedulingCustomModel>();
 
@@ -172,7 +172,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCustomSchedular(List<SchedularTypeCustomModel> filters)
         {
-            using (var schedularbal = new SchedulingBal())
+            using (var schedularbal = new SchedulingService())
             {
                 var listtoReturn = new List<SchedulingCustomModel>();
                 var selectedPhysicianList = filters[0].PhysicianId;
@@ -205,7 +205,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult LoadSchedulngData(string selectedDate, int facility, string viewType)
         {
-            using (var schedularbal = new SchedulingBal())
+            using (var schedularbal = new SchedulingService())
             {
 
                 var listtoconvert = new List<SchedulingCustomModel>();
@@ -216,7 +216,7 @@ namespace BillingSystem.Controllers
                     : Convert.ToString(Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facility)));
                 var isAdmin = Helpers.GetLoggedInUserIsAdmin();
                 var userid = Helpers.GetLoggedInUserId();
-                var corporateUsers = new PhysicianBal().GetCorporatePhysiciansList(
+                var corporateUsers = new PhysicianService().GetCorporatePhysiciansList(
                     Convert.ToInt32(cId), isAdmin, userid, facility);
 
                 var selectedPhysicians = new List<SchedularFiltersCustomModel>();
@@ -265,10 +265,10 @@ namespace BillingSystem.Controllers
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var randomnumber = Helpers.GenerateCustomRandomNumber();
-                using (var oSchedulingBal = new SchedulingBal())
+                using (var oSchedulingBal = new SchedulingService())
                 {
                     // check to add the physician department
-                    var physicianBal = new PhysicianBal().GetPhysicianById(Convert.ToInt32(model[0].AssociatedId));
+                    var physicianBal = new PhysicianService().GetPhysicianById(Convert.ToInt32(model[0].AssociatedId));
                     var physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
                     //var eventId = model[0].SchedulingId != 0
                     //                  ? oSchedulingBal.GetEventIdbySchedulingId(model[0].SchedulingId)
@@ -480,7 +480,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteSchduling(string eventParentId, string schedulingId, int schedulingType, string externalValue3)
         {
             var isDeleted = false;
-            using (var oSchedulingBal = new SchedulingBal())
+            using (var oSchedulingBal = new SchedulingService())
             {
                 if (!string.IsNullOrEmpty(eventParentId))
                 {
@@ -504,7 +504,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAvailableTimeSlots(int facilityid, int physicianId, DateTime dateselected, string typeofproc)
         {
-            var bal = new SchedulingBal();
+            var bal = new SchedulingService();
             DateTime timeSlotDate = DateTime.Now;
             var avialableTimeslotListing = bal.GetAvailableTimeSlots(facilityid, physicianId, dateselected, typeofproc, out timeSlotDate);
             return Json(avialableTimeslotListing, JsonRequestBehavior.AllowGet);
@@ -521,7 +521,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetClosestAvailableTimeSlots(int facilityid, int physicianId, DateTime dateselected, string typeofproc)
         {
-            var bal = new SchedulingBal();
+            var bal = new SchedulingService();
             DateTime timeSlotDate = DateTime.Now;
             var list = bal.GetAvailableTimeSlots(facilityid, physicianId, dateselected, typeofproc, out timeSlotDate, firstAvailable: true);
             var jsonData = new { list, dt = timeSlotDate.ToShortDateString() };
@@ -530,7 +530,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetAvailableTimeSlotsUpdated(int facilityid, int physicianId, DateTime dateselected, string typeofproc)
         {
-            var schedulingBal = new SchedulingBal();
+            var schedulingBal = new SchedulingService();
             var timeSlotDate = DateTime.Now;
             var avialableTimeslotListing = schedulingBal.GetAvailableTimeSlots(facilityid, physicianId, dateselected, typeofproc, out timeSlotDate);
             var deptOpeningDays = schedulingBal.GetDeptOpeningDaysForPhysician(physicianId);
@@ -563,7 +563,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientScheduling(List<SchedularTypeCustomModel> filters)
         {
-            using (var schedularbal = new SchedulingBal())
+            using (var schedularbal = new SchedulingService())
             {
                 var listtoReturn = new List<SchedulingCustomModel>();
 
@@ -595,7 +595,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetSchedulingById(int id)
         {
-            using (var schedulingbal = new SchedulingBal())
+            using (var schedulingbal = new SchedulingService())
             {
                 var schedulingobj = schedulingbal.GetSchedulingCustomModelById(id);
                 var objToreturn = ConvertSchedulingObjToCustomModelForCalender(schedulingobj);
@@ -610,7 +610,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOverView(SchedularOverViewCustomModel oSchedularOverViewCustomModel)
         {
-            using (var schedulingbal = new SchedulingBal())
+            using (var schedulingbal = new SchedulingService())
             {
                 var objToreturn = schedulingbal.GetOverView(oSchedularOverViewCustomModel);
                 var t1 = Json(new
@@ -630,7 +630,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPhyPreviousVacations(int facilityid, int physicianId)
         {
-            using (var schedulingbal = new SchedulingBal())
+            using (var schedulingbal = new SchedulingService())
             {
                 var objtoReturn = schedulingbal.GetPhyPreviousVacations(facilityid, physicianId);
                 var textlist = GetListSectionWise(objtoReturn, "others");
@@ -678,7 +678,7 @@ namespace BillingSystem.Controllers
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
             var loggedInUserId = Helpers.GetLoggedInUserId();
 
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
             {
                 //#################--Get Physicians' Availibility Data  Code starts here--#####################
                 var extValues1 = new[] { "1", "3", "4" };
@@ -689,7 +689,7 @@ namespace BillingSystem.Controllers
                     hTypes = gcList.Where(g => g.ExternalValue1.Equals("3")).ToList();
                     hStatus = gcList.Where(g => g.ExternalValue1.Equals("4")).ToList();
 
-                    using (var pBal = new PhysicianBal())
+                    using (var pBal = new PhysicianService())
                     {
                         pList = pBal.GetPhysicians(cId, userisAdmin, loggedInUserId, facilityId);
 
@@ -741,7 +741,7 @@ namespace BillingSystem.Controllers
             //######################--"Get Saved Slots" Code Starts Here--#####################
             if (selectedPhysicians.Any())
             {
-                using (var schedularbal = new SchedulingBal())
+                using (var schedularbal = new SchedulingService())
                 {
                     var dateValue = Helpers.GetInvariantCultureDateTime();
                     var phyObj = ConvertArrayToCommaSeperatorString(selectedPhysicians);
@@ -761,7 +761,7 @@ namespace BillingSystem.Controllers
 
 
             //#################--Get Facilities Data starts here--###############################
-            using (var facBal = new FacilityBal())
+            using (var facBal = new FacilityService())
             {
                 var ff = userisAdmin ? facBal.GetFacilities(cId) : facBal.GetFacilities(cId, Helpers.GetDefaultFacilityId());
                 //var isSysAdminCorporate = Helpers.GetSysAdminCorporateID() == 6;
@@ -828,7 +828,7 @@ namespace BillingSystem.Controllers
                 countries = _cService.GetCountryWithCode();
 
             SchedulingParametersCustomModel parm = null;
-            using (var sBal = new SchedulingParametersBal())
+            using (var sBal = new SchedulingParametersService())
                 parm = sBal.GetDataByFacilityId(facilityId);
 
 
@@ -870,7 +870,7 @@ namespace BillingSystem.Controllers
             var isAdmin = Helpers.GetLoggedInUserIsAdmin();
             var userid = Helpers.GetLoggedInUserId();
 
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
             {
                 //#################--Get Availibility Data Code starts here--#####################
                 var extValues1 = new[] { "1" };
@@ -879,7 +879,7 @@ namespace BillingSystem.Controllers
                     finalGcList = gcList.Where(g => g.ExternalValue1.Equals("1")).ToList();
             }
 
-            using (var pBal = new PhysicianBal())
+            using (var pBal = new PhysicianService())
             {
                 pList = pBal.GetPhysicians(cId, isAdmin, userid, facilityId);
                 //if (pList.Any())
@@ -916,7 +916,7 @@ namespace BillingSystem.Controllers
             var loggedInUserId = Helpers.GetLoggedInUserId();
 
             //######################--"Get Physicians" Code starts Here--#####################
-            using (var pBal = new PhysicianBal())
+            using (var pBal = new PhysicianService())
             {
                 var pList = pBal.GetPhysicians(cId, userisAdmin, loggedInUserId, facilityId);
 
@@ -972,7 +972,7 @@ namespace BillingSystem.Controllers
             }
 
             //Physicians by Facility
-            using (var pBal = new PhysicianBal())
+            using (var pBal = new PhysicianService())
                 physicians = pBal.GetPhysicians(cId, isAdmin, userid, fId);
 
 
@@ -989,7 +989,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetFacilityHolidays(int facilityid)
         {
-            using (var schedulingbal = new SchedulingBal())
+            using (var schedulingbal = new SchedulingService())
             {
                 var objtoReturn = schedulingbal.GetFacilityHolidays(facilityid);
                 var textlist = GetListSectionWise(objtoReturn, "others");
@@ -1005,7 +1005,7 @@ namespace BillingSystem.Controllers
         /*---Here, id is being used as EventParentID of Scheduler---*/
         public ActionResult DeleteHoliday(string id, int facilityid)
         {
-            using (var schedulingbal = new SchedulingBal())
+            using (var schedulingbal = new SchedulingService())
             {
                 var objtoReturn = schedulingbal.DeleteHolidaysByEventParentID(id);
                 return Json(objtoReturn, JsonRequestBehavior.AllowGet);
@@ -1016,7 +1016,7 @@ namespace BillingSystem.Controllers
         public JsonResult UpdateAppointmentStatus(string status, int id, List<SchedularTypeCustomModel> filters)
         {
             var result = false;
-            using (var bal = new SchedulingBal())
+            using (var bal = new SchedulingService())
                 result = bal.UpdateAppointmentStatus(id, status, Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
 
             if (result)
@@ -1041,7 +1041,7 @@ namespace BillingSystem.Controllers
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var loggedInUserId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                using (var bal = new SchedulingBal())
+                using (var bal = new SchedulingService())
                 {
                     var token = CommonConfig.GenerateLoginCode(8, false);
 
@@ -1388,7 +1388,7 @@ namespace BillingSystem.Controllers
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
             var loggedInUserId = Helpers.GetLoggedInUserId();
 
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
             {
                 //#################--Get Physicians' Availibility Data  Code starts here--#####################
                 var extValues1 = new[] { "1", "3", "4" };
@@ -1399,7 +1399,7 @@ namespace BillingSystem.Controllers
                     hTypes = gcList.Where(g => g.ExternalValue1.Equals("3")).ToList();
                     hStatus = gcList.Where(g => g.ExternalValue1.Equals("4")).ToList();
 
-                    using (var pBal = new PhysicianBal())
+                    using (var pBal = new PhysicianService())
                         pList = pBal.GetPhysicians(cId, userisAdmin, loggedInUserId, facilityId);
                 }
                 //#################--Get Physicians' Availibility Data Code ends here--##########################
@@ -1517,7 +1517,7 @@ namespace BillingSystem.Controllers
 
             //List<SchedulingCustomModel> nextList;
             var mainList = GetSchedulingData(filters, "others");
-            var list2 = new SchedulingBal().GetPatientNextScheduling(filters[0].PatientId, filters[0].SelectedDate);
+            var list2 = new SchedulingService().GetPatientNextScheduling(filters[0].PatientId, filters[0].SelectedDate);
             var patietnNextAppointmentCus = GetListSectionWise(list2, "others");
 
             var jsonObjectToReturn = new
@@ -1542,7 +1542,7 @@ namespace BillingSystem.Controllers
 
                 var token = CommonConfig.GenerateLoginCode(8, false);
 
-                using (var oSchedulingBal = new SchedulingBal())
+                using (var oSchedulingBal = new SchedulingService())
                 {
 
                     //-------------------########### SAVING PATIENT DETAILS SECTION starts here  ###########-----------------------------
@@ -1817,7 +1817,7 @@ namespace BillingSystem.Controllers
 
             var list = new List<SchedulerCustomModelForCalender>();
 
-            using (var bal = new SchedulingBal())
+            using (var bal = new SchedulingService())
             {
                 list = bal.GetSchedulerData(viewtype, selectedDate, phyObj, facilityid, dep, roomsList, statuses,
                     sectionType, patientId);
@@ -1850,7 +1850,7 @@ namespace BillingSystem.Controllers
                 : string.Empty;
 
             var list = new List<SchedulerCustomModelForCalender>();
-            using (var bal = new SchedulingBal())
+            using (var bal = new SchedulingService())
             {
                 list = bal.GetSchedulerData(viewtype, selectedDate, phyObj, facilityid, dep, roomsList, statuses,
                     sectionType, patientId, out nextList);
@@ -1865,7 +1865,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<TypeOfProcedureCustomModel> GetOtherProceduresByEventParentId(string eventparentId, DateTime scheduleFrom)
         {
-            using (var schedulingBal = new SchedulingBal())
+            using (var schedulingBal = new SchedulingService())
             {
                 var schdulingList = schedulingBal.GetOtherProceduresByEventParentId(eventparentId, scheduleFrom);
                 return schdulingList;

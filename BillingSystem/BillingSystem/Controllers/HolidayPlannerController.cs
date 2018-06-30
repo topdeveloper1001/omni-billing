@@ -33,7 +33,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindHolidayPlannerList()
         {
 
-            using (var holidayPlannerBal = new HolidayPlannerBal())
+            using (var holidayPlannerBal = new HolidayPlannerService())
             {
                 var coprporateId = Helpers.GetDefaultCorporateId();
                 var holidayPlannerList = holidayPlannerBal.GetHolidayPlanner(coprporateId);
@@ -91,7 +91,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetHolidayPlanner(int id)
         {
-            using (var bal = new HolidayPlannerBal())
+            using (var bal = new HolidayPlannerService())
             {
                 // Call the AddHolidayPlanner Method to Add / Update current HolidayPlanner
                 HolidayPlanner currentHolidayPlanner = bal.GetHolidayPlannerById(id);
@@ -112,7 +112,7 @@ namespace BillingSystem.Controllers
         public ActionResult HolidayPlannerMain()
         {
             // Initialize the HolidayPlanner BAL object
-            var holidayPlannerBal = new HolidayPlannerBal();
+            var holidayPlannerBal = new HolidayPlannerService();
             var corporateId = Helpers.GetDefaultCorporateId();
             // Get the Entity list
             var holidayPlannerList = holidayPlannerBal.GetHolidayPlanner(corporateId);
@@ -160,7 +160,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new HolidayPlannerBal())
+                using (var bal = new HolidayPlannerService())
                 {
                     if (model.HolidayPlannerId == 0)
                     {
@@ -184,7 +184,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetHolidayPlannerList(int facilityId, int corporateId, int year, string itemTypeId,
                     string itemId)
         {
-            using (var hBal = new HolidayPlannerBal())
+            using (var hBal = new HolidayPlannerService())
             {
                 var holidayList = hBal.GetHolidayPlannerByCurrentSelection(facilityId, corporateId, year, itemTypeId, itemId);
                 return Json(holidayList, JsonRequestBehavior.AllowGet);
@@ -201,7 +201,7 @@ namespace BillingSystem.Controllers
                 {
                     //Facility Case
                     case 1:
-                        using (var bal = new FacilityBal())
+                        using (var bal = new FacilityService())
                         {
                             var name = bal.GetFacilityNameById(fId);
                             list.Add(new DropdownListData
@@ -226,7 +226,7 @@ namespace BillingSystem.Controllers
                         break;
                     //Physicians
                     case 3:
-                        using (var rBal = new RoleBal())
+                        using (var rBal = new RoleService())
                         {
                             var userTypeId = rBal.GetRoleIdByFacilityAndName("physicians", cId, fId);
                             list = Helpers.GetPhysiciansByUserRole(userTypeId);

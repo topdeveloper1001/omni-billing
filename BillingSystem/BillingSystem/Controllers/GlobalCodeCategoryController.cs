@@ -22,10 +22,10 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             // var globalCodeCommunicator = new GlobalCodeCommunicator();
-            var objGlobalCodeCategoryBal = new GlobalCodeCategoryBal();
+            var objGlobalCodeCategoryBal = new GlobalCodeCategoryService();
             var globalCodeCategories = objGlobalCodeCategoryBal.GetGlobalCodeCategoriesWithFacilityName();
             List<Facility> facilities;
-            using (var facilityBal = new FacilityBal())
+            using (var facilityBal = new FacilityService())
             {
                 var cId = Helpers.GetDefaultCorporateId();
                 facilities = facilityBal.GetFacilities(cId);
@@ -52,7 +52,7 @@ namespace BillingSystem.Controllers
         {
             if (list != null)
             {
-                using (var gccBal = new GlobalCodeCategoryBal())
+                using (var gccBal = new GlobalCodeCategoryService())
                 {
                     foreach (var item in list)
                     {
@@ -71,7 +71,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodeCategories()
         {
-            var gccBal = new GlobalCodeCategoryBal();
+            var gccBal = new GlobalCodeCategoryService();
             var globalCodeCategories = gccBal.GetGlobalCodeCategories();
             return Json(globalCodeCategories);
         }
@@ -82,7 +82,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodeCategoriesByNullFacility()
         {
-            var gccBal = new GlobalCodeCategoryBal();
+            var gccBal = new GlobalCodeCategoryService();
             var globalCodeCategories = gccBal.GetGlobalCodeCategoriesByNullFacility();
             return Json(globalCodeCategories);
         }
@@ -94,7 +94,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityGlobalCodeCategories(string FacilityNumber)
         {
-            var gccBal = new GlobalCodeCategoryBal();
+            var gccBal = new GlobalCodeCategoryService();
             var globalCodeCategories = gccBal.GetFacilityGlobalCodeCategories(FacilityNumber);
             return Json(globalCodeCategories);
         }
@@ -105,7 +105,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityGlobalCodeCategoriesByOrderType()
         {
-            var gccMasterBal = new GlobalCodeCategoryMasterBal();
+            var gccMasterBal = new GlobalCodeCategoryMasterService();
             string orderType = Common.Common.OrderType.CPT.ToString();
             var globalCodeCategories = gccMasterBal.GetAllGlobalCodeCategoriesByOrderType(orderType);
             return Json(globalCodeCategories);
@@ -121,7 +121,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                var bal = new GlobalCodeCategoryBal();
+                var bal = new GlobalCodeCategoryService();
                 var list = bal.GetListByCategoryValue(categoryValue);
                 var view = new LabTestOrderSetView
                 {
@@ -147,7 +147,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetRecordById(int id)
         {
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var current = bal.GetCurrentCategoryById(id);
                 var jsonResult = new
@@ -163,7 +163,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult CheckDuplicateRecord(GlobalCodeCategory model)
         {
-            using (var bal = new GlobalCodeCategoryBal())
+            using (var bal = new GlobalCodeCategoryService())
             {
                 var isExists = bal.CheckDuplicateCode(model);
                 return Json(isExists);
@@ -179,7 +179,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveRecord(GlobalCodeCategory model)
         {
-            using (var gccBal = new GlobalCodeCategoryBal())
+            using (var gccBal = new GlobalCodeCategoryService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -211,7 +211,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteRecord(int gccId)
         {
-            using (var gccBal = new GlobalCodeCategoryBal())
+            using (var gccBal = new GlobalCodeCategoryService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -263,7 +263,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveLabOrderSet(GlobalCodeCategory gccModel, List<GlobalCodes> gcList)
         {
-            using (var gccBal = new GlobalCodeCategoryBal())
+            using (var gccBal = new GlobalCodeCategoryService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -292,7 +292,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                var bal = new GlobalCodeCategoryBal();
+                var bal = new GlobalCodeCategoryService();
                 var list = bal.GetListByCategoryValue(categoryValue);
                 var view = new LabTestOrderSetView
                 {
@@ -317,7 +317,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveRecord1(GlobalCodeCategory model)
         {
-            using (var gccBal = new GlobalCodeCategoryBal())
+            using (var gccBal = new GlobalCodeCategoryService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -349,7 +349,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteRecord1(int gccId)
         {
-            using (var gccBal = new GlobalCodeCategoryBal())
+            using (var gccBal = new GlobalCodeCategoryService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();

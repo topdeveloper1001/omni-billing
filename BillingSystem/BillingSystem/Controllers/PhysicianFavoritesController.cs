@@ -36,7 +36,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFav(int Id)
         {
-            using (var bal = new FavoritesBal())
+            using (var bal = new FavoritesService())
             {
                 var isDeleted = bal.DeleteFav(Id);
                 return Json(isDeleted);
@@ -50,7 +50,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPhysicianOrders(int physicianId)
         {
-            using (var orderBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var fav = new PhysicianFavoritesView
                 {
@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPhysicianFavorites(int userid)
         {
-            using (var favBal = new FavoritesBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var favBal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 //var fav = new PhysicianFavoritesView
                 //{
@@ -96,7 +96,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddToPhyFavorites(string codeId, string categoryId, int id, bool isFavorite, string favoriteDesc, int UserId, string screentype)
         {
-            using (var bal = new FavoritesBal())
+            using (var bal = new FavoritesService())
             {
                 UserDefinedDescriptions model;
                 if (id > 0)
@@ -127,7 +127,7 @@ namespace BillingSystem.Controllers
                 if (screentype == "1")
                     return Json(result);
 
-                var ordersBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+                var ordersBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
                 var list = ordersBal.GetFavoriteOrders(UserId);
                 return PartialView(PartialViews.FavoriteOrders, list);
             }
@@ -142,7 +142,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public bool IsAlreadyFav(int userid, string codeId, string categoryId)
         {
-            using (var bal = new FavoritesBal())
+            using (var bal = new FavoritesService())
             {
                 return bal.CheckIfAlreadyFav(userid, codeId, categoryId);
             }
@@ -158,7 +158,7 @@ namespace BillingSystem.Controllers
             var list = new List<OpenOrderCustomModel>();
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+                using (var bal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
                     list = bal.GetSearchedOrders(text);
             }
             return PartialView(PartialViews.OpenOrdersInSearch, list);
@@ -175,7 +175,7 @@ namespace BillingSystem.Controllers
             List<OpenOrderCustomModel> list;
             var corportaeid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            using (var bal = new OpenOrderBal())
+            using (var bal = new OpenOrderService())
                 list = bal.GetOrdersByPhysician(Helpers.GetLoggedInUserId(),corportaeid,facilityid);
             return PartialView(PartialViews.PhyAllOrders, list);
         }

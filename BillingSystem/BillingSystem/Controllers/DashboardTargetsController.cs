@@ -146,10 +146,10 @@ namespace BillingSystem.Controllers
             var fId = Helpers.GetDefaultFacilityId();
             if (Helpers.GetLoggedInUserIsAdmin())
                 fId = 0;
-            using (var bal = new FacilityBal())
+            using (var bal = new FacilityService())
                 fList = bal.GetFacilityDropdownData(cId, fId);
 
-            using (var bal = new RoleBal())
+            using (var bal = new RoleService())
                 rList = bal.GetRolesByFacility(Helpers.GetDefaultFacilityId());
 
             var jsonData = new
@@ -185,7 +185,7 @@ namespace BillingSystem.Controllers
             if (Helpers.GetLoggedInUserIsAdmin())
                 fId = 0;
 
-            using (var bal = new FacilityBal())
+            using (var bal = new FacilityService())
                 fList = bal.GetFacilityDropdownData(cId, fId);
 
             var jsonData = new
@@ -200,7 +200,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetFacilityData(int facilityId)
         {
             List<DropdownListData> rList;
-            using (var bal = new RoleBal())
+            using (var bal = new RoleService())
                 rList = bal.GetRolesByFacility(facilityId);
 
             var jsonData = new

@@ -39,7 +39,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteIndicatorDataCheckList(int id)
         {
-            using (var bal = new IndicatorDataCheckListBal())
+            using (var bal = new IndicatorDataCheckListService())
             {
                 // Get IndicatorDataCheckList model object by current IndicatorDataCheckList ID
                 IndicatorDataCheckList model = bal.GetIndicatorDataCheckListById(id);
@@ -76,7 +76,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetDataFromIndicatorDataCheckList(IndicatorDataCheckListView model)
         {
             var list = new List<IndicatorDataCheckListCustomModel>();
-            using (var bal = new IndicatorDataCheckListBal())
+            using (var bal = new IndicatorDataCheckListService())
             {
                 // Get the Entity list
                 list = bal.GetDataFromIndicatorDataCheckList(
@@ -89,7 +89,7 @@ namespace BillingSystem.Controllers
                 /* if (list.Count == 0)
                 {*/
                 int cId = Helpers.GetDefaultCorporateId();
-                using (var facBal = new FacilityBal())
+                using (var facBal = new FacilityService())
                 {
                     List<Facility> facilities = facBal.GetFacilities(cId);
                     if (facilities.Any())
@@ -106,7 +106,7 @@ namespace BillingSystem.Controllers
                                     }));
                         merged.AddRange(list1.Where(p2 => list.All(p1 => p1.FacilityId != p2.FacilityId)));
 
-                        var oGlobalCodeBal = new GlobalCodeBal();
+                        var oGlobalCodeBal = new GlobalCodeService();
                         List<GlobalCodes> yearDD =
                             oGlobalCodeBal.GetGlobalCodesByCategoryValue("4602").OrderBy(x => x.GlobalCodeID).ToList();
                         List<GlobalCodes> monthDD =
@@ -144,7 +144,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFacilitiesList()
         {
             int cId = Helpers.GetDefaultCorporateId();
-            using (var facBal = new FacilityBal())
+            using (var facBal = new FacilityService())
             {
                 List<Facility> facilities = facBal.GetFacilities(cId);
                 if (facilities.Any())
@@ -178,7 +178,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetIndicatorDataCheckListDetails(int id)
         {
-            using (var bal = new IndicatorDataCheckListBal())
+            using (var bal = new IndicatorDataCheckListService())
             {
                 // Call the AddIndicatorDataCheckList Method to Add / Update current IndicatorDataCheckList
                 IndicatorDataCheckList current = bal.GetIndicatorDataCheckListById(id);
@@ -199,7 +199,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             // Initialize the IndicatorDataCheckList BAL object
-            using (var bal = new IndicatorDataCheckListBal())
+            using (var bal = new IndicatorDataCheckListService())
             {
                 // Get the Entity list
                 var list = new List<IndicatorDataCheckListCustomModel>();
@@ -242,7 +242,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new IndicatorDataCheckListBal())
+                using (var bal = new IndicatorDataCheckListService())
                 {
                     if (model.Id > 0)
                     {
@@ -286,7 +286,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new IndicatorDataCheckListBal())
+                using (var bal = new IndicatorDataCheckListService())
                 {
                     // if (model.Id > 0)
                     // {

@@ -10,6 +10,7 @@ using BillingSystem.Repository.Interfaces;
 using System.Data.SqlClient;
 using AutoMapper;
 using BillingSystem.Bal.Interfaces;
+using BillingSystem.Repository.Common;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -34,12 +35,17 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<Physician> _phRepository;
         private readonly IRepository<PatientInsurance> _pinRepository;
         private readonly IRepository<Users> _uRepository;
+        private readonly IRepository<Diagnosis> _diaRepository;
         private readonly IRepository<PatientEvaluationSet> _pesRepository;
+        private readonly IRepository<DRGCodes> _drgRepository;
+        private readonly IRepository<GlobalCodeCategory> _gcRepository;
+        private readonly IRepository<InsuranceCompany> _icrepository;
+
 
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public EncounterService(IRepository<Encounter> repository, IRepository<GlobalCodes> gRepository, IRepository<BillHeader> biRepository, IRepository<OpenOrder> oRepository, IRepository<CPTCodes> cptRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<Facility> fRepository, IRepository<FacilityStructure> fsRepository, IRepository<UBedMaster> bmRepository, IRepository<MappingPatientBed> mpRepository, IRepository<PatientInfo> piRepository, IRepository<Authorization> auRepository, IRepository<Physician> phRepository, IRepository<PatientInsurance> pinRepository, IRepository<Users> uRepository, IRepository<PatientEvaluationSet> pesRepository, BillingEntities context, IMapper mapper)
+        public EncounterService(IRepository<Encounter> repository, IRepository<GlobalCodes> gRepository, IRepository<BillHeader> biRepository, IRepository<OpenOrder> oRepository, IRepository<CPTCodes> cptRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<Facility> fRepository, IRepository<FacilityStructure> fsRepository, IRepository<UBedMaster> bmRepository, IRepository<MappingPatientBed> mpRepository, IRepository<PatientInfo> piRepository, IRepository<Authorization> auRepository, IRepository<Physician> phRepository, IRepository<PatientInsurance> pinRepository, IRepository<Users> uRepository, IRepository<Diagnosis> diaRepository, IRepository<PatientEvaluationSet> pesRepository, IRepository<DRGCodes> drgRepository, IRepository<GlobalCodeCategory> gcRepository, IRepository<InsuranceCompany> icrepository, BillingEntities context, IMapper mapper)
         {
             _repository = repository;
             _gRepository = gRepository;
@@ -60,7 +66,11 @@ namespace BillingSystem.Bal.BusinessAccess
             _phRepository = phRepository;
             _pinRepository = pinRepository;
             _uRepository = uRepository;
+            _diaRepository = diaRepository;
             _pesRepository = pesRepository;
+            _drgRepository = drgRepository;
+            _gcRepository = gcRepository;
+            _icrepository = icrepository;
             _context = context;
             _mapper = mapper;
         }
@@ -502,7 +512,6 @@ namespace BillingSystem.Bal.BusinessAccess
                 encountersList = encountersList.Where(l => l.EncounterFacility.Equals(common.FacilityNumber)).ToList();
             //Additions end here
 
-            var gBal = new GlobalCodeBal();
             foreach (var item in encountersList)
             {
                 var enId = Convert.ToString(item.EncounterID);
@@ -514,8 +523,8 @@ namespace BillingSystem.Bal.BusinessAccess
                     var spName = string.Format("EXEC {0} @pPatientID", StoredProcedures.SPROC_GetPatientBedInformation);
                     var sqlParameters = new SqlParameter[1];
                     sqlParameters[0] = new SqlParameter("pPatientID", Convert.ToInt32(item.PatientID));
-                    var result = _context.Database.SqlQuery<EncounterCustomModel>(spName, sqlParameters);
-                    bedInfo = result.FirstOrDefault();
+                    var result1 = _context.Database.SqlQuery<EncounterCustomModel>(spName, sqlParameters);
+                    bedInfo = result1.FirstOrDefault();
                 }
                 //bedInfo = _mpRepository.GetPatientBedInformation(Convert.ToInt32(item.PatientID));
 
@@ -525,24 +534,20 @@ namespace BillingSystem.Bal.BusinessAccess
                 bool isDrgDone = false;
                 string primaryDiagnosis;
                 var expectedLengthofStay = "NA";
-                using (var diagnosisBal = new DiagnosisBal(DiagnosisTableNumber, DrgTableNumber))
+                var result = GetDiagnosisInfoByEncounterId(item.EncounterID);
+                isPDiagnosisDone = result != null && result.DiagnosisID > 0;
+                primaryDiagnosis = result != null ? result.DiagnosisCodeDescription : string.Empty;
+                var drgObj = GetDRGDiagnosisInfoByEncounterId(item.EncounterID);
+                if (drgObj != null)
                 {
-                    var result = diagnosisBal.GetDiagnosisInfoByEncounterId(item.EncounterID);
-                    isPDiagnosisDone = result != null && result.DiagnosisID > 0;
-                    primaryDiagnosis = result != null ? result.DiagnosisCodeDescription : string.Empty;
-                    var drgObj = diagnosisBal.GetDRGDiagnosisInfoByEncounterId(item.EncounterID);
-                    if (drgObj != null)
-                    {
-                        isDrgDone = true;
-                        var drgBal = new DRGCodesBal(DrgTableNumber);
-                        var drgcodeObj = drgBal.GetDrgCodesById(Convert.ToInt32(drgObj.DRGCodeID));
-                        expectedLengthofStay = drgcodeObj != null
-                            ? drgcodeObj.Alos != null ? Convert.ToString(Math.Round(Convert.ToDecimal(drgcodeObj.Alos), 2, MidpointRounding.AwayFromZero)) : "NA"
-                            : "NA";
-                        expectedLengthofStay = IsBedAssignedLongTermCase(bedInfo.patientBedService)
-                            ? "NA"
-                            : expectedLengthofStay;
-                    }
+                    isDrgDone = true;
+                    var drgcodeObj = GetDrgCodesById(Convert.ToInt32(drgObj.DRGCodeID));
+                    expectedLengthofStay = drgcodeObj != null
+                        ? drgcodeObj.Alos != null ? Convert.ToString(Math.Round(Convert.ToDecimal(drgcodeObj.Alos), 2, MidpointRounding.AwayFromZero)) : "NA"
+                        : "NA";
+                    expectedLengthofStay = IsBedAssignedLongTermCase(bedInfo.patientBedService)
+                        ? "NA"
+                        : expectedLengthofStay;
                 }
                 var encounterAuhtorized = GetAuthorizationByEncounterId(enId);
                 var isEncounterauhtorized = encounterAuhtorized != null;
@@ -573,9 +578,9 @@ namespace BillingSystem.Bal.BusinessAccess
                     ExpectedLengthofStay = expectedLengthofStay,
                     PhysicianName = GetPhysicianName(Convert.ToInt32(item.EncounterAttendingPhysician)),
                     WaitingTime = GetDateDifference(Convert.ToDateTime(item.EncounterStartTime), Convert.ToInt32(item.EncounterPatientType), Convert.ToInt32(item.EncounterFacility)),
-                    TriageValue = gBal.GetGlobalCodeNameByValueAndCategoryId("4952", item.Triage),
-                    PatientStageName = gBal.GetGlobalCodeNameByValueAndCategoryId("4951", item.PatientState),
-                    TriageSortingValue = gBal.GetGlobalCodeSotringByValueAndCategoryId("4952", item.Triage),
+                    TriageValue = GetGlobalCodeNameByValueAndCategoryId("4952", item.Triage),
+                    PatientStageName = GetGlobalCodeNameByValueAndCategoryId("4951", item.PatientState),
+                    TriageSortingValue = GetGlobalCodeSotringByValueAndCategoryId("4952", item.Triage),
                 });
                 foreach (var itemobj in list)
                 {
@@ -586,7 +591,40 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return list;
         }
+        private string GetGlobalCodeNameByValueAndCategoryId(string categoryId, string globalCodeVal)
+        {
+            var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryId) && c.GlobalCodeValue == globalCodeVal).FirstOrDefault();
+            if (globalCode != null)
+                return globalCode.GlobalCodeName;
+            return string.Empty;
+        }
+        private int GetGlobalCodeSotringByValueAndCategoryId(string categoryId, string globalCodeVal)
+        {
+            var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryId) && c.GlobalCodeValue == globalCodeVal).FirstOrDefault();
+            if (globalCode != null)
+                return Convert.ToInt32(globalCode.SortOrder);
 
+            return 0;
+        }
+
+        private DRGCodes GetDrgCodesById(int id)
+        {
+            var drgCodes = _drgRepository.Where(x => x.DRGCodesId == id).FirstOrDefault();
+            return drgCodes;
+        }
+        private Diagnosis GetDiagnosisInfoByEncounterId(int encounterId)
+        {
+            var pDiagnosis = Convert.ToInt32(DiagnosisType.Primary);
+            var m = _diaRepository.Where(d => d.EncounterID == encounterId && d.DiagnosisType == pDiagnosis).FirstOrDefault();
+            return m;
+        }
+        private Diagnosis GetDRGDiagnosisInfoByEncounterId(int encounterId)
+        {
+            var drgDiagnosis = Convert.ToInt32(DiagnosisType.DRG);
+            var diagnosis = _diaRepository.Where(d => d.EncounterID == encounterId && d.DiagnosisType == drgDiagnosis).FirstOrDefault();
+            return diagnosis;
+
+        }
         private string GetDateDifference(DateTime startTime, int patientType, int facilityId)
         {
             DateTime currentDate = GetInvariantCultureDateTime(facilityId);
@@ -657,9 +695,6 @@ namespace BillingSystem.Bal.BusinessAccess
                     var patientType = encounter.EncounterPatientType != null ? Convert.ToInt32(encounter.EncounterPatientType) : 0;
                     encounterState = EncounterState(endType, patientType);
                 }
-                var globalcodeBal = new GlobalCodeBal();
-                var physicianBal = new PhysicianBal();
-                var globalCodeBal = new GlobalCodeBal();
                 var encountertypeCat = Convert.ToInt32(GlobalCodeCategoryValue.EncounterType);
                 vm = new EncounterCustomModel();
 
@@ -703,23 +738,22 @@ namespace BillingSystem.Bal.BusinessAccess
                 vm.EncounterPhysicianType = encounter.EncounterPhysicianType;
                 vm.PersonMedicalRecordNumber = encounter.PatientInfo != null ? encounter.PatientInfo.PersonMedicalRecordNumber : string.Empty;
                 vm.PatientInfo = encounter.PatientInfo;
-                vm.EncounterPatientTypeName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.EncounterPatientType), encounter.EncounterPatientType.ToString());
-                vm.EncounterSpecialityName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterSpecialty).ToString(), encounter.EncounterSpecialty.ToString());
-                vm.EncounterModeOfArrivalName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterModeofArrival).ToString(), encounter.EncounterModeofArrival.ToString());
-                vm.EncounterServiceCategoryName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterServiceCategory).ToString(), encounter.EncounterServiceCategory.ToString());
-                vm.EncounterPhysicianTypeName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterPhysicianType).ToString(), encounter.EncounterPhysicianType.ToString());
-                vm.EncounterPhysicianName = physicianBal.GetPhysicianName(Convert.ToInt32(encounter.EncounterAttendingPhysician));
-                vm.EncounterAdmitTypeName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterAdmitType).ToString(), encounter.EncounterAdmitType.ToString());
+                vm.EncounterPatientTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.EncounterPatientType), encounter.EncounterPatientType.ToString());
+                vm.EncounterSpecialityName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterSpecialty).ToString(), encounter.EncounterSpecialty.ToString());
+                vm.EncounterModeOfArrivalName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterModeofArrival).ToString(), encounter.EncounterModeofArrival.ToString());
+                vm.EncounterServiceCategoryName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterServiceCategory).ToString(), encounter.EncounterServiceCategory.ToString());
+                vm.EncounterPhysicianTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterPhysicianType).ToString(), encounter.EncounterPhysicianType.ToString());
+                vm.EncounterPhysicianName = GetPhysicianName(Convert.ToInt32(encounter.EncounterAttendingPhysician));
+                vm.EncounterAdmitTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterAdmitType).ToString(), encounter.EncounterAdmitType.ToString());
                 vm.Age = CalculatePersonAge(encounter.PatientInfo.PersonBirthDate, currentDateTime, Convert.ToInt32(encounter.EncounterFacility));
                 vm.OverrideBedType = GetOverRideBedTypeByInPatientEncounterId(Convert.ToString(encounter.EncounterID));
-                vm.EncounterTypeName = globalCodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString(encountertypeCat), encounter.EncounterType.ToString());
+                vm.EncounterTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString(encountertypeCat), encounter.EncounterType.ToString());
                 vm.VirtuallyDischarge = encounter.EncounterDischargePlan != null ? "Discharge" : "";
                 vm.VirtuallyDischargeOn = encounter.EncounterDischargePlan != null ? encounter.EncounterDischargeLocation : null;
 
-                var insBal = new InsuranceCompanyBal();
                 if (encounter != null && encounter.PatientInfo != null && !string.IsNullOrEmpty(encounter.PatientInfo.PersonInsuranceCompany))
                 {
-                    var ins = insBal.GetInsuranceDetailsByPayorId(encounter.PatientInfo.PersonInsuranceCompany);
+                    var ins = GetInsuranceDetailsByPayorId(encounter.PatientInfo.PersonInsuranceCompany);
                     if (ins != null)
                     {
                         vm.InsuranceCompanyName = ins.InsuranceCompanyName;
@@ -753,6 +787,11 @@ namespace BillingSystem.Bal.BusinessAccess
                 }
             }
             return vm;
+        }
+        private InsuranceCompany GetInsuranceDetailsByPayorId(string payorId)
+        {
+            var m = _icrepository.Where(x => x.InsuranceCompanyLicenseNumber.Equals(payorId)).FirstOrDefault();
+            return m;
         }
 
         /// <summary>
@@ -1353,9 +1392,6 @@ namespace BillingSystem.Bal.BusinessAccess
                     var patientType = encounter.EncounterPatientType != null ? Convert.ToInt32(encounter.EncounterPatientType) : 0;
                     encounterState = EncounterState(endType, patientType);
                 }
-                var globalcodeBal = new GlobalCodeBal();
-                var physicianBal = new PhysicianBal();
-                var globalCodeBal = new GlobalCodeBal();
                 var encountertypeCat = Convert.ToInt32(GlobalCodeCategoryValue.EncounterType);
                 vm = new EncounterCustomModel();
 
@@ -1399,23 +1435,22 @@ namespace BillingSystem.Bal.BusinessAccess
                 vm.EncounterPhysicianType = encounter.EncounterPhysicianType;
                 vm.PersonMedicalRecordNumber = encounter.PatientInfo != null ? encounter.PatientInfo.PersonMedicalRecordNumber : string.Empty;
                 vm.PatientInfo = encounter.PatientInfo;
-                vm.EncounterPatientTypeName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.EncounterPatientType), encounter.EncounterPatientType.ToString());
-                vm.EncounterSpecialityName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterSpecialty).ToString(), encounter.EncounterSpecialty.ToString());
-                vm.EncounterModeOfArrivalName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterModeofArrival).ToString(), encounter.EncounterModeofArrival.ToString());
-                vm.EncounterServiceCategoryName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterServiceCategory).ToString(), encounter.EncounterServiceCategory.ToString());
-                vm.EncounterPhysicianTypeName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterPhysicianType).ToString(), encounter.EncounterPhysicianType.ToString());
-                vm.EncounterPhysicianName = physicianBal.GetPhysicianName(Convert.ToInt32(encounter.EncounterAttendingPhysician));
-                vm.EncounterAdmitTypeName = globalcodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterAdmitType).ToString(), encounter.EncounterAdmitType.ToString());
+                vm.EncounterPatientTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.EncounterPatientType), encounter.EncounterPatientType.ToString());
+                vm.EncounterSpecialityName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterSpecialty).ToString(), encounter.EncounterSpecialty.ToString());
+                vm.EncounterModeOfArrivalName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterModeofArrival).ToString(), encounter.EncounterModeofArrival.ToString());
+                vm.EncounterServiceCategoryName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterServiceCategory).ToString(), encounter.EncounterServiceCategory.ToString());
+                vm.EncounterPhysicianTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterPhysicianType).ToString(), encounter.EncounterPhysicianType.ToString());
+                vm.EncounterPhysicianName = GetPhysicianName(Convert.ToInt32(encounter.EncounterAttendingPhysician));
+                vm.EncounterAdmitTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToInt32(GlobalCodeCategoryValue.EncounterAdmitType).ToString(), encounter.EncounterAdmitType.ToString());
                 vm.Age = CalculatePersonAge(encounter.PatientInfo.PersonBirthDate, currentDateTime, Convert.ToInt32(encounter.EncounterFacility));
                 vm.OverrideBedType = GetOverRideBedTypeByInPatientEncounterId(Convert.ToString(encounter.EncounterID));
-                vm.EncounterTypeName = globalCodeBal.GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString(encountertypeCat), encounter.EncounterType.ToString());
+                vm.EncounterTypeName = GetNameByGlobalCodeValueAndCategoryValue(Convert.ToString(encountertypeCat), encounter.EncounterType.ToString());
                 vm.VirtuallyDischarge = encounter.EncounterDischargePlan != null ? "Discharge" : "";
                 vm.VirtuallyDischargeOn = encounter.EncounterDischargePlan != null ? encounter.EncounterDischargeLocation : null;
 
-                var insBal = new InsuranceCompanyBal();
                 if (encounter != null && encounter.PatientInfo != null && !string.IsNullOrEmpty(encounter.PatientInfo.PersonInsuranceCompany))
                 {
-                    var ins = insBal.GetInsuranceDetailsByPayorId(encounter.PatientInfo.PersonInsuranceCompany);
+                    var ins = GetInsuranceDetailsByPayorId(encounter.PatientInfo.PersonInsuranceCompany);
                     if (ins != null)
                     {
                         vm.InsuranceCompanyName = ins.InsuranceCompanyName;
@@ -1429,13 +1464,10 @@ namespace BillingSystem.Bal.BusinessAccess
                 var pId = Convert.ToInt32(vm.PatientID);
                 if (vm.EncounterAuthorizationList.Any())
                 {
-                    using (var bal = new DocumentsTemplatesBal())
-                    {
-                        vm.AuthDocs = new List<DocumentsTemplates>();
-                        var docs = await bal.GetPatientDocumentsList(pId);
-                        if (docs.Any())
-                            vm.AuthDocs = docs.Where(a => a.DocumentName.Equals("Authorization File")).ToList();
-                    }
+                    vm.AuthDocs = new List<DocumentsTemplates>();
+                    var docs = await GetPatientDocumentsList(pId);
+                    if (docs.Any())
+                        vm.AuthDocs = docs.Where(a => a.DocumentName.Equals("Authorization File")).ToList();
                 }
 
                 if (vm.EncounterAuthorizationList.Any(a => a.AuthorizationEnd.HasValue && a.AuthorizationEnd.Value >= currentDateTime.Date))
@@ -1470,7 +1502,22 @@ namespace BillingSystem.Bal.BusinessAccess
                     .ToList().Any();
 
         }
+        private async Task<List<DocumentsTemplates>> GetPatientDocumentsList(int patientId)
+        {
+            var sqlParams = new SqlParameter[5];
+            sqlParams[0] = new SqlParameter("@pFId", 0);
+            sqlParams[1] = new SqlParameter("@pCId", 0);
+            sqlParams[2] = new SqlParameter("@pUserId", 0);
+            sqlParams[3] = new SqlParameter("@pPId", patientId);
+            sqlParams[4] = new SqlParameter("@pExclusions", "profilepicture");
 
+            using (var r = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetDocumentsByPatient.ToString(), false, parameters: sqlParams))
+            {
+                var docs = (await r.ResultSetForAsync<DocumentsTemplates>()).ToList();
+                return docs;
+            }
+
+        }
         public bool PatientEncounterOpenOrders(int patientId)
         {
             var patientCurrentEncounterid = _repository.Where(e => e.PatientID == patientId && e.EncounterEndTime == null).FirstOrDefault().EncounterID;

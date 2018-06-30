@@ -9,7 +9,6 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface IPatientInfoService
     {
-        string GetFacilityNameByFacilityId(int facilityId);
         string GetPatientNameById(int PatientID);
         string GetPersonMotherNameById(int patientId);
         int AddUpdatePatientInfo(PatientInfo patientInfo);

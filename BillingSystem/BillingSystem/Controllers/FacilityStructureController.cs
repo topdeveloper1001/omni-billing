@@ -69,7 +69,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindFacilityData()
         {
-            var bal = new FacilityBal();
+            var bal = new FacilityService();
             var userIsAdmin = Helpers.GetLoggedInUserIsAdmin();
             var cId = Helpers.GetDefaultCorporateId();
             var facId = 0;
@@ -297,7 +297,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetBedOverrideDropdownData(int bedTypeId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            using (var globalCodeBal = new GlobalCodeService())
             {
                 var bedTypeList =
                     globalCodeBal.GetGlobalCodesByCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.Bedtypes));
@@ -523,7 +523,7 @@ namespace BillingSystem.Controllers
 
             if (currentFacilityStructure.GlobalCodeID == 84)
             {
-                var eqBal = new EquipmentBal();
+                var eqBal = new EquipmentService();
                 var equipmentList = eqBal.GetEquipmentListByFacilityId(currentFacilityStructure.FacilityId,
                     facilityStructureId);
                 vm.EquipmentList = equipmentList;
@@ -713,7 +713,7 @@ namespace BillingSystem.Controllers
                         var eqList = facilitysturcture.EquipmentIds.Split(',').Select(Int32.Parse).ToList();
                         if (eqList.Count > 0)
                         {
-                            using (var eBal = new EquipmentBal())
+                            using (var eBal = new EquipmentService())
                             {
                                 eBal.AddRoomIdToEquipments(facilitysturcture.FacilityStructureId,
                                     eqList);
@@ -742,7 +742,7 @@ namespace BillingSystem.Controllers
                                     CreatedBy = userid,
                                     CreatedDate = currentDate,
                                 }));
-                            using (var departmentTimmingsBal = new DeptTimmingBal())
+                            using (var departmentTimmingsBal = new DeptTimmingService())
                             {
                                 departmentTimmingsBal.SaveDeptTimmingList(facilityDepartmentList);
 
@@ -751,7 +751,7 @@ namespace BillingSystem.Controllers
                         }
                         else
                         {
-                            using (var departmentTimmingsBal = new DeptTimmingBal())
+                            using (var departmentTimmingsBal = new DeptTimmingService())
                             {
                                 departmentTimmingsBal.DeleteDepartmentTiming(newId);
 
@@ -846,7 +846,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindDepartmentTimmings(int facilityStructureId)
         {
-            var deptTimmingbal = new DeptTimmingBal();
+            var deptTimmingbal = new DeptTimmingService();
             var deptTimmingobj = deptTimmingbal.GetDepTimingsById(facilityStructureId);
             return Json(deptTimmingobj, JsonRequestBehavior.AllowGet);
         }
@@ -857,7 +857,7 @@ namespace BillingSystem.Controllers
             //var bedRate = bedRateCardBal.GetBedRateByBedTypeId(bedType);
             //return Json(bedRate, JsonRequestBehavior.AllowGet);
 
-            var serviceCodebalObj = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber);
+            var serviceCodebalObj = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber);
             var obj = serviceCodebalObj.GetServiceCodeByCodeValue(bedType);
             return Json(obj != null ? obj.ServiceCodePrice : 0, JsonRequestBehavior.AllowGet);
         }
@@ -870,7 +870,7 @@ namespace BillingSystem.Controllers
 
         private List<ServiceCode> GetBedOverrideList()
         {
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
                 return bal.GetOveridableBedList();
         }
 
@@ -934,13 +934,13 @@ namespace BillingSystem.Controllers
             List<DropdownListData> list;
             var listParentStructure = new List<DropdownListData>();
             var listFacilities = new List<DropdownListData>();
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
                 list = bal.GetListByCategoriesRange(categories);
 
 
             if (loadFacilities)
             {
-                var fbal = new FacilityBal();
+                var fbal = new FacilityService();
                 var userIsAdmin = Helpers.GetLoggedInUserIsAdmin();
                 var cId = Helpers.GetDefaultCorporateId();
                 var facId = 0;
@@ -1040,7 +1040,7 @@ namespace BillingSystem.Controllers
             switch (fsType)
             {
                 case 83:
-                    var deptTimmingbal = new DeptTimmingBal();
+                    var deptTimmingbal = new DeptTimmingService();
                     listDepTimings = deptTimmingbal.GetDepTimingsById(facilityStructureId);
                     vm.RevenueGLAccount = model.ExternalValue1;
                     vm.ARMasterAccount = model.ExternalValue2;
@@ -1069,7 +1069,7 @@ namespace BillingSystem.Controllers
                     vm.CanOverRideValue = !string.IsNullOrEmpty(model.ExternalValue1) ? "Yes" : "No";
 
                     var categories = new List<string> { "1001" };
-                    using (var bal = new GlobalCodeBal())
+                    using (var bal = new GlobalCodeService())
                         listBedTypes = bal.GetListByCategoriesRange(categories);
 
                     if (listBedTypes.Count > 0)

@@ -16,14 +16,21 @@ namespace BillingSystem.Bal.BusinessAccess
     {
         private readonly IRepository<CPTCodes> _repository;
         private readonly IRepository<Users> _uRepository;
+        private readonly IRepository<GlobalCodes> _gRepository;
+        private readonly IRepository<GlobalCodeCategory> _gcRepository;
+
         private readonly BillingEntities _context;
 
-        public CPTCodesService(IRepository<CPTCodes> repository, IRepository<Users> uRepository, BillingEntities context)
+        public CPTCodesService(IRepository<CPTCodes> repository, IRepository<Users> uRepository, IRepository<GlobalCodes> gRepository, IRepository<GlobalCodeCategory> gcRepository, BillingEntities context)
         {
             _repository = repository;
             _uRepository = uRepository;
+            _gRepository = gRepository;
+            _gcRepository = gcRepository;
             _context = context;
         }
+
+
 
         /// <summary>
         /// Get the Service Code
@@ -206,56 +213,88 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var cptcodeCustomobj = new List<CPTCodesCustomModel>();
 
-            using (var globalcodebal = new GlobalCodeBal())
+            var list = _repository.Where(x => !x.CodeNumbering.Contains("T") && !x.CodeNumbering.Contains("F") && x.CodeTableNumber.Trim().Equals(CptTableNumber)).ToList().Where(c => Convert.ToInt32(c.CodeNumbering) >= startRange && Convert.ToInt32(c.CodeNumbering) <= endRange).OrderBy(v => v.CodeNumbering).ToList();
+            foreach (var item in list)
             {
-                var list = _repository.Where(x => !x.CodeNumbering.Contains("T") && !x.CodeNumbering.Contains("F") && x.CodeTableNumber.Trim().Equals(CptTableNumber)).ToList().Where(c => Convert.ToInt32(c.CodeNumbering) >= startRange && Convert.ToInt32(c.CodeNumbering) <= endRange).OrderBy(v => v.CodeNumbering).ToList();
-                foreach (var item in list)
+                var cptCodecustom = new CPTCodesCustomModel
                 {
-                    var cptCodecustom = new CPTCodesCustomModel
-                    {
-                        CPTCodesId = item.CPTCodesId,
-                        CodeTableNumber = item.CodeTableNumber,
-                        CodeTableDescription = item.CodeTableDescription,
-                        CodeNumbering = item.CodeNumbering,
-                        CodeDescription = item.CodeDescription,
-                        CodePrice = item.CodePrice,
-                        CodeAnesthesiaBaseUnit = item.CodeAnesthesiaBaseUnit,
-                        CodeEffectiveDate = item.CodeEffectiveDate,
-                        CodeExpiryDate = item.CodeExpiryDate,
-                        CodeBasicProductApplicationRule = item.CodeBasicProductApplicationRule,
-                        CodeOtherProductsApplicationRule = item.CodeOtherProductsApplicationRule,
-                        CodeServiceMainCategory = item.CodeServiceMainCategory,
-                        CodeServiceCodeSubCategory = item.CodeServiceCodeSubCategory,
-                        CodeUSCLSChapter = item.CodeUSCLSChapter,
-                        CodeCPTMUEValues = item.CodeCPTMUEValues,
-                        CodeGroup = item.CodeGroup,
-                        CreatedBy = item.CreatedBy,
-                        CreatedDate = item.CreatedDate,
-                        ModifiedBy = item.ModifiedBy,
-                        ModifiedDate = item.ModifiedDate,
-                        IsDeleted = item.IsDeleted,
-                        DeletedBy = item.DeletedBy,
-                        IsActive = item.IsActive,
-                        DeletedDate = item.DeletedDate,
-                        CTPCodeRangeValue = item.CTPCodeRangeValue,
-                        ExternalValue1 = item.ExternalValue1,
-                        ExternalValue2 = item.ExternalValue2,
-                        ExternalValue3 = item.ExternalValue3,
-                    };
+                    CPTCodesId = item.CPTCodesId,
+                    CodeTableNumber = item.CodeTableNumber,
+                    CodeTableDescription = item.CodeTableDescription,
+                    CodeNumbering = item.CodeNumbering,
+                    CodeDescription = item.CodeDescription,
+                    CodePrice = item.CodePrice,
+                    CodeAnesthesiaBaseUnit = item.CodeAnesthesiaBaseUnit,
+                    CodeEffectiveDate = item.CodeEffectiveDate,
+                    CodeExpiryDate = item.CodeExpiryDate,
+                    CodeBasicProductApplicationRule = item.CodeBasicProductApplicationRule,
+                    CodeOtherProductsApplicationRule = item.CodeOtherProductsApplicationRule,
+                    CodeServiceMainCategory = item.CodeServiceMainCategory,
+                    CodeServiceCodeSubCategory = item.CodeServiceCodeSubCategory,
+                    CodeUSCLSChapter = item.CodeUSCLSChapter,
+                    CodeCPTMUEValues = item.CodeCPTMUEValues,
+                    CodeGroup = item.CodeGroup,
+                    CreatedBy = item.CreatedBy,
+                    CreatedDate = item.CreatedDate,
+                    ModifiedBy = item.ModifiedBy,
+                    ModifiedDate = item.ModifiedDate,
+                    IsDeleted = item.IsDeleted,
+                    DeletedBy = item.DeletedBy,
+                    IsActive = item.IsActive,
+                    DeletedDate = item.DeletedDate,
+                    CTPCodeRangeValue = item.CTPCodeRangeValue,
+                    ExternalValue1 = item.ExternalValue1,
+                    ExternalValue2 = item.ExternalValue2,
+                    ExternalValue3 = item.ExternalValue3,
+                };
 
-                    var customModel =
-                        globalcodebal.GetGeneralGlobalCodeByRangeVal(Convert.ToInt64(item.CTPCodeRangeValue),
-                            Convert.ToInt32(OrderType.CPT).ToString(), Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
-                    cptCodecustom.CategoryId = customModel.GlobalCodeId.ToString();
-                    cptCodecustom.CategoryName = customModel.GlobalCodeName;
-                    cptCodecustom.GlobalCodeCategoryId = Convert.ToInt32(customModel.GlobalCodeCategoryId);
-                    cptCodecustom.CategoryName = customModel.GlobalCodeCategoryName;
-                    cptCodecustom.CreatedByName = GetNameByUserId(item.CreatedBy);
-                    cptcodeCustomobj.Add(cptCodecustom);
-                }
-                return cptcodeCustomobj;
+                var customModel = GetGeneralGlobalCodeByRangeVal(Convert.ToInt64(item.CTPCodeRangeValue),
+                        Convert.ToInt32(OrderType.CPT).ToString(), Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
+                cptCodecustom.CategoryId = customModel.GlobalCodeId.ToString();
+                cptCodecustom.CategoryName = customModel.GlobalCodeName;
+                cptCodecustom.GlobalCodeCategoryId = Convert.ToInt32(customModel.GlobalCodeCategoryId);
+                cptCodecustom.CategoryName = customModel.GlobalCodeCategoryName;
+                cptCodecustom.CreatedByName = GetNameByUserId(item.CreatedBy);
+                cptcodeCustomobj.Add(cptCodecustom);
             }
+            return cptcodeCustomobj;
 
+        }
+        private GeneralCodesCustomModel GetGeneralGlobalCodeByRangeVal(long coderange, string type, string categoryId)
+        {
+            var generalCodesCustomModel = new GeneralCodesCustomModel();
+            var gModellist =
+                    _gRepository.Where(
+                        f =>
+                            f.IsDeleted != null && !(bool)f.IsDeleted &&
+                            f.ExternalValue1 == type && f.GlobalCodeCategoryValue == categoryId).ToList();
+            if (type == Convert.ToInt32(OrderType.CPT).ToString())
+            {
+
+                var globalcodeval =
+                    gModellist.SingleOrDefault(f => Convert.ToInt32(f.ExternalValue2) <= coderange &&
+                        Convert.ToInt32(f.ExternalValue3) >= coderange);
+                if (globalcodeval != null)
+                {
+
+                    generalCodesCustomModel.GlobalCodeName = globalcodeval.GlobalCodeName;
+                    generalCodesCustomModel.GlobalCodeId = globalcodeval.GlobalCodeID;
+                    var globalcodecategoryVal = GetGlobalCodeCategoryByValue(globalcodeval.GlobalCodeCategoryValue);
+                    if (globalcodecategoryVal != null)
+                    {
+                        generalCodesCustomModel.GlobalCodeCategoryName =
+                            globalcodecategoryVal.GlobalCodeCategoryName;
+                        generalCodesCustomModel.GlobalCodeCategoryId =
+                            globalcodecategoryVal.GlobalCodeCategoryValue;
+                    }
+                }
+            }
+            return generalCodesCustomModel;
+        }
+        private GlobalCodeCategory GetGlobalCodeCategoryByValue(string globalCodeCategoryvalue)
+        {
+            var m = _gcRepository.Where(f => f.GlobalCodeCategoryValue == globalCodeCategoryvalue).FirstOrDefault();
+            return m ?? new GlobalCodeCategory();
         }
         private string GetNameByUserId(int? UserID)
         {
@@ -269,8 +308,6 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public CPTCodesCustomModel GetCPTCodesCustomById(int id, string CptTableNumber)
         {
-            using (var globalcodebal = new GlobalCodeBal())
-            {
                 var cptCodes = _repository.Where(x => x.CPTCodesId == id && x.CodeTableNumber.Trim().Equals(CptTableNumber)).FirstOrDefault();
                 var cptCodecustom = new CPTCodesCustomModel
                 {
@@ -304,8 +341,7 @@ namespace BillingSystem.Bal.BusinessAccess
                     ExternalValue3 = cptCodes.ExternalValue3,
                 };
 
-                var customModel =
-                    globalcodebal.GetGeneralGlobalCodeByRangeVal(Convert.ToInt64(cptCodes.CTPCodeRangeValue),
+                var customModel = GetGeneralGlobalCodeByRangeVal(Convert.ToInt64(cptCodes.CTPCodeRangeValue),
                         Convert.ToInt32(OrderType.CPT).ToString(),
                         Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
                 cptCodecustom.CategoryId = customModel.GlobalCodeId.ToString();
@@ -314,7 +350,6 @@ namespace BillingSystem.Bal.BusinessAccess
                 cptCodecustom.CategoryName = customModel.GlobalCodeCategoryName;
                 cptCodecustom.CreatedByName = GetNameByUserId(cptCodes.CreatedBy);
                 return cptCodecustom;
-            }
         }
 
         /// <summary>

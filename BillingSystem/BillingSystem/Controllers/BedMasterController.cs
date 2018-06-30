@@ -60,7 +60,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var bal = new FacilityBal();
+            var bal = new FacilityService();
             var bedMasterList = bal.GetFacilitiesByRoles(facilityId, corporateid);
             return Json(bedMasterList);
         }
@@ -82,7 +82,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetServicesList()
         {
-            var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber);
+            var serviceCodeBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber);
             var serviceCodeList = serviceCodeBal.GetServiceCodes();
             return Json(serviceCodeList);
         }

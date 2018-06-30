@@ -51,7 +51,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetDocumentsByType(int associatedType, int pid)
         {
             //Initialize the MedicalNotes BAL object
-            using (var documentTemplatesBal = new DocumentsTemplatesBal())
+            using (var documentTemplatesBal = new DocumentsTemplatesService())
             {
                 var userid = Helpers.GetLoggedInUserId();
                 //Get the facilities list
@@ -65,7 +65,7 @@ namespace BillingSystem.Controllers
                 };
                 if (associatedType == 2) //Radiology
                 {
-                    var openorderBal = new OpenOrderBal(
+                    var openorderBal = new OpenOrderService(
                         Helpers.DefaultCptTableNumber,
                         Helpers.DefaultServiceCodeTableNumber,
                         Helpers.DefaultDrgTableNumber,
@@ -87,7 +87,7 @@ namespace BillingSystem.Controllers
                             && _.CategoryId == Convert.ToInt32(GlobalCodeCategoryValue.Radiology)).ToList();
                     fileUploaderView.OpenOrdersList = patientOpenOrders;
                     fileUploaderView.ClosedOrdersList = patientClosedOrders;
-                    using (var medicalnotesbal = new MedicalNotesBal()) //Updated by Shashank on Oct 28, 2014
+                    using (var medicalnotesbal = new MedicalNotesService()) //Updated by Shashank on Oct 28, 2014
                     {
                         var phyMedicalnotes = medicalnotesbal.GetCustomMedicalNotes(
                             pid,
@@ -97,7 +97,7 @@ namespace BillingSystem.Controllers
                         fileUploaderView.ViewType = "2";
                     }
                     using (
-                        var orderActivityBal = new OrderActivityBal(
+                        var orderActivityBal = new OrderActivityService(
                             Helpers.DefaultCptTableNumber,
                             Helpers.DefaultServiceCodeTableNumber,
                             Helpers.DefaultDrgTableNumber,
@@ -157,7 +157,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult PatientDocumentsGrid(string associatedType, string pid, string sort, string sortdir)
         {
-            var oDocumentTemplatesBal = new DocumentsTemplatesBal();
+            var oDocumentTemplatesBal = new DocumentsTemplatesService();
 
             var documentslist = oDocumentTemplatesBal.GetDocumentsCustomModelByType(
                 Convert.ToInt32(associatedType),
@@ -387,7 +387,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SaveDocuments(DocumentsTemplates documentsTemplates)
         {
-            var documentsTemplatesBal = new DocumentsTemplatesBal();
+            var documentsTemplatesBal = new DocumentsTemplatesService();
             var newId = -1;
             var userid = Helpers.GetLoggedInUserId();
             var corporateId = Helpers.GetDefaultCorporateId();
@@ -441,7 +441,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPatientDocument(string documentid)
         {
             var documentidInt = Convert.ToInt32(documentid);
-            var documentsTemplatesBal = new DocumentsTemplatesBal();
+            var documentsTemplatesBal = new DocumentsTemplatesService();
             var objDocumentTemplateData = documentsTemplatesBal.GetDocumentById(documentidInt);
             if (objDocumentTemplateData != null)
             {
@@ -459,7 +459,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetDocuments(string patientId, int associatedtype)
         {
             var patientIdint = Convert.ToInt32(patientId);
-            var documentsTemplatesBal = new DocumentsTemplatesBal();
+            var documentsTemplatesBal = new DocumentsTemplatesService();
             //var objDocumentTemplateData = documentsTemplatesBal.GetPatientDocuments(patientIdint, associatedtype);
             var objDocumentTemplateData = documentsTemplatesBal.GetPatientCustomDocuments(patientIdint, associatedtype);
             //GetPatientCustomDocuments
@@ -474,7 +474,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetDocumentById(int documentid)
         {
             var documentidInt = Convert.ToInt32(documentid);
-            var documentsTemplatesBal = new DocumentsTemplatesBal();
+            var documentsTemplatesBal = new DocumentsTemplatesService();
             var objDocumentTemplateData = documentsTemplatesBal.GetDocumentById(documentidInt);
             if (objDocumentTemplateData != null)
             {
@@ -490,7 +490,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFile(int Id)
         {
-            using (var bal = new DocumentsTemplatesBal())
+            using (var bal = new DocumentsTemplatesService())
             {
                 //Get facility model object by current facility ID
                 var model = bal.GetDocumentById(Convert.ToInt32(Id));
@@ -538,7 +538,7 @@ namespace BillingSystem.Controllers
             var result = false;
             using (var transcope = new TransactionScope())
             {
-                using (var bal = new DocumentsTemplatesBal())
+                using (var bal = new DocumentsTemplatesService())
                 {
                     if (id > 0 && patientId > 0)
                     {
@@ -594,7 +594,7 @@ namespace BillingSystem.Controllers
 
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingBal())
+                    using (var bal = new XMLBillingService())
                     {
                         var result = bal.XMLBillFileParser(xml, filePath, true, corporateId, facilityId, string.Empty);
                         msg = result;
@@ -616,7 +616,7 @@ namespace BillingSystem.Controllers
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             if (!string.IsNullOrEmpty(message)) ViewBag.Message = message;
-            var xFileHeaderBal = new XFileHeaderBal();
+            var xFileHeaderBal = new XFileHeaderService();
             var xFileHeaderList = xFileHeaderBal.GetXFileHeaderByCId(corporateId, facilityId);
             var dataView = new RemittanceAdviceView
             {
@@ -654,7 +654,7 @@ namespace BillingSystem.Controllers
                 var xml = Helpers.GetXML(completePath + fileN);
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingBal())
+                    using (var bal = new XMLBillingService())
                     {
                         var result = bal.RemittanceXMLParser(xml, filePath, true, corporateId, facilityId);
                         var msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
@@ -678,7 +678,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public string ViewRemittanceFile(int id)
         {
-            using (var xFileHeaderBal = new XFileHeaderBal())
+            using (var xFileHeaderBal = new XFileHeaderService())
             {
                 var xmlString = xFileHeaderBal.GetRemittanceFormattedXmlStringByFileId(id);
                 return (xmlString);
@@ -695,7 +695,7 @@ namespace BillingSystem.Controllers
             var listToreturn = new List<XAdviceXMLParsedDataCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            using (var objBal = new XAdviceXMLParsedDataBal())
+            using (var objBal = new XAdviceXMLParsedDataService())
             {
                 listToreturn = objBal.GetXAdviceXmlParsedDataById(corporateId, facilityId, id);
             }
@@ -720,14 +720,14 @@ namespace BillingSystem.Controllers
         public ActionResult ApplyChargesInRemittanceAdvice(int fileId)
         {
             var parsedList = new List<XFileHeaderCustomModel>();
-            using (var bal = new XclaimBal())
+            using (var bal = new XclaimService())
             {
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
                 var xclaimList = bal.ApplyAdvicePaymentInRemittanceAdvice(corporateid, facilityid, fileId);
                 if (xclaimList)
                 {
-                    using (var xFileHeaderBal = new XFileHeaderBal())
+                    using (var xFileHeaderBal = new XFileHeaderService())
                     {
                         parsedList = xFileHeaderBal.GetXFileHeaderByCId(corporateid, facilityid);
                     }
@@ -778,7 +778,7 @@ namespace BillingSystem.Controllers
                 ViewBag.Message = msg;
             }
 
-            var objBal = new TPXMLParsedDataBal();
+            var objBal = new TPXMLParsedDataService();
             var dataView = new XMLBillFileView
             {
                 XAdviceXMLData = new List<TPXMLParsedDataCustomModel>(),
@@ -850,7 +850,7 @@ namespace BillingSystem.Controllers
 
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingBal())
+                    using (var bal = new XMLBillingService())
                     {
                         var result = bal.XMLBillFileParser(xml, filePath, true, corporateId, facilityId, string.Empty, executeDetails, loggedInUserId);
                         msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
@@ -869,7 +869,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public string ViewFile(int id)
         {
-            using (var xFileHeaderBal = new TpFileHeaderBal())
+            using (var xFileHeaderBal = new TpFileHeaderService())
             {
                 var xmlString = xFileHeaderBal.GetFormattedXmlStringByXFileId(id);
                 return (xmlString);
@@ -1063,7 +1063,7 @@ namespace BillingSystem.Controllers
             #region Data Rows
 
             //var listToreturn = new List<TPXMLParsedDataCustomModel>();
-            using (var objBal = new TPXMLParsedDataBal())
+            using (var objBal = new TPXMLParsedDataService())
             {
                 //listToreturn = objBal.TPXMLParsedDataList(Convert.ToInt32(FileHeaderId));
                 var result = objBal.GetXmlParsedData(Convert.ToInt32(FileHeaderId));
@@ -1152,7 +1152,7 @@ namespace BillingSystem.Controllers
 
         private List<TPXMLParsedDataCustomModel> GetXmlParsedData(long id)
         {
-            using (var bal = new TPXMLParsedDataBal())
+            using (var bal = new TPXMLParsedDataService())
             {
                 var result = bal.GetXmlParsedData(id);
                 return result;
@@ -1162,7 +1162,7 @@ namespace BillingSystem.Controllers
 
         public PartialViewResult DeleteByFileIdAndGetXmlData(int fileId)
         {
-            using (var bal = new TPXMLParsedDataBal())
+            using (var bal = new TPXMLParsedDataService())
             {
                 var result = bal.DeleteAndThenGetXmlFileData(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), fileId, withDetails: true);
                 return PartialView(PartialViews.XMLBillFile, result);
@@ -1172,7 +1172,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult ExecuteXmlDetails(int fileId)
         {
-            using (var bal = new TPXMLParsedDataBal())
+            using (var bal = new TPXMLParsedDataService())
             {
                 var result = bal.ExecuteXmlFileDetails(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), fileId);
                 return Json(result, JsonRequestBehavior.AllowGet);
@@ -1188,7 +1188,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult OnlineHelp()
         {
-            using (var bal = new DocumentsTemplatesBal())
+            using (var bal = new DocumentsTemplatesService())
             {
                 var associatedTypeId = Convert.ToInt32(AttachmentType.OnlineHelp);
                 var docTypeId = (int)DocumentTemplateTypes.OnlineHelp;
@@ -1222,7 +1222,7 @@ namespace BillingSystem.Controllers
                 var associatedTypeId = Convert.ToInt32(DocAssociatedType.OnlineHelp);
                 var docTypeId = (int)DocumentTemplateTypes.OnlineHelp;
 
-                using (var bal = new DocumentsTemplatesBal())
+                using (var bal = new DocumentsTemplatesService())
                 {
                     if (ModelState.IsValid)
                     {
@@ -1275,7 +1275,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDocumentTemplate(int id, int associatedTypeId)
         {
-            using (var documentTemplateBal = new DocumentsTemplatesBal())
+            using (var documentTemplateBal = new DocumentsTemplatesService())
             {
                 //Get facility model object by current facility ID
                 var currentFacility = documentTemplateBal.GetDocumentById(id);

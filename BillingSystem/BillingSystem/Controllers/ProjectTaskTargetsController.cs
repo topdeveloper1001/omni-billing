@@ -20,7 +20,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetProjectTaskTargetsDetails(int id)
         {
-            using (var bal = new ProjectTaskTargetsBal())
+            using (var bal = new ProjectTaskTargetsService())
             {
                 //Call the AddProjectTaskTargets Method to Add / Update current ProjectTaskTargets
                 var current = bal.GetProjectTaskTargetsById(id);

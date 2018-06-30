@@ -22,7 +22,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the DrugInteractions BAL object
-            using (var bal = new DrugInteractionsBal())
+            using (var bal = new DrugInteractionsService())
             {
                 //Get the Entity list
                 var list = bal.GetDrugInteractionsList();
@@ -56,7 +56,7 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DrugInteractionsBal())
+                using (var bal = new DrugInteractionsService())
                 {
                     if (model.Id > 0)
                     {
@@ -86,7 +86,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDrugInteractionsDetails(int id)
         {
-            using (var bal = new DrugInteractionsBal())
+            using (var bal = new DrugInteractionsService())
             {
                 //Call the AddDrugInteractions Method to Add / Update current DrugInteractions
                 var current = bal.GetDrugInteractionsById(id);
@@ -103,7 +103,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDrugInteractions(int id)
         {
-            using (var bal = new DrugInteractionsBal())
+            using (var bal = new DrugInteractionsService())
             {
                 //Get DrugInteractions model object by current DrugInteractions ID
                 var model = bal.GetDrugInteractionsById(id);
@@ -131,7 +131,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult SortDrugInstructionlist()
         {
-            using (var bal = new DrugInteractionsBal())
+            using (var bal = new DrugInteractionsService())
             {
                 var list = bal.GetDrugInteractionsList();
                 return PartialView(PartialViews.DrugInteractionsList, list);

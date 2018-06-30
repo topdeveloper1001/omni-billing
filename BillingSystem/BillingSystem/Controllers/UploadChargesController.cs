@@ -72,7 +72,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult UpdateOrderActivities(int orderId)
         {
-            using (var orderActivityBal = new OrderActivityBal())
+            using (var orderActivityBal = new OrderActivityService())
             {
                 var orderactvities = orderActivityBal.GetOrderActivitiesByOrderId(orderId);
                 var loggedinuserid = Helpers.GetLoggedInUserId();
@@ -97,7 +97,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOrdersByEncounterId(int EncounterId)
         {
-            using (var ordersBal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var ordersBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var orderactvities = ordersBal.GetAllOrdersByEncounterId(EncounterId);
                 return PartialView("UserControls/_OpenOrderList", orderactvities);
@@ -115,7 +115,7 @@ namespace BillingSystem.Controllers
             var corporateid = Helpers.GetSysAdminCorporateID();
             common.FacilityId = facilityid;
             common.CorporateId = corporateid;
-            var bal = new UploadChargesBal();
+            var bal = new UploadChargesService();
             var objPatientInfoData = bal.GetXPaymentReturnDenialClaims(common);
             ViewBag.Message = null;
             return PartialView(PartialViews.PatientCustomSerachList, objPatientInfoData);
@@ -144,7 +144,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterOrderList(int encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var encounterOrderbal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var status = OrderStatus.Open.ToString();
             var listOfOrders = encounterOrderbal.GetAllOrdersByEncounterId(encounterIdint).ToList();
             return PartialView(PartialViews.PhysicianOpenOrderList, listOfOrders);
@@ -255,7 +255,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDiagnosisByEncounterId(int encounterId)
         {
-            using (var diagnosisbal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var diagnosisbal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var currentEncounterdiagnosislist = diagnosisbal.GetDiagnosisListByEncounterId(encounterId);
                 var diagnosislistUCpath = string.Format("../Diagnosis/{0}", PartialViews.DiagnosisList);
@@ -276,7 +276,7 @@ namespace BillingSystem.Controllers
             PatientInfoCustomModel patientInfo = null;
             var isPrimary = true;
             var isMajorCPT = true;
-            using (var bal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var dModel = bal.GetNewDiagnosisByEncounterId(EncounterID, PatientID);
                 var dList = bal.GetDiagnosisList(PatientID, EncounterID);
@@ -328,7 +328,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteBillActivity(int billActivityId, int billHeaderId)
         {
-            var uploadChargesBal = new UploadChargesBal();
+            var uploadChargesBal = new UploadChargesService();
             var objBillHeaderDetails = uploadChargesBal.DeleteBillActivity(billActivityId, Helpers.GetLoggedInUserId(),
                 billHeaderId);
             return PartialView(PartialViews.UploadChargesBillActivitiesList, objBillHeaderDetails);
@@ -341,7 +341,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddUpdateMaunalChargesAuditLog(DiagnosisCustomModel model)
         {
-            var moduletrackingBal = new ManualChargesTrackingBal();
+            var moduletrackingBal = new ManualChargesTrackingService();
             var userId = Helpers.GetLoggedInUserId();
             var currentdatetime = Helpers.GetInvariantCultureDateTime();
             var moduletrackingobj = new ManualChargesTracking
@@ -424,10 +424,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult MaunalChargesAdditionAuditLogDeletion(string id, string diagnosisType)
         {
-            var moduletrackingBal = new ManualChargesTrackingBal();
+            var moduletrackingBal = new ManualChargesTrackingService();
             var userId = Helpers.GetLoggedInUserId();
             var currentdatetime = Helpers.GetInvariantCultureDateTime();
-            var diagnosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            var diagnosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
             var diangnosisObj = diagnosisBal.GetDiagnosisById(id);
             var moduletrackingobj = new ManualChargesTracking
             {
@@ -472,7 +472,7 @@ namespace BillingSystem.Controllers
             //using (var billactivityBal = new BillActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             //{
             var orderactvities = new List<BillDetailCustomModel>();
-            var bal = new UploadChargesBal();
+            var bal = new UploadChargesService();
             if (claimId != null)
             {
                 orderactvities = bal.GetBillDetailsByBillHeaderId(Convert.ToInt32(claimId)).Where(x => x.ActivityType == "8").ToList();
@@ -502,7 +502,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult RoomChargesAdditionAuditLogInsertion(BedCharges chargedadded)
         {
-            var moduletrackingBal = new ManualChargesTrackingBal();
+            var moduletrackingBal = new ManualChargesTrackingService();
             var userId = Helpers.GetLoggedInUserId();
             var currentdatetime = Helpers.GetInvariantCultureDateTime();
             var moduletrackingobj = new ManualChargesTracking
@@ -534,7 +534,7 @@ namespace BillingSystem.Controllers
         {
             //var orderactvities = billactivityBal.GetBillActivitiesByEncounterId(encounterid).Where(x => x.ActivityType == "8").ToList();
             var orderactvities = new List<BillDetailCustomModel>();
-            var bal = new UploadChargesBal();
+            var bal = new UploadChargesService();
             if (claimId != null)
             {
                 orderactvities = bal.GetBillDetailsByBillHeaderId(Convert.ToInt32(claimId)).Where(x => x.ActivityType == "8").ToList();
@@ -602,7 +602,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteRoomChargesBillActivity(int billActivityId, int billHeaderId)
         {
-            var uploadChargesBal = new UploadChargesBal();
+            var uploadChargesBal = new UploadChargesService();
             var objBillHeaderDetails = uploadChargesBal.DeleteBillActivity(billActivityId, Helpers.GetLoggedInUserId(),
                 billHeaderId).Where(x => x.ActivityType == "8").ToList();
             return PartialView(PartialViews.RoomChargesList, objBillHeaderDetails);
@@ -616,7 +616,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRoomChargesByServiceCode(string serviceCode, DateTime? effectiveDate)
         {
-            using (var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber, effectiveDate))
+            using (var serviceCodeBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber, effectiveDate))
             {
                 var serviceCodeObj = serviceCodeBal.GetServiceCodePriceByCodeValue(serviceCode);
                 return Json(serviceCodeObj, JsonRequestBehavior.AllowGet);
@@ -630,7 +630,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private static string SetBillheaderStatus(string currentStatus)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            var globalCodeBal = new GlobalCodeService();
             var gcList = globalCodeBal.GetGCodesListByCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.BillHeaderStatus));
             var newstatusval = gcList.FirstOrDefault(x => x.GlobalCodeName.Equals(currentStatus));
             if (newstatusval != null)
@@ -671,7 +671,7 @@ namespace BillingSystem.Controllers
                     if (item.StartDate.HasValue)
                         startDate = item.StartDate.Value;
 
-                    var sBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber, startDate);
+                    var sBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber, startDate);
                     var itemGross = sBal.GetServiceCodePriceByCodeValue(item.OrderCode);
                     var itemObj = new BedCharges
                     {
@@ -729,7 +729,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddManualOrders(List<OpenOrderCustomModel> order)
         {
-            using (var openorderBal = new OpenOrderBal())
+            using (var openorderBal = new OpenOrderService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var corporateId = Helpers.GetDefaultCorporateId();
@@ -794,7 +794,7 @@ namespace BillingSystem.Controllers
 
         public PartialViewResult GetPatientResultByPatientId(int patientId, int encounterId, int billHeaderId)
         {
-            var bal = new UploadChargesBal();
+            var bal = new UploadChargesService();
             var objPatientInfoData = bal.GetXPaymentReturnDenialClaimsByPatientId(patientId, encounterId, billHeaderId);
             ViewBag.Message = null;
             return PartialView(PartialViews.PatientCustomSerachList, objPatientInfoData);
@@ -829,7 +829,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetBillVirtualDischargeDetails(int patientId, int encounterId, int billHeaderId)
         {
-            var bal = new UploadChargesBal();
+            var bal = new UploadChargesService();
             var objPatientInfoData = bal.GetXPaymentReturnDenialClaimsByPatientId(patientId, encounterId, billHeaderId);
             ViewBag.Message = null;
             return PartialView(PartialViews.PatientCustomSerachList, objPatientInfoData);

@@ -58,7 +58,7 @@ namespace BillingSystem.Controllers
             //Check if OpenOrderActivityScheduleViewModel 
             if (OpenOrderActivityScheduleModel != null)
             {
-                using (var openOrderActivityScheduleBal = new OpenOrderActivityScheduleBal())
+                using (var openOrderActivityScheduleBal = new OpenOrderActivityScheduleService())
                 {
                     if (OpenOrderActivityScheduleModel.OpenOrderActivityScheduleID > 0)
                     {
@@ -79,7 +79,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOpenOrderActivitySchedule(OpenOrderActivitySchedule model)
         {
-            using (var OpenOrderActivityScheduleBal = new OpenOrderActivityScheduleBal())
+            using (var OpenOrderActivityScheduleBal = new OpenOrderActivityScheduleService())
             {
                 //Call the AddOpenOrderActivitySchedule Method to Add / Update current OpenOrderActivitySchedule
                 var currentOpenOrderActivitySchedule = OpenOrderActivityScheduleBal.GetOpenOrderActivityScheduleById(Convert.ToInt32(model));
@@ -94,7 +94,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteOpenOrderActivitySchedule(OpenOrderActivitySchedule model)
         {
-            using (var openOrderActivityScheduleBal = new OpenOrderActivityScheduleBal())
+            using (var openOrderActivityScheduleBal = new OpenOrderActivityScheduleService())
             {
                 //Get OpenOrderActivitySchedule model object by current OpenOrderActivitySchedule ID
                 var currentOpenOrderActivitySchedule = openOrderActivityScheduleBal.GetOpenOrderActivityScheduleById(Convert.ToInt32(model));

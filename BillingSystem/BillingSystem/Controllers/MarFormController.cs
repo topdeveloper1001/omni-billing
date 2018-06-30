@@ -43,7 +43,7 @@ namespace BillingSystem.Controllers
                 : vm.FromDate;
             var firstDayOfMonth = new DateTime(date.Year, date.Month, 1);
             var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-            using (var orderActivityBal = new OrderActivityBal())
+            using (var orderActivityBal = new OrderActivityService())
             {
                 vm.FromDate = firstDayOfMonth;
                 vm.TillDate = lastDayOfMonth;

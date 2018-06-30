@@ -194,7 +194,7 @@ namespace BillingSystem.Controllers
                 var result = await Upload(patientId, "1");
                 if (result.Any())
                 {
-                    using (var bal = new DocumentsTemplatesBal())
+                    using (var bal = new DocumentsTemplatesService())
                     {
                         docs = await bal.SaveDocumentsAsync(null, true, "");
                         if (docs.Any())

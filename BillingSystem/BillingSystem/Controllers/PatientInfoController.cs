@@ -110,7 +110,7 @@ namespace BillingSystem.Controllers
         [AcceptVerbs(HttpVerbs.Post)]
         public ActionResult GetPatientRelations()
         {
-            var commonComm = new GlobalCodeBal();
+            var commonComm = new GlobalCodeService();
             var list =
                 commonComm.GetGlobalCodesByCategoryValue(
                     Convert.ToString((int)GlobalCodeCategoryValue.PatientRelationTypes))
@@ -180,7 +180,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPatientDocument(string documentid)
         {
             var documentidInt = Convert.ToInt32(documentid);
-            var documentsTemplatesBal = new DocumentsTemplatesBal();
+            var documentsTemplatesBal = new DocumentsTemplatesService();
             var objDocumentTemplateData = documentsTemplatesBal.GetDocumentById(documentidInt);
             if (objDocumentTemplateData != null)
             {
@@ -197,7 +197,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPatientDocuments(string patientId)
         {
             var patientIdint = Convert.ToInt32(patientId);
-            var documentsTemplatesBal = new DocumentsTemplatesBal();
+            var documentsTemplatesBal = new DocumentsTemplatesService();
             var objDocumentTemplateData =
                 documentsTemplatesBal.GetPatientDocuments(patientIdint)
                     .Where(
@@ -400,11 +400,11 @@ namespace BillingSystem.Controllers
         public ActionResult GetPatientCustomDetailById(int PatientID)
         {
             var info = _service.GetPatientInfoById(PatientID);
-            var patientInsuranceBal = new PatientInsuranceBal();
-            var patientPhoneBal = new PatientPhoneBal();
+            var patientInsuranceBal = new PatientInsuranceService();
+            var patientPhoneBal = new PatientPhoneService();
             var patientInsuranceobj = patientInsuranceBal.GetPatientInsurance(PatientID);
             var patientPhoneObj = patientPhoneBal.GetPatientPersonalPhoneByPateintId(PatientID);
-            var insuraceCompany = new InsuranceCompanyBal();
+            var insuraceCompany = new InsuranceCompanyService();
 
             var customModel = new CommonModel
             {
@@ -614,7 +614,7 @@ namespace BillingSystem.Controllers
                         imgModel = PatientInfoProfileImage(updatedPatientId);
 
 
-                    var docBal = new DocumentsTemplatesBal();
+                    var docBal = new DocumentsTemplatesService();
                     if (imgModel != null)
                     {
                         var newDoc =
@@ -708,7 +708,7 @@ namespace BillingSystem.Controllers
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
-                using (var bal = new PatientPhoneBal())
+                using (var bal = new PatientPhoneService())
                 {
                     if (model.PatientPhoneId > 0)
                     {
@@ -744,7 +744,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientPhoneById(int patientphoneId)
         {
-            using (var bal = new PatientPhoneBal())
+            using (var bal = new PatientPhoneService())
             {
                 var model = bal.GetPatientPhoneById(patientphoneId);
                 if (model != null)
@@ -761,7 +761,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeletePatientPhone(int id)
         {
-            using (var bal = new PatientPhoneBal())
+            using (var bal = new PatientPhoneService())
             {
                 var model = bal.GetPatientPhoneById(id);
                 if (model != null)
@@ -807,7 +807,7 @@ namespace BillingSystem.Controllers
         {
             if (model != null)
             {
-                using (var bal = new PatientAddressRelationBal())
+                using (var bal = new PatientAddressRelationService())
                 {
                     var userId = Helpers.GetLoggedInUserId();
                     var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -836,7 +836,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientAddressInfo(int patientId)
         {
-            var objPatientAddressRelationbal = new PatientAddressRelationBal();
+            var objPatientAddressRelationbal = new PatientAddressRelationService();
             var objPatientAddressRelatioData =
                 objPatientAddressRelationbal.GetPatientAddressRelation(patientId);
             if (objPatientAddressRelatioData != null)
@@ -853,7 +853,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPatientAddressById(int patientRelationId)
         {
-            using (var bal = new PatientAddressRelationBal())
+            using (var bal = new PatientAddressRelationService())
             {
                 var model = bal.GetPatientRelationAddressById(patientRelationId);
                 return Json(model, JsonRequestBehavior.AllowGet);
@@ -881,7 +881,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeletePatientAddressRelation(int Id)
         {
-            using (var objPatientAddressRelationbal = new PatientAddressRelationBal())
+            using (var objPatientAddressRelationbal = new PatientAddressRelationService())
             {
                 var currentPatientInfo =
                     objPatientAddressRelationbal.GetPatientRelationAddressById(Id);
@@ -909,7 +909,7 @@ namespace BillingSystem.Controllers
         public PartialViewResult GetAddressPartialView(int patientId)
         {
             //Patient Addresses
-            using (var bal = new PatientAddressRelationBal())
+            using (var bal = new PatientAddressRelationService())
             {
                 var patientInfoModel = new PatientInfoView
                 {
@@ -936,7 +936,7 @@ namespace BillingSystem.Controllers
         {
             if (model != null)
             {
-                using (var bal = new PatientInsuranceBal())
+                using (var bal = new PatientInsuranceService())
                 {
                     var userId = Helpers.GetLoggedInUserId();
                     var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -974,7 +974,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetInsurancePlansByCompanyId(string companyId)
         {
-            var bal = new InsurancePlansBal();
+            var bal = new InsurancePlansService();
             var planlist = bal.GetInsurancePlansByCompanyId(Convert.ToInt32(companyId), CurrentDateTime);
             var list = new List<DropdownListData>();
             list.AddRange(planlist.Select(item => new DropdownListData
@@ -997,7 +997,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetInsurancePolicesByPlanId(string planId)
         {
-            var bal = new InsurancePolicesBal();
+            var bal = new InsurancePolicesService();
             var policiesList = bal.GetInsurancePolicesByPlanId(Convert.ToInt32(planId), CurrentDateTime);
             var list = new List<DropdownListData>();
             list.AddRange(policiesList.Select(item => new DropdownListData
@@ -1023,7 +1023,7 @@ namespace BillingSystem.Controllers
         {
             if (vm != null)
             {
-                using (var bal = new PatientInsuranceBal())
+                using (var bal = new PatientInsuranceService())
                 {
                     var userId = Helpers.GetLoggedInUserId();
                     var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -1066,7 +1066,7 @@ namespace BillingSystem.Controllers
         {
 
 
-            using (var bal = new DocumentsTemplatesBal())
+            using (var bal = new DocumentsTemplatesService())
             {
                 var facilityId = Helpers.GetDefaultFacilityId();
                 var corporateId = Helpers.GetSysAdminCorporateID();
@@ -1079,7 +1079,7 @@ namespace BillingSystem.Controllers
                 if (Session[SessionEnum.TempOtherDoc.ToString()] != null && Session[SessionEnum.TempOtherDoc.ToString()] != null)
                 {
                     var otherDoc = SaveOtherDocument();
-                    var gBal = new GlobalCodeBal();
+                    var gBal = new GlobalCodeService();
                     var documentName = gBal.GetNameByGlobalCodeValueAndCategoryValue("1103", Convert.ToString(Session[SessionEnum.DocTypeId.ToString()]));
 
                     model.AssociatedType = (int)DocAssociatedType.PatientDemographicDocument;
@@ -1174,7 +1174,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientDocumentType()
         {
-            var commonComm = new GlobalCodeBal();
+            var commonComm = new GlobalCodeService();
             var list =
                 commonComm.GetGlobalCodesByCategoryValue(
                     Convert.ToString((int)GlobalCodeCategoryValue.PatientDocumentTypes))
@@ -1194,7 +1194,7 @@ namespace BillingSystem.Controllers
             IEnumerable<DocumentsTemplates> list = null;
             using (var transcope = new TransactionScope())
             {
-                using (var bal = new DocumentsTemplatesBal())
+                using (var bal = new DocumentsTemplatesService())
                 {
                     if (id > 0 && patientId > 0)
                     {
@@ -1236,7 +1236,7 @@ namespace BillingSystem.Controllers
             {
                 IsDeleted = false,
             };
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
                 var vm2 = bal.GetPatientLoginDetailByPatientId(patientId);
                 if (vm2 != null)
@@ -1253,7 +1253,7 @@ namespace BillingSystem.Controllers
         public async Task<JsonResult> SavePatientLoginDetails(PatientLoginDetailCustomModel vm)
         {
             var message = string.Empty;
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
                 var userId = Helpers.GetLoggedInUserId();
                 var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -1306,7 +1306,7 @@ namespace BillingSystem.Controllers
         public JsonResult ChangePassword(int patientId, string newPassword)
         {
             var updatedId = 0;
-            using (var bal = new PatientLoginDetailBal())
+            using (var bal = new PatientLoginDetailService())
             {
 
                 var vm = bal.GetPatientLoginDetailByPatientId(patientId);
@@ -1334,7 +1334,7 @@ namespace BillingSystem.Controllers
 
             if (vmData != null && vmData.Any())
             {
-                using (var rolebal = new RoleTabsBal())
+                using (var rolebal = new RoleTabsService())
                 {
                     var roleId = Helpers.GetDefaultRoleId();
                     var encountersFirstItem = vmData.First();
@@ -1354,7 +1354,7 @@ namespace BillingSystem.Controllers
         public async Task<PartialViewResult> GetPatientAttachmentsPartialView(int patientId)
         {
             var vm = new DocumentsView();
-            using (var bal = new DocumentsTemplatesBal())
+            using (var bal = new DocumentsTemplatesService())
             {
                 vm.Attachments = await bal.GetPatientDocumentsList(patientId);
                 vm.CurrentAttachment = new DocumentsTemplates();
@@ -1370,7 +1370,7 @@ namespace BillingSystem.Controllers
         public PartialViewResult GetPatientPhonesPartialView(int patientId)
         {
             var vm = new PhonesView();
-            using (var bal = new PatientPhoneBal())
+            using (var bal = new PatientPhoneService())
             {
                 if (patientId > 0)
                     vm.CurrentPhone = bal.GetPatientPersonalPhoneByPateintId(patientId);
@@ -1396,7 +1396,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public PartialViewResult GetPatientPhonesBySort(int patientId)
         {
-            using (var bal = new PatientPhoneBal())
+            using (var bal = new PatientPhoneService())
             {
                 var phonelst = bal.GetPatientPhoneList(patientId);
                 return PartialView(PartialViews.PhoneGrid, phonelst);
@@ -1410,7 +1410,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public async Task<PartialViewResult> GetPatientAttachmentsPartialView1(int patientId)
         {
-            using (var bal = new DocumentsTemplatesBal())
+            using (var bal = new DocumentsTemplatesService())
             {
                 var attachmentsData = await bal.GetPatientDocumentsList(patientId);
                 return PartialView(PartialViews.AttachmentsGrid, attachmentsData);
@@ -1440,7 +1440,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetPatientInsuranceInfo(int patinetId)
         {
-            using (var bal = new PatientInsuranceBal())
+            using (var bal = new PatientInsuranceService())
             {
                 var list = bal.GetPatientInsuranceView(patinetId);
 
@@ -1473,7 +1473,7 @@ namespace BillingSystem.Controllers
 
 
             //Insurance Companies List
-            using (var bal = new InsuranceCompanyBal())
+            using (var bal = new InsuranceCompanyService())
             {
                 var result = bal.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
                 if (result.Count > 0)
@@ -1560,7 +1560,7 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("patientportalemailVerification");
             PatientInfoCustomModel patientVm;
-            using (var bal = new PatientLoginDetailBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new PatientLoginDetailService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
                 patientVm = bal.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
 
             if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
@@ -1601,7 +1601,7 @@ namespace BillingSystem.Controllers
             const int docType = (int)DocumentTemplateTypes.ProfileImage;
             var profileImage = Convert.ToString(DocumentTemplateTypes.ProfileImage);
 
-            using (var docBal = new DocumentsTemplatesBal())
+            using (var docBal = new DocumentsTemplatesService())
             {
                 if (patientId <= 0) return newId;
 
@@ -1691,7 +1691,7 @@ namespace BillingSystem.Controllers
         {
             if (vm != null)
             {
-                using (var bal = new PatientLoginDetailBal())
+                using (var bal = new PatientLoginDetailService())
                 {
                     var userId = Helpers.GetLoggedInUserId();
                     var currentDateTime = Helpers.GetInvariantCultureDateTime();

@@ -21,7 +21,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index()
         {
             //Initialize the MCOrderCodeRates BAL object
-            using (var bal = new MCOrderCodeRatesBal())
+            using (var bal = new MCOrderCodeRatesService())
             {
                 //Get the Entity list
                 var list = bal.GetMCOrderCodeRatesList();
@@ -51,7 +51,7 @@ namespace BillingSystem.Controllers
             if (model != null)
             {
                 //Call the AddMCOrderCodeRates Method to Add / Update current MCOrderCodeRates
-                using (var bal = new MCOrderCodeRatesBal())
+                using (var bal = new MCOrderCodeRatesService())
                     list = bal.SaveMCOrderCodeRates(model);
 
             }
@@ -66,7 +66,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetMCOrderCodeRatesDetails(int id)
         {
-            using (var bal = new MCOrderCodeRatesBal())
+            using (var bal = new MCOrderCodeRatesService())
             {
                 //Call the AddMCOrderCodeRates Method to Add / Update current MCOrderCodeRates
                 var current = bal.GetMCOrderCodeRatesByID(id);
@@ -114,7 +114,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteMCOrderCodeRates(int id)
         {
             var list = new List<MCOrderCodeRatesCustomModel>();
-            using (var bal = new MCOrderCodeRatesBal())
+            using (var bal = new MCOrderCodeRatesService())
             {
                 var obj = bal.GetMCOrderCodeRatesByID(id);
                 var result = bal.DeleteMCOrderCodeRates(id);
@@ -132,7 +132,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindMCOrderCodeRatesList(int McContractID)
         {
             //Initialize the RuleStep BAL object
-            var mcOrderCodeRatesBal = new MCOrderCodeRatesBal();
+            var mcOrderCodeRatesBal = new MCOrderCodeRatesService();
             //Get the Entity list
             var mcOrderCodeRatesList = mcOrderCodeRatesBal.GetMcOrderCodeRatesListByMcCode(McContractID);
             //Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList
@@ -148,10 +148,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindMCOrderCodeList(int McContractID)
         {
-            var mcContractbal = new McContractBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var mcContractbal = new McContractService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var mccontractObj = mcContractbal.GetMcContractDetail(McContractID);
             //Initialize the RuleStep BAL object
-            var mcOrderCodeRatesBal = new MCOrderCodeRatesBal();
+            var mcOrderCodeRatesBal = new MCOrderCodeRatesService();
             //Get the Entity list
             var mcOrderCodeRatesList = mcOrderCodeRatesBal.GetMcOrderCodeRatesListByMcCode(Convert.ToInt32(mccontractObj.MCCode));
             //Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList
@@ -166,7 +166,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ViewOrderRateListByType(int ordrtype, int mcCode)
         {
-            var mcOrderCodeRatesBal = new MCOrderCodeRatesBal();
+            var mcOrderCodeRatesBal = new MCOrderCodeRatesService();
             var mcOrderCodeRatesList = mcOrderCodeRatesBal.GetMcOrderCodeRatesListByMcCode(mcCode);
             mcOrderCodeRatesList = ordrtype == 0
                 ? mcOrderCodeRatesList

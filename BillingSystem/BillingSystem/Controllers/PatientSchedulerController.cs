@@ -38,7 +38,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult BindUsersType(string corporateId, string facilityId)
         {
-            using (var fRole = new FacilityRoleBal())
+            using (var fRole = new FacilityRoleService())
             {
                 var list = new List<DropdownListData>();
                 List<FacilityRoleCustomModel> roleList = fRole.GetUserTypeRoleDropDown(
@@ -108,7 +108,7 @@ namespace BillingSystem.Controllers
             if (model != null)
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
-                using (var oSchedulingBal = new SchedulingBal())
+                using (var oSchedulingBal = new SchedulingService())
                 {
                     foreach (Scheduling item in model)
                     {

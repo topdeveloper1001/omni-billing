@@ -43,7 +43,7 @@ namespace BillingSystem.Controllers
             List<DiagnosisCustomModel> list = null;
             var isPrimary = true;
             var isMajorCPT = true;
-            using (var bal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var dModel = bal.GetNewDiagnosisByEncounterId(encounterId, patientId);
                 var dList = bal.GetDiagnosisList(patientId, encounterId);
@@ -66,7 +66,7 @@ namespace BillingSystem.Controllers
             }
 
             diagnosisModel.IsPrimary = isPrimary;
-            var favDiagnosisBal = new FavoritesBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var favDiagnosisBal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var favDiagnosisList = favDiagnosisBal.GetFavoriteOrders(Helpers.GetLoggedInUserId());
             favDiagnosisList =
                 favDiagnosisList.Where(_ => _.CategoryId == Convert.ToInt32(OrderType.Diagnosis).ToString())
@@ -98,7 +98,7 @@ namespace BillingSystem.Controllers
             PatientInfoCustomModel patientInfo;
             List<DiagnosisCustomModel> list;
             var isPrimary = true;
-            using (var bal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var dModel = bal.GetNewDiagnosisByEncounterId(encounterId, patientId);
                 var dList = bal.GetDiagnosisList(patientId, encounterId);
@@ -121,7 +121,7 @@ namespace BillingSystem.Controllers
             }
 
             diagnosisModel.IsPrimary = isPrimary;
-            var favDiagnosisBal = new FavoritesBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var favDiagnosisBal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var favDiagnosisList = favDiagnosisBal.GetFavoriteOrders(Helpers.GetLoggedInUserId());
             favDiagnosisList =
                 favDiagnosisList.Where(_ => _.CategoryId == Convert.ToInt32(OrderType.Diagnosis).ToString())
@@ -146,7 +146,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+                using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
                 {
                     var userId = Helpers.GetLoggedInUserId();
 
@@ -285,7 +285,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetList(string patientId)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var encounterobj = _eService.GetActiveEncounterByPateintId(Convert.ToInt32(patientId));
                 var diagnosisList = new List<DiagnosisCustomModel>();
@@ -304,7 +304,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetUploadChargesCurrentDiagnosisList(string patientId, string encounterId)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var diagnosisList = bal.GetDiagnosisList(Convert.ToInt32(patientId), Convert.ToInt32(encounterId));
 
@@ -319,7 +319,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetDiagnosisById(string id)
         {
             DRGCodes drg = null;
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var diagnosis = bal.GetDiagnosisById(id);
                 if (diagnosis.DRGCodeID != null && (int)diagnosis.DRGCodeID > 0)
@@ -414,7 +414,7 @@ namespace BillingSystem.Controllers
             //    return Json("-1", JsonRequestBehavior.AllowGet);
             //}
 
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var result = bal.DeleteCurrentDiagnosis(Helpers.GetLoggedInUserId(), id, Helpers.DefaultDrgTableNumber);
                 if (result.ExecutionStatus > 0)
@@ -446,7 +446,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCurrentDiagnosisList(string patientId)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var list = bal.GetDiagnosisList(Convert.ToInt32(patientId));
                 return PartialView(PartialViews.DiagnosisList, list);
@@ -460,11 +460,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddDiagnosisById(string id)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var diagnosis = bal.GetDiagnosisById(id);
 
-                var drgBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber);
+                var drgBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
                 var drg = drgBal.GetDrgCodesById(Convert.ToInt32(diagnosis.DRGCodeID));
                 //var encounterobj = encounterBal.GetActiveEncounterByPateintId(Convert.ToInt32(diagnosis.PatientID));
                 var jsonResult = new
@@ -501,7 +501,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public int IsPrimary(DiagnosisCustomModel vm)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var current = bal.GetDiagnosisList(Convert.ToInt32(vm.PatientID),
                     Convert.ToInt32(vm.EncounterID));
@@ -526,7 +526,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+                using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
                 {
                     var list = bal.GetFilteredDRGCodes(text);
                     var filteredList = list.Select(item => new
@@ -550,7 +550,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private DRGCodes GetDrgCodeById(int drgCodeId)
         {
-            using (var bal = new DRGCodesBal(Helpers.DefaultDrgTableNumber))
+            using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
             {
                 var drg = bal.GetDrgCodesById(drgCodeId);
                 return drg;
@@ -566,13 +566,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDiagnosisByCodeId(string Id, int Pid, int Eid)
         {
-            using (var bal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
             {
                 var Dtype = Convert.ToInt32(DiagnosisType.Primary);
-                var drgBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber);
+                var drgBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
                 var diagnosisCode = bal.GetDiagnosisCodeByCodeId(Id);
                 var drgCode = drgBal.GetDrgCodesobjByCodeValue(Id);
-                using (var Dbal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+                using (var Dbal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
                 {
                     var encounterDiagnosis = Dbal.GetDiagnosisList(Convert.ToInt32(Pid),
                         Convert.ToInt32(Eid));
@@ -645,7 +645,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFavoritesDiagnosis()
         {
             var userid = Helpers.GetLoggedInUserId();
-            var favDiagnosisBal = new FavoritesBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var favDiagnosisBal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var favDiagnosisList = favDiagnosisBal.GetFavoriteOrders(userid);
             favDiagnosisList = favDiagnosisList.Where(_ => _.CategoryId == Convert.ToInt32(OrderType.Diagnosis).ToString())
                     .ToList();
@@ -662,7 +662,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public bool CheckDuplicateDiagnosisCode(string diagnosisCode, int encounterId, int diagnosisId)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var isExists = bal.CheckIfDuplicateDiagnosisAgainstCurrentEncounter(diagnosisCode, encounterId, diagnosisId);
                 return isExists;
@@ -678,7 +678,7 @@ namespace BillingSystem.Controllers
         {
             try
             {
-                var drgBal = new DRGCodesBal(Helpers.DefaultDrgTableNumber);
+                var drgBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
                 var drgCode = drgBal.GetDrgCodeById(Convert.ToInt32(model.DRGCodeID));
                 var orderactivitySave = new OrderActivity
                 {
@@ -713,7 +713,7 @@ namespace BillingSystem.Controllers
                     CreatedBy = model.CreatedBy ?? model.ModifiedBy,
                     CreatedDate = model.CreatedDate ?? model.ModifiedDate,
                 };
-                using (var bal = new OrderActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+                using (var bal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
                 {
                     var alreadyExist =
                         bal.GetOrderActivitiesByEncounterId(Convert.ToInt32(model.EncounterID)).FirstOrDefault(x => x.OrderType == 9);
@@ -745,7 +745,7 @@ namespace BillingSystem.Controllers
         public JsonResult SaveDiagnosisCustomCode(DiagnosisCustomModel model)
         {
             int result = 0;
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var isPrimary = IsPrimary(model);
                 if (isPrimary != 0) return Json(isPrimary, JsonRequestBehavior.AllowGet);
@@ -876,7 +876,7 @@ namespace BillingSystem.Controllers
             if (diagCode.Count > 0)
             {
 
-                using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+                using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
                 {
                     list = bal.GetFilteredDiagnosis(diagCode);
                     var filteredList = list.Select(item => new
@@ -900,7 +900,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortDiagnosisTabGrid(int Pid, int Eid)
         {
-            var daignosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            var daignosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
             var diagnosislist = daignosisBal.GetDiagnosisList(Convert.ToInt32(Pid), Convert.ToInt32(Eid));
             var viewpath = string.Format("../Diagnosis/{0}", PartialViews.PhyAllOrders);
             return this.PartialView(PartialViews.DiagnosisList, diagnosislist);
@@ -908,7 +908,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetFavoriteDiagnosisData()
         {
-            using (var bal = new FavoritesBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var bal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 var list = bal.GetFavoriteDiagnosisData(Helpers.GetLoggedInUserId());
                 var jData = list.Select(f => new[] { Convert.ToString(f.UserDefinedDescriptionID), f.CategoryName, f.CodeId, f.CodeDesc, f.UserDefineDescription, f.CodeId });
@@ -922,7 +922,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetCurrentDiagnosisData(long patientId, long encounterId)
         {
-            using (var bal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
+            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
             {
                 var result = bal.GetCurrentDiagnosisData(patientId, encounterId);
                 var list = result.Select(f => new[] {Convert.ToString(f.DiagnosisID),Convert.ToString(f.DiagnosisCodeId), f.DiagnosisTypeName, f.DiagnosisCode, f.DiagnosisCodeDescription,

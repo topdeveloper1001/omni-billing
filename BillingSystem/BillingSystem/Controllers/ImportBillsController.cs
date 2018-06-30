@@ -18,7 +18,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index()
         {
-            var bal = new TpFileHeaderBal();
+            var bal = new TpFileHeaderService();
             var corporateId = Helpers.GetDefaultCorporateId();
             var list = bal.TpFileHeaderList(corporateId);
             var importBillingView = new ImportBillsView { TpFileHeaderList = list };
@@ -44,7 +44,7 @@ namespace BillingSystem.Controllers
                 var xml = Helpers.GetXML(completePath);
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingBal())
+                    using (var bal = new XMLBillingService())
                         bal.ImportXmlBills(xml, savedFileName, true);
                 }
             }
@@ -53,7 +53,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindTpXMLParsedData(int fileId)
         {
-            using (var bal = new TPXMLParsedDataBal())
+            using (var bal = new TPXMLParsedDataService())
             {
                 var list = bal.TPXMLParsedDataList(fileId);
                 return PartialView(PartialViews.XMLParsedDataView, list);
@@ -91,7 +91,7 @@ namespace BillingSystem.Controllers
                     }
                 }
             }
-            var bal = new TpFileHeaderBal();
+            var bal = new TpFileHeaderService();
             var corporateId = Helpers.GetDefaultCorporateId();
             var list = bal.TpFileHeaderList(corporateId);
             var importBillingView = new ImportBillsView { TpFileHeaderList = list };
@@ -116,7 +116,7 @@ namespace BillingSystem.Controllers
             var xml = Helpers.GetXML(completePath);
             if (!string.IsNullOrEmpty(xml))
             {
-                using (var bal = new XMLBillingBal())
+                using (var bal = new XMLBillingService())
                     result = bal.ImportXmlBills(xml, savedFileName, true);
             }
             return result;

@@ -17,7 +17,7 @@ namespace BillingSystem.Controllers
         public ActionResult OrderActivityMain()
         {
             //Initialize the OrderActivity BAL object
-            var orderActivityBal = new OrderActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var orderActivityBal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
 
             //Get the Entity list
             var orderActivityList = orderActivityBal.GetOrderActivityCustom();
@@ -43,7 +43,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindOrderActivityList()
         {
             //Initialize the OrderActivity BAL object
-            using (var orderActivityBal = new OrderActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            using (var orderActivityBal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             {
                 //Get the facilities list
                 var orderActivityList = orderActivityBal.GetOrderActivityCustom();
@@ -68,7 +68,7 @@ namespace BillingSystem.Controllers
             //Check if OrderActivityViewModel 
             if (OrderActivityModel != null)
             {
-                using (var orderActivityBal = new OrderActivityBal())
+                using (var orderActivityBal = new OrderActivityService())
                 {
                     if (OrderActivityModel.OrderActivityID > 0)
                     {
@@ -89,7 +89,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOrderActivity(int OrderActivityID)
         {
-            using (var orderActivityBal = new OrderActivityBal())
+            using (var orderActivityBal = new OrderActivityService())
             {
                 //Call the AddOrderActivity Method to Add / Update current OrderActivity
                 var currentOrderActivity = orderActivityBal.GetOrderActivityByID(Convert.ToInt32(OrderActivityID));
@@ -109,7 +109,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteOrderActivity(int OrderActivityID)
         {
-            using (var orderActivityBal = new OrderActivityBal())
+            using (var orderActivityBal = new OrderActivityService())
             {
                 //Get OrderActivity model object by current OrderActivity ID
                 var currentOrderActivity = orderActivityBal.GetOrderActivityByID(Convert.ToInt32(OrderActivityID));

@@ -18,7 +18,7 @@ namespace BillingSystem.Controllers
         public ActionResult ParametersMain()
         {
             //Initialize the Parameters BAL object
-            var parametersBal = new ParametersBal();
+            var parametersBal = new ParametersService();
             var corporateid = Helpers.GetDefaultCorporateId();
             var facilityid = Helpers.GetDefaultFacilityId();
             //Get the Entity list
@@ -44,7 +44,7 @@ namespace BillingSystem.Controllers
         public ActionResult BindParametersList()
         {
             //Initialize the Parameters BAL object
-            using (var parametersBal = new ParametersBal())
+            using (var parametersBal = new ParametersService())
             {
                 var corporateid = Helpers.GetDefaultCorporateId();
                 var facilityid = Helpers.GetDefaultFacilityId();
@@ -70,12 +70,12 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var facilityBal = new FacilityBal();
+            var facilityBal = new FacilityService();
             var facilityNumber = facilityBal.GetFacilityNumberById(facilityId);
             //Check if ParametersViewModel 
             if (parametersModel != null)
             {
-                using (var parametersBal = new ParametersBal())
+                using (var parametersBal = new ParametersService())
                 {
                     if (parametersModel.ParametersID > 0)
                     {
@@ -101,7 +101,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetParameters(int ParametersID)
         {
-            using (var parametersBal = new ParametersBal())
+            using (var parametersBal = new ParametersService())
             {
                 //Call the AddParameters Method to Add / Update current Parameters
                 var currentParameters = parametersBal.GetParametersCustomModelByID(Convert.ToInt32(ParametersID));
@@ -121,7 +121,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteParameters(int ParametersID)
         {
-            using (var parametersBal = new ParametersBal())
+            using (var parametersBal = new ParametersService())
             {
                 //Get Parameters model object by current Parameters ID
                 var currentParameters = parametersBal.GetParametersByID(Convert.ToInt32(ParametersID));

@@ -160,7 +160,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetServiceCodeDetailById(int serviceCodeId)
         {
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 var result = bal.GetServiceCodeById(serviceCodeId);
                 return Json(result);
@@ -171,7 +171,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetServiceCodesList()
         {
             var list = new List<DropdownListData>();
-            using (var sBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            using (var sBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
             {
                 var sc = sBal.GetServiceCodesCustomModel();
                 if (sc.Count > 0)
@@ -192,7 +192,7 @@ namespace BillingSystem.Controllers
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
             var finalList = new List<DropdownListData>();
-            var bal = new FacilityBal();
+            var bal = new FacilityService();
             var list = bal.GetFacilitiesByCorporateId(corporateid);
             if (list.Count > 0)
             {
@@ -216,7 +216,7 @@ namespace BillingSystem.Controllers
             var categories = new List<string> { "1001", "18", };
             List<DropdownListData> list;
             var corporateid = Helpers.GetSysAdminCorporateID();
-            using (var bal = new GlobalCodeBal())
+            using (var bal = new GlobalCodeService())
                 list = bal.GetListByCategoriesRange(categories);
 
             //****Bind facility

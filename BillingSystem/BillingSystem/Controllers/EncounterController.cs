@@ -85,7 +85,7 @@ namespace BillingSystem.Controllers
                 var facilityId = Helpers.GetDefaultFacilityId();
                 if (facilityId > 0)
                 {
-                    using (var facBal = new FacilityBal())
+                    using (var facBal = new FacilityService())
                     {
                         var defaultFacility = facBal.GetFacilityById(facilityId);
                         vm.FacilityName = defaultFacility.FacilityName;
@@ -246,7 +246,7 @@ namespace BillingSystem.Controllers
             {
                 var encId = StartEncounter(model);
 
-                var fBal = new FutureOpenOrderBal(Helpers.DefaultCptTableNumber,
+                var fBal = new FutureOpenOrderService(Helpers.DefaultCptTableNumber,
                     Helpers.DefaultServiceCodeTableNumber,
                     Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber,
                     Helpers.DefaultDiagnosisTableNumber);
@@ -303,7 +303,7 @@ namespace BillingSystem.Controllers
             {
                 if (eEndType != 5)
                 {
-                    using (var patientBed = new MappingPatientBedBal())
+                    using (var patientBed = new MappingPatientBedService())
                     {
                         var objtoUpdate =
                             patientBed.GetMappingPatientBedByEncounterId(Convert.ToString(model.EncounterID));
@@ -360,12 +360,12 @@ namespace BillingSystem.Controllers
                                     if (isUpdated > 0)
                                     {
                                         // Transfer Paitent from one bed to another
-                                        using (var transferPaitent = new MappingPatientBedBal())
+                                        using (var transferPaitent = new MappingPatientBedService())
                                         {
                                             var newBedToMap =
                                                 _bedservice.GetBedMasterById(
                                                     Convert.ToInt32(model.patientBedId));
-                                            var mappingPatientBedTransfer = new MappingPatientBed
+                                            var mappingPatientBedTransfer = new McContract
                                             {
                                                 MappingPatientBedId = 0,
                                                 FacilityNumber =
@@ -419,11 +419,11 @@ namespace BillingSystem.Controllers
                             var objEncounterdetais = _service.GetEncounterDetailById(model.EncounterID);
                             if (objEncounterdetais != null)
                             {
-                                using (var patientNewBed = new MappingPatientBedBal())
+                                using (var patientNewBed = new MappingPatientBedService())
                                 {
                                     var newBedToMap =
                                         _bedservice.GetBedMasterById(Convert.ToInt32(model.patientBedId));
-                                    var mappingPatientBed = new MappingPatientBed
+                                    var mappingPatientBed = new McContract
                                     {
                                         MappingPatientBedId = 0,
                                         FacilityNumber =
@@ -691,7 +691,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPhysiciansByPhysicianType(string physicianTypeId)
         {
             var facilityid = Helpers.GetDefaultFacilityId();
-            var bal = new PhysicianBal();
+            var bal = new PhysicianService();
 
             // Need to change later and get the list by type.
             var physicianList = bal.GetPhysiciansByPhysicianTypeId(
@@ -795,7 +795,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPatientFutureOrder(int patientId)
         {
             using (
-               var futureOpenOrderBal = new FutureOpenOrderBal(
+               var futureOpenOrderBal = new FutureOpenOrderService(
                    Helpers.DefaultCptTableNumber,
                    Helpers.DefaultServiceCodeTableNumber,
                    Helpers.DefaultDrgTableNumber,
@@ -816,7 +816,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddFutureOrders(string[] orderIds, int encId)
         {
-            using (var futureOpenOrderBal = new FutureOpenOrderBal())
+            using (var futureOpenOrderBal = new FutureOpenOrderService())
             {
                 var cid = Helpers.GetSysAdminCorporateID();
                 var fid = Helpers.GetDefaultFacilityId();
@@ -985,10 +985,10 @@ namespace BillingSystem.Controllers
                 var objEncounterdetais = _service.GetEncounterDetailById(encounterid);
                 if (objEncounterdetais != null)
                 {
-                    using (var patientBed = new MappingPatientBedBal())
+                    using (var patientBed = new MappingPatientBedService())
                     {
                         var newBedToMap = _bedservice.GetBedMasterById(Convert.ToInt32(model.patientBedId));
-                        var mappingPatientBed = new MappingPatientBed
+                        var mappingPatientBed = new McContract
                         {
                             MappingPatientBedId = 0,
                             FacilityNumber = Convert.ToInt32(objEncounterdetais.EncounterFacility),
@@ -1048,7 +1048,7 @@ namespace BillingSystem.Controllers
             var ltList = new List<DropdownListData>();
 
             //Get License Types and Specialties Data
-            using (var gcBal = new GlobalCodeBal())
+            using (var gcBal = new GlobalCodeService())
                 ltList = gcBal.GetGCodesListByCategoryValue("1104", value, string.Empty);
 
             return Json(ltList, JsonRequestBehavior.AllowGet);
@@ -1065,7 +1065,7 @@ namespace BillingSystem.Controllers
             var ltList = new List<DropdownListData>();
 
             //Get License Types and Specialties Data
-            var gcBal = new GlobalCodeBal();
+            var gcBal = new GlobalCodeService();
             allList = gcBal.GetListByCategoriesRange(new List<string> { "1104", "1121" });
             uList = _uService.GetPhysiciansByRole(fId, cId);
 

@@ -14,17 +14,21 @@ namespace BillingSystem.Bal.BusinessAccess
     {
         private readonly IRepository<BedRateCard> _repository;
         private readonly IRepository<Facility> _fRepository;
+        private readonly IRepository<GlobalCodes> _gRepository;
+        private readonly IRepository<ServiceCode> _scRepository;
 
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public BedRateCardService(IRepository<BedRateCard> repository, IRepository<Facility> fRepository, BillingEntities context, IMapper mapper)
+        public BedRateCardService(IRepository<BedRateCard> repository, IRepository<Facility> fRepository, IRepository<GlobalCodes> gRepository, BillingEntities context, IMapper mapper)
         {
             _repository = repository;
             _fRepository = fRepository;
+            _gRepository = gRepository;
             _context = context;
             _mapper = mapper;
         }
+
 
         /// <summary>
         /// Get the GetBedRateCardsList
@@ -35,19 +39,14 @@ namespace BillingSystem.Bal.BusinessAccess
             var list = new List<BedRateCardCustomModel>();
             var lstBedRateCard = _repository.Where(b => (b.IsDeleted != true) && b.IsActive && b.CorporateId == corporateId && (facilityId == 0 || b.FacilityId == facilityId)).ToList();
 
-            var gcbal = new GlobalCodeBal();
-            var sBal = new ServiceCodeBal(serviceCodeTableNumber);
-
             list.AddRange(from item in lstBedRateCard
-                          let sc = sBal.GetServiceCodeByCodeValue(item.ServiceCodeValue.Trim())
+                          let sc = GetServiceCodeByCodeValue(item.ServiceCodeValue.Trim(), serviceCodeTableNumber)
                           select new BedRateCardCustomModel
                           {
                               BedRateCard = item,
-                              UnitTypeName =
-                                  gcbal.GetNameByGlobalCodeValueAndCategoryValue(
+                              UnitTypeName = GetNameByGlobalCodeValueAndCategoryValue(
                                       Convert.ToString((int)GlobalCodeCategoryValue.BedUnitType), item.UnitType.Trim()),
-                              BedTypeName =
-                                  gcbal.GetNameByGlobalCodeValueAndCategoryValue(
+                              BedTypeName = GetNameByGlobalCodeValueAndCategoryValue(
                                       Convert.ToString((int)GlobalCodeCategoryValue.Bedtypes),
                                       Convert.ToString(Convert.ToInt32(item.BedTypes))),
                               ServiceCodeName = sc.ServiceCodeDescription,
@@ -59,8 +58,23 @@ namespace BillingSystem.Bal.BusinessAccess
 
             return list;
         }
+        private string GetNameByGlobalCodeValueAndCategoryValue(string categoryValue, string globalCodeValue)
+        {
+            if (!string.IsNullOrEmpty(categoryValue) && !string.IsNullOrEmpty(globalCodeValue))
+            {
+                var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
+                && c.GlobalCodeValue.Equals(globalCodeValue)).FirstOrDefault();
 
-
+                if (globalCode != null)
+                    return globalCode.GlobalCodeName;
+            }
+            return string.Empty;
+        }
+        private ServiceCode GetServiceCodeByCodeValue(string serviceCodeValue, string ServiceCodeTableNumber)
+        {
+            var serviceCode = _scRepository.Where(x => x.ServiceCodeValue.Equals(serviceCodeValue) && x.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault();
+            return serviceCode ?? new ServiceCode();
+        }
         /// <summary>
         /// Get the GetBedRateCardsList
         /// </summary>
@@ -73,19 +87,14 @@ namespace BillingSystem.Bal.BusinessAccess
                     b =>
                         (b.IsDeleted != true) && b.IsActive).ToList();
 
-            var gcbal = new GlobalCodeBal();
-            var sBal = new ServiceCodeBal(serviceCodeTableNumber);
-
             list.AddRange(from item in lstBedRateCard
-                          let sc = sBal.GetServiceCodeByCodeValue(item.ServiceCodeValue.Trim())
+                          let sc = GetServiceCodeByCodeValue(item.ServiceCodeValue.Trim(), serviceCodeTableNumber)
                           select new BedRateCardCustomModel
                           {
                               BedRateCard = item,
-                              UnitTypeName =
-                                  gcbal.GetNameByGlobalCodeValueAndCategoryValue(
+                              UnitTypeName = GetNameByGlobalCodeValueAndCategoryValue(
                                       Convert.ToString((int)GlobalCodeCategoryValue.BedUnitType), item.UnitType.Trim()),
-                              BedTypeName =
-                                  gcbal.GetNameByGlobalCodeValueAndCategoryValue(
+                              BedTypeName = GetNameByGlobalCodeValueAndCategoryValue(
                                       Convert.ToString((int)GlobalCodeCategoryValue.Bedtypes),
                                       Convert.ToString(Convert.ToInt32(item.BedTypes))),
                               ServiceCodeName = sc.ServiceCodeDescription,
@@ -98,9 +107,8 @@ namespace BillingSystem.Bal.BusinessAccess
             return list;
         }
 
-        public DateTime GetInvariantCultureDateTime(int facilityid)
+        private DateTime GetInvariantCultureDateTime(int facilityid)
         {
-
             var facilityObj = _fRepository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault() != null ? _fRepository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault().FacilityTimeZone : TimeZoneInfo.Utc.ToString();
             var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
             var utcTime = DateTime.Now.ToUniversalTime();
@@ -175,6 +183,13 @@ namespace BillingSystem.Bal.BusinessAccess
             return m;
         }
 
+        private string GetGlobalCodeNameByIdAndCategoryId(string categoryId, int globalCodeId)
+        {
+            var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryId) && c.GlobalCodeID == globalCodeId).FirstOrDefault();
+            if (globalCode != null)
+                return globalCode.GlobalCodeName;
+            return string.Empty;
+        }
         public IEnumerable<BedRateCardCustomModel> GetBedRateCardsListByBedType(string bedTypeid, bool nonChargeable)
         {
             var lst = new List<BedRateCardCustomModel>();
@@ -182,13 +197,11 @@ namespace BillingSystem.Bal.BusinessAccess
             if (!nonChargeable)
             {
                 var blst = _repository.Where(x => x.BedTypes == bedType).ToList();
-                var globalBal = new GlobalCodeBal();
                 var unitTypesList = Convert.ToString((int)GlobalCodeCategoryValue.BedUnitType);
                 lst.AddRange(blst.Select(item => new BedRateCardCustomModel
                 {
                     BedRateCard = item,
-                    UnitTypeName =
-                        globalBal.GetGlobalCodeNameByIdAndCategoryId(unitTypesList, Convert.ToInt32(item.UnitType))
+                    UnitTypeName = GetGlobalCodeNameByIdAndCategoryId(unitTypesList, Convert.ToInt32(item.UnitType))
                 }));
             }
             else
