@@ -356,7 +356,6 @@
     <Compile Include="Controllers\DeptTimmingController.cs" />
     <Compile Include="Controllers\FacultyDeptController.cs" />
     <Compile Include="Controllers\FacultyRoosterController.cs" />
-    <Compile Include="Controllers\HighChartsEditorController.cs" />
     <Compile Include="Controllers\PlaceOfServiceController.cs" />
     <Compile Include="Controllers\SchedulerController.cs" />
     <Compile Include="Controllers\FindClaimController.cs" />
@@ -369,7 +368,6 @@
     <Compile Include="Controllers\PatientPreSchedulingController.cs" />
     <Compile Include="Controllers\PatientSchedulerController.cs" />
     <Compile Include="Controllers\FacultyTimeslotsController.cs" />
-    <Compile Include="Controllers\ManualDashboardV1Controller.cs" />
     <Compile Include="Controllers\DashboardBudgetController.cs" />
     <Compile Include="Controllers\DashboardDisplayOrderController.cs" />
     <Compile Include="Controllers\DashboardIndicatorDataController.cs" />

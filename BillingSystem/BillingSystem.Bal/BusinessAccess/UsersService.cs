@@ -583,5 +583,12 @@ namespace BillingSystem.Bal.BusinessAccess
             IEnumerable<BillEditorUsersCustomModel> result = _context.Database.SqlQuery<BillEditorUsersCustomModel>(spName, sqlParameters);
             return result.ToList();
         }
+
+
+        public string GetNameByUserId(int id)
+        {
+            var m = _repository.Where(x => x.UserID == id).FirstOrDefault();
+            return m != null ? $"{m.FirstName} {m.LastName}" : string.Empty;
+        }
     }
 }

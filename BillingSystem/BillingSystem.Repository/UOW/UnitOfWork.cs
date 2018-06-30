@@ -111,25 +111,25 @@ namespace BillingSystem.Repository.UOW
         /// </summary>
         private CorporateRepository _CorporateRepository;
 
-        /// <summary>
-        ///     The _ dashboard display order repository.
-        /// </summary>
-        private DashboardDisplayOrderRepository _DashboardDisplayOrderRepository;
+        ///// <summary>
+        /////     The _ dashboard display order repository.
+        ///// </summary>
+        //private DashboardDisplayOrderRepository _DashboardDisplayOrderRepository;
 
-        /// <summary>
-        ///     The _ dashboard indicator data repository.
-        /// </summary>
-        private DashboardIndicatorDataRepository _DashboardIndicatorDataRepository;
+        ///// <summary>
+        /////     The _ dashboard indicator data repository.
+        ///// </summary>
+        //private DashboardIndicatorDataRepository _DashboardIndicatorDataRepository;
 
-        /// <summary>
-        ///     The _ dashboard indicators repository.
-        /// </summary>
-        private DashboardIndicatorsRepository _DashboardIndicatorsRepository;
+        ///// <summary>
+        /////     The _ dashboard indicators repository.
+        ///// </summary>
+        //private DashboardIndicatorsRepository _DashboardIndicatorsRepository;
 
-        /// <summary>
-        ///     The _ dashboard parameters repository.
-        /// </summary>
-        private DashboardParametersRepository _DashboardParametersRepository;
+        ///// <summary>
+        /////     The _ dashboard parameters repository.
+        ///// </summary>
+        //private DashboardParametersRepository _DashboardParametersRepository;
 
         /// <summary>
         ///     The _ dashboard remark repository.
@@ -216,10 +216,10 @@ namespace BillingSystem.Repository.UOW
         /// </summary>
         private HolidayPlannerRepository _HolidayPlannerRepository;
 
-        /// <summary>
-        ///     The _ indicator data check list repository.
-        /// </summary>
-        private IndicatorDataCheckListRepository _IndicatorDataCheckListRepository;
+        ///// <summary>
+        /////     The _ indicator data check list repository.
+        ///// </summary>
+        //private IndicatorDataCheckListRepository _IndicatorDataCheckListRepository;
 
         /// <summary>
         ///     The _ lab test order set repository.
@@ -247,10 +247,10 @@ namespace BillingSystem.Repository.UOW
         /// </summary>
         private ManualChargesTrackingRepository _ManualChargesTrackingRepository;
 
-        /// <summary>
-        ///     The _ manual dashboard repository.
-        /// </summary>
-        private ManualDashboardRepository _ManualDashboardRepository;
+        ///// <summary>
+        /////     The _ manual dashboard repository.
+        ///// </summary>
+        //private ManualDashboardRepository _ManualDashboardRepository;
 
         /// <summary>
         ///     The _ max values repository.
@@ -460,10 +460,10 @@ namespace BillingSystem.Repository.UOW
         /// </summary>
         private CPTCodesRepository _cptCodesRepository;
 
-        /// <summary>
-        ///     The _dashboard budget repository.
-        /// </summary>
-        private DashboardBudgetRepository _dashboardBudgetRepository;
+        ///// <summary>
+        /////     The _dashboard budget repository.
+        ///// </summary>
+        //private DashboardBudgetRepository _dashboardBudgetRepository;
 
         /// <summary>
         ///     The _dashboard targets repository.
@@ -1137,81 +1137,81 @@ namespace BillingSystem.Repository.UOW
             }
         }
 
-        /// <summary>
-        ///     Gets the dashboard budget repository.
-        /// </summary>
-        public DashboardBudgetRepository DashboardBudgetRepository
-        {
-            get
-            {
-                if (_dashboardBudgetRepository == null)
-                {
-                    _dashboardBudgetRepository = new DashboardBudgetRepository(_context);
-                }
+        ///// <summary>
+        /////     Gets the dashboard budget repository.
+        ///// </summary>
+        //public DashboardBudgetRepository DashboardBudgetRepository
+        //{
+        //    get
+        //    {
+        //        if (_dashboardBudgetRepository == null)
+        //        {
+        //            _dashboardBudgetRepository = new DashboardBudgetRepository(_context);
+        //        }
 
-                return _dashboardBudgetRepository;
-            }
-        }
+        //        return _dashboardBudgetRepository;
+        //    }
+        //}
 
-        /// <summary>
-        ///     Gets the dashboard display order repository.
-        /// </summary>
-        public DashboardDisplayOrderRepository DashboardDisplayOrderRepository
-        {
-            get
-            {
-                return _DashboardDisplayOrderRepository
-                       ?? (_DashboardDisplayOrderRepository = new DashboardDisplayOrderRepository(_context));
-            }
-        }
+        ///// <summary>
+        /////     Gets the dashboard display order repository.
+        ///// </summary>
+        //public DashboardDisplayOrderRepository DashboardDisplayOrderRepository
+        //{
+        //    get
+        //    {
+        //        return _DashboardDisplayOrderRepository
+        //               ?? (_DashboardDisplayOrderRepository = new DashboardDisplayOrderRepository(_context));
+        //    }
+        //}
 
-        /// <summary>
-        ///     Gets the dashboard indicator data repository.
-        /// </summary>
-        public DashboardIndicatorDataRepository DashboardIndicatorDataRepository
-        {
-            get
-            {
-                if (_DashboardIndicatorDataRepository == null)
-                {
-                    _DashboardIndicatorDataRepository = new DashboardIndicatorDataRepository(_context);
-                }
+        ///// <summary>
+        /////     Gets the dashboard indicator data repository.
+        ///// </summary>
+        //public DashboardIndicatorDataRepository DashboardIndicatorDataRepository
+        //{
+        //    get
+        //    {
+        //        if (_DashboardIndicatorDataRepository == null)
+        //        {
+        //            _DashboardIndicatorDataRepository = new DashboardIndicatorDataRepository(_context);
+        //        }
 
-                return _DashboardIndicatorDataRepository;
-            }
-        }
+        //        return _DashboardIndicatorDataRepository;
+        //    }
+        //}
 
-        /// <summary>
-        ///     Gets the dashboard indicators repository.
-        /// </summary>
-        public DashboardIndicatorsRepository DashboardIndicatorsRepository
-        {
-            get
-            {
-                if (_DashboardIndicatorsRepository == null)
-                {
-                    _DashboardIndicatorsRepository = new DashboardIndicatorsRepository(_context);
-                }
+        ///// <summary>
+        /////     Gets the dashboard indicators repository.
+        ///// </summary>
+        //public DashboardIndicatorsRepository DashboardIndicatorsRepository
+        //{
+        //    get
+        //    {
+        //        if (_DashboardIndicatorsRepository == null)
+        //        {
+        //            _DashboardIndicatorsRepository = new DashboardIndicatorsRepository(_context);
+        //        }
 
-                return _DashboardIndicatorsRepository;
-            }
-        }
+        //        return _DashboardIndicatorsRepository;
+        //    }
+        //}
 
-        /// <summary>
-        ///     Gets the dashboard parameters repository.
-        /// </summary>
-        public DashboardParametersRepository DashboardParametersRepository
-        {
-            get
-            {
-                if (_DashboardParametersRepository == null)
-                {
-                    _DashboardParametersRepository = new DashboardParametersRepository(_context);
-                }
+        ///// <summary>
+        /////     Gets the dashboard parameters repository.
+        ///// </summary>
+        //public DashboardParametersRepository DashboardParametersRepository
+        //{
+        //    get
+        //    {
+        //        if (_DashboardParametersRepository == null)
+        //        {
+        //            _DashboardParametersRepository = new DashboardParametersRepository(_context);
+        //        }
 
-                return _DashboardParametersRepository;
-            }
-        }
+        //        return _DashboardParametersRepository;
+        //    }
+        //}
 
         /// <summary>
         ///     Gets the dashboard remark repository.
@@ -1689,21 +1689,21 @@ namespace BillingSystem.Repository.UOW
             }
         }
 
-        /// <summary>
-        ///     Gets the indicator data check list repository.
-        /// </summary>
-        public IndicatorDataCheckListRepository IndicatorDataCheckListRepository
-        {
-            get
-            {
-                if (_IndicatorDataCheckListRepository == null)
-                {
-                    _IndicatorDataCheckListRepository = new IndicatorDataCheckListRepository(_context);
-                }
+        ///// <summary>
+        /////     Gets the indicator data check list repository.
+        ///// </summary>
+        //public IndicatorDataCheckListRepository IndicatorDataCheckListRepository
+        //{
+        //    get
+        //    {
+        //        if (_IndicatorDataCheckListRepository == null)
+        //        {
+        //            _IndicatorDataCheckListRepository = new IndicatorDataCheckListRepository(_context);
+        //        }
 
-                return _IndicatorDataCheckListRepository;
-            }
-        }
+        //        return _IndicatorDataCheckListRepository;
+        //    }
+        //}
 
         /// <summary>
         ///     Method is used to return Facility Repository object
@@ -1889,21 +1889,21 @@ namespace BillingSystem.Repository.UOW
             }
         }
 
-        /// <summary>
-        ///     Gets the manual dashboard repository.
-        /// </summary>
-        public ManualDashboardRepository ManualDashboardRepository
-        {
-            get
-            {
-                if (_ManualDashboardRepository == null)
-                {
-                    _ManualDashboardRepository = new ManualDashboardRepository(_context);
-                }
+        ///// <summary>
+        /////     Gets the manual dashboard repository.
+        ///// </summary>
+        //public ManualDashboardRepository ManualDashboardRepository
+        //{
+        //    get
+        //    {
+        //        if (_ManualDashboardRepository == null)
+        //        {
+        //            _ManualDashboardRepository = new ManualDashboardRepository(_context);
+        //        }
 
-                return _ManualDashboardRepository;
-            }
-        }
+        //        return _ManualDashboardRepository;
+        //    }
+        //}
 
         /// <summary>
         ///     Gets the mapping patient bed repository.

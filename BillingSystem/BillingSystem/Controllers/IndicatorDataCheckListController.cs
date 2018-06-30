@@ -1,20 +1,11 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IndicatorDataCheckListController.cs" company="Spadez">
-//   Omnihelathcare
-// </copyright>
-// <summary>
-//   The indicator data check list controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
-namespace BillingSystem.Controllers
+﻿namespace BillingSystem.Controllers
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Web.Mvc;
-
     using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
@@ -25,6 +16,13 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class IndicatorDataCheckListController : BaseController
     {
+        private readonly IIndicatorDataCheckListService _service;
+
+        public IndicatorDataCheckListController(IIndicatorDataCheckListService service)
+        {
+            _service = service;
+        }
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -39,29 +37,25 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteIndicatorDataCheckList(int id)
         {
-            using (var bal = new IndicatorDataCheckListService())
+            IndicatorDataCheckList model = _service.GetIndicatorDataCheckListById(id);
+            int userId = Helpers.GetLoggedInUserId();
+            var list = new List<IndicatorDataCheckListCustomModel>();
+            DateTime currentDate = Helpers.GetInvariantCultureDateTime();
+
+            // Check If IndicatorDataCheckList model is not null
+            if (model != null)
             {
-                // Get IndicatorDataCheckList model object by current IndicatorDataCheckList ID
-                IndicatorDataCheckList model = bal.GetIndicatorDataCheckListById(id);
-                int userId = Helpers.GetLoggedInUserId();
-                var list = new List<IndicatorDataCheckListCustomModel>();
-                DateTime currentDate = Helpers.GetInvariantCultureDateTime();
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDate;
 
-                // Check If IndicatorDataCheckList model is not null
-                if (model != null)
-                {
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDate;
+                // Update Operation of current IndicatorDataCheckList
+                list = _service.SaveIndicatorDataCheckList(model);
 
-                    // Update Operation of current IndicatorDataCheckList
-                    list = bal.SaveIndicatorDataCheckList(model);
-
-                    // return deleted ID of current IndicatorDataCheckList as Json Result to the Ajax Call.
-                }
-
-                // Pass the ActionResult with List of IndicatorDataCheckListViewModel object to Partial View IndicatorDataCheckListList
-                return this.PartialView(PartialViews.IndicatorDataCheckListList, list);
+                // return deleted ID of current IndicatorDataCheckList as Json Result to the Ajax Call.
             }
+
+            // Pass the ActionResult with List of IndicatorDataCheckListViewModel object to Partial View IndicatorDataCheckListList
+            return PartialView(PartialViews.IndicatorDataCheckListList, list);
         }
 
         /// <summary>
@@ -76,63 +70,48 @@ namespace BillingSystem.Controllers
         public ActionResult GetDataFromIndicatorDataCheckList(IndicatorDataCheckListView model)
         {
             var list = new List<IndicatorDataCheckListCustomModel>();
-            using (var bal = new IndicatorDataCheckListService())
+            // Get the Entity list
+            list = _service.GetDataFromIndicatorDataCheckList(
+                Helpers.GetSysAdminCorporateID(),
+                Helpers.GetDefaultFacilityId(),
+                Convert.ToInt32(model.BudgetType),
+                Convert.ToInt32(model.Year),
+                model.Month);
+
+            /* if (list.Count == 0)
+            {*/
+            int cId = Helpers.GetDefaultCorporateId();
+            using (var facBal = new FacilityBal())
             {
-                // Get the Entity list
-                list = bal.GetDataFromIndicatorDataCheckList(
-                    Helpers.GetSysAdminCorporateID(), 
-                    Helpers.GetDefaultFacilityId(), 
-                    Convert.ToInt32(model.BudgetType), 
-                    Convert.ToInt32(model.Year), 
-                    model.Month);
-
-                /* if (list.Count == 0)
-                {*/
-                int cId = Helpers.GetDefaultCorporateId();
-                using (var facBal = new FacilityService())
+                var facilities = facBal.GetFacilities(cId);
+                if (facilities.Any())
                 {
-                    List<Facility> facilities = facBal.GetFacilities(cId);
-                    if (facilities.Any())
-                    {
-                        var merged = new List<IndicatorDataCheckListCustomModel>(list);
-                        var list1 = new List<IndicatorDataCheckListCustomModel>();
-                        list1.AddRange(
-                            facilities.Select(
-                                item =>
-                                new IndicatorDataCheckListCustomModel
-                                    {
-                                        FacilityName = item.FacilityName, 
-                                        FacilityId = item.FacilityId, 
-                                    }));
-                        merged.AddRange(list1.Where(p2 => list.All(p1 => p1.FacilityId != p2.FacilityId)));
+                    var merged = new List<IndicatorDataCheckListCustomModel>(list);
+                    var list1 = new List<IndicatorDataCheckListCustomModel>();
+                    list1.AddRange(
+                        facilities.Select(
+                            item =>
+                            new IndicatorDataCheckListCustomModel
+                            {
+                                FacilityName = item.FacilityName,
+                                FacilityId = item.FacilityId,
+                            }));
+                    merged.AddRange(list1.Where(p2 => list.All(p1 => p1.FacilityId != p2.FacilityId)));
 
-                        var oGlobalCodeBal = new GlobalCodeService();
-                        List<GlobalCodes> yearDD =
-                            oGlobalCodeBal.GetGlobalCodesByCategoryValue("4602").OrderBy(x => x.GlobalCodeID).ToList();
-                        List<GlobalCodes> monthDD =
-                            oGlobalCodeBal.GetGlobalCodesByCategoryValue("903").OrderBy(x => x.GlobalCodeID).ToList();
-                        var obj = new IndicatorDataCheckListView
-                                      {
-                                          IndicatorDataCheckListList = merged, 
-                                          DdYearList = yearDD, 
-                                          DdMonthList = monthDD
-                                      };
-                        return this.PartialView(PartialViews.IndicatorDataCheckListList, obj);
-                    }
-                }
-
-                /*}
-                else
-                {
+                    var oGlobalCodeBal = new GlobalCodeBal();
+                    var yearDD = oGlobalCodeBal.GetGlobalCodesByCategoryValue("4602").OrderBy(x => x.GlobalCodeID).ToList();
+                    List<GlobalCodes> monthDD =
+                        oGlobalCodeBal.GetGlobalCodesByCategoryValue("903").OrderBy(x => x.GlobalCodeID).ToList();
                     var obj = new IndicatorDataCheckListView
                     {
-                        IndicatorDataCheckListList = list
+                        IndicatorDataCheckListList = merged,
+                        DdYearList = yearDD,
+                        DdMonthList = monthDD
                     };
                     return PartialView(PartialViews.IndicatorDataCheckListList, obj);
-                }*/
+                }
             }
-
-            return this.PartialView(PartialViews.IndicatorDataCheckListList, list);
+            return PartialView(PartialViews.IndicatorDataCheckListList, list);
         }
 
         /// <summary>
@@ -144,7 +123,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFacilitiesList()
         {
             int cId = Helpers.GetDefaultCorporateId();
-            using (var facBal = new FacilityService())
+            using (var facBal = new FacilityBal())
             {
                 List<Facility> facilities = facBal.GetFacilities(cId);
                 if (facilities.Any())
@@ -154,17 +133,17 @@ namespace BillingSystem.Controllers
                         facilities.Select(
                             item =>
                             new IndicatorDataCheckListCustomModel
-                                {
-                                    FacilityName = item.FacilityName, 
-                                    FacilityId = item.FacilityId, 
-                                }));
+                            {
+                                FacilityName = item.FacilityName,
+                                FacilityId = item.FacilityId,
+                            }));
 
                     var obj = new IndicatorDataCheckListView { IndicatorDataCheckListList = list };
-                    return this.PartialView(PartialViews.IndicatorDataCheckListList, obj);
+                    return PartialView(PartialViews.IndicatorDataCheckListList, obj);
                 }
             }
 
-            return this.Json(null);
+            return Json(null);
         }
 
         /// <summary>
@@ -178,14 +157,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetIndicatorDataCheckListDetails(int id)
         {
-            using (var bal = new IndicatorDataCheckListService())
-            {
-                // Call the AddIndicatorDataCheckList Method to Add / Update current IndicatorDataCheckList
-                IndicatorDataCheckList current = bal.GetIndicatorDataCheckListById(id);
+            var current = _service.GetIndicatorDataCheckListById(id);
 
-                // Pass the ActionResult with the current IndicatorDataCheckListViewModel object as model to PartialView IndicatorDataCheckListAddEdit
-                return this.Json(current);
-            }
+            // Pass the ActionResult with the current IndicatorDataCheckListViewModel object as model to PartialView IndicatorDataCheckListAddEdit
+            return Json(current);
         }
 
         /// <summary>
@@ -198,25 +173,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            // Initialize the IndicatorDataCheckList BAL object
-            using (var bal = new IndicatorDataCheckListService())
+            var list = new List<IndicatorDataCheckListCustomModel>();
+
+            // Intialize the View Model i.e. IndicatorDataCheckListView which is binded to Main View Index.cshtml under IndicatorDataCheckList
+            var vm = new IndicatorDataCheckListView
             {
-                // Get the Entity list
-                var list = new List<IndicatorDataCheckListCustomModel>();
+                IndicatorDataCheckListList = list,
+                CurrentIndicatorDataCheckList = new IndicatorDataCheckList()
+            };
 
-                // bal.GetIndicatorDataCheckListList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
-
-                // Intialize the View Model i.e. IndicatorDataCheckListView which is binded to Main View Index.cshtml under IndicatorDataCheckList
-                var viewModel = new IndicatorDataCheckListView
-                                    {
-                                        IndicatorDataCheckListList = list, 
-                                        CurrentIndicatorDataCheckList =
-                                            new IndicatorDataCheckList()
-                                    };
-
-                // Pass the View Model in ActionResult to View IndicatorDataCheckList
-                return View(viewModel);
-            }
+            // Pass the View Model in ActionResult to View IndicatorDataCheckList
+            return View(vm);
         }
 
         /// <summary>
@@ -242,26 +209,23 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new IndicatorDataCheckListService())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    // Call the AddIndicatorDataCheckList Method to Add / Update current IndicatorDataCheckList
-                    list = bal.SaveIndicatorDataCheckList(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                // Call the AddIndicatorDataCheckList Method to Add / Update current IndicatorDataCheckList
+                list = _service.SaveIndicatorDataCheckList(model);
             }
 
             // Pass the ActionResult with List of IndicatorDataCheckListViewModel object to Partial View IndicatorDataCheckListList
-            return this.PartialView(PartialViews.IndicatorDataCheckListList, list);
+            return PartialView(PartialViews.IndicatorDataCheckListList, list);
         }
 
         /// <summary>
@@ -286,115 +250,76 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new IndicatorDataCheckListService())
+                var budgetType = model.IndicatorDataCheckListList[0].BudgetType;
+                var year = model.IndicatorDataCheckListList[0].Year;
+                var month = model.IndicatorDataCheckListList[0].Month;
+                var isDeleted = _service.DeleteIndicatorDataCheckList(Convert.ToString(corporateId),
+                    Convert.ToString(facilityId), Convert.ToInt32(budgetType), year.GetValueOrDefault(), month);
+                if (isDeleted)
                 {
-                    // if (model.Id > 0)
-                    // {
-                    // model.ModifiedBy = userId;
-                    // model.ModifiedDate = currentDate;
-                    // }
-                    // else
-                    // {
-                    // model.CreatedBy = userId;
-                    // model.CreatedDate = currentDate;
-                    // }
-                    int? budgetType = model.IndicatorDataCheckListList[0].BudgetType;
-                    int? year = model.IndicatorDataCheckListList[0].Year;
-                    string month = Convert.ToString(model.IndicatorDataCheckListList[0].Month);
-                    bool isDeleted = bal.DeleteIndicatorDataCheckList(
-                        Convert.ToString(corporateId), 
-                        Convert.ToString(facilityId), 
-                        Convert.ToInt32(budgetType), 
-                        Convert.ToInt32(year), 
-                        Convert.ToInt32(month));
-                    if (isDeleted)
+                    // Call the AddIndicatorDataCheckList Method to Add / Update current IndicatorDataCheckList
+                    foreach (IndicatorDataCheckListCustomModel item in model.IndicatorDataCheckListList)
                     {
-                        // Call the AddIndicatorDataCheckList Method to Add / Update current IndicatorDataCheckList
-                        foreach (IndicatorDataCheckListCustomModel item in model.IndicatorDataCheckListList)
+                        var oIndicatorDataCheckList = new IndicatorDataCheckList
                         {
-                            var oIndicatorDataCheckList = new IndicatorDataCheckList
-                                                              {
-                                                                  CorporateId = corporateId, 
-                                                                  FacilityId = item.FacilityId, 
-                                                                  M1 =
-                                                                      Convert.ToString(item.CusM1)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M2 =
-                                                                      Convert.ToString(item.CusM2)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M3 =
-                                                                      Convert.ToString(item.CusM3)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M4 =
-                                                                      Convert.ToString(item.CusM4)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M5 =
-                                                                      Convert.ToString(item.CusM5)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M6 =
-                                                                      Convert.ToString(item.CusM6)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M7 =
-                                                                      Convert.ToString(item.CusM7)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M8 =
-                                                                      Convert.ToString(item.CusM8)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M9 =
-                                                                      Convert.ToString(item.CusM9)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M10 =
-                                                                      Convert.ToString(item.CusM10)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M11 =
-                                                                      Convert.ToString(item.CusM11)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  M12 =
-                                                                      Convert.ToString(item.CusM12)
-                                                                          .ToLower() == "true"
-                                                                          ? "1"
-                                                                          : "0", 
-                                                                  CreatedBy = userId, 
-                                                                  CreatedDate = currentDate, 
-                                                                  IsActive = true, 
-                                                                  BudgetType = budgetType, 
-                                                                  Year = year, 
-                                                                  ExternalValue1 =
-                                                                      Convert.ToString(
-                                                                          item.ExternalValue1), 
-                                                                  ExternalValue2 = month
-                                                              };
-                            list = bal.SaveIndicatorDataCheckList(oIndicatorDataCheckList);
-                        }
+                            CorporateId = corporateId,
+                            FacilityId = item.FacilityId,
+                            M1 = Convert.ToString(item.CusM1).ToLower() == "true" ? "1" : "0",
+                            M2 = Convert.ToString(item.CusM2).ToLower() == "true" ? "1" : "0",
+                            M3 = Convert.ToString(item.CusM3).ToLower() == "true" ? "1" : "0",
+                            M4 = Convert.ToString(item.CusM4).ToLower() == "true" ? "1" : "0",
+                            M5 = Convert.ToString(item.CusM5)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            M6 =
+                                                                  Convert.ToString(item.CusM6)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            M7 =
+                                                                  Convert.ToString(item.CusM7)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            M8 =
+                                                                  Convert.ToString(item.CusM8)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            M9 =
+                                                                  Convert.ToString(item.CusM9)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            M10 =
+                                                                  Convert.ToString(item.CusM10)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            M11 =
+                                                                  Convert.ToString(item.CusM11)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            M12 =
+                                                                  Convert.ToString(item.CusM12)
+                                                                      .ToLower() == "true"
+                                                                      ? "1"
+                                                                      : "0",
+                            CreatedBy = userId,
+                            CreatedDate = currentDate,
+                            IsActive = true,
+                            BudgetType = budgetType,
+                            Year = year,
+                            ExternalValue1 = Convert.ToString(item.ExternalValue1),
+                            ExternalValue2 = Convert.ToString(month)
+                        };
+                        list = _service.SaveIndicatorDataCheckList(oIndicatorDataCheckList);
                     }
                 }
             }
-
-            // Pass the ActionResult with List of IndicatorDataCheckListViewModel object to Partial View IndicatorDataCheckListList
-            // return PartialView(PartialViews.IndicatorDataCheckListList, list);
-            return this.Json(list);
+            return Json(list);
         }
 
         #endregion

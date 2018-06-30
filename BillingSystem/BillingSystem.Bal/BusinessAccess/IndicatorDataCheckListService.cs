@@ -1,25 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
+﻿using System.Collections.Generic;
 using System.Linq;
-using AutoMapper;
-using BillingSystem.Bal.Interfaces;
-using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Repository.Interfaces;
+using BillingSystem.Bal.Interfaces;
+using AutoMapper;
+using System.Data.SqlClient;
+using BillingSystem.Repository.Common;
+using BillingSystem.Common.Common;
+using System;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
     public class IndicatorDataCheckListService : IIndicatorDataCheckListService
     {
         private readonly IRepository<IndicatorDataCheckList> _repository;
+        private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public IndicatorDataCheckListService(IRepository<IndicatorDataCheckList> repository, IMapper mapper)
+
+        public IndicatorDataCheckListService(IRepository<IndicatorDataCheckList> repository
+            , IMapper mapper, BillingEntities context)
         {
             _repository = repository;
             _mapper = mapper;
+            _context = context;
         }
 
         /// <summary>
@@ -32,54 +37,39 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </returns>
         public List<IndicatorDataCheckListCustomModel> GetIndicatorDataCheckListList(int corporateid, int facilityid)
         {
-            var list = new List<IndicatorDataCheckListCustomModel>();
-            var lstIndicatorDataCheckList = _repository.Where(a => a.CorporateId == corporateid).ToList();
-            list.AddRange(MapValues(lstIndicatorDataCheckList));
-            return list;
-        }
-
-        private List<IndicatorDataCheckListCustomModel> MapValues(List<IndicatorDataCheckList> m)
-        {
-            var list = new List<IndicatorDataCheckListCustomModel>();
-            if (m != null && m.Any())
+            var sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter(InputParams.pCID.ToString(), corporateid);
+            using (var r = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetIndicatorDataChecklist.ToString(), isCompiled: false
+                , parameters: sqlParameters))
             {
-                foreach (var model in m)
-                {
-                    var vm = _mapper.Map<IndicatorDataCheckListCustomModel>(model);
-                    if (vm != null)
-                    {
-                        using (var bal = new BaseBal())
-                        {
-                            vm.FacilityName = bal.GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
-                            vm.CusM1 = model.M1 == "1";
-                            vm.CusM2 = model.M2 == "1";
-                            vm.CusM3 = model.M3 == "1";
-                            vm.CusM4 = model.M4 == "1";
-                            vm.CusM5 = model.M5 == "1";
-                            vm.CusM6 = model.M6 == "1";
-                            vm.CusM7 = model.M7 == "1";
-                            vm.CusM8 = model.M8 == "1";
-                            vm.CusM9 = model.M9 == "1";
-                            vm.CusM10 = model.M10 == "1";
-                            vm.CusM11 = model.M11 == "1";
-                            vm.CusM12 = model.M12 == "1";
-                            if (model.ExternalValue2 != null)
-                                vm.CusMonth = Convert.ToInt32(model.ExternalValue2 == "" ? "0" : model.ExternalValue2) > 0 ? true : false;
-                        }
-                    }
-                    list.Add(vm);
-                }
+                var result = r.GetResultWithJson<IndicatorDataCheckListCustomModel>(JsonResultsArray.IndicatorData.ToString());
+                return result;
             }
-
-            return list;
         }
 
         public List<IndicatorDataCheckListCustomModel> GetDataFromIndicatorDataCheckList(int corporateid, int facilityid, int budgetType, int year, string month)
         {
-            var list = new List<IndicatorDataCheckListCustomModel>();
-            var lstIndicatorDataCheckList = _repository.Where(a => a.CorporateId == corporateid && a.BudgetType == budgetType && a.Year == year).ToList();
-            list.AddRange(MapValues(lstIndicatorDataCheckList));
-            return list;
+            //var list = new List<IndicatorDataCheckListCustomModel>();
+            //using (var indicatorDataCheckListRep = UnitOfWork.IndicatorDataCheckListRepository)
+            //{
+            //    var lstIndicatorDataCheckList =
+            //        indicatorDataCheckListRep.Where(
+            //            a => a.CorporateId == corporateid && a.BudgetType == budgetType && a.Year == year).ToList();
+            //    list.AddRange(lstIndicatorDataCheckList.Select(item => IndicatorDataCheckListMapper.MapModelToViewModel(item)));
+            //}
+            //return list;
+
+            var sqlParameters = new SqlParameter[4];
+            sqlParameters[0] = new SqlParameter(InputParams.pCID.ToString(), corporateid);
+            sqlParameters[1] = new SqlParameter(InputParams.pFID.ToString(), facilityid);
+            sqlParameters[2] = new SqlParameter(InputParams.pYear.ToString(), year);
+            sqlParameters[3] = new SqlParameter(InputParams.pBudgetType.ToString(), budgetType);
+            using (var r = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetIndicatorDataChecklist.ToString(), isCompiled: false
+                , parameters: sqlParameters))
+            {
+                var result = r.GetResultWithJson<IndicatorDataCheckListCustomModel>(JsonResultsArray.IndicatorData.ToString());
+                return result;
+            }
         }
 
         /// <summary>
@@ -105,14 +95,17 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public bool DeleteIndicatorDataCheckList(string corporateId, string facilityId, int budgetType, int year, int month)
         {
+            var spName = string.Format("EXEC {0} @CorporateId, @FacilityId,@Year,@BudgetType ", StoredProcedures.SPROC_DeleteIndicatorDataCheckList);
             var sqlParameters = new SqlParameter[4];
             sqlParameters[0] = new SqlParameter("CorporateId", corporateId);
             sqlParameters[1] = new SqlParameter("FacilityId", facilityId);
             sqlParameters[2] = new SqlParameter("Year", year);
             sqlParameters[3] = new SqlParameter("BudgetType", budgetType);
-            _repository.ExecuteCommand(StoredProcedures.SPROC_DeleteIndicatorDataCheckList.ToString(), sqlParameters);
+            _repository.ExecuteCommand(spName, sqlParameters);
             return true;
         }
+
+
         /// <summary>
         /// Method to add the Entity in the database By Id.
         /// </summary>
@@ -123,6 +116,7 @@ namespace BillingSystem.Bal.BusinessAccess
             var model = _repository.Where(x => x.Id == id).FirstOrDefault();
             return model;
         }
+
 
         /// <summary>
         /// Method to add/Update the Entity in the database.
@@ -148,8 +142,23 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public IndicatorDataCheckList GetIndicatorDataCheckListSingle(int facilityId, int corporateId, int budgetType, int year)
         {
-            var model = _repository.Where(x => x.FacilityId == facilityId && x.CorporateId == corporateId && x.Year == year && x.IsActive == true).FirstOrDefault();
+            var model = _repository.Where(x => x.FacilityId == facilityId && x.CorporateId == corporateId &&
+                            x.Year == year && x.IsActive == true).FirstOrDefault();
             return model;
+        }
+
+        public List<int> GetDefaultMonthAndYearByFacilityId(int facilityId, int corporateId)
+        {
+            var result = new List<int>();
+            var current = _repository.Where(f => f.FacilityId == facilityId && f.CorporateId == corporateId && f.Year == DateTime.Now.Year)
+                        .FirstOrDefault();
+
+            if (current != null)
+            {
+                result.Add(Convert.ToInt32(current.ExternalValue1));        //Default Year
+                result.Add(Convert.ToInt32(current.ExternalValue2));        //Default Month
+            }
+            return result;
         }
     }
 }

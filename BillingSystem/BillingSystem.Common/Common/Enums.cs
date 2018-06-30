@@ -540,7 +540,18 @@ namespace BillingSystem.Common.Common
         pDisplayTypeID,
         pTillDate,
         pFromDate,
-        pPatientID
+        pPatientID,
+        pStatus,
+        pSortBy,
+        pSortDirection,
+        pId,
+        pValue,
+        pYear,
+        pBudgetType,
+        pCategory2,
+        pCategory1,
+        pTypeId,
+        pMonth
     }
 
     public enum StoredProcedures
@@ -648,7 +659,7 @@ namespace BillingSystem.Common.Common
         SPROC_GetPreliminaryXmlFile,
         SPROC_GetDBBudgetManualBalanceSheet,
         GenerateEAuthorizationFile,
-        GetDashboardParameters,
+        SprocGetDashboardParameters,
         SPROC_UpdateDashboardIndicatorsData,
         SPROC_GetProjectDashbaordData,
         SPROC_AddMonthWisevaluesInProjectDashboard,
@@ -842,7 +853,14 @@ namespace BillingSystem.Common.Common
         SprocGetOrderActivitiesByOpenOrder,
         SPROC_GetOrderActivityDetailsByOrderActivityID,
         SprocGetDashboardDisplayOrders,
-        SprocGetDashboardIndicatorData
+        SprocGetDashboardIndicatorData,
+        SprocGetDashboardIndicators,
+        SprocGetDashboardIndicatorsByIndicatorNumber,
+        SprocGetManualDashboardData,
+        SprocGetManualDashboardDataByIndicator,
+        SprocGetIndicatorDataChecklist,
+        SprocDashboardRemarks,
+        SprocDashboardTargets
     }
 
     public enum StoredProcsiOS
@@ -1833,6 +1851,7 @@ namespace BillingSystem.Common.Common
         DiagnosisCodes,
         FavoriteDiagnosis,
         Diagnosis,
-        DashboardResult
+        DashboardResult,
+        IndicatorData
     }
 }

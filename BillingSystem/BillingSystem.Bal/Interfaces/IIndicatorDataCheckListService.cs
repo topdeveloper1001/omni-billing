@@ -13,5 +13,6 @@ namespace BillingSystem.Bal.Interfaces
         IndicatorDataCheckList GetIndicatorDataCheckListSingle(int facilityId, int corporateId, int budgetType, int year);
         List<IndicatorDataCheckListCustomModel> SaveIndicatorDataCheckList(IndicatorDataCheckList model);
         List<IndicatorDataCheckListCustomModel> SaveIndicatorDataCheckListInDB(IndicatorDataCheckList model);
+        List<int> GetDefaultMonthAndYearByFacilityId(int facilityId, int corporateId);
     }
 }

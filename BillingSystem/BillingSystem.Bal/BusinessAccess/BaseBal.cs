@@ -1665,19 +1665,19 @@ namespace BillingSystem.Bal.BusinessAccess
             }
         }
 
-        /// <summary>
-        /// Gets the indicator name by indicatornumber.
-        /// </summary>
-        /// <param name="indicatornumber">The indicatornumber.</param>
-        /// <returns></returns>
-        public string GetIndicatorNameByIndicatornumber(string indicatornumber, Int32 corporateId)
-        {
-            using (var rep = UnitOfWork.DashboardIndicatorsRepository)
-            {
-                var ins = rep.Where(e => e.IndicatorNumber == indicatornumber && e.CorporateId == corporateId).FirstOrDefault();
-                return ins != null ? ins.Description : string.Empty;
-            }
-        }
+        ///// <summary>
+        ///// Gets the indicator name by indicatornumber.
+        ///// </summary>
+        ///// <param name="indicatornumber">The indicatornumber.</param>
+        ///// <returns></returns>
+        //public string GetIndicatorNameByIndicatornumber(string indicatornumber, Int32 corporateId)
+        //{
+        //    using (var rep = UnitOfWork.DashboardIndicatorsRepository)
+        //    {
+        //        var ins = rep.Where(e => e.IndicatorNumber == indicatornumber && e.CorporateId == corporateId).FirstOrDefault();
+        //        return ins != null ? ins.Description : string.Empty;
+        //    }
+        //}
 
         /// <summary>
         /// Gets the name of the facility identifier from.
@@ -1786,25 +1786,25 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </summary>
         /// <param name="model">The model.</param>
         /// <returns></returns>
-        public int SaveIndicators(DashboardIndicators model)
-        {
+        //public int SaveIndicators(DashboardIndicators model)
+        //{
 
-            using (var rep = UnitOfWork.DashboardIndicatorsRepository)
-            {
-                var current =
-                    rep.Where(
-                        d => d.CorporateId == model.CorporateId && d.IndicatorNumber.Equals(model.IndicatorNumber))
-                        .FirstOrDefault();
-                if (current != null)
-                {
-                    current.OwnerShip = model.OwnerShip;
-                    //current.Description = model.Description;
-                    rep.UpdateEntity(current, current.IndicatorID);
-                    return current.IndicatorID;
-                }
-            }
-            return 0;
-        }
+        //    using (var rep = UnitOfWork.DashboardIndicatorsRepository)
+        //    {
+        //        var current =
+        //            rep.Where(
+        //                d => d.CorporateId == model.CorporateId && d.IndicatorNumber.Equals(model.IndicatorNumber))
+        //                .FirstOrDefault();
+        //        if (current != null)
+        //        {
+        //            current.OwnerShip = model.OwnerShip;
+        //            //current.Description = model.Description;
+        //            rep.UpdateEntity(current, current.IndicatorID);
+        //            return current.IndicatorID;
+        //        }
+        //    }
+        //    return 0;
+        //}
 
         /// <summary>
         /// Calculates the type of the lab result speciman.

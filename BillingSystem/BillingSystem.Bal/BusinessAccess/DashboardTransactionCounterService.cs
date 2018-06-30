@@ -8,7 +8,7 @@ using BillingSystem.Model.CustomModel;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
-    public class DashboardTransactionCounterBal : BaseBal
+    public class DashboardTransactionCounterService : BaseBal
     {
 
         /// <summary>
