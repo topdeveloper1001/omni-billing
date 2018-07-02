@@ -3,15 +3,15 @@ using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.EntityDto;
-using BillingSystem.Repository.Common;
-using BillingSystem.Repository.Interfaces;
+
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BillingSystem.Bal.Service
+namespace BillingSystem.Bal.BusinessAccess
 {
     public class PatientService : IPatientService
     {

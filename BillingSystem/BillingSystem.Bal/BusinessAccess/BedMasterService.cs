@@ -8,7 +8,7 @@ using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
+
 
 namespace BillingSystem.Bal.BusinessAccess
 {

@@ -1,22 +1,20 @@
-﻿using BillingSystem.Bal.Interfaces;
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;
 using BillingSystem.Common;
 using BillingSystem.WebApi.Common;
 using BillingSystem.WebApi.Middleware;
 using BillingSystem.Model.EntityDto;
-using System.Net.Http;
-using Newtonsoft.Json;
 using BillingSystem.WebApi.Filters;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.WebApi.Controllers
 {
     public class AuthController : ApiController
     {
-        private readonly IUserService _service;
+        private readonly IUsersService _service;
 
-        public AuthController(IUserService service)
+        public AuthController(IUsersService service)
         {
             _service = service;
         }

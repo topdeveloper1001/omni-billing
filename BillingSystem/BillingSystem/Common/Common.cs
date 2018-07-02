@@ -30,7 +30,6 @@ namespace BillingSystem.Common
     using System.Xml.Linq;
     using Common;
     using Model.CustomModel;
-    using Repository.Common;
     using System.Web.Configuration;
     using Newtonsoft.Json.Serialization;
     using Newtonsoft.Json;

@@ -12,13 +12,12 @@ using System.Web.Http;
 
 namespace BillingSystem.WebApi.Controllers
 {
-
     public class PatientController : ApiController
     {
         private readonly IPatientService _service;
-        private readonly IUserService _uservice;
+        private readonly IUsersService _uservice;
 
-        public PatientController(IPatientService service, IUserService uservice)
+        public PatientController(IPatientService service, IUsersService uservice)
         {
             _service = service;
             _uservice = uservice;

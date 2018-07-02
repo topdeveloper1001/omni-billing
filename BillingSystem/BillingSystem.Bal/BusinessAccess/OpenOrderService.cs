@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Common.Common;
 using System;
-using BillingSystem.Repository.Interfaces;
+
 using System.Data.SqlClient;
 using AutoMapper;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

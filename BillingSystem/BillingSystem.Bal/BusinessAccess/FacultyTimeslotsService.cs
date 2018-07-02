@@ -5,7 +5,7 @@ using System.Linq;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using AutoMapper;
-using BillingSystem.Repository.Interfaces;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

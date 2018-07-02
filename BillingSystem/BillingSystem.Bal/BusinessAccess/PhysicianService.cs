@@ -4,12 +4,12 @@ using System.Data.Entity;
 using System.Linq;
 using AutoMapper;
 using System.Threading.Tasks;
-using BillingSystem.Repository.Interfaces;
+
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Common.Common;
 using System.Data.SqlClient;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

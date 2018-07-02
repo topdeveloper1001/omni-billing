@@ -2,10 +2,10 @@
 using System.Linq;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
+
 using AutoMapper;
 using System.Data.SqlClient;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Common.Common;
 using System;
 using BillingSystem.Bal.Interfaces;

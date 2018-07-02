@@ -1,6 +1,5 @@
 ﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Model;
-using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
 {

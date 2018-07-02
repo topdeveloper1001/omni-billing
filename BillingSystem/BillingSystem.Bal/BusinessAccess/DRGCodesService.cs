@@ -2,7 +2,7 @@
 using BillingSystem.Model;
 using System.Collections.Generic;
 using System.Linq;
-using BillingSystem.Repository.Interfaces;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

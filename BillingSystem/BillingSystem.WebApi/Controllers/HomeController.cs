@@ -17,10 +17,10 @@ namespace BillingSystem.WebApi.Controllers
     {
         private readonly IAddressService _addressService;
         private readonly ICommonService _service;
-        private readonly IUserService _uservice;
+        private readonly IUsersService _uservice;
         private readonly IFacilityService _fservice;
 
-        public HomeController(IAddressService addressService, ICommonService service, IUserService uservice, IFacilityService fservice)
+        public HomeController(IAddressService addressService, ICommonService service, IUsersService uservice, IFacilityService fservice)
         {
             _addressService = addressService;
             _service = service;

@@ -723,7 +723,7 @@ namespace BillingSystem.Controllers
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                 ? loggedinfacilityId
                  : 0;
             var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
@@ -1058,7 +1058,7 @@ namespace BillingSystem.Controllers
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
                 var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
                 var corporateid = Helpers.GetSysAdminCorporateID();
@@ -1283,7 +1283,7 @@ namespace BillingSystem.Controllers
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -1493,7 +1493,7 @@ namespace BillingSystem.Controllers
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -1713,7 +1713,7 @@ namespace BillingSystem.Controllers
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var facilityId = facilityID ?? facilityid;
@@ -1798,7 +1798,7 @@ namespace BillingSystem.Controllers
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
 
@@ -1889,7 +1889,7 @@ namespace BillingSystem.Controllers
             #region KPI Dashboard Filtered Data Section
             var loggedinfacilityId = Convert.ToInt32(facilityID);
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                 ? loggedinfacilityId
                  : 17;
             #region Remarks Section
@@ -1958,7 +1958,7 @@ namespace BillingSystem.Controllers
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -2056,7 +2056,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             //var _fService = new FacilityService();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -2965,7 +2965,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             //var _fService = new FacilityService();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var facilityId = facilityID ?? facilityid;
@@ -3146,7 +3146,7 @@ namespace BillingSystem.Controllers
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
                 //var _fService = new FacilityService();
                 var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
                 var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3318,7 +3318,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             //var _fService = new FacilityService();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3370,7 +3370,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             //var _fService = new FacilityService();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3413,7 +3413,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             //var _fService = new FacilityService();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -5175,7 +5175,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             //var _fService = new FacilityService();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -5229,7 +5229,7 @@ namespace BillingSystem.Controllers
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
                 //var _fService = new FacilityService();
                 var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
                 var corporateid = Helpers.GetSysAdminCorporateID();
@@ -5277,7 +5277,7 @@ namespace BillingSystem.Controllers
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
             //var _fService = new FacilityService();
             var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();

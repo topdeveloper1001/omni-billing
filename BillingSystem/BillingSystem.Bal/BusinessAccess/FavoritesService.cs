@@ -5,8 +5,8 @@ using System.Web.Query.Dynamic;
 using BillingSystem.Common.Common;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
-using BillingSystem.Repository.Interfaces;
-using BillingSystem.Repository.Common;
+
+
 using System.Data.SqlClient;
 using BillingSystem.Bal.Interfaces;
 

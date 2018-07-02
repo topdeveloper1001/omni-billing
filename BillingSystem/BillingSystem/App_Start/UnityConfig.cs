@@ -4,7 +4,6 @@ using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Model;
 using BillingSystem.Repository;
-using BillingSystem.Repository.Interfaces;
 using System.Data.Entity;
 using System.Web.Mvc;
 using Unity;

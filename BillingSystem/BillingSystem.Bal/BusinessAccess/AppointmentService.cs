@@ -5,16 +5,14 @@ using System.Collections.Generic;
 using System;
 using BillingSystem.Common.Common;
 using BillingSystem.Common.Requests;
-using BillingSystem.Repository.Interfaces;
 using BillingSystem.Model;
 using System.Data.SqlClient;
 using BillingSystem.Common;
-using BillingSystem.Repository.Common;
 using System.Linq;
 using System.Data;
 using System.Globalization;
 
-namespace BillingSystem.Bal.Service
+namespace BillingSystem.Bal.BusinessAccess
 {
     public class AppointmentService : IAppointmentService
     {
@@ -72,10 +70,9 @@ namespace BillingSystem.Bal.Service
 
         public async Task<List<AppointmentTypeDto>> GetAppointmentTypesAsync()
         {
-            using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetAppointmentTypes.ToString(), isCompiled: false))
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetAppointmentTypes.ToString(), isCompiled: false))
             {
-                var reader = await multiResultSet.GetReaderAsync();
-                var result = GenericHelper.GetJsonResponse<AppointmentTypeDto>(reader, "AppointmentTypes");
+                var result = await ms.GetResultWithJsonAsync<AppointmentTypeDto>(JsonResultsArray.AppointmentTypes.ToString());
                 return result;
             }
         }

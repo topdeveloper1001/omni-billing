@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using BillingSystem.Repository.Interfaces;
+
 using System.Data;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
@@ -10,7 +10,7 @@ using BillingSystem.Common.Common;
 using System.Data.Entity;
 using System.Data.SqlClient;
 using System.Globalization;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

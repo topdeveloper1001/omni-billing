@@ -2,8 +2,8 @@
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Common;
-using BillingSystem.Repository.Interfaces;
+
+
 using System;
 using System.Collections.Generic;
 using System.Data;

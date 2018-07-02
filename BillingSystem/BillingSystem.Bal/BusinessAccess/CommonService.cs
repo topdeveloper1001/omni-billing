@@ -1,14 +1,14 @@
 ﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Model;
-using BillingSystem.Repository.Interfaces;
+
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BillingSystem.Bal.Service
+namespace BillingSystem.Bal.BusinessAccess
 {
     public class CommonService : ICommonService
     {
