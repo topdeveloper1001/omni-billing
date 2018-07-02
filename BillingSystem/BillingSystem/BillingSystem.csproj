@@ -2247,7 +2247,6 @@
     <Content Include="Libs\Omu.ValueInjecter.dll" />
     <Content Include="Libs\SautinSoft.PdfFocus.dll" />
     <Content Include="MvcDiagnostics.aspx" />
-    <Content Include="Plugins\Kendo.Mvc.dll" />
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-cz.js" />
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-da.js" />
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-de.js" />
@@ -2757,10 +2756,6 @@
     <Content Include="Content\shared\fonts\widgets-v1.woff" />
     <Content Include="Content\shared\kendoui.ttf" />
     <Content Include="Content\shared\kendoui.woff" />
-    <Content Include="Content\web\16x16\Thumbs.db" />
-    <Content Include="Content\web\24x24\Thumbs.db" />
-    <Content Include="Content\web\32x32\Thumbs.db" />
-    <Content Include="Content\web\48x48\Thumbs.db" />
     <Content Include="Content\web\datasource\internet-users.json" />
     <Content Include="Content\web\datasource\top250movies.json" />
     <Content Include="Content\web\images\kendoui.ttf" />
