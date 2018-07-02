@@ -627,6 +627,7 @@
     <Compile Include="Models\OpenOrderActivityScheduleView.cs" />
     <Compile Include="Models\RoleSelectionView.cs" />
     <Compile Include="Models\RoleTabsView.cs" />
+    <Compile Include="Models\SessionClass.cs" />
     <Compile Include="Models\TabsViews.cs" />
     <Compile Include="Models\TabView.cs" />
     <Compile Include="Models\InsurancePlansView.cs" />
@@ -3004,7 +3005,16 @@
     <Content Include="SQL Scripts\Release 5.1\5 - Update PROC SprocGetPatientSummaryTabData 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.1\6 - Update PROC SprocGetPatientInfoView 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\1 - Update PROC SprocGetDashboardDisplayOrders 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\10 - New PROC SprocDashboardTargets 28 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\11 - New PROC SprocAuthenticateUser 02 July 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\2 - new PROC SprocGetDashboardIndicatorData 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\3 - New PROC SprocGetDashboardIndicators 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\4 - New PROC SprocGetDashboardIndicatorsByIndicatorNumber 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\5 - New PROC SprocGetDashboardParameters 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\6 - New PROC SprocGetManualDashboardData 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\7 - New PROC SprocGetManualDashboardDataByIndicator 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\8 - New PROC SprocGetIndicatorDataChecklist 28 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\9 - New PROC SprocDashboardRemarks 28 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\1 - Update PROC iSprocGetBookedAppointments 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\10 - Update PROC SPROC_GetPaitentFutureOrder 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\2 - Update PROC SprocOrdersViewData 28 March 2018.sql" />

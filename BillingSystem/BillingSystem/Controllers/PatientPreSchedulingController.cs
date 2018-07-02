@@ -19,6 +19,7 @@ namespace BillingSystem.Controllers
     using BillingSystem.Common.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
+    using BillingSystem.Models;
 
     /// <summary>
     /// PatientPreScheduling controller.

@@ -16,8 +16,6 @@ namespace BillingSystem.Controllers
     using System;
     using System.IO;
     using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
     using BillingSystem.Bal.Interfaces;
     using Common;
     using Model;
@@ -29,6 +27,11 @@ namespace BillingSystem.Controllers
     public class XMLBillingController : BaseController
     {
         private readonly IXMLBillingService _service;
+
+        public XMLBillingController(IXMLBillingService service)
+        {
+            _service = service;
+        }
 
 
         #region Public Methods and Operators

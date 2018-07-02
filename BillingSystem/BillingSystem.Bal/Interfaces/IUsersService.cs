@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 
@@ -6,6 +7,8 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface IUsersService
     {
+        UsersViewModel AuthenticateUser(string userName, string password, DateTime currentDatetime, string ipAddress, string loginTypeId, out int statusId);
+
         Physician GetPhysicianById(int id);
         List<BillEditorUsersCustomModel> GetBillEditorUsers(int corporateId, int facilityId);
         int AddUpdateUser(Users m, int roleId);

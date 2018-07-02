@@ -24,8 +24,9 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IMapper _mapper;
         private readonly BillingEntities _context;
 
-        public ProjectTasksService(IRepository<ProjectTasks> repository, IRepository<GlobalCodes> gRepository, IRepository<Facility> fRepository, IRepository<Users> uRepository, IRepository<Projects> pRepository, IRepository<ProjectDashboard> pdRepository, IMapper mapper, BillingEntities context)
+        public ProjectTasksService(IRepository<ProjectTaskTargets> pttRepository, IRepository<ProjectTasks> repository, IRepository<GlobalCodes> gRepository, IRepository<Facility> fRepository, IRepository<Users> uRepository, IRepository<Projects> pRepository, IRepository<ProjectDashboard> pdRepository, IMapper mapper, BillingEntities context)
         {
+            _pttRepository = pttRepository;
             _repository = repository;
             _gRepository = gRepository;
             _fRepository = fRepository;

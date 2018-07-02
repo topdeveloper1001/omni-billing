@@ -12,6 +12,7 @@ using System.Data.SqlClient;
 using BillingSystem.Common.Common;
 using BillingSystem.Repository.Common;
 using BillingSystem.Bal.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -27,7 +28,7 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IMapper _mapper;
         private readonly BillingEntities _context;
 
-        public UsersService(IRepository<Users> repository, IRepository<Corporate> cRepository, IRepository<UserRole> urRepository, IRepository<Physician> phRepository, IRepository<Facility> fRepository, IRepository<Role> rRepository, IMapper mapper, BillingEntities context)
+        public UsersService(IRepository<Users> repository, IRepository<Corporate> cRepository, IRepository<UserRole> urRepository, IRepository<Physician> phRepository, IRepository<Facility> fRepository, IRepository<Role> rRepository, IRepository<FacilityRole> frRepository, IMapper mapper, BillingEntities context)
         {
             _repository = repository;
             _cRepository = cRepository;
@@ -35,9 +36,11 @@ namespace BillingSystem.Bal.BusinessAccess
             _phRepository = phRepository;
             _fRepository = fRepository;
             _rRepository = rRepository;
+            _frRepository = frRepository;
             _mapper = mapper;
             _context = context;
         }
+
         public Physician GetPhysicianById(int id)
         {
             var phys = _phRepository.Where(p => p.Id == id).FirstOrDefault();
@@ -626,6 +629,39 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var m = _repository.Where(x => x.UserID == id).FirstOrDefault();
             return m != null ? $"{m.FirstName} {m.LastName}" : string.Empty;
+        }
+
+        public UsersViewModel AuthenticateUser(string userName, string password, DateTime currentDatetime, string ipAddress, string loginTypeId, out int statusId)
+        {
+            password = !string.IsNullOrEmpty(password) ? EncryptDecrypt.GetEncryptedData(password, string.Empty)
+                : string.Empty;
+
+            List<UsersViewModel> vm = null;
+            var isEmail = Regex.IsMatch(userName, @"\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\Z", RegexOptions.IgnoreCase);
+
+            var sqlParams = new SqlParameter[6]
+            {
+                new SqlParameter("pUsername",userName),
+                new SqlParameter("pPassword",password),
+                new SqlParameter("pCurrentDateTime",currentDatetime),
+                new SqlParameter("pIPAddress",ipAddress),
+                new SqlParameter("pLoginTypeId",loginTypeId),
+                new SqlParameter("pIsEmail",isEmail),
+            };
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocAuthenticateUser.ToString(), false, sqlParams))
+            {
+                try
+                {
+                    statusId = ms.ResultSetFor<int>().FirstOrDefault();
+                    if (statusId == 0)
+                        vm = ms.GetResultWithJson<UsersViewModel>(JsonResultsArray.UserDto.ToString());
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+            return vm != null && vm.Any() ? vm.FirstOrDefault() : null;
         }
     }
 }

@@ -342,11 +342,7 @@ namespace BillingSystem.Controllers
         public string FileName { get; set; }
 
         private readonly string _pdfurl = string.Empty;
-
-        private int _Width = 0;
-
-        private int _Height = 0;
-
+         
         private byte[] _bytes;
 
         private readonly bool _print = false;

@@ -13,10 +13,9 @@ namespace BillingSystem.Common
     using System.Globalization;
     using System.IO;
     using System.Web;
-
-
     using BillingSystem.Common.Common;
-    using BillingSystem.Model;
+    using BillingSystem.Model.CustomModel;
+    using BillingSystem.Models;
 
     /// <summary>
     ///     The app settings keys.

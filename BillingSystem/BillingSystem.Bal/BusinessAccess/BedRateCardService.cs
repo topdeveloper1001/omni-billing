@@ -20,11 +20,12 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public BedRateCardService(IRepository<BedRateCard> repository, IRepository<Facility> fRepository, IRepository<GlobalCodes> gRepository, BillingEntities context, IMapper mapper)
+        public BedRateCardService(IRepository<BedRateCard> repository, IRepository<Facility> fRepository, IRepository<GlobalCodes> gRepository, IRepository<ServiceCode> scRepository, BillingEntities context, IMapper mapper)
         {
             _repository = repository;
             _fRepository = fRepository;
             _gRepository = gRepository;
+            _scRepository = scRepository;
             _context = context;
             _mapper = mapper;
         }

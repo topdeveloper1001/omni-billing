@@ -1,5 +1,4 @@
-﻿using BillingSystem.Bal.BusinessAccess;
-using BillingSystem.Common;
+﻿using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using System;
 using System.Globalization;
@@ -11,11 +10,11 @@ using System.Web.Optimization;
 using System.Web.Routing;
 using BillingSystem.Filters;
 using Unity;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Models;
 
 namespace BillingSystem
 {
-    using BillingSystem.Bal.Interfaces;
-    using Model;
 
     public class Global : HttpApplication
     {

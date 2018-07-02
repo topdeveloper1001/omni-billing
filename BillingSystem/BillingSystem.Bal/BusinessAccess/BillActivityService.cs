@@ -26,6 +26,21 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<BillingCodeTableSet> _bcRepository;
         private readonly BillingEntities _context;
 
+        public BillActivityService(IRepository<BillActivity> repository, IRepository<BillHeader> bRepository, IRepository<GlobalCodes> gRepository, IRepository<CPTCodes> cRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<BillingCodeTableSet> bcRepository, BillingEntities context)
+        {
+            _repository = repository;
+            _bRepository = bRepository;
+            _gRepository = gRepository;
+            _cRepository = cRepository;
+            _dRepository = dRepository;
+            _hcRepository = hcRepository;
+            _drugRepository = drugRepository;
+            _sRepository = sRepository;
+            _dcRepository = dcRepository;
+            _bcRepository = bcRepository;
+            _context = context;
+        }
+
         /// <summary>
         /// Gets the bill detail view.
         /// </summary>

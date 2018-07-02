@@ -412,7 +412,6 @@
     <Compile Include="Model\ScrubHeader.cs" />
     <Compile Include="Model\ScrubReport.cs" />
     <Compile Include="Model\ServiceCode.cs" />
-    <Compile Include="Model\SessionClass.cs" />
     <Compile Include="Model\State.cs" />
     <Compile Include="Model\sysdiagrams.cs" />
     <Compile Include="Model\SystemConfiguration.cs" />

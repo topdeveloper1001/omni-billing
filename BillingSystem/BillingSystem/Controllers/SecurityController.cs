@@ -29,6 +29,21 @@ namespace BillingSystem.Controllers
         private readonly IFacilityService _fService;
         private readonly IModuleAccessService _maService;
 
+        public SecurityController(IAuditLogService adService, IUsersService uService, IUserRoleService urService, IRoleService rService, IScreenService sService, ITabsService tService, IRolePermissionService rpService, IFacilityRoleService frService, IRoleTabsService rtService, IFacilityService fService, IModuleAccessService maService)
+        {
+            _adService = adService;
+            _uService = uService;
+            _urService = urService;
+            _rService = rService;
+            _sService = sService;
+            _tService = tService;
+            _rpService = rpService;
+            _frService = frService;
+            _rtService = rtService;
+            _fService = fService;
+            _maService = maService;
+        }
+
 
 
         //

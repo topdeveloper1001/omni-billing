@@ -860,7 +860,8 @@ namespace BillingSystem.Common.Common
         SprocGetManualDashboardDataByIndicator,
         SprocGetIndicatorDataChecklist,
         SprocDashboardRemarks,
-        SprocDashboardTargets
+        SprocDashboardTargets,
+        SprocAuthenticateUser
     }
 
     public enum StoredProcsiOS
@@ -1852,6 +1853,7 @@ namespace BillingSystem.Common.Common
         FavoriteDiagnosis,
         Diagnosis,
         DashboardResult,
-        IndicatorData
+        IndicatorData,
+        SessionClass
     }
 }

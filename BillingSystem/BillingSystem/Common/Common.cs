@@ -28,9 +28,7 @@ namespace BillingSystem.Common
     using System.Web.UI;
     using System.Xml;
     using System.Xml.Linq;
-    using Bal.BusinessAccess;
     using Common;
-    using Model;
     using Model.CustomModel;
     using Repository.Common;
     using System.Web.Configuration;
@@ -40,6 +38,7 @@ namespace BillingSystem.Common
     using System.Threading.Tasks;
     using Unity;
     using BillingSystem.Bal.Interfaces;
+    using BillingSystem.Models;
 
 
     // Menu Manipulations
