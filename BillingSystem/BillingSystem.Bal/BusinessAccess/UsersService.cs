@@ -31,7 +31,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public UsersService(IRepository<Users> repository, IRepository<Corporate> cRepository, IRepository<UserRole> urRepository
             , IRepository<Physician> phRepository, IRepository<Facility> fRepository, IRepository<Role> rRepository
-            , IRepository<PatientLoginDetail> pdRepository
+            , IRepository<PatientLoginDetail> pdRepository, IRepository<FacilityRole> frRepository
             , IMapper mapper, BillingEntities context)
         {
             _repository = repository;
