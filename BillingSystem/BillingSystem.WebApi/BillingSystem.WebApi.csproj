@@ -211,10 +211,6 @@
       <Project>{df38e31d-b8d4-437c-9f9b-bda62427defd}</Project>
       <Name>BillingSystem.Model</Name>
     </ProjectReference>
-    <ProjectReference Include="..\BillingSystem.Repository\BillingSystem.Repository.csproj">
-      <Project>{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}</Project>
-      <Name>BillingSystem.Repository</Name>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

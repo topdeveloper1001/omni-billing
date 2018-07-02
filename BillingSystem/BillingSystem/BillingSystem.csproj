@@ -5465,10 +5465,6 @@
       <Project>{df38e31d-b8d4-437c-9f9b-bda62427defd}</Project>
       <Name>BillingSystem.Model</Name>
     </ProjectReference>
-    <ProjectReference Include="..\BillingSystem.Repository\BillingSystem.Repository.csproj">
-      <Project>{2537dbca-a818-40d5-8b4e-d13d5e0d6f36}</Project>
-      <Name>BillingSystem.Repository</Name>
-    </ProjectReference>
     <ProjectReference Include="..\BillingSystem.Resource\BillingSystem.Resource.csproj">
       <Project>{1e07d2e7-645b-4b42-945d-2a191d849582}</Project>
       <Name>BillingSystem.Resource</Name>

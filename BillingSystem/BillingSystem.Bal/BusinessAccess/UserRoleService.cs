@@ -4,7 +4,7 @@ using System.Data.Entity;
 using System.Linq;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Model;
-using BillingSystem.Repository.Interfaces;
+
 
 namespace BillingSystem.Bal.BusinessAccess
 {

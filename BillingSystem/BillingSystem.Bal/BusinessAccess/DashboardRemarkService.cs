@@ -4,11 +4,11 @@ using System.Linq;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Bal.Interfaces;
-using BillingSystem.Repository.Interfaces;
+
 using AutoMapper;
 using BillingSystem.Common.Common;
 using System.Data.SqlClient;
-using BillingSystem.Repository.Common;
+
 
 namespace BillingSystem.Bal.BusinessAccess
 {

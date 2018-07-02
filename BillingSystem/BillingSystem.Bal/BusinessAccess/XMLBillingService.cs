@@ -4,7 +4,7 @@ using System.Linq;
 using BillingSystem.Model;
 using BillingSystem.Common;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
+
 using AutoMapper;
 using System.Data.SqlClient;
 using System.Data;

@@ -4,7 +4,7 @@ using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using System;
 using BillingSystem.Common.Common;
-using BillingSystem.Repository.Interfaces;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

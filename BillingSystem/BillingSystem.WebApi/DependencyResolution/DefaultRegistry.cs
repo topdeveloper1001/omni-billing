@@ -20,7 +20,6 @@ namespace BillingSystem.WebApi.DependencyResolution
     using BillingSystem.Bal.BusinessAccess;
     using BillingSystem.Bal.Interfaces;
     using BillingSystem.Bal.Service;
-    using BillingSystem.Repository.Interfaces;
     using StructureMap.Configuration.DSL;
     using StructureMap.Graph;
 

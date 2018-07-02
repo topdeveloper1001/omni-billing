@@ -7,10 +7,10 @@ using System.Linq;
 using System.Data.Entity;
 using System;
 using System.Collections.Generic;
-using BillingSystem.Repository.Interfaces;
+
 using BillingSystem.Model;
 using System.Data.SqlClient;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Common.Common;
 
 namespace BillingSystem.Bal.Service
@@ -40,14 +40,13 @@ namespace BillingSystem.Bal.Service
             sqlParameters[5] = new SqlParameter("pUserId", 0);
             sqlParameters[6] = new SqlParameter("pIsPatient", isPatient);
 
-            using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocAuthenticateUser.ToString(), parameters: sqlParameters, isCompiled: false))
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocAuthenticateUser.ToString(), parameters: sqlParameters, isCompiled: false))
             {
-                var reader = await multiResultSet.GetReaderAsync();
-                var isAuthenticated = multiResultSet.ResultSetFor<bool>(reader).FirstOrDefault();
-                var isNext = isAuthenticated ? await reader.NextResultAsync() : false;
-                if (isAuthenticated && isNext)
+                var r = ms.ResultSetFor<bool>();
+                var isAuthenticated = r != null && r.Any() ? r.FirstOrDefault() : false;
+                if (isAuthenticated)
                 {
-                    var result = GenericHelper.GetJsonResponse<UserDto>(reader, "UserDto");
+                    var result = await ms.GetResultWithJsonAsync<UserDto>(JsonResultsArray.UserDto.ToString());
                     return result != null && result.Count > 0 ? result.FirstOrDefault() : null;
                 }
             }
@@ -64,14 +63,13 @@ namespace BillingSystem.Bal.Service
             sqlParameters[5] = new SqlParameter("pUserId", userId);
             sqlParameters[6] = new SqlParameter("pIsPatient", isPatient);
 
-            using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocAuthenticateUser.ToString(), parameters: sqlParameters, isCompiled: false))
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocAuthenticateUser.ToString(), parameters: sqlParameters, isCompiled: false))
             {
-                var reader = await multiResultSet.GetReaderAsync();
-                var isAuthenticated = multiResultSet.ResultSetFor<bool>(reader).FirstOrDefault();
-                var isNext = isAuthenticated ? await reader.NextResultAsync() : false;
-                if (isAuthenticated && isNext)
+                var r = ms.ResultSetFor<bool>();
+                var isAuthenticated = r != null && r.Any() ? r.FirstOrDefault() : false;
+                if (isAuthenticated)
                 {
-                    var result = GenericHelper.GetJsonResponse<UserDto>(reader, "UserDto");
+                    var result = await ms.GetResultWithJsonAsync<UserDto>(JsonResultsArray.UserDto.ToString());
                     return result != null && result.Count > 0 ? result.FirstOrDefault() : null;
                 }
             }

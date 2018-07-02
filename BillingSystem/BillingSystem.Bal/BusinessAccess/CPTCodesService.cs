@@ -5,9 +5,9 @@ using BillingSystem.Model;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
-using BillingSystem.Repository.Interfaces;
+
 using System.Data.SqlClient;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

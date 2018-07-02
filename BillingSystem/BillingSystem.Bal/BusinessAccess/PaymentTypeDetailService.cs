@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
+
 using BillingSystem.Model;
 using AutoMapper;
 using BillingSystem.Bal.Interfaces;

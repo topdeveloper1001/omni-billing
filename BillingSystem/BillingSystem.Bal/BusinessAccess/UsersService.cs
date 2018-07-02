@@ -6,11 +6,11 @@ using BillingSystem.Common;
 using System.Data.Entity;
 using BillingSystem.Model.CustomModel;
 using System.Transactions;
-using BillingSystem.Repository.Interfaces;
+
 using AutoMapper;
 using System.Data.SqlClient;
 using BillingSystem.Common.Common;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

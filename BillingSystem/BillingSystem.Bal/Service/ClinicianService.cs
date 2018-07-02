@@ -4,9 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BillingSystem.Model.EntityDto;
 using System.Data.Entity;
-using BillingSystem.Repository.Interfaces;
 using BillingSystem.Model;
-using BillingSystem.Repository.Common;
 using BillingSystem.Common.Common;
 using System.Data.SqlClient;
 
@@ -85,10 +83,9 @@ namespace BillingSystem.Bal.Service
             var sqlParameters = new SqlParameter[1];
             sqlParameters[0] = new SqlParameter("sId", specialityId);
 
-            using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetCliniciansBySpecialty.ToString(), isCompiled: false, parameters: sqlParameters))
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetCliniciansBySpecialty.ToString(), isCompiled: false, parameters: sqlParameters))
             {
-                var reader = await multiResultSet.GetReaderAsync();
-                var result = GenericHelper.GetJsonResponse<ClinicianDto>(reader, "Clinicians");
+                var result = await ms.GetResultWithJsonAsync<ClinicianDto>(JsonResultsArray.Clinicians.ToString());
                 return result;
             }
         }
@@ -123,10 +120,15 @@ namespace BillingSystem.Bal.Service
             var sqlParameters = new SqlParameter[1];
             sqlParameters[0] = new SqlParameter("clinicianId", clinicianId);
 
-            using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetLocationsByClinician.ToString(), isCompiled: false, parameters: sqlParameters))
+            //using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetLocationsByClinician.ToString(), isCompiled: false, parameters: sqlParameters))
+            //{
+            //    var reader = await multiResultSet.GetReaderAsync();
+            //    var result = GenericHelper.GetJsonResponse<LocationDto>(reader, "Locations");
+            //    return result;
+            //}
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetLocationsByClinician.ToString(), isCompiled: false))
             {
-                var reader = await multiResultSet.GetReaderAsync();
-                var result = GenericHelper.GetJsonResponse<LocationDto>(reader, "Locations");
+                var result = await ms.GetResultWithJsonAsync<LocationDto>(JsonResultsArray.Locations.ToString());
                 return result;
             }
         }

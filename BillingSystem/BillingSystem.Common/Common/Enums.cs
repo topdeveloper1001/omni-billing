@@ -2,6 +2,13 @@
 
 namespace BillingSystem.Common.Common
 {
+    public enum WhereOperation
+    {
+        Equal,
+        NotEqual,
+        Contains
+    }
+
     public enum ExcelImportResultCodes
     {
         Initialized = 0,
@@ -1852,6 +1859,9 @@ namespace BillingSystem.Common.Common
         FavoriteDiagnosis,
         Diagnosis,
         DashboardResult,
-        IndicatorData
+        IndicatorData,
+        AppointmentTypes,
+        Clinicians,
+        Locations
     }
 }

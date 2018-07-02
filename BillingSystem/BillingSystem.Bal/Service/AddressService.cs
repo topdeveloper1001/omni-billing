@@ -6,10 +6,10 @@ using BillingSystem.Common;
 using System.Data.Entity;
 using BillingSystem.Model.EntityDto;
 using System;
-using BillingSystem.Repository.Interfaces;
+
 using BillingSystem.Model;
 using System.Data.SqlClient;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Common.Common;
 
 namespace BillingSystem.Bal.Service

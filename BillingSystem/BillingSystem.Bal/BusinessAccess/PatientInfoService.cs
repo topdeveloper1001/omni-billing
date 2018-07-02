@@ -5,8 +5,8 @@ using System.Data.SqlClient;
 using System.Linq;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Common.Common;
-using BillingSystem.Repository.Common;
-using BillingSystem.Repository.Interfaces;
+
+
 using System.Threading.Tasks;
 using System.Data;
 using BillingSystem.Bal.Interfaces;

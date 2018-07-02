@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data.Entity.SqlServer;
 using BillingSystem.Model;
-using BillingSystem.Repository.Interfaces;
+
 using AutoMapper;
 using BillingSystem.Bal.Interfaces;
 

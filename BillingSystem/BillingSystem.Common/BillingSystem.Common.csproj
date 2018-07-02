@@ -81,6 +81,8 @@
     <Compile Include="CommonHelper.cs" />
     <Compile Include="Common\Constants.cs" />
     <Compile Include="Common\Enums.cs" />
+    <Compile Include="Common\Extensions.cs" />
+    <Compile Include="Common\MultiResultSetReader.cs" />
     <Compile Include="Common\ResponseData.cs" />
     <Compile Include="EncryptDecrypt.cs" />
     <Compile Include="ImageHelper.cs" />
