@@ -8,7 +8,7 @@ using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BillingSystem.Bal.Service
+namespace BillingSystem.Bal.BusinessAccess
 {
     public class CommonService : ICommonService
     {

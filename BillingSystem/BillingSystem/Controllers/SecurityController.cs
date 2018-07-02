@@ -29,8 +29,6 @@ namespace BillingSystem.Controllers
         private readonly IFacilityService _fService;
         private readonly IModuleAccessService _maService;
 
-
-
         //
         // GET: /Security/
 

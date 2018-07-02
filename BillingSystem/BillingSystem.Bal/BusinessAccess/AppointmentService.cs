@@ -12,7 +12,7 @@ using System.Linq;
 using System.Data;
 using System.Globalization;
 
-namespace BillingSystem.Bal.Service
+namespace BillingSystem.Bal.BusinessAccess
 {
     public class AppointmentService : IAppointmentService
     {

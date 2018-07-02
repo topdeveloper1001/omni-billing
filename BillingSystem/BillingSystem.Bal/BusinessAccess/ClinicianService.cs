@@ -8,7 +8,7 @@ using BillingSystem.Model;
 using BillingSystem.Common.Common;
 using System.Data.SqlClient;
 
-namespace BillingSystem.Bal.Service
+namespace BillingSystem.Bal.BusinessAccess
 {
     public class ClinicianService : IClinicianService, IService<SpecialityDto>
     {

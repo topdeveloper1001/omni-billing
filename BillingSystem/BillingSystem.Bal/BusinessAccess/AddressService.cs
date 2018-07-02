@@ -12,7 +12,7 @@ using System.Data.SqlClient;
 
 using BillingSystem.Common.Common;
 
-namespace BillingSystem.Bal.Service
+namespace BillingSystem.Bal.BusinessAccess
 {
     public class AddressService : IAddressService
     {

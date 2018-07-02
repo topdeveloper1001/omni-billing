@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
+using BillingSystem.Model.EntityDto;
 
 namespace BillingSystem.Bal.Interfaces
 {
@@ -35,5 +37,10 @@ namespace BillingSystem.Bal.Interfaces
         string UserFacilities(IEnumerable<UserRole> userRoles);
         string UserRoles(IEnumerable<UserRole> roles);
         string GetNameByUserId(int id);
+
+        Task<UserDto> AuthenticateAsync(string username, string password, string deviceToken, string platform, bool isPatient = false);
+        Task<UserDto> GetUserAsync(long userId, bool isPatient = true, string deviceToken = "", string platform = "");
+        Task<bool> SaveUserLocationAsync(string lat, string lng, long userId, bool isPatient = true);
+        Task<List<PatientDto>> GetPatientsByUserIdAsync(long userId = 0);
     }
 }
