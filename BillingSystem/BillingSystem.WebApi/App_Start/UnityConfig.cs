@@ -1,6 +1,5 @@
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Bal.Interfaces;
-using BillingSystem.Bal.BusinessAccess;
 using System.Web.Http;
 using Unity;
 using Unity.WebApi;
