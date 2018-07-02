@@ -7,6 +7,8 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface IOpenOrderService
     {
+        string CalculateLabResultSpecimanType(string ordercode, decimal? resultminvalue, int? patientId);
+
         int AddUpdateOpenOrderCustomModel(OpenOrderCustomModel vm);
         int[] AddUpdatePhysicianMultipleOpenOrder(List<OpenOrder> model);
         int AddUpdatePhysicianOpenOrder(OpenOrder model);

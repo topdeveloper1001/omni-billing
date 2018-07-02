@@ -13,7 +13,7 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class ScrubReportService : IScrubReportService
     {
-        private readonly IRepository<ScrubEditTrack> _repository;
+        private readonly IRepository<ScrubHeader> _repository;
         private readonly IRepository<ScrubReport> _rRepository;
         private readonly IRepository<Users> _uRepository;
         private readonly IRepository<PatientInfo> _piRepository;
@@ -25,7 +25,7 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public ScrubReportService(IRepository<ScrubEditTrack> repository, IRepository<ScrubReport> rRepository, IRepository<Users> uRepository, IRepository<PatientInfo> piRepository, IRepository<BillHeader> bhRepository, IRepository<GlobalCodes> gRepository, IRepository<RuleStep> rsRepository, IRepository<RuleMaster> rmRepository, IRepository<ErrorMaster> erRepository, BillingEntities context, IMapper mapper)
+        public ScrubReportService(IRepository<ScrubHeader> repository, IRepository<ScrubReport> rRepository, IRepository<Users> uRepository, IRepository<PatientInfo> piRepository, IRepository<BillHeader> bhRepository, IRepository<GlobalCodes> gRepository, IRepository<RuleStep> rsRepository, IRepository<RuleMaster> rmRepository, IRepository<ErrorMaster> erRepository, BillingEntities context, IMapper mapper)
         {
             _repository = repository;
             _rRepository = rRepository;
@@ -61,7 +61,7 @@ namespace BillingSystem.Bal.BusinessAccess
             var sqlParameters = new SqlParameter[2];
             sqlParameters[0] = new SqlParameter("pCorporateID", corporateId);
             sqlParameters[1] = new SqlParameter("pFacilityID", facilityId);
-            IEnumerable<ScrubEditTrack> result = _context.Database.SqlQuery<ScrubEditTrack>(spName, sqlParameters);
+            IEnumerable<ScrubHeader> result = _context.Database.SqlQuery<ScrubHeader>(spName, sqlParameters);
             var headerList = result.ToList();
 
             if (headerList.Count > 0)
@@ -103,7 +103,7 @@ namespace BillingSystem.Bal.BusinessAccess
             var m = _piRepository.GetSingle(Convert.ToInt32(PatientID));
             return m != null ? m.PersonFirstName + " " + m.PersonLastName : string.Empty;
         }
-        private List<ScrubHeaderCustomModel> MapModelToViewModel(List<ScrubEditTrack> m)
+        private List<ScrubHeaderCustomModel> MapModelToViewModel(List<ScrubHeader> m)
         {
             var lst = new List<ScrubHeaderCustomModel>();
             foreach (var model in m)
@@ -615,10 +615,10 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </summary>
         /// <param name="scrubHeaderid">The scrub headerid.</param>
         /// <returns>Scrub Header Class Obj</returns>
-        public ScrubEditTrack GetScrubHeaderById(int scrubHeaderid)
+        public ScrubHeader GetScrubHeaderById(int scrubHeaderid)
         {
             var item = _repository.Where(r => r.ScrubHeaderID == scrubHeaderid).FirstOrDefault();
-            return item ?? new ScrubEditTrack();
+            return item ?? new ScrubHeader();
         }
 
         /// <summary>

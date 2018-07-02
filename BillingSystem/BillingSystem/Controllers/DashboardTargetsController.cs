@@ -15,13 +15,17 @@ namespace BillingSystem.Controllers
     {
         private readonly ICorporateService _cService;
         private readonly IDashboardTargetsService _service;
+        private readonly IFacilityService _fService;
+        private readonly IRoleService _rService;
 
-
-        public DashboardTargetsController(ICorporateService cService, IDashboardTargetsService service)
+        public DashboardTargetsController(ICorporateService cService, IDashboardTargetsService service, IFacilityService fService, IRoleService rService)
         {
-            _service = service;
             _cService = cService;
+            _service = service;
+            _fService = fService;
+            _rService = rService;
         }
+
 
         /// <summary>
         /// Get the details of the DashboardTargets View in the Model DashboardTargets such as DashboardTargetsList, list of countries etc.
@@ -137,11 +141,9 @@ namespace BillingSystem.Controllers
             var fId = Helpers.GetDefaultFacilityId();
             if (Helpers.GetLoggedInUserIsAdmin())
                 fId = 0;
-            using (var bal = new FacilityService())
-                fList = bal.GetFacilityDropdownData(cId, fId);
+            fList = _fService.GetFacilityDropdownData(cId, fId);
 
-            using (var bal = new RoleService())
-                rList = bal.GetRolesByFacility(Helpers.GetDefaultFacilityId());
+            rList = _rService.GetRolesByFacility(Helpers.GetDefaultFacilityId());
 
             var jsonData = new
             {
@@ -176,8 +178,7 @@ namespace BillingSystem.Controllers
             if (Helpers.GetLoggedInUserIsAdmin())
                 fId = 0;
 
-            using (var bal = new FacilityService())
-                fList = bal.GetFacilityDropdownData(cId, fId);
+            fList = _fService.GetFacilityDropdownData(cId, fId);
 
             var jsonData = new
             {
@@ -191,8 +192,7 @@ namespace BillingSystem.Controllers
         public JsonResult GetFacilityData(int facilityId)
         {
             List<DropdownListData> rList;
-            using (var bal = new RoleService())
-                rList = bal.GetRolesByFacility(facilityId);
+            rList = _rService.GetRolesByFacility(facilityId);
 
             var jsonData = new
             {

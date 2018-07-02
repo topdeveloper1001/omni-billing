@@ -2,13 +2,25 @@
 using BillingSystem.Common;
 using System;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ManagedCareController : BaseController
     {
+        private readonly IManagedCareService _service;
+        private readonly IInsurancePlansService _ipService;
+        private readonly IInsuranceCompanyService _icService;
+
+        public ManagedCareController(IManagedCareService service, IInsurancePlansService ipService, IInsuranceCompanyService icService)
+        {
+            _service = service;
+            _ipService = ipService;
+            _icService = icService;
+        }
+
+
         /// <summary>
         /// Get the details of the ManagedCare View in the Model ManagedCare such as ManagedCareList, list of countries etc.
         /// </summary>
@@ -17,12 +29,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the ManagedCare BAL object
-            var managedCareBal = new ManagedCareService();
-
             //Get the Entity list
             var corporateId = Helpers.GetDefaultCorporateId();
-            var managedCareList = managedCareBal.GetManagedCareListByCorporate(corporateId);
+            var managedCareList = _service.GetManagedCareListByCorporate(corporateId);
 
             //Intialize the View Model i.e. ManagedCareView which is binded to Main View Index.cshtml under ManagedCare
             var managedCareView = new ManagedCareView
@@ -44,16 +53,12 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindManagedCareList()
         {
-            //Initialize the ManagedCare BAL object
-            using (var managedCareBal = new ManagedCareService())
-            {
-                //Get the facilities list
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var managedCareList = managedCareBal.GetManagedCareListByCorporate(corporateId);
+            //Get the facilities list
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var managedCareList = _service.GetManagedCareListByCorporate(corporateId);
 
-                //Pass the ActionResult with List of ManagedCareViewModel object to Partial View ManagedCareList
-                return PartialView(PartialViews.ManagedCareList, managedCareList);
-            }
+            //Pass the ActionResult with List of ManagedCareViewModel object to Partial View ManagedCareList
+            return PartialView(PartialViews.ManagedCareList, managedCareList);
         }
 
         /// <summary>
@@ -75,24 +80,21 @@ namespace BillingSystem.Controllers
             //Check if ManagedCareViewModel 
             if (model != null)
             {
-                using (var bal = new ManagedCareService())
+                model.CorporateID = corporateId;
+                model.FacilityID = facilityId;
+                if (model.ManagedCareID > 0)
                 {
-                    model.CorporateID = corporateId;
-                    model.FacilityID = facilityId;
-                    if (model.ManagedCareID > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentLocalTime;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentLocalTime;
-                    }
-
-                    //Call the AddManagedCare Method to Add / Update current ManagedCare
-                    newId = bal.AddUptdateManagedCare(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentLocalTime;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentLocalTime;
+                }
+
+                //Call the AddManagedCare Method to Add / Update current ManagedCare
+                newId = _service.AddUptdateManagedCare(model);
             }
             return Json(newId);
         }
@@ -104,17 +106,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetManagedCare(int managedCareId)
         {
-            using (var managedCareBal = new ManagedCareService())
-            {
-                //Call the AddManagedCare Method to Add / Update current ManagedCare
-                var currentManagedCare = managedCareBal.GetManagedCareByID(Convert.ToInt32(managedCareId));
+            //Call the AddManagedCare Method to Add / Update current ManagedCare
+            var currentManagedCare = _service.GetManagedCareByID(Convert.ToInt32(managedCareId));
 
-                //If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
-                //ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
-
-                //Pass the ActionResult with the current ManagedCareViewModel object as model to PartialView ManagedCareAddEdit
-                return PartialView(PartialViews.ManagedCareAddEdit, currentManagedCare);
-            }
+            return PartialView(PartialViews.ManagedCareAddEdit, currentManagedCare);
         }
 
         /// <summary>
@@ -124,27 +119,20 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteManagedCare(int managedCareId)
         {
-            using (var managedCareBal = new ManagedCareService())
+            var currentManagedCare = _service.GetManagedCareByID(Convert.ToInt32(managedCareId));
+            var userId = Helpers.GetLoggedInUserId();
+            if (currentManagedCare != null)
             {
-                //Get ManagedCare model object by current ManagedCare ID
-                var currentManagedCare = managedCareBal.GetManagedCareByID(Convert.ToInt32(managedCareId));
-                var userId = Helpers.GetLoggedInUserId();
-                //Check If ManagedCare model is not null
-                if (currentManagedCare != null)
-                {
-                    currentManagedCare.IsActive = false;
-                    currentManagedCare.ModifiedBy = userId;
-                    currentManagedCare.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                currentManagedCare.IsActive = false;
+                currentManagedCare.ModifiedBy = userId;
+                currentManagedCare.ModifiedDate = Helpers.GetInvariantCultureDateTime();
 
-                    //Update Operation of current ManagedCare
-                    var result = managedCareBal.AddUptdateManagedCare(currentManagedCare);
+                //Update Operation of current ManagedCare
+                var result = _service.AddUptdateManagedCare(currentManagedCare);
 
-                    //return deleted ID of current ManagedCare as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current ManagedCare as Json Result to the Ajax Call.
+                return Json(result);
             }
-
-            //Return the Json result as Action Result back JSON Call Success
             return Json(null);
         }
 
@@ -167,11 +155,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindInsuranceCompanies()
         {
-            using (var insBal = new InsuranceCompanyService())
-            {
-                var list = insBal.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
-                return Json(list);
-            }
+            var list = _icService.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
+            return Json(list);
         }
 
         /// <summary>
@@ -181,11 +166,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindInsurancePlansByCompanyId(int companyId)
         {
-            using (var insBal = new InsurancePlansService())
-            {
-                var list = insBal.GetInsurancePlansByCompanyId(companyId, CurrentDateTime);
-                return Json(list);
-            }
+            var list = _ipService.GetInsurancePlansByCompanyId(companyId, CurrentDateTime);
+            return Json(list);
         }
     }
 }

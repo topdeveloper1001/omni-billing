@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
@@ -10,6 +10,15 @@ namespace BillingSystem.Controllers
 {
     public class PhysicianFavoritesController : BaseController
     {
+        private readonly IOpenOrderService _ooService;
+        private readonly IFavoritesService _service;
+
+        public PhysicianFavoritesController(IOpenOrderService ooService, IFavoritesService service)
+        {
+            _ooService = ooService;
+            _service = service;
+        }
+
         //
         // GET: /PhysicianFavorites/
         /// <summary>
@@ -26,7 +35,7 @@ namespace BillingSystem.Controllers
                 PhyFavoriteOrders = new List<FavoritesCustomModel>()
             };
             return View(fav);
-           
+
         }
 
         /// <summary>
@@ -36,11 +45,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFav(int Id)
         {
-            using (var bal = new FavoritesService())
-            {
-                var isDeleted = bal.DeleteFav(Id);
-                return Json(isDeleted);
-            }
+            var isDeleted = _service.DeleteFav(Id);
+            return Json(isDeleted);
         }
 
         /// <summary>
@@ -50,16 +56,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPhysicianOrders(int physicianId)
         {
-            using (var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            var fav = new PhysicianFavoritesView
             {
-                var fav = new PhysicianFavoritesView
-                {
-                    MostRecentOrders = orderBal.GetOrdersByPhysicianId(physicianId),
-                    FavoriteOrders = orderBal.GetFavoriteOrders(physicianId),
-                    SearchedOrders = new List<OpenOrderCustomModel>()
-                };
-                return PartialView(PartialViews.PhysicianFavoriteCustom, fav);
-            }
+                MostRecentOrders = _ooService.GetOrdersByPhysicianId(physicianId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber),
+                FavoriteOrders = _ooService.GetFavoriteOrders(physicianId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber),
+                SearchedOrders = new List<OpenOrderCustomModel>()
+            };
+            return PartialView(PartialViews.PhysicianFavoriteCustom, fav);
         }
 
         /// <summary>
@@ -69,18 +72,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPhysicianFavorites(int userid)
         {
-            using (var favBal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-            {
-                //var fav = new PhysicianFavoritesView
-                //{
-                //    MostRecentOrders = orderBal.GetOrdersByPhysicianId(userid),
-                //    FavoriteOrders = orderBal.GetFavoriteOrders(userid),
-                //    SearchedOrders = new List<OpenOrderCustomModel>(),
-                //};
-                var phyFavoriteOrders = favBal.GetFavoriteOrders(userid);
-                //return PartialView(PartialViews.PhysicianFavoriteCustom, fav);PhyFavoriteOrders
-                return PartialView(PartialViews.PhyFavoriteOrders, phyFavoriteOrders);
-            }
+            var phyFavoriteOrders = _service.GetFavoriteOrders(userid, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            return PartialView(PartialViews.PhyFavoriteOrders, phyFavoriteOrders);
         }
 
         /// <summary>
@@ -96,11 +89,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddToPhyFavorites(string codeId, string categoryId, int id, bool isFavorite, string favoriteDesc, int UserId, string screentype)
         {
-            using (var bal = new FavoritesService())
-            {
                 UserDefinedDescriptions model;
                 if (id > 0)
-                    model = bal.GetFavoriteById(id);
+                    model = _service.GetFavoriteById(id);
                 else
                 {
                     if (IsAlreadyFav(UserId, codeId, categoryId))
@@ -123,14 +114,12 @@ namespace BillingSystem.Controllers
                     model.CreatedBy = UserId;
                     model.CreatedDate = Helpers.GetInvariantCultureDateTime();
                 }
-                var result = bal.AddToFavorites(model, isFavorite);
+                var result = _service.AddToFavorites(model, isFavorite);
                 if (screentype == "1")
                     return Json(result);
 
-                var ordersBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-                var list = ordersBal.GetFavoriteOrders(UserId);
+                var list = _ooService.GetFavoriteOrders(UserId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
                 return PartialView(PartialViews.FavoriteOrders, list);
-            }
         }
 
         /// <summary>
@@ -141,11 +130,9 @@ namespace BillingSystem.Controllers
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
         public bool IsAlreadyFav(int userid, string codeId, string categoryId)
-        {
-            using (var bal = new FavoritesService())
-            {
-                return bal.CheckIfAlreadyFav(userid, codeId, categoryId);
-            }
+        { 
+                return _service.CheckIfAlreadyFav(userid, codeId, categoryId);
+             
         }
 
         /// <summary>
@@ -158,8 +145,7 @@ namespace BillingSystem.Controllers
             var list = new List<OpenOrderCustomModel>();
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-                    list = bal.GetSearchedOrders(text);
+                    list = _ooService.GetSearchedOrders(text, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             }
             return PartialView(PartialViews.OpenOrdersInSearch, list);
             // return Json(list);
@@ -175,8 +161,7 @@ namespace BillingSystem.Controllers
             List<OpenOrderCustomModel> list;
             var corportaeid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            using (var bal = new OpenOrderService())
-                list = bal.GetOrdersByPhysician(Helpers.GetLoggedInUserId(),corportaeid,facilityid);
+                list = _ooService.GetOrdersByPhysician(Helpers.GetLoggedInUserId(), corportaeid, facilityid);
             return PartialView(PartialViews.PhyAllOrders, list);
         }
         #endregion

@@ -18,13 +18,16 @@ namespace BillingSystem.Controllers
         private readonly ICorporateService _service;
         private readonly ICountryService _cService;
         private readonly IUsersService _uService;
+        private readonly IFacilityRoleService _frService;
 
-        public CorporateController(ICorporateService service, ICountryService cService, IUsersService uService)
+        public CorporateController(ICorporateService service, ICountryService cService, IUsersService uService, IFacilityRoleService frService)
         {
             _service = service;
             _cService = cService;
             _uService = uService;
+            _frService = frService;
         }
+
 
         /// <summary>
         /// Get the details of the Corporate View in the Model Corporate such as CorporateList, list of countries etc.
@@ -233,12 +236,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckCorporateExist(int Id)
         {
-            using (var facilityRoleBal = new FacilityRoleService())
-            {
-                var result = facilityRoleBal.CheckCorporateExist(Id);
-                return Json(result);
-            }
-
+            var result = _frService.CheckCorporateExist(Id);
+            return Json(result);
         }
         /// <summary>
         /// Method is used to check whethere user exists for passing corporate or not

@@ -1,6 +1,5 @@
-﻿using BillingSystem.Bal.BusinessAccess;
+﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
-using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using System.Web.Mvc;
 
@@ -8,6 +7,13 @@ namespace BillingSystem.Controllers
 {
     public class SchedulingParametersController : BaseController
     {
+        private readonly ISchedulingParametersService _service;
+
+        public SchedulingParametersController(ISchedulingParametersService service)
+        {
+            _service = service;
+        }
+
         // GET: SchedulingParameters
         public ActionResult Index()
         {
@@ -16,23 +22,20 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetDataByFacilityId(long fId)
         {
-            using (var bal = new SchedulingParametersService())
+            //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
+            var data = _service.GetDataByFacilityId(fId);
+
+            var jsonResult = new
             {
-                //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
-                var data = bal.GetDataByFacilityId(fId);
+                data.Id,
+                FacilityId = fId,
+                data.CorporateId,
+                data.StartHour,
+                data.EndHour
+            };
 
-                var jsonResult = new
-                {
-                    data.Id,
-                    FacilityId = fId,
-                    data.CorporateId,
-                    data.StartHour,
-                    data.EndHour
-                };
-
-                //Pass the ActionResult with the current BillingSystemParametersViewModel object as model to PartialView BillingSystemParametersAddEdit
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            //Pass the ActionResult with the current BillingSystemParametersViewModel object as model to PartialView BillingSystemParametersAddEdit
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         public JsonResult Save(SchedulingParametersCustomModel vm)
@@ -46,23 +49,20 @@ namespace BillingSystem.Controllers
             //Check if Model is not null
             if (vm != null)
             {
-                using (var bal = new SchedulingParametersService())
+                vm.IsActive = true;
+                if (vm.Id > 0)
                 {
-                    vm.IsActive = true;
-                    if (vm.Id > 0)
-                    {
-                        vm.ModifiedBy = userId;
-                        vm.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        vm.CreatedBy = userId;
-                        vm.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
-                    id = bal.SaveRecord(vm);
+                    vm.ModifiedBy = userId;
+                    vm.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    vm.CreatedBy = userId;
+                    vm.CreatedDate = currentDate;
+                }
+
+                //Call the AddBillingSystemParameters Method to Add / Update current BillingSystemParameters
+                id = _service.SaveRecord(vm);
             }
             return Json(id);
         }

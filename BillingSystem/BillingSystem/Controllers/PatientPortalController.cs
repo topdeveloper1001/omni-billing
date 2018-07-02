@@ -22,12 +22,36 @@ namespace BillingSystem.Controllers
         private readonly IPatientInfoService _piService;
         private readonly IEncounterService _eService;
         private readonly IBillHeaderService _bhService;
+        private readonly IOpenOrderService _ooService;
+        private readonly IMedicalRecordService _mrService;
+        private readonly IMedicalNotesService _mnService;
+        private readonly IMedicalVitalService _mvService;
+        private readonly IDiagnosisService _diaService;
+        private readonly IPhysicianService _phService;
+        private readonly IPatientInsuranceService _pinService;
+        private readonly IPatientPhoneService _ppService;
+        private readonly IPatientLoginDetailService _pldService;
+        private readonly IDocumentsTemplatesService _docService;
+        private readonly IPatientAddressRelationService _parService;
+        private readonly IOrderActivityService _oaService;
 
-        public PatientPortalController(IPatientInfoService piService, IEncounterService eService, IBillHeaderService bhService)
+        public PatientPortalController(IPatientInfoService piService, IEncounterService eService, IBillHeaderService bhService, IOpenOrderService ooService, IMedicalRecordService mrService, IMedicalNotesService mnService, IMedicalVitalService mvService, IDiagnosisService diaService, IPhysicianService phService, IPatientInsuranceService pinService, IPatientPhoneService ppService, IPatientLoginDetailService pldService, IDocumentsTemplatesService docService, IPatientAddressRelationService parService, IOrderActivityService oaService)
         {
             _piService = piService;
             _eService = eService;
             _bhService = bhService;
+            _ooService = ooService;
+            _mrService = mrService;
+            _mnService = mnService;
+            _mvService = mvService;
+            _diaService = diaService;
+            _phService = phService;
+            _pinService = pinService;
+            _ppService = ppService;
+            _pldService = pldService;
+            _docService = docService;
+            _parService = parService;
+            _oaService = oaService;
         }
 
         /// <summary>
@@ -48,65 +72,51 @@ namespace BillingSystem.Controllers
             }
 
             var patientId = Convert.ToInt32(pId);
-            using (var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            var enList = _ooService.GetEncountersListByPatientId(patientId);
+
+            var currentEncounterId = (enList != null && enList.Any() &&
+                                      enList.First().EncounterEndTime == null)
+                ? enList.First().EncounterID
+                : 0;
+
+            var medicalrecords = _mrService.GetMedicalRecord();
+            var medicalvitals = _mvService.GetCustomMedicalVitalsByPidEncounterId(patientId,
+                Convert.ToInt32(MedicalRecordType.Vitals), currentEncounterId);
+
+            //added by Shashank on Dec 01 2014
+            var patientSummaryNotes =
+                _mnService.GetMedicalNotesByPatientIdEncounterId(patientId, currentEncounterId);
+            var allergiesList = _mrService.GetAlergyRecords(patientId,
+                Convert.ToInt32(MedicalRecordType.Allergies));
+
+            var orderStatus = OrderStatus.Open.ToString();
+            var openOrdersList = _ooService.GetPhysicianOrders(currentEncounterId, orderStatus, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var primarydiagnosisId = 0;
+            var diagnosisList = _diaService.GetDiagnosisList(patientId, currentEncounterId);
+            if (diagnosisList.Any())
             {
-                var enList = orderBal.GetEncountersListByPatientId(patientId);
-                using (var medicalRecordbal = new MedicalRecordService()) //Updated by Shashank on Oct 28, 2014
+                var diagnosisCustomModel =
+                    diagnosisList.SingleOrDefault(
+                        x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary));
+                if (diagnosisCustomModel != null)
                 {
-                    using (var medicalnotesbal = new MedicalNotesService()) //Updated by Shashank on Oct 28, 2014
-                    {
-                        using (var medicalVitals = new MedicalVitalService())
-                        {
-                            using (var diagnosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
-                            {
-                                var currentEncounterId = (enList != null && enList.Any() &&
-                                                          enList.First().EncounterEndTime == null)
-                                    ? enList.First().EncounterID
-                                    : 0;
-
-                                var medicalrecords = medicalRecordbal.GetMedicalRecord();
-                                var medicalvitals = medicalVitals.GetCustomMedicalVitalsByPidEncounterId(patientId,
-                                    Convert.ToInt32(MedicalRecordType.Vitals), currentEncounterId);
-
-                                //added by Shashank on Dec 01 2014
-                                var patientSummaryNotes =
-                                    medicalnotesbal.GetMedicalNotesByPatientIdEncounterId(patientId, currentEncounterId);
-                                var allergiesList = medicalRecordbal.GetAlergyRecords(patientId,
-                                    Convert.ToInt32(MedicalRecordType.Allergies));
-
-                                var orderStatus = OrderStatus.Open.ToString();
-                                var openOrdersList = orderBal.GetPhysicianOrders(currentEncounterId, orderStatus);
-                                var primarydiagnosisId = 0;
-                                var diagnosisList = diagnosisBal.GetDiagnosisList(patientId, currentEncounterId);
-                                if (diagnosisList.Any())
-                                {
-                                    var diagnosisCustomModel =
-                                        diagnosisList.SingleOrDefault(
-                                            x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary));
-                                    if (diagnosisCustomModel != null)
-                                    {
-                                        primarydiagnosisId = diagnosisCustomModel.DiagnosisID;
-                                    }
-                                }
-                                var summaryView = new PatientPortalView
-                                {
-                                    PatientInfo = orderBal.GetPatientDetailsByPatientId(patientId),
-                                    OpenOrdersList = openOrdersList,
-                                    EncountersList = enList,
-                                    MedicalVitalList = medicalvitals,
-                                    PatientSummaryNotes = patientSummaryNotes,
-                                    ClosedOrdersList =
-                                        orderBal.GetPhysicianOrders(currentEncounterId, OrderStatus.Closed.ToString()),
-                                    AlergyList = allergiesList,
-                                    DiagnosisList = diagnosisList,
-                                    PatientId = patientId
-                                };
-                                return View(summaryView);
-                            }
-                        }
-                    }
+                    primarydiagnosisId = diagnosisCustomModel.DiagnosisID;
                 }
             }
+            var summaryView = new PatientPortalView
+            {
+                PatientInfo = _piService.GetPatientDetailsByPatientId(patientId),
+                OpenOrdersList = openOrdersList,
+                EncountersList = enList,
+                MedicalVitalList = medicalvitals,
+                PatientSummaryNotes = patientSummaryNotes,
+                ClosedOrdersList =
+                    _ooService.GetPhysicianOrders(currentEncounterId, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber),
+                AlergyList = allergiesList,
+                DiagnosisList = diagnosisList,
+                PatientId = patientId
+            };
+            return View(summaryView);
         }
 
         /// <summary>
@@ -137,53 +147,36 @@ namespace BillingSystem.Controllers
             }
 
             //Patient Insurances
-            using (var pInsurance = new PatientInsuranceService())
-            {
-                //Changes by Amit Jain on 14102014
-                var customModel = pInsurance.GetPatientInsurance(id);
-                patientInfoModel.Insurance = customModel ?? new PatientInsuranceCustomModel();
-            }
+            //Changes by Amit Jain on 14102014
+            var customModel = _pinService.GetPatientInsurance(id);
+            patientInfoModel.Insurance = customModel ?? new PatientInsuranceCustomModel();
 
-            using (var phBal = new PatientPhoneService())
+            patientInfoModel.CurrentPhone = new PatientPhone
             {
-                patientInfoModel.CurrentPhone = new PatientPhone
-                {
-                    PatientPhoneId = phBal.GetPhoneId(id)
-                };
-                patientInfoModel.PatientPhoneView = new PhonesView()
-                {
-                    CurrentPhone = new PatientPhone(),
-                    Phonelst = phBal.GetPatientPhoneList(id)
-                };
-                //patientInfoModel.Phonelst = phBal.GetPatientPhone(id);
-            }
+                PatientPhoneId = _ppService.GetPhoneId(id)
+            };
+            patientInfoModel.PatientPhoneView = new PhonesView()
+            {
+                CurrentPhone = new PatientPhone(),
+                Phonelst = _ppService.GetPatientPhoneList(id)
+            };
 
-            using (var phBal = new PatientAddressRelationService())
-            {
-                patientInfoModel.PatientAddressRealtionList = phBal.GetPatientAddressRelation(id);
-                patientInfoModel.CurrentPatientAddressRelation = new PatientAddressRelation();
-            }
+            patientInfoModel.PatientAddressRealtionList = _parService.GetPatientAddressRelation(id);
+            patientInfoModel.CurrentPatientAddressRelation = new PatientAddressRelation();
 
-            using (var phBal = new DocumentsTemplatesService())
+            patientInfoModel.PatientDocumentsView = new DocumentsView()
             {
-                patientInfoModel.PatientDocumentsView = new DocumentsView()
-                {
-                    Attachments =
-                         phBal.GetPatientDocuments(id)
-                             .Where(p =>
-                                 p.DocumentName.ToLower() != "profilepicture" && p.AssociatedType == 1 &&
-                                 (p.DocumentTypeID == 1 || p.DocumentTypeID == 2 || p.DocumentTypeID == 3)),
-                    CurrentAttachment = new DocumentsTemplates()
-                };
-            }
+                Attachments = _docService.GetPatientDocuments(id)
+                         .Where(p =>
+                             p.DocumentName.ToLower() != "profilepicture" && p.AssociatedType == 1 &&
+                             (p.DocumentTypeID == 1 || p.DocumentTypeID == 2 || p.DocumentTypeID == 3)),
+                CurrentAttachment = new DocumentsTemplates()
+            };
 
-            using (var bal = new PatientLoginDetailService())
-            {
-                patientInfoModel.PatientLoginDetail = new PatientLoginDetailCustomModel { IsDeleted = false };
-                var vm2 = bal.GetPatientLoginDetailByPatientId(id);
-                if (vm2 != null)
-                    patientInfoModel.PatientLoginDetail = vm2;
-            }
+            patientInfoModel.PatientLoginDetail = new PatientLoginDetailCustomModel { IsDeleted = false };
+            var vm2 = _pldService.GetPatientLoginDetailByPatientId(id);
+            if (vm2 != null)
+                patientInfoModel.PatientLoginDetail = vm2;
 
             patientInfoModel.EncounterOpen = _eService.GetEncounterOpenStatus(id);
 
@@ -207,20 +200,20 @@ namespace BillingSystem.Controllers
                 QueryStringTypeId = 0
             };
             if (patientId != null && Convert.ToInt32(patientId) != 0)
-            { 
-                    var encountersList = _bhService.GetAllBillHeaderListByPatientId(Convert.ToInt32(patientId));
+            {
+                var encountersList = _bhService.GetAllBillHeaderListByPatientId(Convert.ToInt32(patientId));
 
-                    //Bill Details ViewModel to be binded to UI
-                    billDetailsView = new BillDetailsView
-                    {
-                        PatientInfo = new PatientInfoCustomModel(),
-                        BillHeaderList = encountersList,
-                        BillActivityList = new List<BillDetailCustomModel>(),
-                        EncounterId = 0,
-                        QueryStringId = 0,
-                        QueryStringTypeId = 0
-                    };
-               
+                //Bill Details ViewModel to be binded to UI
+                billDetailsView = new BillDetailsView
+                {
+                    PatientInfo = new PatientInfoCustomModel(),
+                    BillHeaderList = encountersList,
+                    BillActivityList = new List<BillDetailCustomModel>(),
+                    EncounterId = 0,
+                    QueryStringId = 0,
+                    QueryStringTypeId = 0
+                };
+
             }
 
             //Pass the View Model in ActionResult to partial View BillHeader
@@ -234,16 +227,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientResults(int? patientId)
         {
-            using (var bal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByPatientId(patientId)
-                        .Where(x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                                    &&
-                                    (x.OrderActivityStatus != 0 &&
-                                     x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))).OrderBy(x => x.ExecutedDate).ToList();
-                return PartialView(PartialViews.LabClosedActivtiesList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByPatientId(patientId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                                &&
+                                (x.OrderActivityStatus != 0 &&
+                                 x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))).OrderBy(x => x.ExecutedDate).ToList();
+            return PartialView(PartialViews.LabClosedActivtiesList, list);
         }
 
         /// <summary>
@@ -400,84 +389,82 @@ namespace BillingSystem.Controllers
             const int associatedType = (int)AttachmentType.ProfilePicture;
             var profileImage = Convert.ToString(AttachmentType.ProfilePicture);
 
-            using (var docBal = new DocumentsTemplatesService())
+            if (patientId <= 0) return newId;
+
+            //Save Patient Info Image
+            var imgModel = PatientInfoProfileImage(patientId);
+            if (imgModel != null)
             {
-                if (patientId <= 0) return newId;
-
-                //Save Patient Info Image
-                var imgModel = PatientInfoProfileImage(patientId);
-                if (imgModel != null)
-                {
-                    var newDoc =
-                        docBal.GetDocumentByTypeAndPatientId(Convert.ToInt32(AttachmentType.ProfilePicture),
-                            patientId) ?? new DocumentsTemplates
-                            {
-                                CreatedBy = userId,
-                                CreatedDate = currentDateTime
-                            };
-
-                    newDoc.AssociatedID = patientId;
-                    newDoc.AssociatedType = associatedType;
-                    newDoc.ModifiedBy = userId;
-                    newDoc.ModifiedDate = currentDateTime;
-                    newDoc.IsRequired = true;
-                    newDoc.IsDeleted = false;
-                    newDoc.IsTemplate = false;
-                    newDoc.DocumentTypeID = associatedType;
-                    newDoc.DocumentName = profileImage;
-                    newDoc.FileName = imgModel.FileName;
-                    newDoc.FilePath = imgModel.ImageUrl;
-                    newDoc.CorporateID = corporateId;
-                    newDoc.FacilityID = facilityId;
-                    newDoc.PatientID = patientId;
-
-                    //Add / Update document details of current Patient
-                    newId = docBal.AddUpdateDocumentTempate(newDoc);
-                }
-                else if (Session[SessionEnum.PatientDocName.ToString()] != null)
-                {
-                    var documentType = docBal.GetPatientDocuments(patientId);
-                    var firstOrDefault =
-                        documentType.Where(d => d.DocumentName.ToLower().Contains("profile image"))
-                            .OrderByDescending(d1 => d1.DocumentsTemplatesID)
-                            .FirstOrDefault();
-
-                    if (firstOrDefault == null)
-                    {
-                        var documentsTemplates = new DocumentsTemplates
+                var newDoc =
+                    _docService.GetDocumentByTypeAndPatientId(Convert.ToInt32(AttachmentType.ProfilePicture),
+                        patientId) ?? new DocumentsTemplates
                         {
-                            AssociatedID = patientId,
-                            AssociatedType = associatedType,
-                            FileName = Session[SessionEnum.PatientDocName.ToString()].ToString(),
-                            FilePath = Session[SessionEnum.PatientDoc.ToString()].ToString(),
                             CreatedBy = userId,
-                            CreatedDate = currentDateTime,
-                            IsDeleted = false,
-                            IsRequired = false,
-                            IsTemplate = true,
-                            DocumentTypeID = 1,
-                            DocumentName = profileImage,
-                            CorporateID = corporateId,
-                            FacilityID = facilityId,
-                            PatientID = patientId
+                            CreatedDate = currentDateTime
                         };
-                        newId = docBal.AddUpdateDocumentTempate(documentsTemplates);
-                    }
-                    else
+
+                newDoc.AssociatedID = patientId;
+                newDoc.AssociatedType = associatedType;
+                newDoc.ModifiedBy = userId;
+                newDoc.ModifiedDate = currentDateTime;
+                newDoc.IsRequired = true;
+                newDoc.IsDeleted = false;
+                newDoc.IsTemplate = false;
+                newDoc.DocumentTypeID = associatedType;
+                newDoc.DocumentName = profileImage;
+                newDoc.FileName = imgModel.FileName;
+                newDoc.FilePath = imgModel.ImageUrl;
+                newDoc.CorporateID = corporateId;
+                newDoc.FacilityID = facilityId;
+                newDoc.PatientID = patientId;
+
+                //Add / Update document details of current Patient
+                newId = _docService.AddUpdateDocumentTempate(newDoc);
+            }
+            else if (Session[SessionEnum.PatientDocName.ToString()] != null)
+            {
+                var documentType = _docService.GetPatientDocuments(patientId);
+                var firstOrDefault =
+                    documentType.Where(d => d.DocumentName.ToLower().Contains("profile image"))
+                        .OrderByDescending(d1 => d1.DocumentsTemplatesID)
+                        .FirstOrDefault();
+
+                if (firstOrDefault == null)
+                {
+                    var documentsTemplates = new DocumentsTemplates
                     {
-                        var documenttoupdate = firstOrDefault;
-                        documenttoupdate.FileName = Session[SessionEnum.PatientDocName.ToString()].ToString();
-                        documenttoupdate.FilePath = Session[SessionEnum.PatientDoc.ToString()].ToString();
-                        documenttoupdate.ModifiedBy = userId;
-                        documenttoupdate.CreatedDate = currentDateTime;
-                        documenttoupdate.DocumentsTemplatesID = firstOrDefault.DocumentsTemplatesID;
-                        documenttoupdate.CorporateID = corporateId;
-                        documenttoupdate.FacilityID = facilityId;
-                        documenttoupdate.PatientID = patientId;
-                        newId = docBal.AddUpdateDocumentTempate(documenttoupdate);
-                    }
+                        AssociatedID = patientId,
+                        AssociatedType = associatedType,
+                        FileName = Session[SessionEnum.PatientDocName.ToString()].ToString(),
+                        FilePath = Session[SessionEnum.PatientDoc.ToString()].ToString(),
+                        CreatedBy = userId,
+                        CreatedDate = currentDateTime,
+                        IsDeleted = false,
+                        IsRequired = false,
+                        IsTemplate = true,
+                        DocumentTypeID = 1,
+                        DocumentName = profileImage,
+                        CorporateID = corporateId,
+                        FacilityID = facilityId,
+                        PatientID = patientId
+                    };
+                    newId = _docService.AddUpdateDocumentTempate(documentsTemplates);
+                }
+                else
+                {
+                    var documenttoupdate = firstOrDefault;
+                    documenttoupdate.FileName = Session[SessionEnum.PatientDocName.ToString()].ToString();
+                    documenttoupdate.FilePath = Session[SessionEnum.PatientDoc.ToString()].ToString();
+                    documenttoupdate.ModifiedBy = userId;
+                    documenttoupdate.CreatedDate = currentDateTime;
+                    documenttoupdate.DocumentsTemplatesID = firstOrDefault.DocumentsTemplatesID;
+                    documenttoupdate.CorporateID = corporateId;
+                    documenttoupdate.FacilityID = facilityId;
+                    documenttoupdate.PatientID = patientId;
+                    newId = _docService.AddUpdateDocumentTempate(documenttoupdate);
                 }
             }
+
             return newId;
         }
 
@@ -564,46 +551,32 @@ namespace BillingSystem.Controllers
         {
             if (vm != null)
             {
-                using (var bal = new PatientInsuranceService())
+                var userId = Helpers.GetLoggedInUserId();
+                var currentDateTime = Helpers.GetInvariantCultureDateTime();
+
+                var model = new PatientInsurance
                 {
-                    var userId = Helpers.GetLoggedInUserId();
-                    var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                    //model.IsPrimary = true;
-                    //if (model.PatientInsuraceID > 0)
-                    //{
-                    //    model.ModifiedBy = userId;
-                    //    model.ModifiedDate = currentDateTime;
-                    //}
-                    //else
-                    //{
-                    //    model.CreatedBy = userId;
-                    //    model.CreatedDate = currentDateTime;
-                    //}
+                    CreatedBy = userId,
+                    CreatedDate = currentDateTime,
+                    ModifiedBy = userId,
+                    ModifiedDate = currentDateTime,
+                    InsuranceCompanyId = vm.InsuranceCompanyId,
+                    PatientInsuraceID = vm.PatientInsuraceID,
+                    PatientID = vm.PatientID,
+                    IsPrimary = true,
+                    Startdate = vm.Startdate,
+                    Expirydate = vm.Expirydate,
+                    DeletedBy = vm.DeletedBy,
+                    DeletedDate = vm.DeletedDate,
+                    IsDeleted = false,
+                    IsActive = true,
+                    InsurancePlanId = vm.InsurancePlanId,
+                    InsurancePolicyId = vm.InsurancePlanId,
+                    PersonHealthCareNumber = vm.PersonHealthCareNumber
+                };
 
-                    var model = new PatientInsurance
-                    {
-                        CreatedBy = userId,
-                        CreatedDate = currentDateTime,
-                        ModifiedBy = userId,
-                        ModifiedDate = currentDateTime,
-                        InsuranceCompanyId = vm.InsuranceCompanyId,
-                        PatientInsuraceID = vm.PatientInsuraceID,
-                        PatientID = vm.PatientID,
-                        IsPrimary = true,
-                        Startdate = vm.Startdate,
-                        Expirydate = vm.Expirydate,
-                        DeletedBy = vm.DeletedBy,
-                        DeletedDate = vm.DeletedDate,
-                        IsDeleted = false,
-                        IsActive = true,
-                        InsurancePlanId = vm.InsurancePlanId,
-                        InsurancePolicyId = vm.InsurancePlanId,
-                        PersonHealthCareNumber = vm.PersonHealthCareNumber
-                    };
-
-                    var result = bal.SavePatientInsurance(model);
-                    return result.Count > 0 ? result[0] : 0;
-                }
+                var result = _pinService.SavePatientInsurance(model);
+                return result.Count > 0 ? result[0] : 0;
             }
             return 0;
         }
@@ -615,11 +588,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private int SavePatientPhoneData(PatientPhone model)
         {
-            using (var patientPhoneBal = new PatientPhoneService())
-            {
-                var newId = patientPhoneBal.SavePatientPhone(model);
-                return newId;
-            }
+            var newId = _ppService.SavePatientPhone(model);
+            return newId;
         }
 
         /// <summary>
@@ -631,45 +601,42 @@ namespace BillingSystem.Controllers
         {
             if (vm != null)
             {
-                using (var bal = new PatientLoginDetailService())
+                var userId = Helpers.GetLoggedInUserId();
+                var currentDateTime = Helpers.GetInvariantCultureDateTime();
+                if (vm.Id == 0)
                 {
-                    var userId = Helpers.GetLoggedInUserId();
-                    var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                    if (vm.Id == 0)
-                    {
-                        vm.CreatedBy = userId;
-                        vm.CreatedDate = currentDateTime;
-                    }
-                    else
-                    {
-                        vm.ModifiedBy = userId;
-                        vm.ModifiedDate = currentDateTime;
-                    }
-
-                    vm.TokenId = vm.DeleteVerificationToken
-                        ? string.Empty
-                        : CommonConfig.GeneratePasswordResetToken(14, false);
-
-                    var isEmailSentBefore = !string.IsNullOrEmpty(vm.ExternalValue1) &&
-                                            Convert.ToInt32(vm.ExternalValue1) == 1;
-
-                    if (vm.PatientPortalAccess && !isEmailSentBefore)
-                    {
-                        //Generate the 8-Digit Code
-                        vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
-                        vm.CodeValue = CommonConfig.GenerateLoginCode(8, false);
-
-                        var emailSentStatus = SendVerificationLinkForPatientLoginPortal(Convert.ToInt32(vm.PatientId),
-                            vm.Email,
-                            vm.TokenId, vm.CodeValue);
-
-                        //Is Email Sent Now
-                        vm.ExternalValue1 = emailSentStatus ? "1" : "0";
-                    }
-
-                    var updatedId = bal.SavePatientLoginDetails(vm);
-                    return updatedId;
+                    vm.CreatedBy = userId;
+                    vm.CreatedDate = currentDateTime;
                 }
+                else
+                {
+                    vm.ModifiedBy = userId;
+                    vm.ModifiedDate = currentDateTime;
+                }
+
+                vm.TokenId = vm.DeleteVerificationToken
+                    ? string.Empty
+                    : CommonConfig.GeneratePasswordResetToken(14, false);
+
+                var isEmailSentBefore = !string.IsNullOrEmpty(vm.ExternalValue1) &&
+                                        Convert.ToInt32(vm.ExternalValue1) == 1;
+
+                if (vm.PatientPortalAccess && !isEmailSentBefore)
+                {
+                    //Generate the 8-Digit Code
+                    vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
+                    vm.CodeValue = CommonConfig.GenerateLoginCode(8, false);
+
+                    var emailSentStatus = SendVerificationLinkForPatientLoginPortal(Convert.ToInt32(vm.PatientId),
+                        vm.Email,
+                        vm.TokenId, vm.CodeValue);
+
+                    //Is Email Sent Now
+                    vm.ExternalValue1 = emailSentStatus ? "1" : "0";
+                }
+
+                var updatedId = _pldService.SavePatientLoginDetails(vm);
+                return updatedId;
             }
             return 0;
         }
@@ -686,8 +653,7 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("patientportalemailVerification");
             PatientInfoCustomModel patientVm;
-            using (var bal = new PatientLoginDetailService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-                patientVm = bal.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
+            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
 
             if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
             {

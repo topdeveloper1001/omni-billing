@@ -28,13 +28,15 @@ namespace BillingSystem.Controllers
     {
         private readonly IDashboardBudgetService _dbService;
         private readonly IDashboardRemarkService _drService;
+        private readonly IFacilityService _fService;
 
-
-        public XMLDashboardController(IDashboardBudgetService dbService, IDashboardRemarkService drService)
+        public XMLDashboardController(IDashboardBudgetService dbService, IDashboardRemarkService drService, IFacilityService fService)
         {
             _dbService = dbService;
             _drService = drService;
+            _fService = fService;
         }
+
 
         // GET: /XMLDashboard/
         #region Public Methods and Operators
@@ -59,8 +61,9 @@ namespace BillingSystem.Controllers
             var section10RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            
+
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();

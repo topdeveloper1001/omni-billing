@@ -7,7 +7,6 @@ using BillingSystem.Models;
 using CaptchaMvc.HtmlHelpers;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using System.Globalization;
@@ -42,12 +41,34 @@ namespace BillingSystem.Controllers
         private readonly ICorporateService _coService;
         private readonly ICityService _ctService;
         private readonly IIndicatorDataCheckListService _iService;
+        private readonly IPatientLoginDetailService _pldService;
+        private readonly ILoginTrackingService _ltService;
+        private readonly ITabsService _tService;
+        private readonly IModuleAccessService _maService;
+        private readonly ISystemConfigurationService _scsService;
+        private readonly IFacilityService _fService;
+        private readonly IRoleTabsService _rtService;
+        private readonly IStateService _stService;
+        private readonly IGlobalCodeCategoryService _gcService;
+        private readonly IRoleService _roService;
+        private readonly IGlobalCodeService _gService;
+        private readonly IServiceCodeService _scService;
+        private readonly IDRGCodesService _drgService;
+        private readonly IHCPCSCodesService _hcpcService;
+        private readonly IDenialService _denService;
+        private readonly IDiagnosisCodeService _diacService;
+        private readonly IDrugService _drugService;
+        private readonly IOpenOrderService _ooService;
+        private readonly IRuleMasterService _rmService;
+        private readonly IBillActivityService _baService;
+        private readonly IUserRoleService _urService;
+        private readonly IFacilityRoleService _frService;
+        private readonly IPhysicianService _phService;
+        private readonly ISchedulingService _schService;
+        private readonly IDeptTimmingService _deptService;
+        private readonly IDocumentsTemplatesService _docService;
 
-        public HomeController(IAppointmentTypesService atService, IAuditLogService adService, IBillHeaderService bhService
-            , IATCCodesService atcService, IBedRateCardService service, IPatientInfoService piService
-            , IFacilityStructureService fsService, IEncounterService eService, IBillingSystemParametersService bspService
-            , ICPTCodesService cptService, IUsersService uService, ICountryService cService
-            , ICorporateService coService, ICityService ctService, IIndicatorDataCheckListService iService)
+        public HomeController(IAppointmentTypesService atService, IAuditLogService adService, IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service, IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService, IBillingSystemParametersService bspService, ICPTCodesService cptService, IUsersService uService, ICountryService cService, ICorporateService coService, ICityService ctService, IIndicatorDataCheckListService iService, IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, ISystemConfigurationService scsService, IFacilityService fService, IRoleTabsService rtService, IStateService stService, IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService, IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService, IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService, IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService, IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService, ISchedulingService schService, IDeptTimmingService deptService, IDocumentsTemplatesService docService)
         {
             _atService = atService;
             _adService = adService;
@@ -64,6 +85,32 @@ namespace BillingSystem.Controllers
             _coService = coService;
             _ctService = ctService;
             _iService = iService;
+            _pldService = pldService;
+            _ltService = ltService;
+            _tService = tService;
+            _maService = maService;
+            _scsService = scsService;
+            _fService = fService;
+            _rtService = rtService;
+            _stService = stService;
+            _gcService = gcService;
+            _roService = roService;
+            _gService = gService;
+            _scService = scService;
+            _drgService = drgService;
+            _hcpcService = hcpcService;
+            _denService = denService;
+            _diacService = diacService;
+            _drugService = drugService;
+            _ooService = ooService;
+            _rmService = rmService;
+            _baService = baService;
+            _urService = urService;
+            _frService = frService;
+            _phService = phService;
+            _schService = schService;
+            _deptService = deptService;
+            _docService = docService;
         }
 
         /// <summary>
@@ -98,125 +145,111 @@ namespace BillingSystem.Controllers
             if (model != null && !string.IsNullOrEmpty(model.Password) && !string.IsNullOrEmpty(model.Email))
             {
                 var flag = true;
-                using (var pbal = new PatientLoginDetailService())
+                var currentPatient = _pldService.GetPatientLoginDetailsByEmail(model.Email);
+                if (currentPatient != null)
                 {
-                    var currentPatient = pbal.GetPatientLoginDetailsByEmail(model.Email);
-                    if (currentPatient != null)
+                    var patientId = currentPatient.PatientId ?? 0;
+                    var enPwd = EncryptDecrypt.Encrypt(model.Password).ToLower().Trim();
+                    if (string.IsNullOrEmpty(currentPatient.Password))
                     {
-                        var patientId = currentPatient.PatientId ?? 0;
-                        var enPwd = EncryptDecrypt.Encrypt(model.Password).ToLower().Trim();
-                        if (string.IsNullOrEmpty(currentPatient.Password))
+                        ViewBag.check = (int)LoginResponseTypes.AccountNotActivated;
+                        return View();
+                    }
+
+                    if (currentPatient.Password.ToLower().Trim().Equals(enPwd))
+                    {
+                        if (currentPatient.FailedLoginAttempts.HasValue &&
+                            currentPatient.FailedLoginAttempts.Value == 3)
                         {
-                            ViewBag.check = (int)LoginResponseTypes.AccountNotActivated;
-                            return View();
-                        }
-
-                        if (currentPatient.Password.ToLower().Trim().Equals(enPwd))
-                        {
-                            if (currentPatient.FailedLoginAttempts.HasValue &&
-                                currentPatient.FailedLoginAttempts.Value == 3)
+                            var failedlogin = Convert.ToDateTime(currentPatient.LastInvalidLogin);
+                            var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
+                            if (timespan.TotalMinutes < 30)
                             {
-                                var failedlogin = Convert.ToDateTime(currentPatient.LastInvalidLogin);
-                                var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
-                                if (timespan.TotalMinutes < 30)
-                                {
-                                    flag = false;
-                                    ViewBag.check = (int)LoginResponseTypes.FailedAttemptsOver;
-                                }
-                            }
-
-                            if (flag)
-                            {
-                                using (var bal = new LoginTrackingService())
-                                {
-                                    var loginTrackingVm = new LoginTracking
-                                    {
-                                        ID = patientId,
-                                        LoginTime = Helpers.GetInvariantCultureDateTime(),
-                                        LoginUserType = (int)LoginTrackingTypes.UserLogin,
-                                        FacilityId = currentPatient.PatientId,
-                                        CorporateId = currentPatient.CorporateId,
-                                        IsDeleted = false,
-                                        IPAddress = Helpers.GetUser_IP(),
-                                        CreatedBy = patientId,
-                                        CreatedDate = Helpers.GetInvariantCultureDateTime()
-                                    };
-
-                                    bal.AddUpdateLoginTrackingData(loginTrackingVm);
-                                    pbal.UpdatePatientLoginFailedLog(patientId, 0, Helpers.GetInvariantCultureDateTime());
-
-
-                                    var objSession = Session[SessionNames.SessionClass.ToString()] != null
-                                        ? Session[SessionNames.SessionClass.ToString()] as SessionClass
-                                        : new SessionClass();
-
-                                    objSession.FirstTimeLogin = bal.IsFirstTimeLoggedIn(patientId,
-                                        (int)LoginTrackingTypes.PatientLogin);
-
-                                    objSession.FacilityNumber = currentPatient.FacilityNumber;
-                                    objSession.UserName = currentPatient.PatientName;
-                                    objSession.UserId = patientId;
-                                    objSession.SelectedCulture = CultureInfo.CurrentCulture.Name;
-                                    objSession.LoginUserType = (int)LoginTrackingTypes.PatientLogin;
-                                    objSession.UserIsAdmin = false;
-                                    objSession.RoleId = 0;
-                                    objSession.RoleName = "Patient Access";
-
-                                    using (var tBal = new TabsService())
-                                        //objSession.MenuSessionList = tBal.GetPatientTabsList();
-                                        objSession.MenuSessionList = tBal.GetPatientTabsListData(patientId);
-
-
-                                    using (var mBal = new ModuleAccessService())
-                                    {
-                                        Session[SessionNames.SessoionModuleAccess.ToString()] =
-                                                                        mBal.GetModulesAccessList(currentPatient.CorporateId, currentPatient.FacilityId);
-                                    }
-
-                                    Session[SessionNames.SessionClass.ToString()] = objSession;
-                                    return RedirectToAction("Index", "PatientPortal", new { pId = patientId });
-                                }
+                                flag = false;
+                                ViewBag.check = (int)LoginResponseTypes.FailedAttemptsOver;
                             }
                         }
-                        else
+
+                        if (flag)
                         {
-                            if (currentPatient.Password == null || !currentPatient.Password.Equals(EncryptDecrypt.Encrypt(currentPatient.Password)))
-                                ViewBag.check = (int)LoginResponseTypes.Failed;
-                            else if (currentPatient.IsDeleted != false)
-                                ViewBag.check = (int)LoginResponseTypes.IsDeleted;
-
-                            else if (!string.IsNullOrEmpty(currentPatient.PatientName) && ViewBag.check == (int)LoginResponseTypes.Failed)
+                            var loginTrackingVm = new LoginTracking
                             {
-                                if (currentPatient.FailedLoginAttempts < 3 || currentPatient.FailedLoginAttempts == null)
-                                {
-                                    var failedlogin = currentPatient.LastInvalidLogin ?? Helpers.GetInvariantCultureDateTime();
-                                    var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
-                                    var failedattempts = timespan.TotalMinutes < 30
-                                        ? Convert.ToInt32(currentPatient.FailedLoginAttempts) + 1
-                                        : 1;
-                                    using (var bal = new PatientLoginDetailService())
-                                    {
-                                        bal.UpdatePatientLoginFailedLog(patientId, failedattempts,
-                                            Helpers.GetInvariantCultureDateTime());
-                                    }
-                                }
-                                else if (currentPatient.FailedLoginAttempts == 3)
-                                {
-                                    var failedlogin = currentPatient.LastInvalidLogin ?? Helpers.GetInvariantCultureDateTime();
-                                    var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
-                                    if (timespan.TotalMinutes < 30)
-                                        flag = false;
-                                }
-                            }
+                                ID = patientId,
+                                LoginTime = Helpers.GetInvariantCultureDateTime(),
+                                LoginUserType = (int)LoginTrackingTypes.UserLogin,
+                                FacilityId = currentPatient.PatientId,
+                                CorporateId = currentPatient.CorporateId,
+                                IsDeleted = false,
+                                IPAddress = Helpers.GetUser_IP(),
+                                CreatedBy = patientId,
+                                CreatedDate = Helpers.GetInvariantCultureDateTime()
+                            };
 
-                            if (flag == false)
-                                ViewBag.check = (int)LoginResponseTypes.Failed;
+                            _ltService.AddUpdateLoginTrackingData(loginTrackingVm);
+                            _pldService.UpdatePatientLoginFailedLog(patientId, 0, Helpers.GetInvariantCultureDateTime());
+
+
+                            var objSession = Session[SessionNames.SessionClass.ToString()] != null
+                                ? Session[SessionNames.SessionClass.ToString()] as SessionClass
+                                : new SessionClass();
+
+                            objSession.FirstTimeLogin = _ltService.IsFirstTimeLoggedIn(patientId,
+                                (int)LoginTrackingTypes.PatientLogin);
+
+                            objSession.FacilityNumber = currentPatient.FacilityNumber;
+                            objSession.UserName = currentPatient.PatientName;
+                            objSession.UserId = patientId;
+                            objSession.SelectedCulture = CultureInfo.CurrentCulture.Name;
+                            objSession.LoginUserType = (int)LoginTrackingTypes.PatientLogin;
+                            objSession.UserIsAdmin = false;
+                            objSession.RoleId = 0;
+                            objSession.RoleName = "Patient Access";
+
+                            objSession.MenuSessionList = _tService.GetPatientTabsListData(patientId);
+
+
+                            Session[SessionNames.SessoionModuleAccess.ToString()] =
+                                                            _maService.GetModulesAccessList(currentPatient.CorporateId, currentPatient.FacilityId);
+
+                            Session[SessionNames.SessionClass.ToString()] = objSession;
+                            return RedirectToAction("Index", "PatientPortal", new { pId = patientId });
                         }
                     }
                     else
                     {
-                        ViewBag.check = (int)LoginResponseTypes.Failed;
+                        if (currentPatient.Password == null || !currentPatient.Password.Equals(EncryptDecrypt.Encrypt(currentPatient.Password)))
+                            ViewBag.check = (int)LoginResponseTypes.Failed;
+                        else if (currentPatient.IsDeleted != false)
+                            ViewBag.check = (int)LoginResponseTypes.IsDeleted;
+
+                        else if (!string.IsNullOrEmpty(currentPatient.PatientName) && ViewBag.check == (int)LoginResponseTypes.Failed)
+                        {
+                            if (currentPatient.FailedLoginAttempts < 3 || currentPatient.FailedLoginAttempts == null)
+                            {
+                                var failedlogin = currentPatient.LastInvalidLogin ?? Helpers.GetInvariantCultureDateTime();
+                                var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
+                                var failedattempts = timespan.TotalMinutes < 30
+                                    ? Convert.ToInt32(currentPatient.FailedLoginAttempts) + 1
+                                    : 1;
+                                _pldService.UpdatePatientLoginFailedLog(patientId, failedattempts,
+                                    Helpers.GetInvariantCultureDateTime());
+                            }
+                            else if (currentPatient.FailedLoginAttempts == 3)
+                            {
+                                var failedlogin = currentPatient.LastInvalidLogin ?? Helpers.GetInvariantCultureDateTime();
+                                var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
+                                if (timespan.TotalMinutes < 30)
+                                    flag = false;
+                            }
+                        }
+
+                        if (flag == false)
+                            ViewBag.check = (int)LoginResponseTypes.Failed;
                     }
+                }
+                else
+                {
+                    ViewBag.check = (int)LoginResponseTypes.Failed;
                 }
             }
             else
@@ -240,8 +273,7 @@ namespace BillingSystem.Controllers
             //var _configdata = objSystemConfigurationWebCommunicator.getOfflineTime();
             var login = new Users();
 
-            var systemConfigurationBal = new SystemConfigurationService();
-            var configdata = systemConfigurationBal.getOfflineTime();
+            var configdata = _scsService.getOfflineTime();
             //Changes end here
 
             var startTime = (TimeSpan)configdata.LoginStartTime;
@@ -282,7 +314,6 @@ namespace BillingSystem.Controllers
                         }
                     }
 
-                    var bal = new LoginTrackingService();
                     if (flag)
                     {
                         ViewBag.check = LoginResponseTypes.Success.ToString();
@@ -299,7 +330,7 @@ namespace BillingSystem.Controllers
                             objSession.CountryId = currentUser.CountryID;
                             objSession.UserEmail = currentUser.Email;
                             objSession.MenuSessionList = null;
-                            objSession.FirstTimeLogin = bal.IsFirstTimeLoggedIn(currentUser.UserID,
+                            objSession.FirstTimeLogin = _ltService.IsFirstTimeLoggedIn(currentUser.UserID,
                                 (int)LoginTrackingTypes.UserLogin);
 
                             var loginTrackingVm = new LoginTracking
@@ -312,10 +343,10 @@ namespace BillingSystem.Controllers
                                 IsDeleted = false,
                                 IPAddress = Helpers.GetUser_IP(),
                                 CreatedBy = currentUser.UserID,
-                                CreatedDate = Helpers.GetInvariantCultureDateTime()
+                                CreatedDate = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId())
                             };
 
-                            bal.AddUpdateLoginTrackingData(loginTrackingVm);
+                            _ltService.AddUpdateLoginTrackingData(loginTrackingVm);
 
                             UpdateFailedLog(currentUser.UserID, 0);
                             /*
@@ -356,45 +387,39 @@ namespace BillingSystem.Controllers
                                 objSession.RoleKey = cm.RoleKey;
 
 
-                                using (var facilitybal = new FacilityService())
+                                var facilityObj = _fService.GetFacilityById(currentRole.FacilityId);
+                                var timezoneValue = facilityObj.FacilityTimeZone;
+                                if (!string.IsNullOrEmpty(timezoneValue))
                                 {
-                                    var facilityObj = facilitybal.GetFacilityByFacilityId(currentRole.FacilityId);
-                                    var timezoneValue = facilityObj.FacilityTimeZone;
-                                    if (!string.IsNullOrEmpty(timezoneValue))
-                                    {
-                                        var timezoneobj = TimeZoneInfo.FindSystemTimeZoneById(timezoneValue);
-                                        objSession.TimeZone = timezoneobj.BaseUtcOffset.TotalHours.ToString();
-                                    }
-                                    else
-                                        objSession.TimeZone = "0.0";
+                                    var timezoneobj = TimeZoneInfo.FindSystemTimeZoneById(timezoneValue);
+                                    objSession.TimeZone = timezoneobj.BaseUtcOffset.TotalHours.ToString();
                                 }
+                                else
+                                    objSession.TimeZone = "0.0";
 
-                                using (var rtBal = new RoleTabsService())
-                                {
-                                    objSession.IsPatientSearchAccessible = rtBal.CheckIfTabNameAccessibleToGivenRole("Patient Lookup",
-                                        ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
+                                objSession.IsPatientSearchAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("Patient Lookup",
+                                    ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
+                                    Convert.ToInt32(currentRole.RoleId));
+                                objSession.IsAuthorizationAccessible =
+                                    _rtService.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization",
+                                        ControllerAccess.Authorization.ToString(),
+                                        ActionNameAccess.AuthorizationMain.ToString(), Convert.ToInt32(currentRole.RoleId));
+                                objSession.IsActiveEncountersAccessible =
+                                    _rtService.CheckIfTabNameAccessibleToGivenRole("Active Encounters",
+                                        ControllerAccess.ActiveEncounter.ToString(),
+                                        ActionNameAccess.ActiveEncounter.ToString(),
                                         Convert.ToInt32(currentRole.RoleId));
-                                    objSession.IsAuthorizationAccessible =
-                                        rtBal.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization",
-                                            ControllerAccess.Authorization.ToString(),
-                                            ActionNameAccess.AuthorizationMain.ToString(), Convert.ToInt32(currentRole.RoleId));
-                                    objSession.IsActiveEncountersAccessible =
-                                        rtBal.CheckIfTabNameAccessibleToGivenRole("Active Encounters",
-                                            ControllerAccess.ActiveEncounter.ToString(),
-                                            ActionNameAccess.ActiveEncounter.ToString(),
-                                            Convert.ToInt32(currentRole.RoleId));
-                                    objSession.IsBillHeaderViewAccessible =
-                                        rtBal.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
-                                            ControllerAccess.BillHeader.ToString(),
-                                            ActionNameAccess.Index.ToString(), Convert.ToInt32(currentRole.RoleId));
-                                    objSession.IsEhrAccessible =
-                                        rtBal.CheckIfTabNameAccessibleToGivenRole("EHR",
-                                            ControllerAccess.Summary.ToString(),
-                                            ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(currentRole.RoleId));
+                                objSession.IsBillHeaderViewAccessible =
+                                    _rtService.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
+                                        ControllerAccess.BillHeader.ToString(),
+                                        ActionNameAccess.Index.ToString(), Convert.ToInt32(currentRole.RoleId));
+                                objSession.IsEhrAccessible =
+                                    _rtService.CheckIfTabNameAccessibleToGivenRole("EHR",
+                                        ControllerAccess.Summary.ToString(),
+                                        ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(currentRole.RoleId));
 
-                                    objSession.SchedularAccessible =
-                                        rtBal.CheckIfTabNameAccessibleToGivenRole("Scheduling", string.Empty, string.Empty, Convert.ToInt32(currentRole.RoleId));
-                                }
+                                objSession.SchedularAccessible =
+                                    _rtService.CheckIfTabNameAccessibleToGivenRole("Scheduling", string.Empty, string.Empty, Convert.ToInt32(currentRole.RoleId));
 
                                 /*
                                  * By: Amit Jain
@@ -621,8 +646,7 @@ namespace BillingSystem.Controllers
             var userType = 1;
             if (objSession != null)
             {
-                using (var bal = new LoginTrackingService())
-                    bal.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
+                _ltService.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
                 userType = objSession.LoginUserType;
             }
             Session.RemoveAll();
@@ -644,8 +668,7 @@ namespace BillingSystem.Controllers
         [AcceptVerbs(HttpVerbs.Post)]
         public ActionResult GetStatesByCountryId(string countryId)
         {
-            var bal = new StateService();
-            var stateList = bal.GetStatesByCountryId(Convert.ToInt32(countryId));
+            var stateList = _stService.GetStatesByCountryId(Convert.ToInt32(countryId));
             return Json(stateList);
         }
 
@@ -677,11 +700,8 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetAllGlobalCodeCategories()
         {
-            using (var bal = new GlobalCodeCategoryService())
-            {
-                var list = bal.GetGlobalCodeCategories();
-                return Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategories();
+            return Json(list);
         }
 
         /// <summary>
@@ -706,11 +726,8 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodeCategories(string startRange, string endRange)
         {
-            using (var bal = new GlobalCodeCategoryService())
-            {
-                var list = bal.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
-                return Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
+            return Json(list);
         }
 
         /// <summary>
@@ -722,20 +739,16 @@ namespace BillingSystem.Controllers
         public ActionResult GetSubcategortCode(string startRange, string endRange)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeCategoryService())
+            var finalList = _gcService.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
+            if (finalList.Count > 0)
             {
-                var finalList = bal.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
-                if (finalList.Count > 0)
+                list.AddRange(finalList.Select(item => new SelectListItem
                 {
-                    list.AddRange(finalList.Select(item => new SelectListItem
-                    {
-                        Text = string.Format("{0}", item.GlobalCodeCategoryName),
-                        Value = item.GlobalCodeCategoryValue.Trim()
-                    }));
-                }
-                return Json(list, JsonRequestBehavior.AllowGet);
+                    Text = string.Format("{0}", item.GlobalCodeCategoryName),
+                    Value = item.GlobalCodeCategoryValue.Trim()
+                }));
             }
-
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -747,14 +760,12 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public JsonResult GetGlobalCodes(string categoryId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeName);
+            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeName);
             return Json(list, JsonRequestBehavior.AllowGet);
         }
         public ActionResult GetGlobalCodesOrderByGlobalCodeId(string categoryId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeID);
+            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeID);
             return Json(list);
         }
         /// <summary>
@@ -766,8 +777,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesOrderbyCode(string categoryId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => Convert.ToDecimal(x.GlobalCodeValue)).ToList();
+            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => Convert.ToDecimal(x.GlobalCodeValue)).ToList();
             return Json(list);
         }
 
@@ -780,8 +790,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesOrderBy(string categoryId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder).ToList();
+            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder).ToList();
             return Json(list);
         }
 
@@ -794,8 +803,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesOrderbyName(string categoryId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => (x.GlobalCodeName)).ToList();
+            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => (x.GlobalCodeName)).ToList();
             return Json(list);
         }
 
@@ -809,8 +817,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetEncounterTypes(string categoryId, string patientTypeId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetEncounterTypesByPatientType(categoryId, patientTypeId);
+            var list = _gService.GetEncounterTypesByPatientType(categoryId, patientTypeId);
             return Json(list);
         }
 
@@ -835,19 +842,16 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetFacilityNameById(string facilityNumber)
         {
-            using (var facilityBal = new FacilityService())
+            if (string.IsNullOrEmpty(facilityNumber))
             {
-                if (string.IsNullOrEmpty(facilityNumber))
+                if (Session[SessionNames.SessionClass.ToString()] != null)
                 {
-                    if (Session[SessionNames.SessionClass.ToString()] != null)
-                    {
-                        var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                        facilityNumber = session.FacilityNumber;
-                    }
+                    var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+                    facilityNumber = session.FacilityNumber;
                 }
-                var name = facilityBal.GetFacilityNameByNumber(facilityNumber);
-                return Json(name);
             }
+            var name = _fService.GetFacilityNameByNumber(facilityNumber);
+            return Json(name);
         }
 
         /// <summary>
@@ -909,20 +913,18 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetRolesDropdownData(string corporateId)
         {
-            using (var roleBal = new RoleService())
+            var roles = _roService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
+            if (roles.Count > 0)
             {
-                var roles = roleBal.GetRolesByCorporateId(Convert.ToInt32(corporateId));
-                if (roles.Count > 0)
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(roles.Select(item => new SelectListItem
-                    {
-                        Text = item.RoleName,
-                        Value = item.RoleID.ToString()
-                    }));
-                    return Json(list);
-                }
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                return Json(list);
             }
+
             return Json(null);
         }
 
@@ -934,21 +936,19 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetDistinctRolesDropdownData(string corporateId)
         {
-            using (var roleBal = new RoleService())
+            var roles = _roService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
+            if (roles.Count > 0)
             {
-                var roles = roleBal.GetRolesByCorporateId(Convert.ToInt32(corporateId));
-                if (roles.Count > 0)
+                roles = roles.DistinctBy(x => x.RoleName).ToList();
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
                 {
-                    roles = roles.DistinctBy(x => x.RoleName).ToList();
-                    var list = new List<SelectListItem>();
-                    list.AddRange(roles.Select(item => new SelectListItem
-                    {
-                        Text = item.RoleName,
-                        Value = item.RoleID.ToString()
-                    }));
-                    return Json(list);
-                }
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                return Json(list);
             }
+
             return Json(null);
         }
 
@@ -961,20 +961,17 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetRolesByFacilityDropdownData(string corporateId, string facilityId)
         {
-            using (var roleBal = new RoleService())
+            var roles = _roService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
+            if (roles.Count > 0)
             {
-                var roles = roleBal.GetRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
-                if (roles.Count > 0)
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(roles.Select(item => new SelectListItem
-                    {
-                        Text = item.RoleName,
-                        Value = item.RoleID.ToString()
-                    }));
-                    list = list.OrderBy(x => x.Text).ToList();
-                    return Json(list);
-                }
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
             }
             return Json(0);
         }
@@ -987,20 +984,17 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRolesByCorporateFacilityDropdownData(string corporateId, string facilityId)
         {
-            using (var roleBal = new RoleService())
+            var roles = _roService.GetFacilityRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
+            if (roles.Count > 0)
             {
-                var roles = roleBal.GetFacilityRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
-                if (roles.Count > 0)
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(roles.Select(item => new SelectListItem
-                    {
-                        Text = item.RoleName,
-                        Value = item.RoleID.ToString()
-                    }));
-                    list = list.OrderBy(x => x.Text).ToList();
-                    return Json(list);
-                }
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
             }
             return Json(0);
         }
@@ -1034,20 +1028,19 @@ namespace BillingSystem.Controllers
             switch (codeType)
             {
                 case SearchType.ServiceCode:
-                    using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
-                    {
-                        var userid = Helpers.GetLoggedInUserId();
-                        viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
-                        var result1 = !string.IsNullOrEmpty(text) ? bal.GetFilteredServiceCodes(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultServiceCodeTableNumber : tableNumber) : bal.GetServiceCodesCustomList();
 
-                        var serviceCodeView = new ServiceCodeViewModel
-                        {
-                            ServiceCodeList = result1,
-                            CurrentServiceCode = new ServiceCode(),
-                            UserId = userid
-                        };
-                        return PartialView(viewpath, serviceCodeView);
-                    }
+                    var userid = Helpers.GetLoggedInUserId();
+                    viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
+                    var result1 = !string.IsNullOrEmpty(text) ? _scService.GetFilteredServiceCodes(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultServiceCodeTableNumber : tableNumber) : _scService.GetServiceCodesCustomList(Helpers.DefaultServiceCodeTableNumber);
+
+                    var serviceCodeView = new ServiceCodeViewModel
+                    {
+                        ServiceCodeList = result1,
+                        CurrentServiceCode = new ServiceCode(),
+                        UserId = userid
+                    };
+                    return PartialView(viewpath, serviceCodeView);
+
                 case SearchType.CPT:
 
                     viewpath = string.Format("../CPTCodes/{0}", PartialViews.CPTCodesList);
@@ -1061,99 +1054,83 @@ namespace BillingSystem.Controllers
                     return PartialView(viewpath, viewData);
 
                 case SearchType.DRG:
-                    using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+
+                    viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
+                    var result3 = !string.IsNullOrEmpty(text) ? _drgService.GetDRGCodesFiltered(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultDrgTableNumber : tableNumber) : _drgService.GetDrgCodes(Helpers.DefaultDrgTableNumber);
+
+                    var drgCodesView = new DRGCodesView
                     {
-                        viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
-                        var result3 = !string.IsNullOrEmpty(text) ? bal.GetDRGCodesFiltered(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultDrgTableNumber : tableNumber) : bal.GetDrgCodes();
+                        DRGCodesList = result3,
+                        CurrentDRGCodes = new DRGCodes(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
 
-                        var drgCodesView = new DRGCodesView
-                        {
-                            DRGCodesList = result3,
-                            CurrentDRGCodes = new DRGCodes(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
+                    return PartialView(viewpath, drgCodesView);
 
-                        return PartialView(viewpath, drgCodesView);
-                    }
                 case SearchType.HCPCS:
-                    using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
+
+                    viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
+                    //var result = !string.IsNullOrEmpty(text) ? bal.GetFilteredHCPCSCodes(text) : bal.GetHCPCSCodes();
+                    var result4 = !string.IsNullOrEmpty(text) ? _hcpcService.GetHCPCSCodesFilterData(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultHcPcsTableNumber : tableNumber) : _hcpcService.GetHCPCSCodes(Helpers.DefaultHcPcsTableNumber);
+                    var hcpcsCodesView = new HCPCSCodesView
                     {
-                        viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
-                        //var result = !string.IsNullOrEmpty(text) ? bal.GetFilteredHCPCSCodes(text) : bal.GetHCPCSCodes();
-                        var result4 = !string.IsNullOrEmpty(text) ? bal.GetHCPCSCodesFilterData(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultHcPcsTableNumber : tableNumber) : bal.GetHCPCSCodes();
-                        var hcpcsCodesView = new HCPCSCodesView
-                        {
-                            HCPCSCodesList = result4,
-                            CurrentHCPCSCodes = new HCPCSCodes(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-                        return PartialView(viewpath, hcpcsCodesView);
-                    }
+                        HCPCSCodesList = result4,
+                        CurrentHCPCSCodes = new HCPCSCodes(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+                    return PartialView(viewpath, hcpcsCodesView);
+
                 case SearchType.Denial:
-                    using (var bal = new DenialService())
+
+                    viewpath = string.Format("../Denial/{0}", PartialViews.DenialList);
+                    var result5 = !string.IsNullOrEmpty(text) ? _denService.GetFilteredDenialCodes(text) : _denService.GetDenial();
+
+                    var denialView = new DenialView
                     {
-                        //var viewpath = string.Format("../Denial/{0}", PartialViews.DenialList);
-                        //var result = bal.GetFilteredDenialCodes(text);
-                        //var DenialView = new DenialView
-                        //{
-                        //    DenialList = result,
-                        //    CurrentDenial = new Denial()
-                        //};
+                        DenialList = result5,
+                        CurrentDenial = new Denial()
+                    };
 
-                        //return PartialView(viewpath, DenialView);
-                        viewpath = string.Format("../Denial/{0}", PartialViews.DenialList);
-                        var result5 = !string.IsNullOrEmpty(text) ? bal.GetFilteredDenialCodes(text) : bal.GetDenial();
+                    return PartialView(viewpath, result5);
 
-                        var denialView = new DenialView
-                        {
-                            DenialList = result5,
-                            CurrentDenial = new Denial()
-                        };
-
-                        return PartialView(viewpath, result5);
-                    }
                 case SearchType.Diagnosis:
-                    using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
-                    {
-                        viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
-                        //var result = !string.IsNullOrEmpty(text) ? bal.GetFilteredDiagnosisCodes(text) : bal.GetDiagnosisCode();
-                        var result6 = !string.IsNullOrEmpty(text) ? bal.GetFilteredDiagnosisCodesData(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultDiagnosisTableNumber : tableNumber) : bal.GetDiagnosisCode();
+                    viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
+                    //var result = !string.IsNullOrEmpty(text) ? bal.GetFilteredDiagnosisCodes(text) : bal.GetDiagnosisCode();
+                    var result6 = !string.IsNullOrEmpty(text) ? _diacService.GetFilteredDiagnosisCodesData(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultDiagnosisTableNumber : tableNumber) : _diacService.GetDiagnosisCode(Helpers.DefaultDiagnosisTableNumber);
 
-                        if (blockNumber != null)
-                        {
-                            var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-                            result6 = result6.ToList().OrderByDescending(i => i.DiagnosisTableNumberId).Take(takeValue).ToList();
-                        }
-                        var diagnosisCodeView = new DiagnosisCodeView
-                        {
-                            DiagnosisCodeList = result6,
-                            CurrentDiagnosisCode = new DiagnosisCode(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-                        return PartialView(viewpath, diagnosisCodeView);
+                    if (blockNumber != null)
+                    {
+                        var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
+                        result6 = result6.ToList().OrderByDescending(i => i.DiagnosisTableNumberId).Take(takeValue).ToList();
                     }
+                    var diagnosisCodeView = new DiagnosisCodeView
+                    {
+                        DiagnosisCodeList = result6,
+                        CurrentDiagnosisCode = new DiagnosisCode(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+                    return PartialView(viewpath, diagnosisCodeView);
                 case SearchType.DRUG:
-                    using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
+
+                    viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
+                    var result7 = !string.IsNullOrEmpty(text) ?
+                        _drugService.GetFilteredDrugCodesData(text, drugStatus, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultDrugTableNumber : tableNumber) :
+                        _drugService.GetDrugList(Helpers.DefaultDrugTableNumber);
+
+                    if (blockNumber != null)
                     {
-                        viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
-                        var result7 = !string.IsNullOrEmpty(text) ?
-                            bal.GetFilteredDrugCodesData(text, drugStatus, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultDrugTableNumber : tableNumber) :
-                            bal.GetDrugList();
-
-                        if (blockNumber != null)
-                        {
-                            var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-                            result7 = result7.ToList().OrderByDescending(i => i.Id).Take(takeValue).ToList();
-                        }
-                        var viewData1 = new DrugView
-                        {
-                            CurrentDrug = new Drug(),
-                            DrugList = result7,
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-
-                        return PartialView(viewpath, viewData1);
+                        var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
+                        result7 = result7.ToList().OrderByDescending(i => i.Id).Take(takeValue).ToList();
                     }
+                    var viewData1 = new DrugView
+                    {
+                        CurrentDrug = new Drug(),
+                        DrugList = result7,
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+
+                    return PartialView(viewpath, viewData1);
+
 
                 case SearchType.ATC:
                     viewpath = string.Format("../ATCCodes/{0}", PartialViews.ATCCodesList);
@@ -1174,11 +1151,8 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesByCategoriesRange(string startRange, string endRange)
         {
-            using (var bal = new GlobalCodeService())
-            {
-                var list = bal.GetGlobalCodesByCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
-                return Json(list);
-            }
+            var list = _gService.GetGlobalCodesByCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
+            return Json(list);
         }
 
         /// <summary>
@@ -1197,16 +1171,13 @@ namespace BillingSystem.Controllers
                     var cptcodeslist = _cptService.GetCPTCodes(Helpers.DefaultCptTableNumber);
                     return Json(cptcodeslist);
                 case OrderType.HCPCS:
-                    var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber);
-                    var hcpcsCodeslist = hcpcsCodesBal.GetHCPCSCodes();
+                    var hcpcsCodeslist = _hcpcService.GetHCPCSCodes(Helpers.DefaultHcPcsTableNumber);
                     return Json(hcpcsCodeslist);
                 case OrderType.DRG:
-                    var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
-                    var drgCodeslist = drgCodesBal.GetDrgCodes();
+                    var drgCodeslist = _drgService.GetDrgCodes(Helpers.DefaultDrgTableNumber);
                     return Json(drgCodeslist);
                 case OrderType.DRUG:
-                    var DrugService = new DrugService(Helpers.DefaultDrugTableNumber);
-                    var list = DrugService.GetDrugList();
+                    var list = _drugService.GetDrugList(Helpers.DefaultDrugTableNumber);
                     return Json(list);
             }
             return Json(null);
@@ -1220,8 +1191,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetMaxGlobalCodeValueByCategory(string categoryValue)
         {
-            var bal = new GlobalCodeService();
-            var maxId = bal.GetMaxGlobalCodeValueByCategory(categoryValue);
+            var maxId = _gService.GetMaxGlobalCodeValueByCategory(categoryValue);
             return Json(maxId);
         }
 
@@ -1264,66 +1234,50 @@ namespace BillingSystem.Controllers
                         //return PartialView(viewpath, result);
                         return PartialView(viewpath, CPTCodesList);
                     case OrderType.DRG:
-                        using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+
+                        viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
+                        var result5 = _drgService.GetDrgCodes(Helpers.DefaultDrgTableNumber).Take(100).ToList();
+                        var DRGCodeList = new DRGCodesView
                         {
-                            viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
-                            var result5 = bal.GetDrgCodes().Take(100).ToList();
-                            var DRGCodeList = new DRGCodesView
-                            {
-                                DRGCodesList = result5,
-                                CurrentDRGCodes = new DRGCodes()
-                            };
+                            DRGCodesList = result5,
+                            CurrentDRGCodes = new DRGCodes()
+                        };
 
-                            return PartialView(viewpath, DRGCodeList);
-
-                            //return PartialView(viewpath, result);
-                        }
+                        return PartialView(viewpath, DRGCodeList);
                     case OrderType.HCPCS:
-                        using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
+                        viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
+                        var result4 = _hcpcService.GetHCPCSCodes(Helpers.DefaultHcPcsTableNumber).Take(100).ToList();
+                        var HCPCSCodesList = new HCPCSCodesView
                         {
-                            viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
-                            var result4 = bal.GetHCPCSCodes().Take(100).ToList();
-                            var HCPCSCodesList = new HCPCSCodesView
-                            {
-                                HCPCSCodesList = result4,
-                                CurrentHCPCSCodes = new HCPCSCodes()
-                            };
-                            return PartialView(viewpath, HCPCSCodesList);
-                        }
+                            HCPCSCodesList = result4,
+                            CurrentHCPCSCodes = new HCPCSCodes()
+                        };
+                        return PartialView(viewpath, HCPCSCodesList);
                     case OrderType.Orders:
-                        using (var bal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-                        {
-                            viewpath = string.Format("../Summary/{0}", PartialViews.OpenOrderListPatientSummary);
-                            var result3 = bal.GetOrdersByPhysicianId(1).Take(100).ToList();
+                        viewpath = string.Format("../Summary/{0}", PartialViews.OpenOrderListPatientSummary);
+                        var result3 = _ooService.GetOrdersByPhysicianId(1, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber).Take(100).ToList();
 
-                            return PartialView(viewpath, result3);
-                        }
+                        return PartialView(viewpath, result3);
                     case OrderType.Diagnosis:
-                        using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
+                        viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
+                        var result2 = _diacService.GetDiagnosisCode(Helpers.DefaultDiagnosisTableNumber).Take(100).ToList();
+                        var DiagnosisCodeList = new DiagnosisCodeView
                         {
-                            viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
-                            var result2 = bal.GetDiagnosisCode().Take(100).ToList();
-                            var DiagnosisCodeList = new DiagnosisCodeView
-                            {
-                                DiagnosisCodeList = result2,
-                                CurrentDiagnosisCode = new DiagnosisCode()
+                            DiagnosisCodeList = result2,
+                            CurrentDiagnosisCode = new DiagnosisCode()
 
-                            };
-                            return PartialView(viewpath, DiagnosisCodeList);
-                            //return PartialView(viewpath, result);
-                        }
+                        };
+                        return PartialView(viewpath, DiagnosisCodeList);
                     case OrderType.DRUG:
-                        using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
+
+                        viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
+                        var result1 = _drugService.GetDrugList(Helpers.DefaultDrugTableNumber).Take(100).ToList();
+                        var Druglist = new DrugView()
                         {
-                            viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
-                            var result1 = bal.GetDrugList().Take(100).ToList();
-                            var Druglist = new DrugView()
-                            {
-                                DrugList = result1,
-                                CurrentDrug = new Drug()
-                            };
-                            return PartialView(viewpath, Druglist);
-                        }
+                            DrugList = result1,
+                            CurrentDrug = new Drug()
+                        };
+                        return PartialView(viewpath, Druglist);
                     default:
                         break;
                 }
@@ -1342,26 +1296,83 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrderingCodes(string text, int subCategoryId, int categoryId)
         {
             var finalList = new List<GeneralCodesCustomModel>();
-            using (
-                var bal = new BaseBal(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-                finalList = bal.GetOrderingCodesSP(
-                    text,
-                    categoryId,
-                    subCategoryId,
-                    Helpers.GetSysAdminCorporateID(),
-                    Helpers.GetDefaultFacilityId());
-            //finalList = categoryId == 0
-            //    ? subCategoryId == 0 ? bal.GetAllOrderingCodes(text) : bal.GetOrderingCodesBySubCategory(text, subCategoryId) :
-            //    bal.GetOrderingCodesByCategory(text, categoryId);
             var largedata = Json(finalList, JsonRequestBehavior.AllowGet);
             largedata.MaxJsonLength = int.MaxValue;
             return largedata;
+        }
+        public List<string> GetColumnsByTableNameb(string tableName)
+        {
+            var list = new List<string>();
+            var entity = (TableNames)Enum.Parse(typeof(TableNames), tableName);
+            switch (entity)
+            {
+                case TableNames.Authorization:
+                    list = typeof(Authorization).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.BillHeader:
+                    list = typeof(BillHeader).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.Corporate:
+                    list = typeof(Corporate).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.Denial:
+                    list = typeof(Denial).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.Diagnosis:
+                    list = typeof(Diagnosis).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.DiagnosisCode:
+                    list = typeof(DiagnosisCode).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.Drug:
+                    list = typeof(Drug).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.Encounter:
+                    list = typeof(Encounter).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.Facility:
+                    list = typeof(Facility).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.HCPCSCodes:
+                    list = typeof(HCPCSCodes).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.InsuranceCompany:
+                    list = typeof(InsuranceCompany).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.InsurancePlans:
+                    list = typeof(InsurancePlans).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.InsurancePolices:
+                    list = typeof(InsurancePolices).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.MCContract:
+                    list = typeof(ManagedCare).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.OpenOrder:
+                    list = typeof(OpenOrder).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.OpenOrderActivitySchedule:
+                    list = typeof(OpenOrderActivitySchedule).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.OpenOrderActivityTime:
+                    list = typeof(OpenOrderActivityTime).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.OrderActivity:
+                    list = typeof(OrderActivity).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.PatientInfo:
+                    list = typeof(PatientInfo).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.RuleMaster:
+                    list = typeof(RuleMaster).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                case TableNames.PatientInsurance:
+                    list = typeof(PatientInsurance).GetProperties().Select(i => i.Name).ToList();
+                    break;
+                default:
+                    break;
+            }
+            return list;
         }
 
         /// <summary>
@@ -1374,23 +1385,21 @@ namespace BillingSystem.Controllers
         {
             var list = new List<DropdownListData>();
             var keyColumn = string.Empty;
-            using (var bal = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            var result = GetColumnsByTableNameb(tableName);
+            keyColumn = _gService.GetKeyColmnNameByTableName(tableName);
+            if (result.Count > 0)
             {
-                var result = bal.GetColumnsByTableName(tableName);
-                keyColumn = bal.GetKeyColmnNameByTableName(tableName);
-                if (result.Count > 0)
+                list.AddRange(result.Select(item => new DropdownListData
                 {
-                    list.AddRange(result.Select(item => new DropdownListData
-                    {
-                        Text = item,
-                        Value = item,
-                    }));
-                    list = list.OrderBy(a => a.Text).ToList();
-                }
-                var jsonResult = new { List = list, KeyColumn = keyColumn };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                    Text = item,
+                    Value = item,
+                }));
+                list = list.OrderBy(a => a.Text).ToList();
             }
+            var jsonResult = new { List = list, KeyColumn = keyColumn };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
+
 
         /// <summary>
         /// Gets the columns for table.
@@ -1403,34 +1412,31 @@ namespace BillingSystem.Controllers
             var list = new List<DropdownListData>();
             var kColumnlist = new List<DropdownListData>();
             var keyColumn = string.Empty;
-            using (var bal = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+            var result = _gService.GetTableStruturebyTableId(tableid).OrderBy(x => Convert.ToInt32(x.SortOrder)).ToList();
+            var firstOrDefault = result.FirstOrDefault(x => x.ExternalValue2 == "1");
+            if (firstOrDefault != null)
+                keyColumn = result.Any() ? firstOrDefault.GlobalCodeName : "";
+            if (result.Count > 0)
             {
-                var result = bal.GetTableStruturebyTableId(tableid).OrderBy(x => Convert.ToInt32(x.SortOrder)).ToList();
-                var firstOrDefault = result.FirstOrDefault(x => x.ExternalValue2 == "1");
-                if (firstOrDefault != null)
-                    keyColumn = result.Any() ? firstOrDefault.GlobalCodeName : "";
-                if (result.Count > 0)
+                list.AddRange(result.Select(item => new DropdownListData
                 {
-                    list.AddRange(result.Select(item => new DropdownListData
-                    {
-                        Text = item.GlobalCodeName,
-                        Value = item.GlobalCodeValue,
-                    }));
-                    list = list.OrderBy(a => a.Text).ToList();
-                }
-                var keyColumnList = result.Where(x => x.ExternalValue3 == "1").ToList();
-                if (keyColumnList.Count > 0)
-                {
-                    kColumnlist.AddRange(keyColumnList.Select(item => new DropdownListData
-                    {
-                        Text = item.GlobalCodeName,
-                        Value = item.GlobalCodeName,
-                    }));
-                    kColumnlist = kColumnlist.OrderBy(a => a.Text).ToList();
-                }
-                var jsonResult = new { List = list, KeyColumnList = kColumnlist, KeyColumn = keyColumn };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeValue,
+                }));
+                list = list.OrderBy(a => a.Text).ToList();
             }
+            var keyColumnList = result.Where(x => x.ExternalValue3 == "1").ToList();
+            if (keyColumnList.Count > 0)
+            {
+                kColumnlist.AddRange(keyColumnList.Select(item => new DropdownListData
+                {
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeName,
+                }));
+                kColumnlist = kColumnlist.OrderBy(a => a.Text).ToList();
+            }
+            var jsonResult = new { List = list, KeyColumnList = kColumnlist, KeyColumn = keyColumn };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -1441,11 +1447,9 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetDrugDetailsByDrugCode(string drugCode)
         {
-            using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
-            {
-                var drugObj = bal.GetDrugListbyDrugCode(drugCode);
-                return Json(drugObj, JsonRequestBehavior.AllowGet);
-            }
+            var drugObj = _drugService.GetDrugListbyDrugCode(drugCode, Helpers.DefaultDrugTableNumber);
+            return Json(drugObj, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -1459,33 +1463,27 @@ namespace BillingSystem.Controllers
         {
             if (code != null)
             {
-                using (var bal = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+
+                var fId = Helpers.GetDefaultFacilityId();
+                var tn = string.Empty;
+
+                switch (Type)
                 {
-                    //var drugObj = bal.GetSelectedCodeParent(code, Type);
-                    //return Json(drugObj, JsonRequestBehavior.AllowGet);
-
-                    var fId = Helpers.GetDefaultFacilityId();
-                    var tn = string.Empty;
-
-                    switch (Type)
-                    {
-                        case "3":
-                            tn = Helpers.DefaultCptTableNumber;
-                            break;
-                        case "4":
-                            tn = Helpers.DefaultHcPcsTableNumber;
-                            break;
-                        case "5":
-                            tn = Helpers.DefaultDrugTableNumber;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    var vm = bal.GetSelectedCodeParent1(code, Type, fId, tn);
-                    return Json(vm, JsonRequestBehavior.AllowGet);
-
+                    case "3":
+                        tn = Helpers.DefaultCptTableNumber;
+                        break;
+                    case "4":
+                        tn = Helpers.DefaultHcPcsTableNumber;
+                        break;
+                    case "5":
+                        tn = Helpers.DefaultDrugTableNumber;
+                        break;
+                    default:
+                        break;
                 }
+
+                var vm = _gService.GetSelectedCodeParent1(code, Type, fId, tn);
+                return Json(vm, JsonRequestBehavior.AllowGet);
             }
             return null;
         }
@@ -1517,8 +1515,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetCategoryLabtest(string labtrest)
         {
-            var gbal = new GlobalCodeService();
-            var golbalcodeObj = gbal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(labtrest));
+            var golbalcodeObj = _gService.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(labtrest));
             var list = _cptService.GetCodesByRange(Convert.ToInt32(golbalcodeObj.ExternalValue2), Convert.ToInt32(golbalcodeObj.ExternalValue3), Helpers.DefaultCptTableNumber);
             return Json(list);
         }
@@ -1582,8 +1579,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetGlobalCodesChilds(string globalcodeId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetGlobalCodesByCategoryValue(globalcodeId).OrderBy(x => x.GlobalCodeID);
+            var list = _gService.GetGlobalCodesByCategoryValue(globalcodeId).OrderBy(x => x.GlobalCodeID);
             return Json(list);
         }
 
@@ -1597,8 +1593,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFacilitiesbyCorporate(int corporateid)
         {
             var finalList = new List<DropdownListData>();
-            var bal = new FacilityService();
-            var list = bal.GetFacilitiesByCorporateId(corporateid).ToList().OrderBy(x => x.FacilityName).ToList();
+            var list = _fService.GetFacilitiesByCorporateId(corporateid).ToList().OrderBy(x => x.FacilityName).ToList();
             if (list.Count > 0)
             {
                 var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
@@ -1741,10 +1736,83 @@ namespace BillingSystem.Controllers
             var list = new List<GeneralCodesCustomModel>();
             if (!string.IsNullOrEmpty(text) && orderTypeId > 0 && orderTypeId < 6)
             {
-                using (var bal = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-                    list = bal.GetOrderCodesByOrderTypeId(text, orderTypeId);
+                list = GetOrderCodesByOrderTypeId1(text, orderTypeId);
             }
             return Json(list, JsonRequestBehavior.AllowGet);
+        }
+        public List<GeneralCodesCustomModel> GetOrderCodesByOrderTypeId1(string text, int orderTypeId)
+        {
+            var finalList = new List<GeneralCodesCustomModel>();
+            switch (orderTypeId)
+            {
+                case 1:
+                    break;
+                case 2:
+                    var result1 = _hcpcService.GetHCPCSCodes(Helpers.DefaultHcPcsTableNumber);
+                    finalList.AddRange(
+                        result1.Select(
+                            item =>
+                            new GeneralCodesCustomModel
+                            {
+                                Code = item.CodeNumbering,
+                                Description = item.CodeDescription,
+                                CodeDescription =
+                                        string.Format(
+                                            "{0} - {1}",
+                                            item.CodeDescription,
+                                            item.CodeNumbering),
+                                CodeType = Convert.ToInt32(OrderType.HCPCS).ToString(),
+                                CodeTypeName = "HCPCS",
+                                ExternalCode = string.Empty,
+                                ID = item.HCPCSCodesId.ToString()
+                            }));
+                    break;
+                case 4:
+                    var result2 = _drgService.GetFilteredDRGCodes(text, Helpers.DefaultDrgTableNumber);
+                    finalList.AddRange(
+                        result2.Select(
+                            item =>
+                            new GeneralCodesCustomModel
+                            {
+                                Code = item.CodeNumbering,
+                                Description = item.CodeDescription,
+                                CodeDescription =
+                                        string.Format(
+                                            "{0} - {1}",
+                                            item.CodeDescription,
+                                            item.CodeNumbering),
+                                CodeType =
+                                        Convert.ToString(Convert.ToInt32(OrderType.HCPCS)),
+                                CodeTypeName = "DRG",
+                                ExternalCode = string.Empty,
+                                ID = Convert.ToString(item.DRGCodesId)
+                            }));
+                    break;
+                case 5:
+                    var result3 = _drugService.GetFilteredDrugCodes(text, Helpers.DefaultDrugTableNumber).Where(x => x.InStock == true).ToList();
+                    finalList.AddRange(
+                        result3.Select(
+                            item =>
+                            new GeneralCodesCustomModel
+                            {
+                                Code = item.DrugCode,
+                                Description = item.DrugPackageName,
+                                CodeDescription =
+                                        string.Format(
+                                            "{0} - {1} - {2} - {3}",
+                                            item.DrugPackageName,
+                                            item.DrugCode,
+                                            item.DrugStrength,
+                                            item.DrugDosage),
+                                CodeType =
+                                        Convert.ToString(Convert.ToInt32(OrderType.DRUG)),
+                                CodeTypeName = "DRUG",
+                                ExternalCode = Convert.ToString(item.BrandCode),
+                                ID = Convert.ToString(item.Id)
+                            }));
+                    break;
+            }
+            return finalList;
         }
 
         /// <summary>
@@ -1784,13 +1852,10 @@ namespace BillingSystem.Controllers
 
             if (value <= 0)
             {
-                using (var bal = new GlobalCodeService())
-                {
-                    var result = bal.GetGlobalCodeByFacilityAndCategory(globalCodeCategoryValue, Helpers.GetDefaultFacilityNumber());
-                    value = result == null ? Convert.ToDecimal(0) : Convert.ToDecimal(result.GlobalCodeName);
-                    if (objSession != null)
-                        objSession.AutoLogOffMinutes = value;
-                }
+                var result = _gService.GetGlobalCodeByFacilityAndCategory(globalCodeCategoryValue, Helpers.GetDefaultFacilityNumber());
+                value = result == null ? Convert.ToDecimal(0) : Convert.ToDecimal(result.GlobalCodeName);
+                if (objSession != null)
+                    objSession.AutoLogOffMinutes = value;
             }
             return Json(value, JsonRequestBehavior.AllowGet);
         }
@@ -1804,9 +1869,196 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetColumnDataType(string tableName, string columnName)
         {
-            var baseBalobj = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-            var datatype = baseBalobj.GetColumnDataTypeByTableNameColumnName(tableName, columnName);
+            var datatype = GetColumnDataTypeByTableNameColumnName(tableName, columnName);
             return Json(datatype, JsonRequestBehavior.AllowGet);
+        }
+        public string GetColumnDataTypeByTableNameColumnName(string tableName, string columnName)
+        {
+            var list = string.Empty;
+            var entity = (TableNames)Enum.Parse(typeof(TableNames), tableName);
+            switch (entity)
+            {
+                case TableNames.Authorization:
+                    var authorizationval =
+                        typeof(Authorization).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (authorizationval != null)
+                        list = authorizationval.PropertyType.GenericTypeArguments.Length > 0
+                                   ? authorizationval.PropertyType.GenericTypeArguments[0].Name
+                                   : authorizationval.PropertyType.Name;
+                    break;
+                case TableNames.BillHeader:
+                    var billHeaderVal = typeof(BillHeader).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (billHeaderVal != null)
+                        list = billHeaderVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? billHeaderVal.PropertyType.GenericTypeArguments[0].Name
+                                   : billHeaderVal.PropertyType.Name;
+                    break;
+                case TableNames.Corporate:
+                    var corporateVal = typeof(Corporate).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (corporateVal != null)
+                        list = corporateVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? corporateVal.PropertyType.GenericTypeArguments[0].Name
+                                   : corporateVal.PropertyType.Name;
+                    break;
+                case TableNames.Denial:
+                    var DenialVal = typeof(Denial).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (DenialVal != null)
+                        list = DenialVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? DenialVal.PropertyType.GenericTypeArguments[0].Name
+                                   : DenialVal.PropertyType.Name;
+                    break;
+                case TableNames.Diagnosis:
+                    var DiagnosisVal = typeof(Diagnosis).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (DiagnosisVal != null)
+                        list = DiagnosisVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? DiagnosisVal.PropertyType.GenericTypeArguments[0].Name
+                                   : DiagnosisVal.PropertyType.Name;
+                    break;
+                case TableNames.DiagnosisCode:
+                    var DiagnosisCodeVal =
+                        typeof(DiagnosisCode).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (DiagnosisCodeVal != null)
+                        list = DiagnosisCodeVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? DiagnosisCodeVal.PropertyType.GenericTypeArguments[0].Name
+                                   : DiagnosisCodeVal.PropertyType.Name;
+                    break;
+                case TableNames.Drug:
+                    var DrugVal = typeof(Drug).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (DrugVal != null)
+                        list = DrugVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? DrugVal.PropertyType.GenericTypeArguments[0].Name
+                                   : DrugVal.PropertyType.Name;
+                    break;
+                case TableNames.Encounter:
+                    var EncounterVal = typeof(Encounter).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (EncounterVal != null)
+                        list = EncounterVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? EncounterVal.PropertyType.GenericTypeArguments[0].Name
+                                   : EncounterVal.PropertyType.Name;
+                    break;
+                case TableNames.Facility:
+                    var FacilityVal = typeof(Facility).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (FacilityVal != null)
+                        list = FacilityVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? FacilityVal.PropertyType.GenericTypeArguments[0].Name
+                                   : FacilityVal.PropertyType.Name;
+                    break;
+                case TableNames.HCPCSCodes:
+                    var HCPCSCodesVal = typeof(HCPCSCodes).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (HCPCSCodesVal != null)
+                        list = HCPCSCodesVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? HCPCSCodesVal.PropertyType.GenericTypeArguments[0].Name
+                                   : HCPCSCodesVal.PropertyType.Name;
+                    break;
+                case TableNames.InsuranceCompany:
+                    var InsuranceCompanyVal =
+                        typeof(InsuranceCompany).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (InsuranceCompanyVal != null)
+                        list = InsuranceCompanyVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? InsuranceCompanyVal.PropertyType.GenericTypeArguments[0].Name
+                                   : InsuranceCompanyVal.PropertyType.Name;
+                    break;
+                case TableNames.InsurancePlans:
+                    var InsurancePlansVal =
+                        typeof(InsurancePlans).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (InsurancePlansVal != null)
+                        list = InsurancePlansVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? InsurancePlansVal.PropertyType.GenericTypeArguments[0].Name
+                                   : InsurancePlansVal.PropertyType.Name;
+                    break;
+                case TableNames.InsurancePolices:
+                    var InsurancePolicesVal =
+                        typeof(InsurancePolices).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (InsurancePolicesVal != null)
+                        list = InsurancePolicesVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? InsurancePolicesVal.PropertyType.GenericTypeArguments[0].Name
+                                   : InsurancePolicesVal.PropertyType.Name;
+                    break;
+                case TableNames.MCContract:
+                    var ManagedCareVal = typeof(MCContract).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (ManagedCareVal != null)
+                        list = ManagedCareVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? ManagedCareVal.PropertyType.GenericTypeArguments[0].Name
+                                   : ManagedCareVal.PropertyType.Name;
+                    break;
+                case TableNames.OpenOrder:
+                    var OpenOrderVal = typeof(OpenOrder).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (OpenOrderVal != null)
+                        list = OpenOrderVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? OpenOrderVal.PropertyType.GenericTypeArguments[0].Name
+                                   : OpenOrderVal.PropertyType.Name;
+                    break;
+                case TableNames.OpenOrderActivitySchedule:
+                    var OpenOrderActivityScheduleVal =
+                        typeof(OpenOrderActivitySchedule).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (OpenOrderActivityScheduleVal != null)
+                        list = OpenOrderActivityScheduleVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? OpenOrderActivityScheduleVal.PropertyType.GenericTypeArguments[0].Name
+                                   : OpenOrderActivityScheduleVal.PropertyType.Name;
+                    break;
+                case TableNames.OpenOrderActivityTime:
+                    var OpenOrderActivityTimeVal =
+                        typeof(OpenOrderActivityTime).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (OpenOrderActivityTimeVal != null)
+                        list = OpenOrderActivityTimeVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? OpenOrderActivityTimeVal.PropertyType.GenericTypeArguments[0].Name
+                                   : OpenOrderActivityTimeVal.PropertyType.Name;
+                    break;
+                case TableNames.OrderActivity:
+                    var OrderActivityVal =
+                        typeof(OrderActivity).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (OrderActivityVal != null)
+                        list = OrderActivityVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? OrderActivityVal.PropertyType.GenericTypeArguments[0].Name
+                                   : OrderActivityVal.PropertyType.Name;
+                    break;
+                case TableNames.PatientInfo:
+                    var PatientInfoVal = typeof(PatientInfo).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (PatientInfoVal != null)
+                        list = PatientInfoVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? PatientInfoVal.PropertyType.GenericTypeArguments[0].Name
+                                   : PatientInfoVal.PropertyType.Name;
+                    break;
+                case TableNames.RuleMaster:
+                    var RuleMasterVal = typeof(RuleMaster).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (RuleMasterVal != null)
+                        list = RuleMasterVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? RuleMasterVal.PropertyType.GenericTypeArguments[0].Name
+                                   : RuleMasterVal.PropertyType.Name;
+                    break;
+                case TableNames.PatientInsurance:
+                    var PatientInsuranceVal =
+                        typeof(PatientInsurance).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (PatientInsuranceVal != null)
+                        list = PatientInsuranceVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? PatientInsuranceVal.PropertyType.GenericTypeArguments[0].Name
+                                   : PatientInsuranceVal.PropertyType.Name;
+                    break;
+                case TableNames.CPTCodes:
+                    var CPTCodesVal = typeof(CPTCodes).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (CPTCodesVal != null) //list = CPTCodesVal.PropertyType.GenericTypeArguments[0].Name;
+                        list = CPTCodesVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? CPTCodesVal.PropertyType.GenericTypeArguments[0].Name
+                                   : CPTCodesVal.PropertyType.Name;
+                    break;
+                case TableNames.DRGCodes:
+                    var DRGCodesVal = typeof(DRGCodes).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (DRGCodesVal != null)
+                        list = DRGCodesVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? DRGCodesVal.PropertyType.GenericTypeArguments[0].Name
+                                   : DRGCodesVal.PropertyType.Name;
+                    break;
+                case TableNames.ServiceCode:
+                    var ServiceCodeVal = typeof(ServiceCode).GetProperties().FirstOrDefault(i => i.Name == columnName);
+                    if (ServiceCodeVal != null)
+                        list = ServiceCodeVal.PropertyType.GenericTypeArguments.Length > 0
+                                   ? ServiceCodeVal.PropertyType.GenericTypeArguments[0].Name
+                                   : ServiceCodeVal.PropertyType.Name;
+                    break;
+                default:
+                    break;
+            }
+            return list;
         }
 
         /// <summary>
@@ -1825,27 +2077,18 @@ namespace BillingSystem.Controllers
                 switch (codeType)
                 {
                     case OrderType.DRG:
-                        using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
-                        {
-                            var result3 = bal.GetDrgDescriptionByCode(ordercode);
-                            return Json(result3);
-                        }
+                        var result3 = _drgService.GetDrgDescriptionByCode(ordercode, Helpers.DefaultDrgTableNumber);
+                        return Json(result3);
                     case OrderType.DRUG:
-                        using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
-                        {
-                            var result2 = bal.GetDRUGCodeDescription(ordercode);
-                            return Json(result2);
-                        }
+                        var result2 = _drugService.GetDRUGCodeDescription(ordercode, Helpers.DefaultDrugTableNumber);
+                        return Json(result2);
                     case OrderType.CPT:
                         var result = _cptService.GetOrderCodeDescbyCode(ordercode, Helpers.DefaultCptTableNumber);
                         return Json(result);
 
                     case OrderType.BedCharges:
-                        using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
-                        {
-                            var result1 = bal.GetServiceCodeDescription(ordercode);
-                            return Json(result1);
-                        }
+                        var result1 = _scService.GetServiceCodeDescription(ordercode, Helpers.DefaultServiceCodeTableNumber);
+                        return Json(result1);
                     default:
                         return Json(string.Empty);
                 }
@@ -1861,9 +2104,8 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetColumnForManagedCareTable(string tableId)
         {
-            var globalcodeBal = new GlobalCodeService();
-            var globalcodelist = globalcodeBal.GetGlobalCodesByCategoryValue("1017").Where(x => x.ExternalValue1 == tableId).OrderBy(x => x.GlobalCodeID).ToList();
-            var globalcodeKeyColumnList = globalcodeBal.GetGlobalCodesByCategoryValue("1016").FirstOrDefault(x => x.GlobalCodeValue == tableId);
+            var globalcodelist = _gService.GetGlobalCodesByCategoryValue("1017").Where(x => x.ExternalValue1 == tableId).OrderBy(x => x.GlobalCodeID).ToList();
+            var globalcodeKeyColumnList = _gService.GetGlobalCodesByCategoryValue("1016").FirstOrDefault(x => x.GlobalCodeValue == tableId);
             var list = new List<DropdownListData>();
             if (globalcodelist.Count > 0)
             {
@@ -1963,19 +2205,16 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetFacilitiesDropdownDataWithFacilityNumber(int? corporateId)
         {
-            using (var facBal = new FacilityService())
+            var facilities = _fService.GetFacilities(Convert.ToInt32(corporateId));
+            if (facilities.Count > 0)
             {
-                var facilities = facBal.GetFacilities(Convert.ToInt32(corporateId));
-                if (facilities.Count > 0)
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(facilities.Select(item => new SelectListItem
-                    {
-                        Text = item.FacilityName,
-                        Value = item.FacilityNumber,
-                    }));
-                    return Json(list);
-                }
+                    Text = item.FacilityName,
+                    Value = item.FacilityNumber,
+                }));
+                return Json(list);
             }
             return Json(null);
         }
@@ -1989,9 +2228,36 @@ namespace BillingSystem.Controllers
         public ActionResult GetServiceCodes(string text)
         {
             var finalList = new List<GeneralCodesCustomModel>();
-            using (var bal = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-                finalList = bal.GetServiceCodes(text);
+            finalList = GetServiceCodes1(text);
             return Json(finalList, JsonRequestBehavior.AllowGet);
+        }
+        public List<GeneralCodesCustomModel> GetServiceCodes1(string text)
+        {
+            var finalList = new List<GeneralCodesCustomModel>();
+            var serviceCodesList = _scService.GetServiceCodes(Helpers.DefaultServiceCodeTableNumber);
+            finalList.AddRange(
+                serviceCodesList.Select(
+                    item =>
+                    new GeneralCodesCustomModel
+                    {
+                        Code = item.ServiceCodeValue,
+                        Description = item.ServiceCodeDescription,
+                        CodeDescription =
+                                string.Format(
+                                    "{0} - {1}",
+                                    item.ServiceCodeValue,
+                                    item.ServiceCodeDescription),
+                        CodeType = Convert.ToString(OrderType.BedCharges),
+                        CodeTypeName = "Service Code",
+                        //ExternalCode = item.CTPCodeRangeValue.ToString(),
+                        ID = item.ServiceCodeId.ToString()
+                    }));
+            if (finalList.Count > 0)
+            {
+                text = text.ToLower().Trim();
+                finalList = finalList.Where(f => f.CodeDescription.ToLower().Contains(text)).ToList();
+            }
+            return finalList;
         }
 
         /// <summary>
@@ -2001,11 +2267,9 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetServiceCodesList()
         {
-            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
-            {
-                var finalList = bal.GetServiceCodes();
-                return Json(finalList, JsonRequestBehavior.AllowGet);
-            }
+            var finalList = GetServiceCodes1(Helpers.DefaultServiceCodeTableNumber);
+            return Json(finalList, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -2018,17 +2282,15 @@ namespace BillingSystem.Controllers
         public JsonResult GetServiceCodesByCodeMainValue(string codeMainValue, int rowCount)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
+
+            var result = _scService.GetServiceCodesByCodeMainValue(codeMainValue, rowCount, Helpers.DefaultServiceCodeTableNumber);
+            if (result.Count > 0)
             {
-                var result = bal.GetServiceCodesByCodeMainValue(codeMainValue, rowCount);
-                if (result.Count > 0)
+                list.AddRange(result.Select(item => new SelectListItem
                 {
-                    list.AddRange(result.Select(item => new SelectListItem
-                    {
-                        Text = item.ServiceCodeDescription,
-                        Value = item.ServiceCodeValue
-                    }));
-                }
+                    Text = item.ServiceCodeDescription,
+                    Value = item.ServiceCodeValue
+                }));
             }
             return Json(list, JsonRequestBehavior.AllowGet);
         }
@@ -2066,28 +2328,26 @@ namespace BillingSystem.Controllers
         public JsonResult SavePatientLoginDetails(PatientLoginDetailCustomModel vm)
         {
             int updatedId;
-            using (var bal = new PatientLoginDetailService())
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
+            vm.ModifiedBy = vm.PatientId;
+            vm.ModifiedDate = currentDateTime;
+            vm.PatientPortalAccess = true;
+            vm.Password = EncryptDecrypt.Encrypt(vm.Password).ToLower().Trim();
+            if (vm.DeleteVerificationToken)
+                vm.TokenId = string.Empty;
+
+            if (!vm.NewCodeValue.Equals(vm.CodeValue))
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
-                vm.ModifiedBy = vm.PatientId;
-                vm.ModifiedDate = currentDateTime;
-                vm.PatientPortalAccess = true;
-                vm.Password = EncryptDecrypt.Encrypt(vm.Password).ToLower().Trim();
-                if (vm.DeleteVerificationToken)
-                    vm.TokenId = string.Empty;
-
-                if (!vm.NewCodeValue.Equals(vm.CodeValue))
+                var re = new
                 {
-                    var re = new
-                    {
-                        Status = -1
-                    };
-                    return Json(re, JsonRequestBehavior.AllowGet);
-                }
-
-                updatedId = bal.SavePatientLoginDetails(vm);
+                    Status = -1
+                };
+                return Json(re, JsonRequestBehavior.AllowGet);
             }
+
+            updatedId = _pldService.SavePatientLoginDetails(vm);
+
             var jsonStatus1 = new
             {
                 Message = ResourceKeyValues.GetKeyValue("patientportalisaccessiblemessage"),
@@ -2110,14 +2370,11 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
                 return Content(message);
 
-            using (var bal = new PatientLoginDetailService())
-            {
-                vtoken = vtoken.ToLower().Trim();
-                var result = bal.GetPatientLoginDetailsByEmail(e);
-                if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
-                    result.TokenId.ToLower().Trim().Equals(vtoken))
-                    return View("Verify", result);
-            }
+            vtoken = vtoken.ToLower().Trim();
+            var result = _pldService.GetPatientLoginDetailsByEmail(e);
+            if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
+                result.TokenId.ToLower().Trim().Equals(vtoken))
+                return View("Verify", result);
             return Content(message);
         }
 
@@ -2154,17 +2411,14 @@ namespace BillingSystem.Controllers
             PatientInfo patientm = null;
             PatientInfoCustomModel patientVm = null;
             var verficationTokenId = CommonConfig.GeneratePasswordResetToken(14, false);
-            using (var patientLoginbal = new PatientLoginDetailService())
-            {
-                var patientlogindetailcustomModel = patientLoginbal.GetPatientLoginDetailsByEmail(emailid);
+            var patientlogindetailcustomModel = _pldService.GetPatientLoginDetailsByEmail(emailid);
 
-                patientm = _piService.GetPatientDetailByEmailid(emailid);
-                patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientm.PatientID));
+            patientm = _piService.GetPatientDetailByEmailid(emailid);
+            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientm.PatientID));
 
 
-                patientlogindetailcustomModel.TokenId = verficationTokenId;
-                var updatedId = patientLoginbal.SavePatientLoginDetails(patientlogindetailcustomModel);
-            }
+            patientlogindetailcustomModel.TokenId = verficationTokenId;
+            var updatedId = _pldService.SavePatientLoginDetails(patientlogindetailcustomModel);
             if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
             {
                 msgBody = msgBody.Replace("{Patient}", patientVm.PatientName)
@@ -2190,14 +2444,11 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
                 return Content(message);
 
-            using (var bal = new PatientLoginDetailService())
-            {
-                vtoken = vtoken.ToLower().Trim();
-                var result = bal.GetPatientLoginDetailsByEmail(e);
-                if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
-                    result.TokenId.ToLower().Trim().Equals(vtoken))
-                    return View("ResetPassword", result);
-            }
+            vtoken = vtoken.ToLower().Trim();
+            var result = _pldService.GetPatientLoginDetailsByEmail(e);
+            if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
+                result.TokenId.ToLower().Trim().Equals(vtoken))
+                return View("ResetPassword", result);
             return Content(message);
         }
 
@@ -2212,41 +2463,38 @@ namespace BillingSystem.Controllers
         {
             var message = string.Empty;
             var error = string.Empty;
-            using (var bal = new PatientLoginDetailService())
+            var userId = Helpers.GetLoggedInUserId();
+            var patinetlogindetailObj = _pldService.GetPatientLoginDetailByPatientId(Convert.ToInt32(vm.PatientId));
+            var newPassword = CommonConfig.GeneratePasswordResetToken(8, true);
+            if (vm.PatientPortalAccess)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var patinetlogindetailObj = bal.GetPatientLoginDetailByPatientId(Convert.ToInt32(vm.PatientId));
-                var newPassword = CommonConfig.GeneratePasswordResetToken(8, true);
-                if (vm.PatientPortalAccess)
+                if (!IsPatientDataValid(Convert.ToInt32(vm.PatientId), vm.BirthDate, vm.EmriateId.Trim()))
                 {
-                    if (!IsPatientDataValid(Convert.ToInt32(vm.PatientId), vm.BirthDate, vm.EmriateId.Trim()))
-                    {
-                        error = "1";
-                        message = "Invalid data!";
-                        var jsonStatus1 = new { message, error };
-                        return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
-                    }
-                    patinetlogindetailObj.Password = EncryptDecrypt.Encrypt(newPassword).ToLower().Trim();
-                    patinetlogindetailObj.TokenId = string.Empty;
-                    //Generate the 8-Digit Code
-                    var emailSentStatus = await SendNewPasswordForPatientLoginPortal(Convert.ToInt32(vm.PatientId),
-                        vm.Email, newPassword);
-
-                    //Is Email Sent Now
-                    vm.ExternalValue1 = emailSentStatus ? "1" : "0";
-                    error = emailSentStatus ? "" : "0";
-                    message = emailSentStatus
-                        ? ResourceKeyValues.GetKeyValue("newpasswordemailsuccess")
-                        : ResourceKeyValues.GetKeyValue("newpasswordemailfailure");
+                    error = "1";
+                    message = "Invalid data!";
+                    var jsonStatus1 = new { message, error };
+                    return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
                 }
+                patinetlogindetailObj.Password = EncryptDecrypt.Encrypt(newPassword).ToLower().Trim();
+                patinetlogindetailObj.TokenId = string.Empty;
+                //Generate the 8-Digit Code
+                var emailSentStatus = await SendNewPasswordForPatientLoginPortal(Convert.ToInt32(vm.PatientId),
+                    vm.Email, newPassword);
 
-                var updatedId = bal.SavePatientLoginDetails(patinetlogindetailObj);
-                if (updatedId <= 0)
-                    message = ResourceKeyValues.GetKeyValue("msgrecordsnotsaved");
-
-                var jsonStatus = new { message, updatedId, vm.ExternalValue1, error };
-                return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+                //Is Email Sent Now
+                vm.ExternalValue1 = emailSentStatus ? "1" : "0";
+                error = emailSentStatus ? "" : "0";
+                message = emailSentStatus
+                    ? ResourceKeyValues.GetKeyValue("newpasswordemailsuccess")
+                    : ResourceKeyValues.GetKeyValue("newpasswordemailfailure");
             }
+
+            var updatedId = _pldService.SavePatientLoginDetails(patinetlogindetailObj);
+            if (updatedId <= 0)
+                message = ResourceKeyValues.GetKeyValue("msgrecordsnotsaved");
+
+            var jsonStatus = new { message, updatedId, vm.ExternalValue1, error };
+            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -2260,8 +2508,7 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("newpasswordemail");
             PatientInfoCustomModel patientVm = null;
-            using (var bal = new PatientLoginDetailService())
-                patientVm = bal.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
+            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
 
             if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
             {
@@ -2322,20 +2569,18 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetDefaultCorporateId();
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            using (var facBal = new FacilityService())
+            var facilities = userisAdmin ? _fService.GetFacilitiesWithoutCorporateFacility(cId) : _fService.GetFacilitiesWithoutCorporateFacility(cId, Helpers.GetDefaultFacilityId());
+            if (facilities.Any())
             {
-                var facilities = userisAdmin ? facBal.GetFacilitiesWithoutCorporateFacility(cId) : facBal.GetFacilitiesWithoutCorporateFacility(cId, Helpers.GetDefaultFacilityId());
-                if (facilities.Any())
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(facilities.Select(item => new SelectListItem
-                    {
-                        Text = item.FacilityName,
-                        Value = Convert.ToString(item.FacilityId),
-                    }));
-                    return Json(list);
-                }
+                    Text = item.FacilityName,
+                    Value = Convert.ToString(item.FacilityId),
+                }));
+                return Json(list);
             }
+
             return Json(null);
         }
 
@@ -2356,33 +2601,30 @@ namespace BillingSystem.Controllers
             var defaultMonth = currentDateTime.Month - 1;
 
             var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeService())
+            var glist = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
+            if (glist.Any())
             {
-                var glist = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
-                if (glist.Any())
+                list.AddRange(glist.Select(item => new SelectListItem
                 {
-                    list.AddRange(glist.Select(item => new SelectListItem
-                    {
-                        Text = item.GlobalCodeName,
-                        Value = item.GlobalCodeValue
-                    }));
-                }
-
-                var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
-                if (defaults.Count > 0)
-                {
-                    defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
-                    defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
-                }
-
-                var jsonData = new
-                {
-                    list,
-                    defaultYear,
-                    defaultMonth
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeValue
+                }));
             }
+
+            var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
+            if (defaults.Count > 0)
+            {
+                defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
+                defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
+            }
+
+            var jsonData = new
+            {
+                list,
+                defaultYear,
+                defaultMonth
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -2462,19 +2704,18 @@ namespace BillingSystem.Controllers
         public ActionResult GetServiceCodeAndDescList()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
+
+            var finalList = _scService.GetServiceCodes(Helpers.DefaultServiceCodeTableNumber);
+            if (finalList.Count > 0)
             {
-                var finalList = bal.GetServiceCodes();
-                if (finalList.Count > 0)
+                list.AddRange(finalList.Select(item => new SelectListItem
                 {
-                    list.AddRange(finalList.Select(item => new SelectListItem
-                    {
-                        Text = string.Format("{0} - {1}", item.ServiceCodeValue, item.ServiceCodeDescription),
-                        Value = item.ServiceCodeValue.Trim()
-                    }));
-                }
-                return Json(list, JsonRequestBehavior.AllowGet);
+                    Text = string.Format("{0} - {1}", item.ServiceCodeValue, item.ServiceCodeDescription),
+                    Value = item.ServiceCodeValue.Trim()
+                }));
             }
+            return Json(list, JsonRequestBehavior.AllowGet);
+
         }
 
 
@@ -2501,8 +2742,7 @@ namespace BillingSystem.Controllers
             {
                 if (session != null)
                 {
-                    var oFacilityBal = new FacilityService();
-                    var facilityName = oFacilityBal.GetFacilityNameByNumber(session.FacilityNumber);
+                    var facilityName = _fService.GetFacilityNameByNumber(session.FacilityNumber);
                     msgBody = msgBody.Replace("{Patient}", oUsers.UserName)
                         .Replace("{Facility-Name}", Convert.ToString(facilityName)).Replace("{CodeValue}", oUsers.ResetToken);
                 }
@@ -2640,8 +2880,7 @@ namespace BillingSystem.Controllers
             var jsonObjreturn = false;
             if (objSession != null)
             {
-                using (var bal = new LoginTrackingService())
-                    bal.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
+                _ltService.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
                 userType = objSession.LoginUserType;
                 jsonObjreturn = true;
             }
@@ -2738,98 +2977,79 @@ namespace BillingSystem.Controllers
                     return PartialView(viewpath, viewData);
 
                 case "4": // ---- HCPCS Code Value
-                    using (var bal = new HCPCSCodesService(tableNumber))
+                    var finalList4 = _hcpcService.GetHCPCSCodesListOnDemand(1, Helpers.DefaultRecordCount, Helpers.DefaultHcPcsTableNumber); // --------- Get Service Codes for the table number
+                    var viewData2 = new HCPCSCodesView
                     {
-                        var finalList4 = bal.GetHCPCSCodesListOnDemand(1, Helpers.DefaultRecordCount); // --------- Get Service Codes for the table number
-                        var viewData2 = new HCPCSCodesView
-                        {
-                            HCPCSCodesList = finalList4,
-                            CurrentHCPCSCodes = new HCPCSCodes(),
-                            UserId = loggedinUserId
-                        };
-                        viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
+                        HCPCSCodesList = finalList4,
+                        CurrentHCPCSCodes = new HCPCSCodes(),
+                        UserId = loggedinUserId
+                    };
+                    viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
 
-                        // Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
-                        return PartialView(viewpath, viewData2);
-                    }
+                    // Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
+                    return PartialView(viewpath, viewData2);
 
                 case "5": // ---- DRUG Code Value
-                    using (var bal = new DrugService(tableNumber))
+                    var finalList3 = _drugService.GetDrugListOnDemand(1, Helpers.DefaultRecordCount, "Active", Helpers.DefaultDrugTableNumber); // --------- Get Service Codes for the table number
+                    var viewData1 = new DrugView
                     {
-                        var finalList3 = bal.GetDrugListOnDemand(1, Helpers.DefaultRecordCount, "Active"); // --------- Get Service Codes for the table number
-                        var viewData1 = new DrugView
-                        {
-                            DrugList = finalList3,
-                            CurrentDrug = new Drug(),
-                            UserId = loggedinUserId
-                        };
-                        viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
+                        DrugList = finalList3,
+                        CurrentDrug = new Drug(),
+                        UserId = loggedinUserId
+                    };
+                    viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
 
-                        // Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
-                        return PartialView(viewpath, viewData1);
-                    }
+                    // Pass the ActionResult with List of CPTCodesViewModel object to Partial View CPTCodesList
+                    return PartialView(viewpath, viewData1);
 
                 case "8": // ---- Service Code Value
-                    using (var bal = new ServiceCodeService(tableNumber))
+                          // var finalList = bal.GetServiceCodes(); // --------- Get Service Codes for the table number
+                    var serviceCodeList = _scService.GetServiceCodesCustomList(Helpers.DefaultServiceCodeTableNumber).OrderByDescending(f => f.ServiceCodeId).ToList();
+                    var serviceCodeView = new ServiceCodeViewModel
                     {
-                        // var finalList = bal.GetServiceCodes(); // --------- Get Service Codes for the table number
-                        var serviceCodeList =
-                    bal.GetServiceCodesCustomList().OrderByDescending(f => f.ServiceCodeId).ToList();
-                        var serviceCodeView = new ServiceCodeViewModel
-                        {
-                            //ServiceCodeListData = finalList,
-                            ServiceCodeList = serviceCodeList,
-                            CurrentServiceCode = new ServiceCode(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-                        viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
+                        //ServiceCodeListData = finalList,
+                        ServiceCodeList = serviceCodeList,
+                        CurrentServiceCode = new ServiceCode(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+                    viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
 
-                        // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
-                        return PartialView(viewpath, serviceCodeView);
-                    }
+                    // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
+                    return PartialView(viewpath, serviceCodeView);
 
                 case "9": // ---- DRG Code Value
-                    using (var bal = new DRGCodesService(tableNumber))
+                    var finalList2 = _drgService.GetDrgCodesListOnDemand(1, Helpers.DefaultRecordCount, Helpers.DefaultDrgTableNumber); // --------- Get Service Codes for the table number
+                    var drgCodesView = new DRGCodesView
                     {
-                        var finalList2 = bal.GetDrgCodesListOnDemand(1, Helpers.DefaultRecordCount); // --------- Get Service Codes for the table number
-                        var drgCodesView = new DRGCodesView
-                        {
-                            DRGCodesList = finalList2,
-                            CurrentDRGCodes = new DRGCodes(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
+                        DRGCodesList = finalList2,
+                        CurrentDRGCodes = new DRGCodes(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
 
-                        viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
+                    viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
 
-                        // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
-                        return PartialView(viewpath, drgCodesView);
-                    }
+                    // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
+                    return PartialView(viewpath, drgCodesView);
 
                 case "16": // ---- Diagnosis Code Value
-                    using (var bal = new DiagnosisCodeService(tableNumber))
+                    var finalList1 = _diacService.GetListOnDemand(1, Helpers.DefaultRecordCount, Helpers.DefaultDiagnosisTableNumber); // --------- Get Service Codes for the table number
+                    var drgCodesView1 = new DiagnosisCodeView
                     {
-                        var finalList1 = bal.GetListOnDemand(1, Helpers.DefaultRecordCount); // --------- Get Service Codes for the table number
-                        var drgCodesView = new DiagnosisCodeView
-                        {
-                            DiagnosisCodeList = finalList1,
-                            CurrentDiagnosisCode = new DiagnosisCode(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-                        viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
+                        DiagnosisCodeList = finalList1,
+                        CurrentDiagnosisCode = new DiagnosisCode(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+                    viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
 
-                        // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
-                        return PartialView(viewpath, drgCodesView);
-                    }
+                    // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
+                    return PartialView(viewpath, drgCodesView1);
 
                 case "19": // ---- Bill Edit Rule Value
-                    using (var bal = new RuleMasterService(tableNumber))
-                    {
-                        var list = bal.GetRuleMasterList();
-                        viewpath = string.Format("../RuleMaster/{0}", PartialViews.RuleMasterList);
+                    var list = _rmService.GetRuleMasterList(Helpers.DefaultBillEditRuleTableNumber);
+                    viewpath = string.Format("../RuleMaster/{0}", PartialViews.RuleMasterList);
 
-                        // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
-                        return PartialView(viewpath, list);
-                    }
+                    // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
+                    return PartialView(viewpath, list);
             }
 
             return null;
@@ -2847,27 +3067,23 @@ namespace BillingSystem.Controllers
             switch (codeType)
             {
                 case OrderType.DRG:
-                    using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+
+                    foreach (var item in codeValues)
                     {
-                        foreach (var item in codeValues)
-                        {
-                            var model = bal.GetDrgCodesById(Convert.ToInt32(item));
-                            model.IsActive = false;
-                            bal.SaveDrgCode(model);
-                        }
-                        return Json("true");
+                        var model = _drgService.GetDrgCodesById(Convert.ToInt32(item));
+                        model.IsActive = false;
+                        _drgService.SaveDrgCode(model, Helpers.DefaultDrgTableNumber);
                     }
+                    return Json("true");
+
                 case OrderType.DRUG:
-                    using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
+                    foreach (var item in codeValues)
                     {
-                        foreach (var item in codeValues)
-                        {
-                            var model = bal.GetDrugByID(Convert.ToInt32(item));
-                            model.DrugStatus = "Deleted";
-                            bal.AddUptdateDrug(model);
-                        }
-                        return Json("true");
+                        var model = _drugService.GetDrugByID(Convert.ToInt32(item));
+                        model.DrugStatus = "Deleted";
+                        _drugService.AddUptdateDrug(model, Helpers.DefaultDrugTableNumber);
                     }
+                    return Json("true");
                 case OrderType.CPT:
                     foreach (var item in codeValues)
                     {
@@ -2878,45 +3094,35 @@ namespace BillingSystem.Controllers
                     return Json("true");
 
                 case OrderType.BedCharges:
-                    using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
+
+                    foreach (var item in codeValues)
                     {
-                        foreach (var item in codeValues)
-                        {
-                            var model = bal.GetServiceCodeById(Convert.ToInt32(item));
-                            model.IsActive = false;
-                            bal.AddUpdateServiceCode(model);
-                        }
-                        return Json("true");
+                        var model = _scService.GetServiceCodeById(Convert.ToInt32(item));
+                        model.IsActive = false;
+                        _scService.AddUpdateServiceCode(model, Helpers.DefaultServiceCodeTableNumber);
                     }
+                    return Json("true");
+
                 case OrderType.HCPCS:
-                    using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
+                    foreach (var item in codeValues)
                     {
-                        foreach (var item in codeValues)
-                        {
-                            var model = bal.GetHCPCSCodesById(Convert.ToInt32(item));
-                            model.IsActive = false;
-                            bal.AddHCPCSCodes(model);
-                        }
-                        return Json("true");
+                        var model = _hcpcService.GetHCPCSCodesById(Convert.ToInt32(item));
+                        model.IsActive = false;
+                        _hcpcService.AddHCPCSCodes(model, Helpers.DefaultHcPcsTableNumber);
                     }
+                    return Json("true");
                 case OrderType.Diagnosis:
-                    using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
+                    foreach (var item in codeValues)
                     {
-                        foreach (var item in codeValues)
-                        {
-                            var model = bal.GetDiagnosisCodeByID(Convert.ToInt32(item));
-                            model.IsDeleted = true;
-                            bal.AddUptdateDiagnosisCode(model);
-                        }
-                        return Json("true");
+                        var model = _diacService.GetDiagnosisCodeByID(Convert.ToInt32(item));
+                        model.IsDeleted = true;
+                        _diacService.AddUptdateDiagnosisCode(model, Helpers.DefaultDiagnosisTableNumber);
                     }
+                    return Json("true");
                 case OrderType.BillEditRules:
-                    using (var bal = new RuleMasterService(Helpers.DefaultBillEditRuleTableNumber))
-                    {
-                        var list = codeValues.Select(i => int.Parse(i)).ToList();
-                        var result = bal.DeleteMultipleRules(list);
-                        return Json(result ? "true" : "false", JsonRequestBehavior.AllowGet);
-                    }
+                    var list = codeValues.Select(i => int.Parse(i)).ToList();
+                    var result = _rmService.DeleteMultipleRules(list);
+                    return Json(result ? "true" : "false", JsonRequestBehavior.AllowGet);
                 default:
                     return Json(string.Empty);
             }
@@ -2964,39 +3170,18 @@ namespace BillingSystem.Controllers
         private bool CheckIfDuplicateTableSet(string tableNumber, string typeId, int id)
         {
             var isExists = false;
-            using (var bal = new BaseBal())
-                isExists = bal.CheckForDuplicateTableSet(id, tableNumber, typeId);
+            isExists = _baService.CheckForDuplicateTableSet(id, tableNumber, typeId);
 
             return isExists;
         }
 
         public JsonResult GetTableNumbers(string typeId)
         {
-            using (var bal = new BaseBal())
-            {
-                var tn = bal.GetTableNumbersList(typeId);
-                return Json(tn, JsonRequestBehavior.AllowGet);
-            }
+            var tn = _baService.GetTableNumbersList(typeId);
+            return Json(tn, JsonRequestBehavior.AllowGet);
         }
         #endregion
 
-        //public JsonResult CopyExistingRule(string tableNumber, string[] selectedCodes, bool isAll, string typeId)
-        //{
-        //    using (var bBal = new BillingSystemParametersBal())
-        //    {
-        //        if (!string.IsNullOrEmpty(tableNumber))
-        //        {
-        //          selectedCodes = isAll ? new[] { "0" } : selectedCodes;
-
-        //                if (!isAll && (selectedCodes == null || selectedCodes.Length == 0))
-        //                    return Json("-3", JsonRequestBehavior.AllowGet);
-
-        //                var saveserviceCodeData = bBal.SaveRecordsFortableNumber(tableNumber, selectedCodes, typeId);
-        //              return Json(saveserviceCodeData);
-        //            }
-        //      }
-        //    return Json("-1", JsonRequestBehavior.AllowGet);
-        //}
 
         /// <summary>
         /// Gets the facility deapartments.
@@ -3047,19 +3232,15 @@ namespace BillingSystem.Controllers
         private List<RoleSelectionCustomModel> GetUserRoles(int userid)
         {
             var userroleList = new List<RoleSelectionCustomModel>();
-            var userroleBal = new UserRoleService();
-            var roleBal = new RoleService();
-            var facilityRole = new FacilityRoleService();
-            var facility = new FacilityService();
-            var roles = userroleBal.GetUserRolesByUserId(userid);
+            var roles = _urService.GetUserRolesByUserId(userid);
             foreach (var role in roles)
             {
-                var roleFacilityIds = facilityRole.GetFacilityRolesByRoleId(role.RoleID);
+                var roleFacilityIds = _frService.GetFacilityRolesByRoleId(role.RoleID);
                 userroleList.AddRange(roleFacilityIds.Select(rolefacility => new RoleSelectionCustomModel
                 {
                     RoleId = role.RoleID,
-                    RoleName = roleBal.GetRoleNameById(role.RoleID),
-                    FacilityName = facility.GetFacilityNameById(rolefacility.FacilityId),
+                    RoleName = _roService.GetRoleNameById(role.RoleID),
+                    FacilityName = _fService.GetFacilityNameById(rolefacility.FacilityId),
                     FacilityId = rolefacility.FacilityId,
                     CorporateId = rolefacility.CorporateId
                 }));
@@ -3089,21 +3270,17 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult BindUsersType(string corporateId, string facilityId)
         {
-            using (var fRole = new FacilityRoleService())
+            var list = new List<DropdownListData>();
+            var roleList = _frService.GetUserTypeRoleDropDown(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId), true);
+            if (roleList.Count > 0)
             {
-                var list = new List<DropdownListData>();
-                var roleList = fRole.GetUserTypeRoleDropDown(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId), true);
-                if (roleList.Count > 0)
+                list.AddRange(roleList.Select(item => new DropdownListData
                 {
-                    list.AddRange(roleList.Select(item => new DropdownListData
-                    {
-                        Text = string.Format("{0}", item.RoleName),
-                        Value = Convert.ToString(item.RoleId)
-                    }));
-                }
-                return Json(list, JsonRequestBehavior.AllowGet);
+                    Text = string.Format("{0}", item.RoleName),
+                    Value = Convert.ToString(item.RoleId)
+                }));
             }
-
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -3114,18 +3291,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCorporatePhysicians(string corporateId, string facilityId)
         {
-            using (var phyBal = new PhysicianService())
-            {
-                var cId = string.IsNullOrEmpty(corporateId) ? Helpers.GetSysAdminCorporateID().ToString() : corporateId;
-                cId = string.IsNullOrEmpty(facilityId)
-                          ? cId
-                          : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-                var isAdmin = Helpers.GetLoggedInUserIsAdmin();
-                var userid = Helpers.GetLoggedInUserId();
-                var corporateUsers = phyBal.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
-                var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.PhysicianCheckBoxList);
-                return PartialView(viewpath, corporateUsers);
-            }
+            var cId = string.IsNullOrEmpty(corporateId) ? Helpers.GetSysAdminCorporateID().ToString() : corporateId;
+            cId = string.IsNullOrEmpty(facilityId)
+                      ? cId
+                      : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var userid = Helpers.GetLoggedInUserId();
+            var corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.PhysicianCheckBoxList);
+            return PartialView(viewpath, corporateUsers);
         }
 
         /// <summary>
@@ -3135,12 +3309,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodesCheckListView(string ggcValue)
         {
-            using (var globalCodeBal = new GlobalCodeService())
-            {
-                var globalCodelist = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "3").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
-                var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.StatusCheckBoxList);
-                return PartialView(viewpath, globalCodelist);
-            }
+            var globalCodelist = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "3").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.StatusCheckBoxList);
+            return PartialView(viewpath, globalCodelist);
         }
 
         /// <summary>
@@ -3151,27 +3322,24 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodesAvailability(string ggcValue, string facilityId)
         {
-            using (var globalCodeBal = new GlobalCodeService())
+            var globalCodelist = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "1").ToList();
+            var holidayStatus = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "4").ToList();
+            var holidayTypes = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "3").ToList();
+            var cId = Helpers.GetSysAdminCorporateID().ToString();
+            cId = string.IsNullOrEmpty(facilityId)
+                      ? cId
+                      : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var userid = Helpers.GetLoggedInUserId();
+            var corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+            var list = new
             {
-                var globalCodelist = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "1").ToList();
-                var holidayStatus = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "4").ToList();
-                var holidayTypes = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "3").ToList();
-                var cId = Helpers.GetSysAdminCorporateID().ToString();
-                cId = string.IsNullOrEmpty(facilityId)
-                          ? cId
-                          : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-                var isAdmin = Helpers.GetLoggedInUserIsAdmin();
-                var userid = Helpers.GetLoggedInUserId();
-                var corporateUsers = new PhysicianService().GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
-                var list = new
-                {
-                    gClist = globalCodelist,
-                    physicians = corporateUsers,
-                    hStatus = holidayStatus,
-                    hTypes = holidayTypes
-                };
-                return Json(list, JsonRequestBehavior.AllowGet);
-            }
+                gClist = globalCodelist,
+                physicians = corporateUsers,
+                hStatus = holidayStatus,
+                hTypes = holidayTypes
+            };
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
         /// <summary>
         /// Method is used to get department by passing facility id
@@ -3198,7 +3366,7 @@ namespace BillingSystem.Controllers
                 : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
             var isAdmin = Helpers.GetLoggedInUserIsAdmin();
             var userid = Helpers.GetLoggedInUserId();
-            corporateUsers = new PhysicianService().GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+            corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
 
             var updatedList = new
             {
@@ -3217,21 +3385,18 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetDefaultCorporateId();
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            using (var facBal = new FacilityService())
+            var facilities = userisAdmin ? _fService.GetFacilities(cId) : _fService.GetFacilities(cId, Helpers.GetDefaultFacilityId());
+            if (facilities.Any())
             {
-                var facilities = userisAdmin ? facBal.GetFacilities(cId) : facBal.GetFacilities(cId, Helpers.GetDefaultFacilityId());
-                if (facilities.Any())
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(facilities.Select(item => new SelectListItem
-                    {
-                        Text = item.FacilityName,
-                        Value = Convert.ToString(item.FacilityId),
-                    }));
+                    Text = item.FacilityName,
+                    Value = Convert.ToString(item.FacilityId),
+                }));
 
-                    list = list.OrderBy(f => f.Text).ToList();
-                    return Json(list);
-                }
+                list = list.OrderBy(f => f.Text).ToList();
+                return Json(list);
             }
             return Json(null);
         }
@@ -3245,21 +3410,18 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetSysAdminCorporateID();
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            using (var facBal = new FacilityService())
+            var facilities = userisAdmin ? _fService.GetFacilities(cId) : _fService.GetFacilities(cId, Helpers.GetDefaultFacilityId());
+            if (facilities.Any())
             {
-                var facilities = userisAdmin ? facBal.GetFacilities(cId) : facBal.GetFacilities(cId, Helpers.GetDefaultFacilityId());
-                if (facilities.Any())
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(facilities.Select(item => new SelectListItem
-                    {
-                        Text = item.FacilityName,
-                        Value = Convert.ToString(item.FacilityId),
-                    }));
+                    Text = item.FacilityName,
+                    Value = Convert.ToString(item.FacilityId),
+                }));
 
-                    list = list.OrderBy(f => f.Text).ToList();
-                    return Json(list);
-                }
+                list = list.OrderBy(f => f.Text).ToList();
+                return Json(list);
             }
             return Json(null);
         }
@@ -3269,15 +3431,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFaciltyListTreeView()
         {
-            // Initialize the Facility Communicator object
-            using (var facilityBal = new FacilityService())
-            {
-                // Get the facilities list
-                var cId = Helpers.GetSysAdminCorporateID();
-                var facilityList = facilityBal.GetFacilityList(cId);
-                var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.LocationListView);
-                return PartialView(viewpath, facilityList);
-            }
+            // Get the facilities list
+            var cId = Helpers.GetSysAdminCorporateID();
+            var facilityList = _fService.GetFacilityList(cId);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.LocationListView);
+            return PartialView(viewpath, facilityList);
         }
 
         /// <summary>
@@ -3290,7 +3448,7 @@ namespace BillingSystem.Controllers
             // Get the facilities list
             var cId = Helpers.GetSysAdminCorporateID();
             var facilityDepartmentList = _fsService.GetFacilityDepartments(cId, facilityid);
-            var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.FacilityDepartmentListView);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityDepartmentListView);
             return PartialView(viewpath, facilityDepartmentList);
 
         }
@@ -3305,7 +3463,7 @@ namespace BillingSystem.Controllers
             // Get the facilities list
             var cId = Helpers.GetSysAdminCorporateID();
             var lst = _fsService.GetFacilityRooms(cId, facilityid);
-            var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.FacilityRoomsListView);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
             return PartialView(viewpath, lst);
         }
 
@@ -3320,7 +3478,7 @@ namespace BillingSystem.Controllers
             // Get the facilities list
             var cId = Helpers.GetSysAdminCorporateID();
             var facilityDepartmentList = _fsService.GetFacilityRoomsCustomModel(cId, facilityid);
-            var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.FacilityRoomsListView);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
             return PartialView(viewpath, facilityDepartmentList);
         }
 
@@ -3335,7 +3493,7 @@ namespace BillingSystem.Controllers
             var facilityid = filters[0].Facility;
             //var deptIds = string.Join(",", selectedDepartmentList.Select(x => x.Id));
             var facilityDepartmentList = _fsService.GetDepartmentRooms(selectedDepartmentList, facilityid);
-            var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.FacilityRoomsListView);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
             return PartialView(viewpath, facilityDepartmentList);
         }
 
@@ -3354,74 +3512,68 @@ namespace BillingSystem.Controllers
             var list = new List<SchedulingCustomModel>();
             if (validRequest)
             {
-                using (var bal = new SchedulingService())
+                list = _schService.GetSchedulingListByPatient(patientId, physicianId, vtoken);
+
+                //Check if list contains items.
+                validRequest = list.Count > 0;
+
+                if (validRequest)
                 {
-
-                    //Get the list of Scheduling Events of current Patient attending current Physician.
-                    list = bal.GetSchedulingListByPatient(patientId, physicianId, vtoken);
-
-                    //Check if list contains items.
-                    validRequest = list.Count > 0;
-
-                    if (validRequest)
+                    list.ForEach(a =>
                     {
-                        list.ForEach(a =>
+                        a.Status = st;
+                        a.ExtValue4 = CommonConfig.GenerateLoginCode(8, false);
+                        a.ModifiedBy = patientId;
+                        a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                    });
+                    validRequest = _schService.UpdateSchedulingEvents(list);
+
+                    if (st == "2" && bit)//After Patient Approval Mail Will Be sent to Physician
+                    {
+                        var appointmentType = string.Empty;
+                        foreach (var item in list)
                         {
-                            a.Status = st;
-                            a.ExtValue4 = CommonConfig.GenerateLoginCode(8, false);
-                            a.ModifiedBy = patientId;
-                            a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                        });
-                        using (var sBal = new SchedulingService())
-                            validRequest = sBal.UpdateSchedulingEvents(list);
-
-                        if (st == "2" && bit)//After Patient Approval Mail Will Be sent to Physician
-                        {
-                            var appointmentType = string.Empty;
-                            foreach (var item in list)
-                            {
-                                var app =
-               _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
-                                appointmentType = app != null ? app.Name : string.Empty;
-                                item.AppointmentType = appointmentType;
-                            }
-
-
-
-                            var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
-                            var validRequest1 = objPhysician != null && objPhysician.UserId > 0;
-                            if (validRequest1)
-                            {
-
-                                var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
-                                Helpers.SendAppointmentNotification(list, email,
-                                    Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
-                                    patientId, Convert.ToInt32(physicianId), 2);
-
-                            }
-
+                            var app =
+           _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                            appointmentType = app != null ? app.Name : string.Empty;
+                            item.AppointmentType = appointmentType;
                         }
-                        if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
+
+
+
+                        var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
+                        var validRequest1 = objPhysician != null && objPhysician.UserId > 0;
+                        if (validRequest1)
                         {
-                            var email = new PatientLoginDetailService().GetPatientEmail(patientId);
+
+                            var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
                             Helpers.SendAppointmentNotification(list, email,
-                                        Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
-                                        patientId, Convert.ToInt32(physicianId), 5);
+                                Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
+                                patientId, Convert.ToInt32(physicianId), 2);
+
                         }
-                        if (st == "2" && bit != true)//After Physician Approvel Mail sent to Patient
+
+                    }
+                    if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
+                    {
+                        var email = _pldService.GetPatientEmail(patientId);
+                        Helpers.SendAppointmentNotification(list, email,
+                                    Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
+                                    patientId, Convert.ToInt32(physicianId), 5);
+                    }
+                    if (st == "2" && bit != true)//After Physician Approvel Mail sent to Patient
+                    {
+                        var appointmentType = string.Empty;
+                        foreach (var item in list)
                         {
-                            var appointmentType = string.Empty;
-                            foreach (var item in list)
-                            {
-                                var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
-                                appointmentType = app != null ? app.Name : string.Empty;
-                                item.AppointmentType = appointmentType;
-                            }
-                            var email = new PatientLoginDetailService().GetPatientEmail(patientId);
-                            Helpers.SendAppointmentNotification(list, email,
-                                        Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
-                                        patientId, Convert.ToInt32(physicianId), 4);
+                            var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                            appointmentType = app != null ? app.Name : string.Empty;
+                            item.AppointmentType = appointmentType;
                         }
+                        var email = _pldService.GetPatientEmail(patientId);
+                        Helpers.SendAppointmentNotification(list, email,
+                                    Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
+                                    patientId, Convert.ToInt32(physicianId), 4);
                     }
                 }
             }
@@ -3458,8 +3610,7 @@ namespace BillingSystem.Controllers
                         a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                     });
 
-                    using (var sBal = new SchedulingService())
-                        success = sBal.UpdateSchedulingEvents(list);
+                    success = _schService.UpdateSchedulingEvents(list);
                 }
             }
             return Json(success ? 1 : 0, JsonRequestBehavior.AllowGet);
@@ -3576,11 +3727,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetFacilityPhycisian(int coporateId, int facilityId)
         {
-            using (var physicianBal = new PhysicianService())
-            {
-                var facilityphysicianList = physicianBal.GetFacilityPhysicians(facilityId);
-                return Json(facilityphysicianList, JsonRequestBehavior.AllowGet);
-            }
+            var lst = _phService.GetFacilityPhysicians(facilityId);
+            return Json(lst, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -3590,16 +3738,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDepartmentTiming(int deptId)
         {
-            using (var deptTimming = new DeptTimmingService())
+            var deptTimingList = _deptService.GetDeptTimmingByDepartmentId(deptId);
+            var listToReturn = new
             {
-                var deptTimingList = deptTimming.GetDeptTimmingByDepartmentId(deptId);
-                var listToReturn = new
-                {
-                    deptOpeningDays = string.Join(",", deptTimingList.Select(x => x.OpeningDayId)),
-                    deptTimingList,
-                };
-                return Json(listToReturn, JsonRequestBehavior.AllowGet);
-            }
+                deptOpeningDays = string.Join(",", deptTimingList.Select(x => x.OpeningDayId)),
+                deptTimingList,
+            };
+            return Json(listToReturn, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -3639,7 +3784,7 @@ namespace BillingSystem.Controllers
             cId = facilityId == 0
                 ? cId
                 : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-            corporateUsers = new PhysicianService().GetCorporatePhysiciansPreScheduling(Convert.ToInt32(cId), Convert.ToInt32(facilityId));
+            corporateUsers = _phService.GetCorporatePhysiciansPreScheduling(Convert.ToInt32(cId), Convert.ToInt32(facilityId));
 
 
             var updatedList = new
@@ -3656,12 +3801,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodesCheckListViewPreScheduling(string ggcValue)
         {
-            using (var globalCodeBal = new GlobalCodeService())
-            {
-                var globalCodelist = globalCodeBal.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "2" && x.ExternalValue1 != "3" && x.ExternalValue1 != "4").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
-                var viewpath = string.Format("../FacultyTimeslots/{0}", PartialViews.StatusCheckBoxList);
-                return PartialView(viewpath, globalCodelist);
-            }
+            var globalCodelist = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "2" && x.ExternalValue1 != "3" && x.ExternalValue1 != "4").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.StatusCheckBoxList);
+            return PartialView(viewpath, globalCodelist);
         }
 
 
@@ -3675,23 +3817,20 @@ namespace BillingSystem.Controllers
             switch (codeType)
             {
                 case SearchType.ServiceCode:
-                    using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
-                    {
-                        tableNumber = Helpers.DefaultServiceCodeTableNumber;
-                        var userid = Helpers.GetLoggedInUserId();
-                        viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
-                        var result6 = !string.IsNullOrEmpty(text) ?
-                            bal.GetFilteredServiceCodes(text, tableNumber) :
-                            bal.GetServiceCodesCustomList();
+                    tableNumber = Helpers.DefaultServiceCodeTableNumber;
+                    var userid = Helpers.GetLoggedInUserId();
+                    viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
+                    var result6 = !string.IsNullOrEmpty(text) ?
+                        _scService.GetFilteredServiceCodes(text, tableNumber) :
+                        _scService.GetServiceCodesCustomList(Helpers.DefaultServiceCodeTableNumber);
 
-                        var serviceCodeView = new ServiceCodeViewModel
-                        {
-                            ServiceCodeList = result6,
-                            CurrentServiceCode = new ServiceCode(),
-                            UserId = userid
-                        };
-                        return PartialView(viewpath, serviceCodeView);
-                    }
+                    var serviceCodeView = new ServiceCodeViewModel
+                    {
+                        ServiceCodeList = result6,
+                        CurrentServiceCode = new ServiceCode(),
+                        UserId = userid
+                    };
+                    return PartialView(viewpath, serviceCodeView);
                 case SearchType.CPT:
                     tableNumber = Helpers.DefaultCptTableNumber;
                     viewpath = string.Format("../CPTCodes/{0}", PartialViews.CPTCodesList);
@@ -3704,90 +3843,77 @@ namespace BillingSystem.Controllers
                     };
                     return PartialView(viewpath, viewData);
                 case SearchType.DRG:
-                    using (var bal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+
+                    tableNumber = Helpers.DefaultDrgTableNumber;
+                    viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
+                    var result5 = !string.IsNullOrEmpty(text) ? _drgService.GetDRGCodesFiltered(text, tableNumber) : _drgService.GetDrgCodes(Helpers.DefaultDrgTableNumber);
+
+                    var drgCodesView = new DRGCodesView
                     {
-                        tableNumber = Helpers.DefaultDrgTableNumber;
-                        viewpath = string.Format("../DRGCodes/{0}", PartialViews.DRGCodesList);
-                        var result5 = !string.IsNullOrEmpty(text) ? bal.GetDRGCodesFiltered(text, tableNumber) : bal.GetDrgCodes();
+                        DRGCodesList = result5,
+                        CurrentDRGCodes = new DRGCodes(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
 
-                        var drgCodesView = new DRGCodesView
-                        {
-                            DRGCodesList = result5,
-                            CurrentDRGCodes = new DRGCodes(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-
-                        return PartialView(viewpath, drgCodesView);
-                    }
+                    return PartialView(viewpath, drgCodesView);
                 case SearchType.HCPCS:
-                    using (var bal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
+                    tableNumber = Helpers.DefaultHcPcsTableNumber;
+                    viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
+                    var result4 = !string.IsNullOrEmpty(text) ? _hcpcService.GetHCPCSCodesFilterData(text, tableNumber) : _hcpcService.GetHCPCSCodes(Helpers.DefaultHcPcsTableNumber);
+                    var hcpcsCodesView = new HCPCSCodesView
                     {
-                        tableNumber = Helpers.DefaultHcPcsTableNumber;
-                        viewpath = string.Format("../HCPCSCodes/{0}", PartialViews.HCPCSCodesList);
-                        var result4 = !string.IsNullOrEmpty(text) ? bal.GetHCPCSCodesFilterData(text, tableNumber) : bal.GetHCPCSCodes();
-                        var hcpcsCodesView = new HCPCSCodesView
-                        {
-                            HCPCSCodesList = result4,
-                            CurrentHCPCSCodes = new HCPCSCodes(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-                        return PartialView(viewpath, hcpcsCodesView);
-                    }
+                        HCPCSCodesList = result4,
+                        CurrentHCPCSCodes = new HCPCSCodes(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+                    return PartialView(viewpath, hcpcsCodesView);
                 case SearchType.Denial:
-                    using (var bal = new DenialService())
+                    viewpath = string.Format("../Denial/{0}", PartialViews.DenialList);
+                    var result3 = !string.IsNullOrEmpty(text) ? _denService.GetFilteredDenialCodes(text) : _denService.GetDenial();
+
+                    var denialView = new DenialView
                     {
-                        viewpath = string.Format("../Denial/{0}", PartialViews.DenialList);
-                        var result3 = !string.IsNullOrEmpty(text) ? bal.GetFilteredDenialCodes(text) : bal.GetDenial();
+                        DenialList = result3,
+                        CurrentDenial = new Denial()
+                    };
 
-                        var denialView = new DenialView
-                        {
-                            DenialList = result3,
-                            CurrentDenial = new Denial()
-                        };
-
-                        return PartialView(viewpath, result3);
-                    }
+                    return PartialView(viewpath, result3);
                 case SearchType.Diagnosis:
-                    using (var bal = new DiagnosisCodeService(Helpers.DefaultDiagnosisTableNumber))
-                    {
-                        tableNumber = Helpers.DefaultDiagnosisTableNumber;
-                        viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
-                        var result2 = !string.IsNullOrEmpty(text) ? bal.GetFilteredDiagnosisCodesData(text, tableNumber) : bal.GetDiagnosisCode();
 
-                        if (blockNumber != null)
-                        {
-                            var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-                            result2 = result2.ToList().OrderByDescending(i => i.DiagnosisTableNumberId).Take(takeValue).ToList();
-                        }
-                        var diagnosisCodeView = new DiagnosisCodeView
-                        {
-                            DiagnosisCodeList = result2,
-                            CurrentDiagnosisCode = new Model.DiagnosisCode(),
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-                        return PartialView(viewpath, diagnosisCodeView);
+                    tableNumber = Helpers.DefaultDiagnosisTableNumber;
+                    viewpath = string.Format("../DiagnosisCode/{0}", PartialViews.DiagnosisCodeList);
+                    var result2 = !string.IsNullOrEmpty(text) ? _diacService.GetFilteredDiagnosisCodesData(text, tableNumber) : _diacService.GetDiagnosisCode(Helpers.DefaultDiagnosisTableNumber);
+
+                    if (blockNumber != null)
+                    {
+                        var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
+                        result2 = result2.ToList().OrderByDescending(i => i.DiagnosisTableNumberId).Take(takeValue).ToList();
                     }
+                    var diagnosisCodeView = new DiagnosisCodeView
+                    {
+                        DiagnosisCodeList = result2,
+                        CurrentDiagnosisCode = new Model.DiagnosisCode(),
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+                    return PartialView(viewpath, diagnosisCodeView);
                 case SearchType.DRUG:
-                    using (var bal = new DrugService(Helpers.DefaultDrugTableNumber))
+                    tableNumber = Helpers.DefaultDrugTableNumber;
+                    viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
+                    var result1 = !string.IsNullOrEmpty(text) ? _drugService.GetFilteredDrugCodesData(text, "0", tableNumber) : _drugService.GetDrugList(Helpers.DefaultDrugTableNumber);
+
+                    if (blockNumber != null)
                     {
-                        tableNumber = Helpers.DefaultDrugTableNumber;
-                        viewpath = string.Format("../Drug/{0}", PartialViews.DrugList);
-                        var result1 = !string.IsNullOrEmpty(text) ? bal.GetFilteredDrugCodesData(text, "0", tableNumber) : bal.GetDrugList();
-
-                        if (blockNumber != null)
-                        {
-                            var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-                            result1 = result1.ToList().OrderByDescending(i => i.Id).Take(takeValue).ToList();
-                        }
-                        var viewData1 = new DrugView
-                        {
-                            CurrentDrug = new Drug(),
-                            DrugList = result1,
-                            UserId = Helpers.GetLoggedInUserId()
-                        };
-
-                        return PartialView(viewpath, viewData1);
+                        var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
+                        result1 = result1.ToList().OrderByDescending(i => i.Id).Take(takeValue).ToList();
                     }
+                    var viewData1 = new DrugView
+                    {
+                        CurrentDrug = new Drug(),
+                        DrugList = result1,
+                        UserId = Helpers.GetLoggedInUserId()
+                    };
+
+                    return PartialView(viewpath, viewData1);
                 default:
                     break;
             }
@@ -3804,20 +3930,17 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult GetRolesByFacilityDropdownDataCustom()
         {
-            using (var roleBal = new RoleService())
+            var roles = _roService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(Helpers.GetSysAdminCorporateID()), Convert.ToInt32(Helpers.GetDefaultFacilityId()));
+            if (roles.Count > 0)
             {
-                var roles = roleBal.GetRolesByCorporateIdFacilityId(Convert.ToInt32(Helpers.GetSysAdminCorporateID()), Convert.ToInt32(Helpers.GetDefaultFacilityId()));
-                if (roles.Count > 0)
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(roles.Select(item => new SelectListItem
-                    {
-                        Text = item.RoleName,
-                        Value = item.RoleID.ToString()
-                    }));
-                    list = list.OrderBy(x => x.Text).ToList();
-                    return Json(list);
-                }
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
             }
             return Json(0);
         }
@@ -3829,31 +3952,25 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetClinicalIDNumber()
         {
-            using (var physicianBal = new PhysicianService())
+            var physicians = _phService.GetPhysiciansListByFacilityId(Helpers.GetDefaultFacilityId());
+            if (physicians.Count > 0)
             {
-                var physicians = physicianBal.GetPhysiciansListByFacilityId(Helpers.GetDefaultFacilityId());
-                if (physicians.Count > 0)
+                var list = new List<SelectListItem>();
+                list.AddRange(physicians.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(physicians.Select(item => new SelectListItem
-                    {
-                        Text = item.Physician.PhysicianLicenseNumber,
-                        Value = item.Physician.PhysicianLicenseNumber
-                    }));
-                    list = list.OrderBy(x => x.Text).ToList();
-                    return Json(list);
-                }
+                    Text = item.Physician.PhysicianLicenseNumber,
+                    Value = item.Physician.PhysicianLicenseNumber
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
             }
             return Json(0);
         }
 
         public ActionResult GetGlobalCodeCatByExternalValue(string startRange, string endRange)
         {
-            using (var bal = new GlobalCodeCategoryService())
-            {
-                var list = bal.GetGlobalCodeCategoriesByExternalValue();
-                return Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategoriesByExternalValue();
+            return Json(list);
         }
 
 
@@ -3878,30 +3995,25 @@ namespace BillingSystem.Controllers
 
         public ActionResult Download(int fileId)
         {
-            using (var bal = new DocumentsTemplatesService())
+            var file = _docService.GetDocumentById(fileId);
+            if (file != null)
             {
-
-
-                var file = bal.GetDocumentById(fileId);
-                if (file != null)
+                var fullPath = Server.MapPath("~" + file.FilePath);
+                if (System.IO.File.Exists(fullPath))
                 {
-                    var fullPath = Server.MapPath("~" + file.FilePath);
-                    if (System.IO.File.Exists(fullPath))
+                    var cd = new ContentDisposition
                     {
-                        var cd = new ContentDisposition
-                        {
-                            FileName = file.FileName,
-                            // always prompt the user for downloading, set to true if you want 
-                            // the browser to try to show the file inline
-                            Inline = false,
-                        };
-                        var contentType = MimeMapping.GetMimeMapping(fileName: file.FileName);
-                        Response.AppendHeader("Content-Disposition", cd.ToString());
-                        //var ext = Path.GetExtension(file.FileName);
-                        //var fileType = (MimeTypes)Enum.Parse(typeof(MimeTypes), ext);
-                        //var contentType = fileType.GetEnumDescription();
-                        return File(fullPath, contentType, file.FileName);
-                    }
+                        FileName = file.FileName,
+                        // always prompt the user for downloading, set to true if you want 
+                        // the browser to try to show the file inline
+                        Inline = false,
+                    };
+                    var contentType = MimeMapping.GetMimeMapping(fileName: file.FileName);
+                    Response.AppendHeader("Content-Disposition", cd.ToString());
+                    //var ext = Path.GetExtension(file.FileName);
+                    //var fileType = (MimeTypes)Enum.Parse(typeof(MimeTypes), ext);
+                    //var contentType = fileType.GetEnumDescription();
+                    return File(fullPath, contentType, file.FileName);
                 }
             }
             return Content("File No Found");

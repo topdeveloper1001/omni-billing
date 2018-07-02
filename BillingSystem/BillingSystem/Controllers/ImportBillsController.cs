@@ -5,11 +5,23 @@ using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Common;
 using BillingSystem.Models;
 using System.Linq;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ImportBillsController : BaseController
     {
+        private readonly ITpFileHeaderService _service;
+        private readonly IXMLBillingService _xbService;
+        private readonly ITPXMLParsedDataService _xpdService;
+
+        public ImportBillsController(ITpFileHeaderService service, IXMLBillingService xbService, ITPXMLParsedDataService xpdService)
+        {
+            _service = service;
+            _xbService = xbService;
+            _xpdService = xpdService;
+        }
+
         //
         // GET: /FileUploader/
         /// <summary>
@@ -18,9 +30,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index()
         {
-            var bal = new TpFileHeaderService();
             var corporateId = Helpers.GetDefaultCorporateId();
-            var list = bal.TpFileHeaderList(corporateId);
+            var list = _service.TpFileHeaderList(corporateId);
             var importBillingView = new ImportBillsView { TpFileHeaderList = list };
             return View(importBillingView);
         }
@@ -44,8 +55,7 @@ namespace BillingSystem.Controllers
                 var xml = Helpers.GetXML(completePath);
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingService())
-                        bal.ImportXmlBills(xml, savedFileName, true);
+                    _xbService.ImportXmlBills(xml, savedFileName, true);
                 }
             }
             return RedirectToAction("Index");
@@ -53,11 +63,8 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindTpXMLParsedData(int fileId)
         {
-            using (var bal = new TPXMLParsedDataService())
-            {
-                var list = bal.TPXMLParsedDataList(fileId);
-                return PartialView(PartialViews.XMLParsedDataView, list);
-            }
+            var list = _xpdService.TPXMLParsedDataList(fileId);
+            return PartialView(PartialViews.XMLParsedDataView, list);
         }
 
         [HttpPost]
@@ -91,9 +98,8 @@ namespace BillingSystem.Controllers
                     }
                 }
             }
-            var bal = new TpFileHeaderService();
             var corporateId = Helpers.GetDefaultCorporateId();
-            var list = bal.TpFileHeaderList(corporateId);
+            var list = _service.TpFileHeaderList(corporateId);
             var importBillingView = new ImportBillsView { TpFileHeaderList = list };
             return View(importBillingView);
         }
@@ -116,8 +122,7 @@ namespace BillingSystem.Controllers
             var xml = Helpers.GetXML(completePath);
             if (!string.IsNullOrEmpty(xml))
             {
-                using (var bal = new XMLBillingService())
-                    result = bal.ImportXmlBills(xml, savedFileName, true);
+                result = _xbService.ImportXmlBills(xml, savedFileName, true);
             }
             return result;
         }

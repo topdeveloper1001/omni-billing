@@ -9,6 +9,12 @@ namespace BillingSystem.Controllers
     public class BillingSystemParametersController : BaseController
     {
         private readonly IBillingSystemParametersService _service;
+
+        public BillingSystemParametersController(IBillingSystemParametersService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the BillingSystemParameters View in the Model BillingSystemParameters such as BillingSystemParametersList, list of countries etc.
         /// </summary>

@@ -1,44 +1,35 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ActiveEncounterController.cs" company="Spadez Solutions PVT. LTD.">
-//   Servicesdotcom
-// </copyright>
-// <summary>
-//   Defines the Active Encounter Controller type.
-//   This Will hold the Features of the Screen Active Encounters
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
-using System.Linq;
+﻿using System.Linq;
+using System;
+using System.Collections.Generic;
+using System.Web.Mvc;
+using Kendo.Mvc.Extensions;
+using Kendo.Mvc.UI;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Models;
+using BillingSystem.Common.Common;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Model;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
-    using Common;
-    using Common.Common;
-    using Model;
-    using Model.CustomModel;
-    using Models;
-
-    using Kendo.Mvc.Extensions;
-    using Kendo.Mvc.UI;
-    using BillingSystem.Bal.Interfaces;
-
-    /// <summary>
-    /// The active encounter controller.
-    /// </summary>
     public class ActiveEncounterController : BaseController
     {
         private readonly IEncounterService _service;
         private readonly IPatientInfoService _piService;
+        private readonly IOpenOrderService _oService;
+        private readonly IRoleTabsService _rtService;
+        private readonly IGlobalCodeService _gService;
+        private readonly IOrderActivityService _oaService;
 
-        public ActiveEncounterController(IEncounterService service, IPatientInfoService piService)
+        public ActiveEncounterController(IEncounterService service, IPatientInfoService piService, IOpenOrderService oService, IRoleTabsService rtService, IGlobalCodeService gService, IOrderActivityService oaService)
         {
             _service = service;
             _piService = piService;
+            _oService = oService;
+            _rtService = rtService;
+            _gService = gService;
+            _oaService = oaService;
         }
 
         /// <summary>
@@ -182,9 +173,8 @@ namespace BillingSystem.Controllers
         [AllowAnonymous]
         public ActionResult GetOpenOrders(int encounterId, int patientId)
         {
-            var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-            var openOrderList = orderBal.GetPhysicianOrders(Convert.ToInt32(encounterId), OrderStatus.Open.ToString());
-            var closedOrdersList = orderBal.GetPhysicianOrders(Convert.ToInt32(encounterId), OrderStatus.Closed.ToString());
+            var openOrderList = _oService.GetPhysicianOrders(Convert.ToInt32(encounterId), OrderStatus.Open.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var closedOrdersList = _oService.GetPhysicianOrders(Convert.ToInt32(encounterId), OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var ordersFullView = new OrdersFullView()
             {
                 AllPhysicianOrders = new List<OpenOrderCustomModel>(),
@@ -201,9 +191,7 @@ namespace BillingSystem.Controllers
         {
             var openActStatuses = new[] { 0, 1, 30, 20, 40 };
 
-            var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-            //var openOrderList = orderBal.GetOrdersAndActivitiesByEncounter(Convert.ToInt32(encounterId));
-            var openOrderList = orderBal.GetPhysicianOrders(Convert.ToInt32(encounterId), OrderStatus.Open.ToString());
+            var openOrderList = _oService.GetPhysicianOrders(Convert.ToInt32(encounterId), OrderStatus.Open.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var jsonResult = new
             {
                 OpenOrdersList = openOrderList.Select(x => new[] { Convert.ToString(x.OpenOrderID), x.OrderCode, x.OrderDescription, x.CategoryName,
@@ -219,8 +207,7 @@ namespace BillingSystem.Controllers
         {
             var openActStatuses = new[] { 0, 1, 30, 20, 40 };
 
-            var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-            var orderActivities = orderBal.GetOrderActivitiesByOpenOrder(Convert.ToInt32(openOrderId));
+            var orderActivities = _oService.GetOrderActivitiesByOpenOrder(Convert.ToInt32(openOrderId));
             var jsonResult = new
             {
                 orderActivities = orderActivities.Where(a => openActStatuses.Contains(Convert.ToInt32(a.OrderActivityStatus))).Select(x => new[] {
@@ -290,54 +277,48 @@ namespace BillingSystem.Controllers
         public JsonResult GetTriageData(int encounterId)
         {
             var triValue = _service.GetTriageData(encounterId);
-            using (var ebal = new GlobalCodeService())
-            {
-                var list = new List<DropdownListData>();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var elist = ebal.GetGlobalCodesByCategoryValue("4952");
-                if (elist.Count > 0)
-                {
-                    list.AddRange(elist.Select(item => new DropdownListData
-                    {
-                        Text = string.Format("{0}", item.GlobalCodeName),
-                        Value = Convert.ToString(item.GlobalCodeValue)
-                    }));
-                }
-                var jsonData = new
-                {
-                    list,
-                    triValue
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-            }
 
+            var list = new List<DropdownListData>();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var elist = _gService.GetGlobalCodesByCategoryValue("4952");
+            if (elist.Count > 0)
+            {
+                list.AddRange(elist.Select(item => new DropdownListData
+                {
+                    Text = string.Format("{0}", item.GlobalCodeName),
+                    Value = Convert.ToString(item.GlobalCodeValue)
+                }));
+            }
+            var jsonData = new
+            {
+                list,
+                triValue
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
 
         public JsonResult GetPatientStageData(int encounterId)
         {
             var stateValue = _service.GetPatientStateData(encounterId);
-            using (var ebal = new GlobalCodeService())
+
+            var list = new List<DropdownListData>();
+            var elist = _gService.GetGlobalCodesByCategoryValue("4951");
+            if (elist.Count > 0)
             {
-                var list = new List<DropdownListData>();
-                var elist = ebal.GetGlobalCodesByCategoryValue("4951");
-                if (elist.Count > 0)
+                list.AddRange(elist.Select(item => new DropdownListData
                 {
-                    list.AddRange(elist.Select(item => new DropdownListData
-                    {
-                        Text = string.Format("{0}", item.GlobalCodeName),
-                        Value = Convert.ToString(item.GlobalCodeValue),
+                    Text = string.Format("{0}", item.GlobalCodeName),
+                    Value = Convert.ToString(item.GlobalCodeValue),
 
-                    }));
+                }));
 
-                }
-                var jsonData = new
-                {
-                    list,
-                    stateValue
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
             }
-
+            var jsonData = new
+            {
+                list,
+                stateValue
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult UpdatePatientStageInEncounter(int encounterId, string patientState)
@@ -485,41 +466,38 @@ namespace BillingSystem.Controllers
         public void SetAccessOfActions(ActiveEncounter model)
         {
             var roleId = Helpers.GetDefaultRoleId();
-            using (var bal = new RoleTabsService())
+            var result = _rtService.CheckIfTabsAccessibleToGivenRole(Convert.ToInt32(roleId), AccessibleIconsList());
+            foreach (var item in result)
             {
-                var result = bal.CheckIfTabsAccessibleToGivenRole(Convert.ToInt32(roleId), AccessibleIconsList());
-                foreach (var item in result)
+                var tabId = (ModulesAccessible)Enum.Parse(typeof(ModulesAccessible), Convert.ToString(item.TabId));
+                switch (tabId)
                 {
-                    var tabId = (ModulesAccessible)Enum.Parse(typeof(ModulesAccessible), Convert.ToString(item.TabId));
-                    switch (tabId)
-                    {
-                        case ModulesAccessible.AuthorizationView:
-                            model.AuthorizationViewAccessible = item.IsAccessible;
-                            break;
-                        case ModulesAccessible.BillHeaderView:
-                            model.BillHeaderViewAccessible = item.IsAccessible;
-                            break;
-                        case ModulesAccessible.DiagnosisView:
-                            model.DiagnosisViewAccessible = item.IsAccessible;
-                            break;
-                        case ModulesAccessible.EhrView:
-                            model.EhrViewAccessible = item.IsAccessible;
-                            break;
-                        case ModulesAccessible.PatientInfoView:
-                            model.PatientInfoViewAccessible = item.IsAccessible;
-                            break;
-                        case ModulesAccessible.TransactionsView:
-                            model.TransactionsViewAccessible = item.IsAccessible;
-                            break;
-                        case ModulesAccessible.AdmitPatientView:
-                        case ModulesAccessible.StartOpView:
-                            model.EncounterViewAccessible = item.IsAccessible;
-                            break;
-                        case ModulesAccessible.EndOpView:
-                        case ModulesAccessible.DischargePatientView:
-                            model.EndEncounterViewAccessible = item.IsAccessible;
-                            break;
-                    }
+                    case ModulesAccessible.AuthorizationView:
+                        model.AuthorizationViewAccessible = item.IsAccessible;
+                        break;
+                    case ModulesAccessible.BillHeaderView:
+                        model.BillHeaderViewAccessible = item.IsAccessible;
+                        break;
+                    case ModulesAccessible.DiagnosisView:
+                        model.DiagnosisViewAccessible = item.IsAccessible;
+                        break;
+                    case ModulesAccessible.EhrView:
+                        model.EhrViewAccessible = item.IsAccessible;
+                        break;
+                    case ModulesAccessible.PatientInfoView:
+                        model.PatientInfoViewAccessible = item.IsAccessible;
+                        break;
+                    case ModulesAccessible.TransactionsView:
+                        model.TransactionsViewAccessible = item.IsAccessible;
+                        break;
+                    case ModulesAccessible.AdmitPatientView:
+                    case ModulesAccessible.StartOpView:
+                        model.EncounterViewAccessible = item.IsAccessible;
+                        break;
+                    case ModulesAccessible.EndOpView:
+                    case ModulesAccessible.DischargePatientView:
+                        model.EndEncounterViewAccessible = item.IsAccessible;
+                        break;
                 }
             }
         }
@@ -527,18 +505,9 @@ namespace BillingSystem.Controllers
 
         public ActionResult EditOpenOrderActivity(int OpenOrderActivityId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var result = bal.GetOrderActivityByIDVM(OpenOrderActivityId);
-                return PartialView(PartialViews.AdministerOrdersinEncounter, result);
-            }
+
+            var result = _oaService.GetOrderActivityByIDVM(OpenOrderActivityId);
+            return PartialView(PartialViews.AdministerOrdersinEncounter, result);
         }
     }
 }

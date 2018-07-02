@@ -13,7 +13,7 @@ namespace BillingSystem.Bal.Interfaces
         List<ScrubHeaderCustomModel> GetErrorDetailByRuleCode(int corporateId, int facilityId, DateTime? fromDate, DateTime? tillDate);
         List<ScrubHeaderCustomModel> GetErrorSummaryByRuleCode(int corporateId, int facilityId, DateTime? fromDate, DateTime? tillDate);
         List<ScrubHeaderCustomModel> GetScrubHeaderByEncounter(int encounterid);
-        ScrubEditTrack GetScrubHeaderById(int scrubHeaderid);
+        ScrubHeader GetScrubHeaderById(int scrubHeaderid);
         List<ScrubHeaderCustomModel> GetScrubHeaderList(int corporateId, int facilityId, int billHeaderId, int userId, bool createscrub);
         List<ScrubHeaderCustomModel> GetScrubHeaderListWorkQueues(int corporateId, int facilityId, int billHeaderId, int userId, bool createscrub);
         List<ScrubReportCustomModel> GetScrubReport(int scrubHeaderId, int reportType);

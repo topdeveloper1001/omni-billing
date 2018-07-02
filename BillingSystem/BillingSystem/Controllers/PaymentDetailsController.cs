@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Model;
@@ -15,11 +14,15 @@ namespace BillingSystem.Controllers
     {
         private readonly IBillHeaderService _bhService;
         private readonly IPatientInfoService _piService;
+        private readonly IPaymentService _pService;
+        private readonly IXactivityService _xaService;
 
-        public PaymentDetailsController(IBillHeaderService bhService, IPatientInfoService piService)
+        public PaymentDetailsController(IBillHeaderService bhService, IPatientInfoService piService, IPaymentService pService, IXactivityService xaService)
         {
             _bhService = bhService;
             _piService = piService;
+            _pService = pService;
+            _xaService = xaService;
         }
 
         //
@@ -44,8 +47,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPaymentDetails(int BillHeaderId)
         {
             var vm = new PaymentDetailsCustomModel();
-            var billPaymentBal = new PaymentService();
-            var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
+            var billPaymentObj = _pService.GetPaymentByBillId(BillHeaderId);
             var insurencePayment = billPaymentObj.Where(x => x.PayType == 100).ToList();
             var patientPayment = billPaymentObj.Where(x => x.PayType == 500).ToList();
             var billDetails = _bhService.GetBillHeaderById(BillHeaderId);
@@ -112,8 +114,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPaymentDetailsList(int BillHeaderId)
         {
-            var billPaymentBal = new PaymentService();
-            var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
+            var billPaymentObj = _pService.GetPaymentByBillId(BillHeaderId);
             var insurencePayment = billPaymentObj.Where(x => x.PayType == 100).ToList();
             return PartialView("UserControls/_PaymentDetailList", insurencePayment);
         }
@@ -125,8 +126,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetManualPaymentDetailsList(int BillHeaderId)
         {
-            var billPaymentBal = new PaymentService();
-            var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
+            var billPaymentObj = _pService.GetPaymentByBillId(BillHeaderId);
             var insurencePayment = billPaymentObj.Where(x => x.PayType == 500).ToList();
             return PartialView("UserControls/_PaymentDetailManualList", insurencePayment);
         }
@@ -138,10 +138,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetXActivitiesList(int BillHeaderId)
         {
-            var billPaymentBal = new PaymentService();
-            var billPaymentObj = billPaymentBal.GetPaymentByBillId(BillHeaderId);
-            var xactivitiesBal = new XactivityService();
-            var xActivitesList = xactivitiesBal.GetXactivityByClaimId(BillHeaderId);
+            var billPaymentObj = _pService.GetPaymentByBillId(BillHeaderId);
+            var xActivitesList = _xaService.GetXactivityByClaimId(BillHeaderId);
             var xActivitesCustomList = xActivitesList.Where(t2 => billPaymentObj.Any(t1 => t2.ActivityID == t1.PayActivityID)).ToList();
             var xActivitesMergePayment = new List<XActivityCustomModel>();
             foreach (var xActivityCustomModel in xActivitesCustomList)

@@ -17,11 +17,10 @@
 
 namespace BillingSystem.WebApi.DependencyResolution
 {
+    using BillingSystem.Bal.BusinessAccess;
     using BillingSystem.Bal.Interfaces;
     using BillingSystem.Bal.Service;
-    using BillingSystem.Repository;
     using BillingSystem.Repository.Interfaces;
-    using BillingSystem.Repository.UOW;
     using StructureMap.Configuration.DSL;
     using StructureMap.Graph;
 
@@ -42,8 +41,9 @@ namespace BillingSystem.WebApi.DependencyResolution
             For<IAppointmentService>().Use<AppointmentService>();
             For<IPatientService>().Use<PatientService>();
             For<IClinicianService>().Use<ClinicianService>();
+            For<IFacilityService>().Use<FacilityService>();
             For<IAddressService>().Use<AddressService>();
-            For<IUnitOfWork>().Use<UnitOfWork>();
+
             For<ICommonService>().Use<CommonService>();
         }
 

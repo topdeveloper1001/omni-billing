@@ -10,8 +10,7 @@
 namespace BillingSystem.Controllers
 {
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
     using BillingSystem.Models;
@@ -21,6 +20,12 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class PreSchedulingLinkController : BaseController
     {
+        private readonly IPreSchedulingLinkService _service;
+
+        public PreSchedulingLinkController(IPreSchedulingLinkService service)
+        {
+            _service = service;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -29,18 +34,14 @@ namespace BillingSystem.Controllers
         /// <returns>action result with the partial view containing the PreSchedulingLink list object</returns>
         public ActionResult BindPreSchedulingLinkList()
         {
-            // Initialize the PreSchedulingLink BAL object
-            using (var preSchedulingLinkBal = new PreSchedulingLinkService())
-            {
-                var cId = Helpers.GetDefaultCorporateId();
-                var fId = Helpers.GetDefaultFacilityId();
+            var cId = Helpers.GetDefaultCorporateId();
+            var fId = Helpers.GetDefaultFacilityId();
 
-                // Get the facilities list
-                var preSchedulingLinkList = preSchedulingLinkBal.GetPreSchedulingLink(cId, fId);
+            // Get the facilities list
+            var preSchedulingLinkList = _service.GetPreSchedulingLink(cId, fId);
 
-                // Pass the ActionResult with List of PreSchedulingLinkViewModel object to Partial View PreSchedulingLinkList
-                return this.PartialView(PartialViews.PreSchedulingLinkList, preSchedulingLinkList);
-            }
+            // Pass the ActionResult with List of PreSchedulingLinkViewModel object to Partial View PreSchedulingLinkList
+            return PartialView(PartialViews.PreSchedulingLinkList, preSchedulingLinkList);
         }
 
         /// <summary>
@@ -54,13 +55,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePreSchedulingLink(int id)
         {
-            using (var bal = new PreSchedulingLinkService())
-            {
-                // Get PreSchedulingLink model object by current PreSchedulingLink ID
-                var currentPreSchedulingLink = bal.GetPreSchedulingLinkById(id);
-                var userId = Helpers.GetLoggedInUserId();
-                bal.DeletePreSchedulingLink(currentPreSchedulingLink);
-            }
+            // Get PreSchedulingLink model object by current PreSchedulingLink ID
+            var currentPreSchedulingLink = _service.GetPreSchedulingLinkById(id);
+            var userId = Helpers.GetLoggedInUserId();
+            _service.DeletePreSchedulingLink(currentPreSchedulingLink);
 
             // Return the Json result as Action Result back JSON Call Success
             return this.Json(true);
@@ -77,14 +75,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPreSchedulingLink(int id)
         {
-            using (var bal = new PreSchedulingLinkService())
-            {
-                // Call the AddPreSchedulingLink Method to Add / Update current PreSchedulingLink
-                var currentPreSchedulingLink = bal.GetPreSchedulingLinkById(id);
+            // Call the AddPreSchedulingLink Method to Add / Update current PreSchedulingLink
+            var currentPreSchedulingLink = _service.GetPreSchedulingLinkById(id);
 
-                // Pass the ActionResult with the current PreSchedulingLinkViewModel object as model to PartialView PreSchedulingLinkAddEdit
-                return Json(currentPreSchedulingLink, JsonRequestBehavior.AllowGet);
-            }
+            // Pass the ActionResult with the current PreSchedulingLinkViewModel object as model to PartialView PreSchedulingLinkAddEdit
+            return Json(currentPreSchedulingLink, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -97,21 +92,19 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            // Initialize the PreSchedulingLink BAL object
-            var preSchedulingLinkBal = new PreSchedulingLinkService();
 
             var cId = Helpers.GetDefaultCorporateId();
             var fId = Helpers.GetDefaultFacilityId();
 
             // Get the Entity list
-            var preSchedulingLinkList = preSchedulingLinkBal.GetPreSchedulingLink(cId, fId);
+            var preSchedulingLinkList = _service.GetPreSchedulingLink(cId, fId);
 
             // Intialize the View Model i.e. PreSchedulingLinkView which is binded to Main View Index.cshtml under PreSchedulingLink
             var preSchedulingLinkView = new PreSchedulingLinkView
-                                         {
-                                             PreSchedulingLinkList = preSchedulingLinkList, 
-                                             CurrentPreSchedulingLink = new PreSchedulingLink()
-                                         };
+            {
+                PreSchedulingLinkList = preSchedulingLinkList,
+                CurrentPreSchedulingLink = new PreSchedulingLink()
+            };
 
             // Pass the View Model in ActionResult to View PreSchedulingLink
             return View(preSchedulingLinkView);
@@ -152,31 +145,28 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PreSchedulingLinkService())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
+                    model.Modifiedby = userId;
+                    model.ModifiedDate = datetime;
+                }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = datetime;
+                    var objpreviousRecordId = _service.CheckforPreviousData(model.CorporateId, model.FacilityId);
+                    if (objpreviousRecordId != null && objpreviousRecordId.Id != 0)
                     {
                         model.Modifiedby = userId;
                         model.ModifiedDate = datetime;
+                        model.CreatedBy = objpreviousRecordId.CreatedBy;
+                        model.CreatedDate = objpreviousRecordId.CreatedDate;
+                        model.Id = objpreviousRecordId.Id;
                     }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = datetime;
-                        var objpreviousRecordId = bal.CheckforPreviousData(model.CorporateId, model.FacilityId);
-                        if (objpreviousRecordId != null && objpreviousRecordId.Id != 0)
-                        {
-                            model.Modifiedby = userId;
-                            model.ModifiedDate = datetime;
-                            model.CreatedBy = objpreviousRecordId.CreatedBy;
-                            model.CreatedDate = objpreviousRecordId.CreatedDate;
-                            model.Id = objpreviousRecordId.Id; 
-                        }
-                    }
-
-                    // Call the AddPreSchedulingLink Method to Add / Update current PreSchedulingLink
-                    newId = bal.SavePreSchedulingLink(model);
                 }
+
+                // Call the AddPreSchedulingLink Method to Add / Update current PreSchedulingLink
+                newId = _service.SavePreSchedulingLink(model);
             }
 
             return this.Json(newId);

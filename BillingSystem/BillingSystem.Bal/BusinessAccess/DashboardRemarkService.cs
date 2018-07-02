@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using BillingSystem.Bal.Mapper;
-using BillingSystem.Repository.UOW;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Bal.Interfaces;

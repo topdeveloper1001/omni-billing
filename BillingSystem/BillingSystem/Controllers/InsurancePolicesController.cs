@@ -8,11 +8,22 @@ using System.Web.Mvc;
 using BillingSystem.Model.CustomModel;
 using System.Collections.Generic;
 using System.Linq;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class InsurancePolicesController : BaseController
     {
+        private readonly IInsurancePolicesService _service;
+        private readonly IMcContractService _mcService;
+
+        public InsurancePolicesController(IInsurancePolicesService service, IMcContractService mcService)
+        {
+            _service = service;
+            _mcService = mcService;
+        }
+
+
         /// <summary>
         /// Get the details of the InsurancePolices View in the Model InsurancePolices such as InsurancePolicesList, list of countries etc.
         /// </summary>
@@ -21,30 +32,19 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult InsurancePolices()
         {
-            //Initialize the InsurancePolices Communicator object
-            using (var bal = new InsurancePolicesService())
+            var list = _service.GetInsurancePolicyListByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
+            var vm = new InsurancePolicesView
             {
-                var list = bal.GetInsurancePolicyListByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
-
-                //Intialize the View Model i.e. InsurancePolicesView which is binded to Main View Index.cshtml under InsurancePolices
-                var vm = new InsurancePolicesView
-                {
-                    InsurancePolicesList = list,
-                    CurrentInsurancePolices = new InsurancePolices()
-                };
-                //Pass the View Model in ActionResult to View InsurancePolices
-                return View(vm);
-            }
+                InsurancePolicesList = list,
+                CurrentInsurancePolices = new InsurancePolices()
+            };
+            return View(vm);
         }
 
         public ActionResult ListView()
         {
-
-            using (var bal = new InsurancePolicesService())
-            {
-                var vm = bal.GetInsurancePolicyListByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
-                return PartialView("UserControls/_PolicesList", vm);
-            }
+            var vm = _service.GetInsurancePolicyListByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
+            return PartialView("UserControls/_PolicesList", vm);
         }
 
         /// <summary>
@@ -56,31 +56,28 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveInsurancePolices(InsurancePolices model)
         {
-            using (var bal = new InsurancePolicesService())
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            model.IsActive = true;
+            model.IsDeleted = false;
+            model.CorporateId = Helpers.GetDefaultCorporateId();
+            model.FacilityId = Helpers.GetDefaultFacilityId();
+
+            if (model.InsurancePolicyId > 0)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                model.IsActive = true;
-                model.IsDeleted = false;
-                model.CorporateId = Helpers.GetDefaultCorporateId();
-                model.FacilityId = Helpers.GetDefaultFacilityId();
-
-                if (model.InsurancePolicyId > 0)
-                {
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDateTime;
-                }
-                else
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentDateTime;
-                }
-                //Call the AddInsurancePolices Method to Add / Update current InsurancePolices
-                var list = bal.AddUpdateInsurancePolices(model);
-
-                //Pass the ActionResult with List of InsurancePolicesViewModel object to Partial View InsurancePolicesList
-                return PartialView(PartialViews.PolicesList, list);
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDateTime;
             }
+            else
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentDateTime;
+            }
+            //Call the AddInsurancePolices Method to Add / Update current InsurancePolices
+            var list = _service.AddUpdateInsurancePolices(model);
+
+            //Pass the ActionResult with List of InsurancePolicesViewModel object to Partial View InsurancePolicesList
+            return PartialView(PartialViews.PolicesList, list);
         }
 
         /// <summary>
@@ -90,35 +87,29 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetInsurancePolicesById(int id)
         {
-            using (var insurancePolicesBal = new InsurancePolicesService())
+            var current = _service.GetInsurancePolicyById(id);
+
+            var jsonResult = new
             {
-                //Call the AddInsurancePolices Method to Add / Update current InsurancePolices
-                var current = insurancePolicesBal.GetInsurancePolicyById(id);
-
-                var jsonResult = new
-                {
-                    current.InsuranceCompanyId,
-                    current.InsurancePlanId,
-                    current.InsurancePolicyId,
-                    current.IsActive,
-                    current.IsDeleted,
-                    current.McContractCode,
-                    current.ModifiedBy,
-                    current.PlanName,
-                    current.PlanNumber,
-                    PolicyBeginDate = Convert.ToDateTime(current.PolicyBeginDate).ToString("d"),
-                    PolicyEndDate = Convert.ToDateTime(current.PolicyEndDate).ToString("d"),
-                    current.PolicyDescription,
-                    current.PolicyHolderName,
-                    current.PolicyNumber,
-                    current.PolicyName,
-                };
+                current.InsuranceCompanyId,
+                current.InsurancePlanId,
+                current.InsurancePolicyId,
+                current.IsActive,
+                current.IsDeleted,
+                current.McContractCode,
+                current.ModifiedBy,
+                current.PlanName,
+                current.PlanNumber,
+                PolicyBeginDate = Convert.ToDateTime(current.PolicyBeginDate).ToString("d"),
+                PolicyEndDate = Convert.ToDateTime(current.PolicyEndDate).ToString("d"),
+                current.PolicyDescription,
+                current.PolicyHolderName,
+                current.PolicyNumber,
+                current.PolicyName,
+            };
 
 
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-                //Pass the ActionResult with the current InsurancePolicesViewModel object as model to PartialView InsurancePolicesAddEdit
-                //return PartialView(PartialViews.insurancePolicesAddEdit, current);
-            }
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -128,21 +119,15 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteInsurancePolices(int policyId)
         {
             var list = Enumerable.Empty<InsurancePolicyCustomModel>();
-            using (var bal = new InsurancePolicesService())
+            var m = _service.GetInsurancePolicyById(policyId);
+
+            if (m != null)
             {
-                //Get InsurancePolices model object by current InsurancePolices ID
-                var m = bal.GetInsurancePolicyById(policyId);
+                m.IsDeleted = true;
+                m.DeletedBy = Helpers.GetLoggedInUserId();
+                m.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If InsurancePolices model is not null
-                if (m != null)
-                {
-                    m.IsDeleted = true;
-                    m.DeletedBy = Helpers.GetLoggedInUserId();
-                    m.DeletedDate = Helpers.GetInvariantCultureDateTime();
-
-                    //Update Operation of current Insurance Polices
-                    list = bal.AddUpdateInsurancePolices(m);
-                }
+                list = _service.AddUpdateInsurancePolices(m);
             }
 
             //Pass the ActionResult with List of InsurancePolicesViewModel object to Partial View InsurancePolicesList
@@ -157,17 +142,14 @@ namespace BillingSystem.Controllers
         public JsonResult GetInsurancePlanByCompany(int companyId)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new InsurancePolicesService())
+            var list2 = _service.GetInsurancePlanByCompanyId(companyId);
+            if (list2.Count > 0)
             {
-                var list2 = bal.GetInsurancePlanByCompanyId(companyId);
-                if (list2.Count > 0)
+                list.AddRange(list2.Select(item => new SelectListItem
                 {
-                    list.AddRange(list2.Select(item => new SelectListItem
-                    {
-                        Text = item.PlanName,
-                        Value = Convert.ToString(item.InsurancePlanId)
-                    }));
-                }
+                    Text = item.PlanName,
+                    Value = Convert.ToString(item.InsurancePlanId)
+                }));
             }
             return Json(list, JsonRequestBehavior.AllowGet);
         }
@@ -182,11 +164,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult ValidatePolicyNamePolicyNumber(string policyName, string policyNumber, int id, int insuranceCompanyId, int planId)
         {
-            using (var bal = new InsurancePolicesService())
-            {
-                var result = bal.ValidatePolicyNamePolicyNumber(policyName, policyNumber, id);
-                return Json(result, JsonRequestBehavior.AllowGet);
-            }
+            var result = _service.ValidatePolicyNamePolicyNumber(policyName, policyNumber, id);
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -196,42 +175,31 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPolicyNameById(int id)
         {
-            using (var bal = new InsurancePolicesService())
-            {
-                var result = bal.GetInsurancePolicyById(id);
-                return Json(result != null ? result.PolicyName : string.Empty);
-            }
+            var result = _service.GetInsurancePolicyById(id);
+            return Json(result != null ? result.PolicyName : string.Empty);
         }
 
         public JsonResult BindMcContracts()
         {
             var list = new List<DropdownListData>();
-            using (var bal = new McContractService())
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var data = _mcService.GetManagedCareByFacility(corporateId, facilityId, Helpers.GetLoggedInUserId());
+            if (data.Any())
             {
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var data = bal.GetManagedCareByFacility(corporateId, facilityId, Helpers.GetLoggedInUserId());
-                if (data.Any())
+                list.AddRange(data.Select(item => new DropdownListData
                 {
-                    list.AddRange(data.Select(item => new DropdownListData
-                    {
-                        Text = item.MCCode,
-                        Value = Convert.ToString(item.MCContractID)
-                    }));
-                }
+                    Text = item.MCCode,
+                    Value = Convert.ToString(item.MCContractID)
+                }));
             }
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult GetInsurancePoliceData()
         {
-            using (var policeBal = new InsurancePolicesService())
-            {
-                var list = policeBal.GetInsurancePolicyList();
-                return PartialView(PartialViews.PolicesList, list);
-
-            }
-
+            var list = _service.GetInsurancePolicyList();
+            return PartialView(PartialViews.PolicesList, list);
         }
     }
 }

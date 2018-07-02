@@ -10,23 +10,31 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using BillingSystem.Common;
 using BillingSystem.Model.CustomModel;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DenialController : BaseController
     {
+        private readonly IDenialService _service;
+        private readonly IGlobalCodeService _gService;
+
+        public DenialController(IDenialService service, IGlobalCodeService gService)
+        {
+            _service = service;
+            _gService = gService;
+        }
+
+
         /// <summary>
         /// Denials this instance.
         /// </summary>
         /// <returns></returns>
         public ActionResult Denial()
         {
-            //Initialize the Denial Communicator object
-            var denialBal = new DenialService();
-
             //Get the facilities list
             //var denialList = denialBal.GetDenial();
-            var denialList = denialBal.GetListOnDemand(1,Helpers.DefaultRecordCount);
+            var denialList = _service.GetListOnDemand(1, Helpers.DefaultRecordCount);
 
 
             //Intialize the View Model i.e. DenialView which is binded to Main View Index.cshtml under Denial
@@ -53,16 +61,13 @@ namespace BillingSystem.Controllers
             //Check if DenialViewModel 
             if (model != null)
             {
-                using (var denialBal = new DenialService())
+                if (model.DenialSetNumber > 0)
                 {
-                    if (model.DenialSetNumber > 0)
-                    {
-                        model.ModifiedBy = Helpers.GetLoggedInUserId();
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    //Call the AddDenial Method to Add / Update current Denial
-                    newId = denialBal.AddUpdateDenial(model);
+                    model.ModifiedBy = Helpers.GetLoggedInUserId();
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                //Call the AddDenial Method to Add / Update current Denial
+                newId = _service.AddUpdateDenial(model);
             }
             return Json(newId);
         }
@@ -77,15 +82,12 @@ namespace BillingSystem.Controllers
         public ActionResult BindDenialList(string blockNumber)
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-            //Initialize the Denial Communicator object
-            using (var denialBal = new DenialService())
-            {
-                //Get the facilities list
-                var denialList = denialBal.BindDenialCodes(takeValue).ToList();
 
-                //Pass the ActionResult with List of DenialViewModel object to Partial View DenialList
-                return PartialView(PartialViews.DenialList, denialList);
-            }
+            //Get the facilities list
+            var denialList = _service.BindDenialCodes(takeValue).ToList();
+
+            //Pass the ActionResult with List of DenialViewModel object to Partial View DenialList
+            return PartialView(PartialViews.DenialList, denialList);
         }
 
         /// <summary>
@@ -95,11 +97,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDenial(string id)
         {
-            using (var bal = new DenialService())
-            {
-                var current = bal.GetDenialById(Convert.ToInt32(id));
-                return PartialView(PartialViews.DenialAddEdit, current);
-            }
+            var current = _service.GetDenialById(Convert.ToInt32(id));
+            return PartialView(PartialViews.DenialAddEdit, current);
         }
 
         /// <summary>
@@ -122,24 +121,21 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDenial(CommonModel model)
         {
-            using (var denialBal = new DenialService())
+            //Get Denial model object by current Denial ID
+            var currentDenial = _service.GetDenialById(Convert.ToInt32(model.Id));
+
+            //Check If Denial model is not null
+            if (currentDenial != null)
             {
-                //Get Denial model object by current Denial ID
-                var currentDenial = denialBal.GetDenialById(Convert.ToInt32(model.Id));
+                currentDenial.IsDeleted = true;
+                currentDenial.DeletedBy = Helpers.GetLoggedInUserId();
+                //currentDenial.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If Denial model is not null
-                if (currentDenial != null)
-                {
-                    currentDenial.IsDeleted = true;
-                    currentDenial.DeletedBy = Helpers.GetLoggedInUserId();
-                    //currentDenial.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                //Update Operation of current Denial
+                var result = _service.AddUpdateDenial(currentDenial);
 
-                    //Update Operation of current Denial
-                    var result = denialBal.AddUpdateDenial(currentDenial);
-
-                    //return deleted ID of current Denial as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current Denial as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             //Return the Json result as Action Result back JSON Call Success
@@ -152,20 +148,18 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAuthorizationDenialsCode()
         {
-            using (var denialBal = new DenialService())
+            var facilities = _service.GetAuthorizationDenialsCode();
+            if (facilities.Count > 0)
             {
-                var facilities = denialBal.GetAuthorizationDenialsCode();
-                if (facilities.Count > 0)
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
                 {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(facilities.Select(item => new SelectListItem
-                    {
-                        Text = item.DenialCode + @" - " + item.DenialDescription,
-                        Value = Convert.ToString(item.DenialSetNumber)
-                    }));
-                    return Json(list);
-                }
+                    Text = item.DenialCode + @" - " + item.DenialDescription,
+                    Value = Convert.ToString(item.DenialSetNumber)
+                }));
+                return Json(list);
             }
+
             return Json(null);
         }
 
@@ -272,46 +266,43 @@ namespace BillingSystem.Controllers
             denialtable.Columns.Add("DenialEndDate", typeof(string));
 
 
-            var denialBal = new DenialService();
-            //Get the facilities list
+            var objDenialData = searchText != null ? _service.GetFilteredDenialCodes(searchText) : _service.GetDenial();
 
-            var objDenialData = searchText != null ? denialBal.GetFilteredDenialCodes(searchText) : denialBal.GetDenial();
-          
-                foreach (var item in objDenialData)
+            foreach (var item in objDenialData)
+            {
+                var model = new Denial
                 {
-                    var model = new Denial
-                    {
-                        DenialSetNumber = item.DenialSetNumber,
-                        InsuranceCompanyNumber = item.InsuranceCompanyNumber,
-                        DenialSetDescription = item.DenialSetDescription,
-                        DenialSetStartDate = item.DenialSetStartDate,
-                        DenialSetEndDate = item.DenialSetEndDate,
-                        DenialCode = item.DenialCode,
-                        DenialDescription = item.DenialDescription,
-                        DenialExplain = item.DenialExplain,
-                        DenialStatus = item.DenialStatus,
-                        DenialType = item.DenialType,
-                        DenialStartDate = item.DenialStartDate,
-                        DenialEndDate = item.DenialEndDate
-                    };
+                    DenialSetNumber = item.DenialSetNumber,
+                    InsuranceCompanyNumber = item.InsuranceCompanyNumber,
+                    DenialSetDescription = item.DenialSetDescription,
+                    DenialSetStartDate = item.DenialSetStartDate,
+                    DenialSetEndDate = item.DenialSetEndDate,
+                    DenialCode = item.DenialCode,
+                    DenialDescription = item.DenialDescription,
+                    DenialExplain = item.DenialExplain,
+                    DenialStatus = item.DenialStatus,
+                    DenialType = item.DenialType,
+                    DenialStartDate = item.DenialStartDate,
+                    DenialEndDate = item.DenialEndDate
+                };
 
-                    denialtable.Rows.Add(
-                        model.DenialSetNumber,
-                        model.InsuranceCompanyNumber,
-                        model.DenialSetDescription ?? "",
-                        model.DenialSetStartDate,
-                        model.DenialSetEndDate,
-                        model.DenialCode ?? "",
-                        model.DenialDescription ?? "",
-                        model.DenialExplain == null ? "" : model.DenialDescription,
-                        model.DenialStatus ?? "",
-                        model.DenialType ?? "",
-                        model.DenialStartDate,
-                        model.DenialEndDate);
-                }
+                denialtable.Rows.Add(
+                    model.DenialSetNumber,
+                    model.InsuranceCompanyNumber,
+                    model.DenialSetDescription ?? "",
+                    model.DenialSetStartDate,
+                    model.DenialSetEndDate,
+                    model.DenialCode ?? "",
+                    model.DenialDescription ?? "",
+                    model.DenialExplain == null ? "" : model.DenialDescription,
+                    model.DenialStatus ?? "",
+                    model.DenialType ?? "",
+                    model.DenialStartDate,
+                    model.DenialEndDate);
+            }
 
-            
-           
+
+
             var grid = new GridView { DataSource = denialtable.Rows.Count > 0 ? denialtable : null };
             grid.DataBind();
 
@@ -323,17 +314,17 @@ namespace BillingSystem.Controllers
             if (objDenialData.Count > 0)
             {
                 var sw = new StringWriter();
-               
-                var htw = new HtmlTextWriter(sw);
-           
-            grid.RenderControl(htw);
 
-            Response.Output.Write(sw.ToString());
-            Response.Flush();
-            Response.End();
+                var htw = new HtmlTextWriter(sw);
+
+                grid.RenderControl(htw);
+
+                Response.Output.Write(sw.ToString());
+                Response.Flush();
+                Response.End();
             }
-            
-            
+
+
             //return RedirectToAction("Denial");
             return null;
         }
@@ -348,19 +339,16 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new DenialService())
+                var list = _service.GetFilteredDenialCodes(text);
+                var filteredList = list.Select(item => new
                 {
-                    var list = bal.GetFilteredDenialCodes(text);
-                    var filteredList = list.Select(item => new
-                    {
-                        ID = item.DenialCode,
-                        Menu_Title = string.Format("{0} - {1}", item.DenialCode, item.DenialDescription),
-                        Name = item.DenialDescription,
-                        Code = item.DenialCode
-                    }).ToList();
+                    ID = item.DenialCode,
+                    Menu_Title = string.Format("{0} - {1}", item.DenialCode, item.DenialDescription),
+                    Name = item.DenialDescription,
+                    Code = item.DenialCode
+                }).ToList();
 
-                    return Json(filteredList, JsonRequestBehavior.AllowGet);
-                }
+                return Json(filteredList, JsonRequestBehavior.AllowGet);
             }
             return Json(null);
         }
@@ -371,13 +359,12 @@ namespace BillingSystem.Controllers
         /// Denial Types: 5203
         /// </summary>
         /// <returns></returns>
-       
+
         public ActionResult BindGlobalCodesDropdownData()
         {
             var categories = new List<string> { "5202", "5203" };
             List<DropdownListData> list;
-            using (var bal = new GlobalCodeService())
-                list = bal.GetListByCategoriesRange(categories);
+            list = _gService.GetListByCategoriesRange(categories);
 
             var jsonResult = new
             {
@@ -391,27 +378,25 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetDenialCodesData(int id)
         {
-            using (var bal = new DenialService())
+            var current = _service.GetDenialById(Convert.ToInt32(id));
+            var jsonData = new
             {
-                var current = bal.GetDenialById(Convert.ToInt32(id));
-                var jsonData = new
-                {
-                    current.DenialCode,
-                    current.DenialDescription,
-                    DenialEndDate=  current.DenialEndDate.GetShortDateString3(),
-                    current.DenialExplain,
-                    current.DenialSetDescription,
-                    DenialSetEndDate=current.DenialSetEndDate.GetShortDateString3(),
-                    current.DenialSetNumber,
-                    DenialSetStartDate= current.DenialSetStartDate.GetShortDateString3(),
-                    DenialStartDate= current.DenialStartDate.GetShortDateString3(),
-                    current.DenialStatus,
-                    current.DenialType,
-            
-                    
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-            }
+                current.DenialCode,
+                current.DenialDescription,
+                DenialEndDate = current.DenialEndDate.GetShortDateString3(),
+                current.DenialExplain,
+                current.DenialSetDescription,
+                DenialSetEndDate = current.DenialSetEndDate.GetShortDateString3(),
+                current.DenialSetNumber,
+                DenialSetStartDate = current.DenialSetStartDate.GetShortDateString3(),
+                DenialStartDate = current.DenialStartDate.GetShortDateString3(),
+                current.DenialStatus,
+                current.DenialType,
+
+
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+
         }
 
 
@@ -419,17 +404,15 @@ namespace BillingSystem.Controllers
         public JsonResult RebindDenialCodeList(int blockNumber)
         {
             var recordCount = Helpers.DefaultRecordCount;
-            using (var bal = new DenialService())
+
+            var list = _service.GetListOnDemand(blockNumber, recordCount);
+            var jsonResult = new
             {
-                var list = bal.GetListOnDemand(blockNumber, recordCount);
-                var jsonResult = new
-                {
-                    list,
-                    NoMoreData = list.Count < recordCount,
-                    UserId = Helpers.GetLoggedInUserId()
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                list,
+                NoMoreData = list.Count < recordCount,
+                UserId = Helpers.GetLoggedInUserId()
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
     }

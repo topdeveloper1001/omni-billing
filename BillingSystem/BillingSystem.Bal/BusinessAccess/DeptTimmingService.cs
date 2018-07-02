@@ -29,7 +29,11 @@ namespace BillingSystem.Bal.BusinessAccess
             var lst = _repository.GetAll().ToList();
             return lst.Select(x => _mapper.Map<DeptTimmingCustomModel>(x)).ToList();
         }
-
+        public string GetTimingAddedById(int id)
+        {
+            var list = _repository.Where(x => x.FacilityStructureID == id && x.IsActive).FirstOrDefault();
+            return list != null && list.IsActive ? "YES" : "NO";
+        }
         public List<DeptTimmingCustomModel> GetDeptTimmingByDepartmentId(int departmenId)
         {
             var lst = _repository.Where(x => x.FacilityStructureID == departmenId).ToList();

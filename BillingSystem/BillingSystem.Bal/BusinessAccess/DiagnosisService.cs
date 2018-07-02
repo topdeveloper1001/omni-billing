@@ -39,6 +39,12 @@ namespace BillingSystem.Bal.BusinessAccess
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
             return convertedTime;
         }
+        public bool CheckIfPrimaryDiagnosis(int patientId, int encounterId, int diagnosisType)
+        {
+            bool isExists;
+            isExists = _repository.Where(d => d.PatientID == patientId && d.EncounterID == encounterId && d.IsDeleted != true && d.DiagnosisType == diagnosisType).Any();
+            return isExists;
+        }
         //Function to get all GlobalCodes
         /// <summary>
         /// Gets all diagnosis codes.

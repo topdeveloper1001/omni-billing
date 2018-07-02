@@ -16,10 +16,12 @@ namespace BillingSystem.Controllers
     public class PatientSearchController : BaseController
     {
         private readonly IPatientInfoService _piService;
+        private readonly IRoleTabsService _rtService;
 
-        public PatientSearchController(IPatientInfoService piService)
+        public PatientSearchController(IPatientInfoService piService, IRoleTabsService rtService)
         {
             _piService = piService;
+            _rtService = rtService;
         }
 
         #region Patient search main
@@ -107,17 +109,14 @@ namespace BillingSystem.Controllers
 
             if (objPatientInfoData.Count > 0)
             {
-                using (var rolebal = new RoleTabsService())
-                {
-                    var roleId = Helpers.GetDefaultRoleId();
-                    objPatientInfoData[0].EhrViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
-                    //objPatientInfoData[0].TransactionsViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole(ControllerAccess.PreliminaryBill.ToString(), Convert.ToInt32(roleId)); ; ;
-                    objPatientInfoData[0].AuthorizationViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization", ControllerAccess.Authorization.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
-                    objPatientInfoData[0].BillHeaderViewAccessible =
-                        rolebal.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
-                            ControllerAccess.BillHeader.ToString(), ActionNameAccess.Index.ToString(),
-                            Convert.ToInt32(roleId));
-                }
+                var roleId = Helpers.GetDefaultRoleId();
+                objPatientInfoData[0].EhrViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
+                //objPatientInfoData[0].TransactionsViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole(ControllerAccess.PreliminaryBill.ToString(), Convert.ToInt32(roleId)); ; ;
+                objPatientInfoData[0].AuthorizationViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization", ControllerAccess.Authorization.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
+                objPatientInfoData[0].BillHeaderViewAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
+                        ControllerAccess.BillHeader.ToString(), ActionNameAccess.Index.ToString(),
+                        Convert.ToInt32(roleId));
             }
 
             return PartialView(PartialViews.PatientSearchList, objPatientInfoData);
@@ -226,22 +225,19 @@ namespace BillingSystem.Controllers
 
             if (objPatientInfoData.Count > 0)
             {
-                using (var rolebal = new RoleTabsService())
-                {
-                    var roleId = Helpers.GetDefaultRoleId();
-                    objPatientInfoData[0].PatientInfoAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("Register new patient", ControllerAccess.PatientInfo.ToString(), ActionNameAccess.RegisterPatient.ToString(), Convert.ToInt32(roleId));
-                    objPatientInfoData[0].EhrViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
-                    objPatientInfoData[0].AuthorizationViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization", ControllerAccess.Authorization.ToString(), ActionNameAccess.AuthorizationMain.ToString(), Convert.ToInt32(roleId));
-                    objPatientInfoData[0].BillHeaderViewAccessible =
-                        rolebal.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
-                            ControllerAccess.BillHeader.ToString(), ActionNameAccess.Index.ToString(),
-                            Convert.ToInt32(roleId));
+                var roleId = Helpers.GetDefaultRoleId();
+                objPatientInfoData[0].PatientInfoAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("Register new patient", ControllerAccess.PatientInfo.ToString(), ActionNameAccess.RegisterPatient.ToString(), Convert.ToInt32(roleId));
+                objPatientInfoData[0].EhrViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
+                objPatientInfoData[0].AuthorizationViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization", ControllerAccess.Authorization.ToString(), ActionNameAccess.AuthorizationMain.ToString(), Convert.ToInt32(roleId));
+                objPatientInfoData[0].BillHeaderViewAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
+                        ControllerAccess.BillHeader.ToString(), ActionNameAccess.Index.ToString(),
+                        Convert.ToInt32(roleId));
 
-                    var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                    if (objSession != null)
-                    {
-                        objPatientInfoData[0].SchedularViewAccessible = objSession.SchedularAccessible;
-                    }
+                var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+                if (objSession != null)
+                {
+                    objPatientInfoData[0].SchedularViewAccessible = objSession.SchedularAccessible;
                 }
             }
             var facilityPatients = RenderPartialViewToStringBase(PartialViews.PatientSearchList, objPatientInfoData.Where(x => x.PatientInfo.FacilityId == facilityid).ToList());
@@ -288,17 +284,14 @@ namespace BillingSystem.Controllers
 
             if (objPatientInfoData.Count > 0)
             {
-                using (var rolebal = new RoleTabsService())
-                {
-                    var roleId = Helpers.GetDefaultRoleId();
-                    objPatientInfoData[0].EhrViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
-                    //objPatientInfoData[0].TransactionsViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole(ControllerAccess.PreliminaryBill.ToString(), Convert.ToInt32(roleId)); ; ;
-                    objPatientInfoData[0].AuthorizationViewAccessible = rolebal.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization", ControllerAccess.Authorization.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
-                    objPatientInfoData[0].BillHeaderViewAccessible =
-                        rolebal.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
-                            ControllerAccess.BillHeader.ToString(), ActionNameAccess.Index.ToString(),
-                            Convert.ToInt32(roleId));
-                }
+                var roleId = Helpers.GetDefaultRoleId();
+                objPatientInfoData[0].EhrViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("EHR", ControllerAccess.Summary.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
+                //objPatientInfoData[0].TransactionsViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole(ControllerAccess.PreliminaryBill.ToString(), Convert.ToInt32(roleId)); ; ;
+                objPatientInfoData[0].AuthorizationViewAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization", ControllerAccess.Authorization.ToString(), ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
+                objPatientInfoData[0].BillHeaderViewAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
+                        ControllerAccess.BillHeader.ToString(), ActionNameAccess.Index.ToString(),
+                        Convert.ToInt32(roleId));
             }
 
             return PartialView(PartialViews.PatientSearchList, objPatientInfoData);

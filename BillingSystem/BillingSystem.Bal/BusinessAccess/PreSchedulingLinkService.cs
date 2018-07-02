@@ -16,11 +16,15 @@ namespace BillingSystem.Bal.BusinessAccess
     public class PreSchedulingLinkService : IPreSchedulingLinkService
     {
         private readonly IRepository<PreSchedulingLink> _repository;
+        private readonly IRepository<Facility> _fRepository;
+        private readonly IRepository<Corporate> _cRepository;
         private readonly IMapper _mapper;
 
-        public PreSchedulingLinkService(IRepository<PreSchedulingLink> repository, IMapper mapper)
+        public PreSchedulingLinkService(IRepository<PreSchedulingLink> repository, IRepository<Facility> fRepository, IRepository<Corporate> cRepository, IMapper mapper)
         {
             _repository = repository;
+            _fRepository = fRepository;
+            _cRepository = cRepository;
             _mapper = mapper;
         }
 
@@ -88,20 +92,30 @@ namespace BillingSystem.Bal.BusinessAccess
             foreach (var model in m)
             {
                 var vm = _mapper.Map<PreSchedulingLinkCustomModel>(model);
-                var basebalobj = new BaseBal();
-                vm.FacilityName = basebalobj.GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
-                vm.CorporateName = basebalobj.GetCorporateNameFromId(Convert.ToInt32(model.CorporateId));
+                vm.FacilityName = GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
+                vm.CorporateName =GetCorporateNameFromId(Convert.ToInt32(model.CorporateId));
                 lst.Add(vm);
             }
 
             return lst;
         }
+        private string GetCorporateNameFromId(int corpId)
+        {
+            var corpName = "";
+            var obj = _cRepository.Where(f => f.CorporateID == corpId).FirstOrDefault();
+            if (obj != null) corpName = obj.CorporateName;
+            return corpName;
+        }
+        private string GetFacilityNameByFacilityId(int id)
+        {
+            var facility = _fRepository.Get(id);
+            return (facility != null) ? facility.FacilityName : string.Empty;
+        }
         private PreSchedulingLinkCustomModel MapValues(PreSchedulingLink model)
         {
             var vm = _mapper.Map<PreSchedulingLinkCustomModel>(model);
-            var basebalobj = new BaseBal();
-            vm.FacilityName = basebalobj.GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
-            vm.CorporateName = basebalobj.GetCorporateNameFromId(Convert.ToInt32(model.CorporateId));
+            vm.FacilityName = GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
+            vm.CorporateName = GetCorporateNameFromId(Convert.ToInt32(model.CorporateId));
 
             return vm;
         }

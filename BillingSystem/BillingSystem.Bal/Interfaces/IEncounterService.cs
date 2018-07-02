@@ -8,8 +8,7 @@ namespace BillingSystem.Bal.Interfaces
 
 {
     public interface IEncounterService
-    {
-        DateTime GetInvariantCultureDateTime(int facilityid);
+    { 
         string GetPhysicianName(int physicianId);
         bool PatientEncounterOpenOrders(int patientId);
         bool EncounterOpenOrders(int encounterId);

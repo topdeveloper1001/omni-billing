@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
@@ -21,19 +20,22 @@ using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
-
-
-    /// <summary>
-    ///     The payment controller.
-    /// </summary>
     public class PaymentController : BaseController
     {
         private readonly IPatientInfoService _piService;
+        private readonly IPaymentService _service;
+        private readonly IPaymentTypeDetailService _ptdService;
+        private readonly IEncounterService _eService;
 
-        public PaymentController(IPatientInfoService piService)
+        public PaymentController(IPatientInfoService piService, IPaymentService service, IPaymentTypeDetailService ptdService, IEncounterService eService)
         {
             _piService = piService;
+            _service = service;
+            _ptdService = ptdService;
+            _eService = eService;
         }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -46,11 +48,8 @@ namespace BillingSystem.Controllers
         {
             int facilityId = Helpers.GetDefaultFacilityId();
             int corporateId = Helpers.GetSysAdminCorporateID();
-            using (var paymentBal = new PaymentService())
-            {
-                bool applyPaymnetManual = paymentBal.ApplyManualPayment(corporateId, facilityId);
-                return this.Json(applyPaymnetManual);
-            }
+            bool applyPaymnetManual = _service.ApplyManualPayment(corporateId, facilityId);
+            return this.Json(applyPaymnetManual);
         }
 
         /// <summary>
@@ -70,20 +69,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPaymentList(int? patientId, int? encounterId, int? billHeaderId)
         {
-            using (var bal = new PaymentService())
-            {
-                int corporateId = Helpers.GetDefaultCorporateId();
-                int facilityId = Helpers.GetDefaultFacilityId();
+            int corporateId = Helpers.GetDefaultCorporateId();
+            int facilityId = Helpers.GetDefaultFacilityId();
 
-                List<PaymentCustomModel> list = bal.GetPaymentBills(
-                    Convert.ToInt32(patientId),
-                    Convert.ToInt32(encounterId),
-                    Convert.ToInt32(billHeaderId),
-                    corporateId,
-                    facilityId);
-                list = list.Where(x => x.PayType == 500).ToList(); // only show Manual Payments
-                return this.PartialView(PartialViews.PaymentListView, list);
-            }
+            List<PaymentCustomModel> list = _service.GetPaymentBills(
+                Convert.ToInt32(patientId),
+                Convert.ToInt32(encounterId),
+                Convert.ToInt32(billHeaderId),
+                corporateId,
+                facilityId);
+            list = list.Where(x => x.PayType == 500).ToList(); // only show Manual Payments
+            return this.PartialView(PartialViews.PaymentListView, list);
         }
 
         /// <summary>
@@ -97,44 +93,40 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPaymentDetail(int paymentId)
         {
-            using (var bal = new PaymentService())
+            PaymentCustomModel result = _service.GetPaymentById(paymentId);
+            var paymentList = _ptdService.GetPaymentTypeDetailByPaymentId(paymentId) != null ? _ptdService.GetPaymentTypeDetailByPaymentId(paymentId) : new PaymentTypeDetail();
+
+            if (result == null)
             {
-                PaymentCustomModel result = bal.GetPaymentById(paymentId);
-                var paymentBal = new PaymentTypeDetailService();
-                var paymentList = paymentBal.GetPaymentTypeDetailByPaymentId(paymentId) != null ? paymentBal.GetPaymentTypeDetailByPaymentId(paymentId) : new PaymentTypeDetail();
-
-                if (result == null)
-                {
-                    return this.Json(null);
-                }
-
-                var jsonResult =
-                    new
-                    {
-                        result.PayedDate,
-                        PaymentDate = result.PayDate,
-                        result.PayReference,
-                        PatientFor = result.PayFor,
-                        BillNumber = result.PayBillNumber,
-                        BillId = result.PayBillID,
-                        EncounterId = result.PayEncounterID,
-                        CreatedDate = result.PayCreatedDate,
-                        CreatedBy = result.PayCreatedBy,
-                        result.PayAmount,
-                        result.PaymentID,
-                        CardHolderName = paymentList.CardHolderName,
-                        CardNumber = paymentList.CardNumber,
-                        ExpiryMonth = paymentList.ExpiryMonth,
-                        ExpiryYear = paymentList.ExpiryYear,
-                        result.PaymentTypeId,
-                        PaymentType = paymentList.PaymentType,
-                        ExtValue1 = paymentList.ExtValue1
-
-
-                    };
-
-                return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
+                return this.Json(null);
             }
+
+            var jsonResult =
+                new
+                {
+                    result.PayedDate,
+                    PaymentDate = result.PayDate,
+                    result.PayReference,
+                    PatientFor = result.PayFor,
+                    BillNumber = result.PayBillNumber,
+                    BillId = result.PayBillID,
+                    EncounterId = result.PayEncounterID,
+                    CreatedDate = result.PayCreatedDate,
+                    CreatedBy = result.PayCreatedBy,
+                    result.PayAmount,
+                    result.PaymentID,
+                    paymentList.CardHolderName,
+                    paymentList.CardNumber,
+                    paymentList.ExpiryMonth,
+                    paymentList.ExpiryYear,
+                    result.PaymentTypeId,
+                    paymentList.PaymentType,
+                    paymentList.ExtValue1
+
+
+                };
+
+            return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -154,32 +146,29 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index(int? patientId, int? encounterId, int? billHeaderId)
         {
-            using (var bal = new PaymentService())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+
+            var list = _service.GetPaymentBills(
+                Convert.ToInt32(patientId),
+                Convert.ToInt32(encounterId),
+                Convert.ToInt32(billHeaderId),
+                corporateId,
+                facilityId);
+
+            list = list.Where(x => x.PayType == 500).ToList(); // only show User entered Payments
+            var paymentsView = new PaymentsView
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-
-                var list = bal.GetPaymentBills(
-                    Convert.ToInt32(patientId),
-                    Convert.ToInt32(encounterId),
-                    Convert.ToInt32(billHeaderId),
-                    corporateId,
-                    facilityId);
-
-                list = list.Where(x => x.PayType == 500).ToList(); // only show User entered Payments
-                var paymentsView = new PaymentsView
+                PaymentsList = list,
+                CurrentPayment = new PaymentCustomModel()
                 {
-                    PaymentsList = list,
-                    CurrentPayment = new PaymentCustomModel()
-                    {
-                        CurrentPaymentTypeDetail = new PaymentTypeDetail()
-                    },
-                    PatientSearchList = new List<PatientInfoXReturnPaymentCustomModel>(),
-                    PatientSearch = new PatientInfo(),
-                    //CurrentPaymentTypeDetail = new PaymentTypeDetail()
-                };
-                return View(paymentsView);
-            }
+                    CurrentPaymentTypeDetail = new PaymentTypeDetail()
+                },
+                PatientSearchList = new List<PatientInfoXReturnPaymentCustomModel>(),
+                PatientSearch = new PatientInfo(),
+                //CurrentPaymentTypeDetail = new PaymentTypeDetail()
+            };
+            return View(paymentsView);
         }
 
         /// <summary>
@@ -193,7 +182,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         //public ActionResult SaveManualPayment(Payment model)
         //{
-        //    using (var bal = new PaymentBal())
+        //    using (var _service = new PaymentBal())
         //    {
         //        DateTime currentDateTime = Helpers.GetInvariantCultureDateTime();
         //        int userId = Helpers.GetLoggedInUserId();
@@ -210,7 +199,7 @@ namespace BillingSystem.Controllers
         //            model.PayCreatedDate = currentDateTime;
         //        }
 
-        //        long result = bal.SavePayments(model);
+        //        long result = _service.SavePayments(model);
 
         //        // Added Code here to apply the manual payment to the Billheader.
         //        using (var paymentBal = new PaymentBal())
@@ -266,8 +255,8 @@ namespace BillingSystem.Controllers
         //    var corporateid = Helpers.GetSysAdminCorporateID();
         //    common.FacilityId = facilityid;
         //    common.CorporateId = corporateid;
-        //    var bal = new UploadChargesBal();
-        //    var objPatientInfoData = bal.GetXPaymentReturnDenialClaims(common);
+        //    var _service = new UploadChargesBal();
+        //    var objPatientInfoData = _service.GetXPaymentReturnDenialClaims(common);
         //    ViewBag.Message = null;
         //   return PartialView(PartialViews.PatientSearchResultList, objPatientInfoData);
         //}
@@ -277,8 +266,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetPatientName(int patientId)
         {
-            var bal = new BaseBal();
-            var patientName = bal.GetPatientNameById(patientId);
+            var patientName = _piService.GetPatientNameById(patientId);
             return Json(patientName, JsonRequestBehavior.AllowGet);
         }
 
@@ -286,62 +274,58 @@ namespace BillingSystem.Controllers
 
         public ActionResult SaveManualPayment(PaymentCustomModel m)
         {
-            var pdBal = new PaymentTypeDetailService();
             var ptd = new PaymentTypeDetail();
 
-            using (var bal = new PaymentService())
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var userId = Helpers.GetLoggedInUserId();
+            m.PayCorporateID = Helpers.GetSysAdminCorporateID();
+            m.PayFacilityID = Helpers.GetDefaultFacilityId();
+
+            /*----Saving Payment Details to Payment Section--*/
+            if (m.PaymentID > 0)
             {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var userId = Helpers.GetLoggedInUserId();
-                m.PayCorporateID = Helpers.GetSysAdminCorporateID();
-                m.PayFacilityID = Helpers.GetDefaultFacilityId();
-
-                /*----Saving Payment Details to Payment Section--*/
-                if (m.PaymentID > 0)
-                {
-                    ptd = pdBal.GetPaymentTypeDetailByPaymentId(Convert.ToInt32(m.PaymentID));
-                    m.PayModifiedBy = userId;
-                    m.PayModifiedDate = currentDateTime;
-                    m.PaymentTypeId = Convert.ToInt32(m.PTDPaymentType);
-                }
-                else
-                {
-                    m.PayCreatedBy = userId;
-                    m.PayCreatedDate = currentDateTime;
-                    m.PaymentTypeId = Convert.ToInt32(m.PTDPaymentType);
-                }
-                var result = bal.SaveCustomPayments(m);
-                /*----Saving Payment Details to Payment Section--*/
-
-
-                /*----Saving Payment-Type Details to Payment Section--*/
-                var paymentTypeDetail = new PaymentTypeDetail
-                {
-                    Id = ptd.Id,
-                    PaymentType = Convert.ToString(m.PaymentTypeId),
-                    CardHolderName = m.PTDCardHolderName,
-                    CardNumber = m.PTDCardNumber,
-                    ExpiryMonth = m.PTDExpiryMonth,
-                    ExpiryYear = m.PTDExpiryYear,
-                    CreatedBy = userId,
-                    PaymentId = Convert.ToInt32(result),
-                    ExtValue1 = m.PTDSecurityNumber
-                };
-
-                pdBal.SavePaymentTypeDetail(paymentTypeDetail);
-                /*----Saving Payment-Type Details to Payment Section--*/
-
-
-                /*----Apply Manual Payments Section --*/
-                // Added Code here to apply the manual payment to the Billheader.
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var applyPaymnetManual = bal.ApplyManualPayment(corporateId, facilityId);
-                /*----Apply Manual Payments Section --*/
-
-
-                return Json(result);
+                ptd = _ptdService.GetPaymentTypeDetailByPaymentId(Convert.ToInt32(m.PaymentID));
+                m.PayModifiedBy = userId;
+                m.PayModifiedDate = currentDateTime;
+                m.PaymentTypeId = Convert.ToInt32(m.PTDPaymentType);
             }
+            else
+            {
+                m.PayCreatedBy = userId;
+                m.PayCreatedDate = currentDateTime;
+                m.PaymentTypeId = Convert.ToInt32(m.PTDPaymentType);
+            }
+            var result = _service.SaveCustomPayments(m);
+            /*----Saving Payment Details to Payment Section--*/
+
+
+            /*----Saving Payment-Type Details to Payment Section--*/
+            var paymentTypeDetail = new PaymentTypeDetail
+            {
+                Id = ptd.Id,
+                PaymentType = Convert.ToString(m.PaymentTypeId),
+                CardHolderName = m.PTDCardHolderName,
+                CardNumber = m.PTDCardNumber,
+                ExpiryMonth = m.PTDExpiryMonth,
+                ExpiryYear = m.PTDExpiryYear,
+                CreatedBy = userId,
+                PaymentId = Convert.ToInt32(result),
+                ExtValue1 = m.PTDSecurityNumber
+            };
+
+            _ptdService.SavePaymentTypeDetail(paymentTypeDetail);
+            /*----Saving Payment-Type Details to Payment Section--*/
+
+
+            /*----Apply Manual Payments Section --*/
+            // Added Code here to apply the manual payment to the Billheader.
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var applyPaymnetManual = _service.ApplyManualPayment(corporateId, facilityId);
+            /*----Apply Manual Payments Section --*/
+
+
+            return Json(result);
         }
 
 
@@ -368,8 +352,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetEncounterNumberById(int encounterId)
         {
-            var bal = new BaseBal();
-            var encounterNumber = bal.GetEncounterNumberById(encounterId);
+            var encounterNumber = _eService.GetEncounterNumberByEncounterId(encounterId);
             return Json(encounterNumber, JsonRequestBehavior.AllowGet);
         }
 
@@ -378,47 +361,41 @@ namespace BillingSystem.Controllers
 
         public ActionResult SaveAndApplyManualPayments(PaymentCustomModel vm)
         {
-            using (var bal = new PaymentService())
-            {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var userId = Helpers.GetLoggedInUserId();
-                vm.PayCreatedBy = userId;
-                vm.PayCreatedDate = currentDateTime;
-                vm.PaymentTypeId = Convert.ToInt32(vm.PTDPaymentType);
-                vm.PayCorporateID = Helpers.GetSysAdminCorporateID();
-                vm.PayFacilityID = Helpers.GetDefaultFacilityId();
-                var pl = string.Empty;
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var userId = Helpers.GetLoggedInUserId();
+            vm.PayCreatedBy = userId;
+            vm.PayCreatedDate = currentDateTime;
+            vm.PaymentTypeId = Convert.ToInt32(vm.PTDPaymentType);
+            vm.PayCorporateID = Helpers.GetSysAdminCorporateID();
+            vm.PayFacilityID = Helpers.GetDefaultFacilityId();
+            var pl = string.Empty;
 
-                var cm = bal.SaveAndApplyPayments(vm.PayCorporateID.GetValueOrDefault(), vm.PayFacilityID.GetValueOrDefault(), userId, vm, currentDateTime);
+            var cm = _service.SaveAndApplyPayments(vm.PayCorporateID.GetValueOrDefault(), vm.PayFacilityID.GetValueOrDefault(), userId, vm, currentDateTime);
 
-                if (cm.PaymentsList.Any())
-                    pl = RenderPartialViewToStringBase(PartialViews.PaymentListView, cm.PaymentsList);
+            if (cm.PaymentsList.Any())
+                pl = RenderPartialViewToStringBase(PartialViews.PaymentListView, cm.PaymentsList);
 
-                var jsonData = new JsonResult { Data = new { Success = cm.Success, pl, pd = cm.PaymentDetails, patients = cm.PatientsList }, JsonRequestBehavior = JsonRequestBehavior.AllowGet };
-                return jsonData;
-            }
+            var jsonData = new JsonResult { Data = new { Success = cm.Success, pl, pd = cm.PaymentDetails, patients = cm.PatientsList }, JsonRequestBehavior = JsonRequestBehavior.AllowGet };
+            return jsonData;
         }
 
 
 
         public JsonResult GetPaymentsRelatedData(long billHeaderId, long? patientId, long? eId, string billNo, long? payId)
         {
-            using (var bal = new PaymentService())
-            {
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var userId = Helpers.GetLoggedInUserId();
-                var cId = Helpers.GetSysAdminCorporateID();
-                var fId = Helpers.GetDefaultFacilityId();
-                billNo = string.IsNullOrEmpty(billNo) ? string.Empty : billNo;
-                var pl = string.Empty;
-                var cm = bal.GetPaymentsListAndOthersData(cId, fId, userId, billHeaderId, patientId: patientId.GetValueOrDefault(), encounterId: eId.GetValueOrDefault(), billNumber: billNo, paymentId: payId.GetValueOrDefault());
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var userId = Helpers.GetLoggedInUserId();
+            var cId = Helpers.GetSysAdminCorporateID();
+            var fId = Helpers.GetDefaultFacilityId();
+            billNo = string.IsNullOrEmpty(billNo) ? string.Empty : billNo;
+            var pl = string.Empty;
+            var cm = _service.GetPaymentsListAndOthersData(cId, fId, userId, billHeaderId, patientId: patientId.GetValueOrDefault(), encounterId: eId.GetValueOrDefault(), billNumber: billNo, paymentId: payId.GetValueOrDefault());
 
-                if (cm.PaymentsList.Any())
-                    pl = RenderPartialViewToStringBase(PartialViews.PaymentListView, cm.PaymentsList);
+            if (cm.PaymentsList.Any())
+                pl = RenderPartialViewToStringBase(PartialViews.PaymentListView, cm.PaymentsList);
 
-                var jsonData = new JsonResult { Data = new { pl, pd = cm.PaymentDetails, patients = cm.PatientsList }, JsonRequestBehavior = JsonRequestBehavior.AllowGet };
-                return jsonData;
-            }
+            var jsonData = new JsonResult { Data = new { pl, pd = cm.PaymentDetails, patients = cm.PatientsList }, JsonRequestBehavior = JsonRequestBehavior.AllowGet };
+            return jsonData;
         }
     }
 }

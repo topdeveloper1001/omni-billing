@@ -57,7 +57,9 @@ namespace BillingSystem.Bal.BusinessAccess
         }
         public DateTime GetInvariantCultureDateTime(int facilityid)
         {
-            var facilityObj = _repository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault() != null ? _repository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault().FacilityTimeZone : TimeZoneInfo.Utc.ToString();
+            var facilityObj = _repository.Where(f => f.FacilityId == facilityid).FirstOrDefault() != null ?
+                _repository.Where(f => f.FacilityId == facilityid).FirstOrDefault().FacilityTimeZone :
+                TimeZoneInfo.Utc.ToString();
             var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
             var utcTime = DateTime.Now.ToUniversalTime();
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
@@ -74,6 +76,11 @@ namespace BillingSystem.Bal.BusinessAccess
             return (facility != null) ? facility.FacilityName : string.Empty;
         }
 
+        public string GetFacilityNameByNumber(string number)
+        {
+            var facility = _repository.Where(a => a.FacilityNumber.Equals(number)).FirstOrDefault();
+            return (facility != null) ? facility.FacilityName : string.Empty;
+        }
         /// <summary>
         /// Method to add/Update the facility in the database.
         /// </summary>

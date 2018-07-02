@@ -1,5 +1,4 @@
-﻿@using BillingSystem.Bal.Mapper
-@using BillingSystem.Common
+﻿@using BillingSystem.Common
 @model IEnumerable<BillingSystem.Model.CustomModel.PatientEvaluationSetCustomModel>
 
 <style type="text/css">
@@ -12,29 +11,29 @@
 {
     var grid = new WebGrid(Model, ajaxUpdateContainerId: "gridContentPreEvaluationList", canPage: false);
     <div id="gridContentPreEvaluationList">
-        @grid.GetHtml(htmlAttributes: new { id = "PreEvaluationListGrid" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow", 
-       columns: 
-       grid.Columns(grid.Column("DocumentName", header: " Form", canSort: true, style: "col3"), 
-       grid.Column("EncounterNumber", header: " Encounter Number", canSort: true, style: "col3"), 
-       grid.Column("PhysicianName", header: "Physician", canSort: true, style: "col5"), 
-       grid.Column("CompletedBy", header: "Completed By", canSort: true, style: "col5"), 
-       grid.Column("UpdateDate", header: "Completed On", canSort: true, style: "col5"), 
-       grid.Column("ENMStartdate", header: "Start Time", canSort: true, style: "col2"), 
-       grid.Column(header: "Action", format: @<text>
-       @if (Helpers.GetLoggedInUserId() == item.CreatedBy)
-       {
-           if (!string.IsNullOrEmpty(item.ExtValue2) && item.ExtValue2 == "99")
-           {
-               <a href="javascript:void(0);" title="View Document" onclick="EditNurseAssessmentForm('@item.SetId') " style="float: left; margin-right: 7px; width: 15px;">
-                   <img src="~/images/edit.png"/>
-               </a>
-           }
-           else
-           {
-               <a href="#" title="View E & M form" onclick="ViewENMFrom('@item.SetId');" style="float: left; width: 10px;"><img src="~/images/edit.png"/></a>
-           }
-       }
-    </text>)))<h6>* Click on any column heading to sort</h6>
+        @grid.GetHtml(htmlAttributes: new { id = "PreEvaluationListGrid" }, tableStyle: "table", headerStyle: "gridHead", footerStyle: "gridFooter", rowStyle: "gridRow", alternatingRowStyle: "gridAltRow",
+            columns:
+            grid.Columns(grid.Column("DocumentName", header: " Form", canSort: true, style: "col3"),
+            grid.Column("EncounterNumber", header: " Encounter Number", canSort: true, style: "col3"),
+            grid.Column("PhysicianName", header: "Physician", canSort: true, style: "col5"),
+            grid.Column("CompletedBy", header: "Completed By", canSort: true, style: "col5"),
+            grid.Column("UpdateDate", header: "Completed On", canSort: true, style: "col5"),
+            grid.Column("ENMStartdate", header: "Start Time", canSort: true, style: "col2"),
+            grid.Column(header: "Action", format: @<text>
+                @if (Helpers.GetLoggedInUserId() == item.CreatedBy)
+                             {
+                                 if (!string.IsNullOrEmpty(item.ExtValue2) && item.ExtValue2 == "99")
+                                 {
+                        <a href="javascript:void(0);" title="View Document" onclick="EditNurseAssessmentForm('@item.SetId') " style="float: left; margin-right: 7px; width: 15px;">
+                            <img src="~/images/edit.png" />
+                        </a>
+                                 }
+                                 else
+                                 {
+                        <a href="#" title="View E & M form" onclick="ViewENMFrom('@item.SetId');" style="float: left; width: 10px;"><img src="~/images/edit.png" /></a>
+                                 }
+                             }
+            </text>)))<h6>* Click on any column heading to sort</h6>
     </div>
 }
 else
@@ -42,7 +41,7 @@ else
     <h2>No Record found</h2>
 }
 <script type="text/javascript">
-    $(function() {
+    $(function () {
         if ($('#PreEvaluationListGrid tr').length > 5) {
             if ($('#collapseEANDM').hasClass('in'))
                 $('#PreEvaluationListGrid')
@@ -50,7 +49,7 @@ else
                         cloneHeadToFoot: true,
                         altClass: 'odd',
                         autoShow:
-                            true
+                        true
                     });
             else {
                 $('#collapseEANDM').addClass('in');
@@ -59,7 +58,7 @@ else
                         cloneHeadToFoot: true,
                         altClass: 'odd',
                         autoShow:
-                            true
+                        true
                     });
                 $('#collapseEANDM').removeClass('in');
             }

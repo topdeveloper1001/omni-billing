@@ -8,6 +8,8 @@ using BillingSystem.Repository.Interfaces;
 using System.Data.SqlClient;
 using BillingSystem.Repository.Common;
 using BillingSystem.Bal.Interfaces;
+using System.Threading.Tasks;
+using System.Data.Entity;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -38,7 +40,76 @@ namespace BillingSystem.Bal.BusinessAccess
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
             return convertedTime;
         }
+        public GlobalCodes GetGlobalCodeByCategoryAndCodeValue(string gcCategoryValue, string gcvalue)
+        {
+            var globalCode = _repository.Where(s => s.IsDeleted == false && s.GlobalCodeCategoryValue.Equals(gcCategoryValue) && s.GlobalCodeValue.Equals(gcvalue)).FirstOrDefault();
+            return globalCode ?? new GlobalCodes();
+        }
 
+        public List<GlobalCodes> GetSubCategories2(string gcValue1)
+        {
+            var list = _repository.Where(f => f.ExternalValue1.Trim().Equals(gcValue1) && f.GlobalCodeCategoryValue.Trim().Equals("4351")).ToList();
+            return list;
+        }
+        public async Task<string> GetGlobalCodeNameAsync(string codeValue, string categoryValue)
+        {
+            if (!string.IsNullOrEmpty(codeValue))
+            {
+                var gl = await _repository.Where(g => g.GlobalCodeValue.Equals(codeValue) && g.GlobalCodeCategoryValue.Equals(categoryValue)).FirstOrDefaultAsync();
+                return gl != null ? gl.GlobalCodeName : string.Empty;
+            }
+            return string.Empty;
+        }
+        public string GetKeyColmnNameByTableName(string tableName)
+        {
+            var keyColumn = string.Empty;
+            var gc = _repository.Where(a => a.GlobalCodeName.Equals(tableName)).FirstOrDefault();
+            keyColumn = gc != null ? gc.ExternalValue1 : string.Empty;
+            return keyColumn;
+        }
+        public List<GlobalCodes> GetTableStruturebyTableId(string id)
+        {
+            var tableNameCategoryvalue = Convert.ToInt32(GlobalCodeCategoryValue.Column).ToString();
+            var globalCodelist = _repository.Where(
+                    s =>
+                    s.IsDeleted == false && s.GlobalCodeCategoryValue.Equals(tableNameCategoryvalue)
+                    && s.ExternalValue1.Equals(id) && s.IsActive).ToList();
+            return globalCodelist;
+        }
+
+        public GeneralCodesCustomModel GetSelectedCodeParent1(string orderCode, string codeType, long facilityId, string tableNumber)
+        {
+            GeneralCodesCustomModel vm = null;
+            var sqlParams = new SqlParameter[4];
+
+            sqlParams[0] = new SqlParameter("@pOrderCode", orderCode);
+            sqlParams[1] = new SqlParameter("@pOrderCodeType", codeType);
+            sqlParams[2] = new SqlParameter("@pFId", facilityId);
+            sqlParams[3] = new SqlParameter("@pTableNumber", tableNumber);
+
+            using (var r = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetSelectedCodeParent.ToString(), isCompiled: false, parameters: sqlParams))
+            {
+                try
+                {
+                    var c = r.ResultSetFor<GlobalCodeSaveModel>().FirstOrDefault();
+                    if (c != null)
+                    {
+                        vm = new GeneralCodesCustomModel
+                        {
+                            GlobalCodeCategoryId = c.GlobalCodeCategoryValue,
+                            GlobalCodeCategoryName = c.GlobalCodeCategoryNameStr,
+                            GlobalCodeId = Convert.ToInt32(c.GlobalCodeValue),
+                            GlobalCodeName = c.GlobalCodeName
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    //throw;
+                }
+            }
+            return vm;
+        }
         //Function to get all GlobalCodes
         /// <summary>
         /// Gets all global codes.
@@ -64,6 +135,15 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return list;
         }
+        public List<GlobalCodes> GetGlobalCodesByCategoriesSp(string gccValues)
+        {
+            string spName = string.Format("EXEC {0} @pGCC", StoredProcedures.SPROC_GetGlobalCodesByCategories);
+            var sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter("pGCC", gccValues);
+            IEnumerable<GlobalCodes> result = _context.Database.SqlQuery<GlobalCodes>(spName, sqlParameters);
+            return result.ToList();
+        }
+
         private GlobalCodeCategory GetGlobalCodeCategoryByValue(string globalCodeCategoryvalue)
         {
             var m = _gcRepository.Where(f => f.GlobalCodeCategoryValue == globalCodeCategoryvalue).FirstOrDefault();
@@ -777,7 +857,7 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return list;
         }
-        private string GetNameByGlobalCodeValue(string codeValue, string categoryValue, string fId = "")
+        public string GetNameByGlobalCodeValue(string codeValue, string categoryValue, string fId = "")
         {
             if (!string.IsNullOrEmpty(codeValue))
             {

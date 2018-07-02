@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
+using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 
 namespace BillingSystem.Bal.Interfaces
 {
     public interface IBillActivityService
     {
+        bool CheckForDuplicateTableSet(int id, string tableNumber, string typeId);
+        List<BillingCodeTableSet> GetTableNumbersList(string typeId);
         bool DeleteBillActivityFromBill(int id);
         bool DeleteDiagnosisTypeBillActivity(int encounterId, int patientId, string actCode, int userId);
         List<BillDetailCustomModel> GetBillActivitiesByBillHeaderId(int billHeaderId);

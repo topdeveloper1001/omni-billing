@@ -6,6 +6,7 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface IDiagnosisService
     {
+        bool CheckIfPrimaryDiagnosis(int patientId, int encounterId, int diagnosisType);
         int CheckIfAnyDiagnosisExists(int encounterId);
         bool CheckIfDuplicateDiagnosisAgainstCurrentEncounter(string diagnosisCode, int encounterId, int diagnosisId);
         DiagnosisTabData DeleteCurrentDiagnosis(long userId, long id, string drgTn);

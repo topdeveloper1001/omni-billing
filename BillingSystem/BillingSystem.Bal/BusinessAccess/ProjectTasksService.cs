@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using AutoMapper;
 using BillingSystem.Bal.Interfaces;
@@ -12,7 +13,7 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class ProjectTasksService : IProjectTasksService
     {
-
+        private readonly IRepository<ProjectTaskTargets> _pttRepository;
         private readonly IRepository<ProjectTasks> _repository;
         private readonly IRepository<GlobalCodes> _gRepository;
         private readonly IRepository<Facility> _fRepository;
@@ -162,9 +163,8 @@ namespace BillingSystem.Bal.BusinessAccess
                 var current = _repository.GetSingle(model.ProjectTaskId);
                 model.CreatedBy = current.CreatedBy;
                 model.CreatedDate = current.CreatedDate;
-                var oProjectTaskTargetsBal = new ProjectTaskTargetsService();
-                oProjectTaskTargetsBal.UpdateProjectTaskTargetTaskNumber(current.TaskNumber, model.TaskNumber,
-                    Convert.ToString(model.ProjectTaskId));
+                UpdateProjectTaskTargetTaskNumber(current.TaskNumber, model.TaskNumber,
+                                    Convert.ToString(model.ProjectTaskId));
                 _repository.UpdateEntity(model, model.ProjectTaskId);
             }
             else
@@ -195,7 +195,15 @@ namespace BillingSystem.Bal.BusinessAccess
             var list = GetProjectTasksList(model.CorporateId, model.FacilityId, userSelected);
             return list;
         }
-
+        private bool UpdateProjectTaskTargetTaskNumber(string oldTaskNumber, string newTaskNumber, string projectTaskId)
+        {
+            var sqlParameters = new SqlParameter[3];
+            sqlParameters[0] = new SqlParameter("OldTaskNumber", oldTaskNumber);
+            sqlParameters[1] = new SqlParameter("NewTaskNumber", newTaskNumber);
+            sqlParameters[2] = new SqlParameter("ProjectTaskId", projectTaskId);
+            _pttRepository.ExecuteCommand(StoredProcedures.SPROC_UpdateProjectTaskTargetTaskNumber.ToString(), sqlParameters);
+            return true;
+        }
         /// <summary>
         /// Method to add the Entity in the database By Id.
         /// </summary>

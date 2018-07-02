@@ -1,5 +1,4 @@
 ﻿using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Common;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
@@ -10,28 +9,28 @@ namespace BillingSystem.Controllers
     public class ReviewExpectedPaymentsController : BaseController
     {
         private readonly IPatientInfoService _piService;
+        private readonly IPaymentService _pService;
 
-        public ReviewExpectedPaymentsController(IPatientInfoService piService)
+        public ReviewExpectedPaymentsController(IPatientInfoService piService, IPaymentService pService)
         {
             _piService = piService;
+            _pService = pService;
         }
 
         //
         // GET: /ReviewExpectedPayments/
         public ActionResult Index()
         {
-            using (var bal = new PaymentService())
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var viewData = new ReviewExpectedPaymentsView
             {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var viewData = new ReviewExpectedPaymentsView
-                {
-                    ExpectedPaymentInsNotPaidList = bal.GetExpectedPaymentInsNotPaid(corporateId, facilityId),
-                    ExpectedPaymentPatientVarList = bal.GetExpectedPaymentPatientVar(corporateId, facilityId),
-                    ExpectedPaymentInsVarianceList = bal.GetExpectedPaymentInsVariance(corporateId, facilityId),
-                };
-                return View(viewData);
-            }
+                ExpectedPaymentInsNotPaidList = _pService.GetExpectedPaymentInsNotPaid(corporateId, facilityId),
+                ExpectedPaymentPatientVarList = _pService.GetExpectedPaymentPatientVar(corporateId, facilityId),
+                ExpectedPaymentInsVarianceList = _pService.GetExpectedPaymentInsVariance(corporateId, facilityId),
+            };
+            return View(viewData);
+
         }
 
         /// <summary>
@@ -56,11 +55,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientAccountSummary(int PatientID)
         {
-            using (var paymentBal = new PaymentService())
-            {
-                var applyPaymnetManual = paymentBal.GetPatientAccountStatement(PatientID);
-                return PartialView("UserControls/_PatienAccountSummary", applyPaymnetManual);
-            }
+            var applyPaymnetManual = _pService.GetPatientAccountStatement(PatientID);
+            return PartialView("UserControls/_PatienAccountSummary", applyPaymnetManual);
         }
 
         /// <summary>
@@ -69,13 +65,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetNotReceivedPaymentList()
         {
-            using (var paymentBal = new PaymentService())
-            {
-                var corpoarteId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var notReceivedpaymentsList = paymentBal.GetNoPaymentReceviedList(corpoarteId, facilityId);
-                return PartialView("UserControls/_PatienAccountSummary", notReceivedpaymentsList);
-            }
+            var corpoarteId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var notReceivedpaymentsList = _pService.GetNoPaymentReceviedList(corpoarteId, facilityId);
+            return PartialView("UserControls/_PatienAccountSummary", notReceivedpaymentsList);
         }
 
         /// <summary>
@@ -84,13 +77,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetUnMatchedPaymentList()
         {
-            using (var paymentBal = new PaymentService())
-            {
-                var corpoarteId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var unMatchedpaymentsList = paymentBal.GetUnMactedPaymentList(corpoarteId, facilityId);
-                return PartialView("UserControls/_PatienAccountSummary", unMatchedpaymentsList);
-            }
+            var corpoarteId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var unMatchedpaymentsList = _pService.GetUnMactedPaymentList(corpoarteId, facilityId);
+            return PartialView("UserControls/_PatienAccountSummary", unMatchedpaymentsList);
         }
 
 
@@ -98,16 +88,14 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new PaymentService();
-            var expectedPaymentInsNotPaidList = bal.GetExpectedPaymentInsNotPaid(corporateId, facilityId);
+            var expectedPaymentInsNotPaidList = _pService.GetExpectedPaymentInsNotPaid(corporateId, facilityId);
             return PartialView(PartialViews.ExpectedPaymentInsNotPaidListView, expectedPaymentInsNotPaidList);
         }
         public ActionResult SortPatientVarianceReport()
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new PaymentService();
-            var expectedPaymentPatientVarList = bal.GetExpectedPaymentPatientVar(corporateId, facilityId);
+            var expectedPaymentPatientVarList = _pService.GetExpectedPaymentPatientVar(corporateId, facilityId);
             return PartialView(PartialViews.ExpectedPaymentPatientVarListView, expectedPaymentPatientVarList);
         }
 

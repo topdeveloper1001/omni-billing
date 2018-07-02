@@ -1,18 +1,22 @@
 ﻿using BillingSystem.Models;
 using BillingSystem.Common;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DrugInteractionsController : BaseController
     {
+        private readonly IDrugInteractionsService _service;
+
+        public DrugInteractionsController(IDrugInteractionsService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the DrugInteractions View in the Model DrugInteractions such as DrugInteractionsList, list of countries etc.
         /// </summary>
@@ -21,22 +25,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the DrugInteractions BAL object
-            using (var bal = new DrugInteractionsService())
+            //Get the Entity list
+            var list = _service.GetDrugInteractionsList();
+
+            //Intialize the View Model i.e. DrugInteractionsView which is binded to Main View Index.cshtml under DrugInteractions
+            var viewModel = new DrugInteractionsView
             {
-                //Get the Entity list
-                var list = bal.GetDrugInteractionsList();
+                DrugInteractionsList = list,
+                CurrentDrugInteractions = new DrugInteractions()
+            };
 
-                //Intialize the View Model i.e. DrugInteractionsView which is binded to Main View Index.cshtml under DrugInteractions
-                var viewModel = new DrugInteractionsView
-                {
-                    DrugInteractionsList = list,
-                    CurrentDrugInteractions = new DrugInteractions()
-                };
-
-                //Pass the View Model in ActionResult to View DrugInteractions
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View DrugInteractions
+            return View(viewModel);
         }
 
         /// <summary>
@@ -56,23 +56,19 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DrugInteractionsService())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.Modifieddate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddDrugInteractions Method to Add / Update current DrugInteractions
-                    list = bal.SaveDrugInteractions(model);
-                    //list = bal.GetDrugInteractionsList();
+                    model.ModifiedBy = userId;
+                    model.Modifieddate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                //Call the AddDrugInteractions Method to Add / Update current DrugInteractions
+                list = _service.SaveDrugInteractions(model);
             }
 
             //Pass the ActionResult with List of DrugInteractionsViewModel object to Partial View DrugInteractionsList
@@ -86,14 +82,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDrugInteractionsDetails(int id)
         {
-            using (var bal = new DrugInteractionsService())
-            {
-                //Call the AddDrugInteractions Method to Add / Update current DrugInteractions
-                var current = bal.GetDrugInteractionsById(id);
+            //Call the AddDrugInteractions Method to Add / Update current DrugInteractions
+            var current = _service.GetDrugInteractionsById(id);
 
-                //Pass the ActionResult with the current DrugInteractionsViewModel object as model to PartialView DrugInteractionsAddEdit
-                return Json(current);
-            }
+            //Pass the ActionResult with the current DrugInteractionsViewModel object as model to PartialView DrugInteractionsAddEdit
+            return Json(current);
         }
 
         /// <summary>
@@ -103,39 +96,33 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDrugInteractions(int id)
         {
-            using (var bal = new DrugInteractionsService())
+            //Get DrugInteractions model object by current DrugInteractions ID
+            var model = _service.GetDrugInteractionsById(id);
+            var userId = Helpers.GetLoggedInUserId();
+            var list = new List<DrugInteractionsCustomModel>();
+            var currentDate = Helpers.GetInvariantCultureDateTime();
+
+            //Check If DrugInteractions model is not null
+            if (model != null)
             {
-                //Get DrugInteractions model object by current DrugInteractions ID
-                var model = bal.GetDrugInteractionsById(id);
-                var userId = Helpers.GetLoggedInUserId();
-                var list = new List<DrugInteractionsCustomModel>();
-                var currentDate = Helpers.GetInvariantCultureDateTime();
+                model.IsDeleted = true;
+                model.ModifiedBy = userId;
+                model.Modifieddate = currentDate;
 
-                //Check If DrugInteractions model is not null
-                if (model != null)
-                {
-                    model.IsDeleted = true;
-                    model.ModifiedBy = userId;
-                    model.Modifieddate = currentDate;
-
-                    //Update Operation of current DrugInteractions
-                    var result = bal.SaveDrugInteractions(model);
-                    list = bal.GetDrugInteractionsList();
-                    //return deleted ID of current DrugInteractions as Json Result to the Ajax Call.
-                }
-                //Pass the ActionResult with List of DrugInteractionsViewModel object to Partial View DrugInteractionsList
-                return PartialView(PartialViews.DrugInteractionsList, list);
+                //Update Operation of current DrugInteractions
+                var result = _service.SaveDrugInteractions(model);
+                list = _service.GetDrugInteractionsList();
+                //return deleted ID of current DrugInteractions as Json Result to the Ajax Call.
             }
+            //Pass the ActionResult with List of DrugInteractionsViewModel object to Partial View DrugInteractionsList
+            return PartialView(PartialViews.DrugInteractionsList, list);
         }
 
 
         public ActionResult SortDrugInstructionlist()
         {
-            using (var bal = new DrugInteractionsService())
-            {
-                var list = bal.GetDrugInteractionsList();
+                var list = _service.GetDrugInteractionsList();
                 return PartialView(PartialViews.DrugInteractionsList, list);
-            }
         }
     }
 }

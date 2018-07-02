@@ -200,18 +200,24 @@ namespace BillingSystem.Bal.BusinessAccess
         public List<TabsCustomModel> GetParentCorporateFacilityTabList(int corporateid, int facilityid)
         {
             var list = new List<TabsCustomModel>();
-            using (var moduleaccessBal = new ModuleAccessService())
+            var tabs = _repository.GetAll().OrderBy(t => t.TabName).ToList();
+            var moduleAccess = GetModulesAccessList(corporateid, facilityid).ToList();
+            var newlist = corporateid == 0 ? tabs : tabs.Where(t => moduleAccess.Any(z => z.TabID == t.TabId) && !t.TabName.Equals("Setup")).ToList();
+            list.AddRange(newlist.Select(item => new TabsCustomModel
             {
-                var tabs = _repository.GetAll().OrderBy(t => t.TabName).ToList();
-                var moduleAccess =
-                    moduleaccessBal.GetModulesAccessList(corporateid, facilityid).ToList();
-                var newlist = corporateid == 0 ? tabs : tabs.Where(t => moduleAccess.Any(z => z.TabID == t.TabId) && !t.TabName.Equals("Setup")).ToList();
-                list.AddRange(newlist.Select(item => new TabsCustomModel
-                {
-                    CurrentTab = item,
-                    ParentTabName = GetTabNameById(item.ParentTabId),
-                    HasChilds = HasChildren(item.TabId)
-                }));
+                CurrentTab = item,
+                ParentTabName = GetTabNameById(item.ParentTabId),
+                HasChilds = HasChildren(item.TabId)
+            }));
+            return list;
+        }
+        private List<ModuleAccess> GetModulesAccessList(int corporateId, int? facilityid)
+        {
+            var list = _mRepository.Where(rp => rp.CorporateID == corporateId).ToList();
+            if (facilityid != 0)
+            {
+                if (list.Any(fc => fc.FacilityID == facilityid))
+                    list = list.Where(fc => fc.FacilityID == facilityid).ToList();
             }
             return list;
         }

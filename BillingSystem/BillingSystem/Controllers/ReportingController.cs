@@ -10,8 +10,6 @@ namespace BillingSystem.Controllers
     using System.Security;
     using System.Security.Permissions;
     using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
     using Common;
     using Common.Common;
     using Model;
@@ -36,8 +34,13 @@ namespace BillingSystem.Controllers
         private readonly IFacilityStructureService _fsService;
         private readonly IPatientInfoService _piService;
         private readonly IUsersService _uService;
+        private readonly IReportingService _service;
+        private readonly IFacilityService _fService;
+        private readonly IPhysicianService _phService;
+        private readonly IScrubReportService _srService;
+        private readonly IXmlReportingService _xrService;
 
-        public ReportingController(IEncounterService eService, IBillActivityService baService, IBillHeaderService bhService, IFacilityStructureService fsService, IPatientInfoService piService, IUsersService uService)
+        public ReportingController(IEncounterService eService, IBillActivityService baService, IBillHeaderService bhService, IFacilityStructureService fsService, IPatientInfoService piService, IUsersService uService, IReportingService service, IFacilityService fService, IPhysicianService phService, IScrubReportService srService, IXmlReportingService xrService)
         {
             _eService = eService;
             _baService = baService;
@@ -45,7 +48,13 @@ namespace BillingSystem.Controllers
             _fsService = fsService;
             _piService = piService;
             _uService = uService;
+            _service = service;
+            _fService = fService;
+            _phService = phService;
+            _srService = srService;
+            _xrService = xrService;
         }
+
 
         /// <summary>
         ///     Indexes the specified reporting identifier.
@@ -109,7 +118,6 @@ namespace BillingSystem.Controllers
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
             int useridnotnull = userId == null ? 0 : Convert.ToInt32(userId);
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             if (isAll)
@@ -121,10 +129,10 @@ namespace BillingSystem.Controllers
             {
                 case ReportingType.UserLoginActivity:
 
-                    // var userLoginList = bal.GetUserLoginActivityList(fromDate, tillDate, isAll, useridnotnull);
+                    // var userLoginList = _service.GetUserLoginActivityList(fromDate, tillDate, isAll, useridnotnull);
                     // return PartialView(PartialViews.UserLoginActivityView, userLoginList);
                     corporateId = Helpers.GetDefaultCorporateId();
-                    List<LoginActivityReportCustomModel> userLoginList = bal.GetLoginTimeDayNightShift(
+                    List<LoginActivityReportCustomModel> userLoginList = _service.GetLoginTimeDayNightShift(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -135,7 +143,7 @@ namespace BillingSystem.Controllers
                 case ReportingType.PasswordDisablesLog:
 
                     // corporateId = Helpers.GetDefaultCorporateId();
-                    List<AuditLogCustomModel> pwdDisabledLogs = bal.GetPasswordDisableLog_SP(
+                    List<AuditLogCustomModel> pwdDisabledLogs = _service.GetPasswordDisableLog_SP(
                         fromDate,
                         tillDate,
                         isAll,
@@ -144,7 +152,7 @@ namespace BillingSystem.Controllers
                     return PartialView(PartialViews.PasswordDisablesLogView, pwdDisabledLogs);
 
                 case ReportingType.PasswordChangeLog:
-                    List<AuditLogCustomModel> passwordChangeLogs = bal.GetPasswordChangeLog_SP(
+                    List<AuditLogCustomModel> passwordChangeLogs = _service.GetPasswordChangeLog_SP(
                         fromDate,
                         tillDate,
                         isAll,
@@ -153,21 +161,21 @@ namespace BillingSystem.Controllers
                     return PartialView(PartialViews.PasswordChangeLogView, passwordChangeLogs);
 
                 case ReportingType.DailyChargeReport:
-                    List<LoginTrackingCustomModel> dailyChargeReport = bal.GetUserLoginActivityList(
+                    List<LoginTrackingCustomModel> dailyChargeReport = _service.GetUserLoginActivityList(
                         fromDate,
                         tillDate,
                         useridnotnull);
                     return PartialView(PartialViews.DailyChargeReportView, dailyChargeReport);
 
                 case ReportingType.ChargesByPayorReport:
-                    List<LoginTrackingCustomModel> chargesByPayorReport = bal.GetUserLoginActivityList(
+                    List<LoginTrackingCustomModel> chargesByPayorReport = _service.GetUserLoginActivityList(
                         fromDate,
                         tillDate,
                         useridnotnull);
                     return PartialView(PartialViews.ChargesByPayorReportView, chargesByPayorReport);
 
                 case ReportingType.RevenueForecastReport:
-                    List<RevenueForecast> revenueReport = bal.GetRevenueForecastFacility(
+                    List<RevenueForecast> revenueReport = _service.GetRevenueForecastFacility(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -176,11 +184,11 @@ namespace BillingSystem.Controllers
 
                 case ReportingType.ClaimTransactionDetailReport:
                     List<BillTransmissionReportCustomModel> claimtransactionDetails =
-                        bal.GetClaimTransDetails(corporateId, facilityId, fromDate, tillDate, displayby);
+                        _service.GetClaimTransDetails(corporateId, facilityId, fromDate, tillDate, displayby);
                     return PartialView(PartialViews.ClaimTransDetailReport, claimtransactionDetails);
 
                 case ReportingType.DenialReport:
-                    List<DenialReportCustomModel> denialreportDetail = bal.GetDenialCodesReport(
+                    List<DenialReportCustomModel> denialreportDetail = _service.GetDenialCodesReport(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -190,23 +198,23 @@ namespace BillingSystem.Controllers
 
                 case ReportingType.JournalEntrySupport:
                     List<JournalEntrySupportReportCustomModel> journalEntrySupportReportDetail =
-                        bal.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
+                        _service.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
                     return PartialView(PartialViews.JournalEntrySupportReport, journalEntrySupportReportDetail);
 
                 case ReportingType.JournalEntrySupportMCD:
                     List<JournalEntrySupportReportCustomModel> journalEntrySupportReportDetail1 =
-                        bal.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
+                        _service.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
                     return PartialView(
                         PartialViews.JournalEntryManageCareDiscount,
                         journalEntrySupportReportDetail1);
 
                 case ReportingType.JournalEntrySupportWO:
                     List<JournalEntrySupportReportCustomModel> journalEntrySupportReportDetail2 =
-                        bal.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
+                        _service.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
                     return PartialView(PartialViews.JournalEnterBadDebtWriteoffs, journalEntrySupportReportDetail2);
 
                 case ReportingType.CorrectionLog:
-                    List<ScrubEditTrackCustomModel> correctionLogReport = bal.GetBillEditCorrectionLogs(
+                    List<ScrubEditTrackCustomModel> correctionLogReport = _service.GetBillEditCorrectionLogs(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -215,7 +223,7 @@ namespace BillingSystem.Controllers
                     return PartialView(PartialViews.ScrubEditTrackListReport, correctionLogReport);
 
                 case ReportingType.SchedulingActivityLog:
-                    List<AuditLogCustomModel> schedulingLogReport = bal.GetSchedulingLogActivity(fromDate, tillDate, corporateId, facilityId);
+                    List<AuditLogCustomModel> schedulingLogReport = _service.GetSchedulingLogActivity(fromDate, tillDate, corporateId, facilityId);
                     return PartialView(PartialViews.SchedulingLog, schedulingLogReport);
 
                 default:
@@ -247,7 +255,6 @@ namespace BillingSystem.Controllers
             // var dtTill = Helpers.ParseValueToInvariantDateTime(tillDate);
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingService();
             DateTime tillDateNew = tillDate ?? Helpers.GetInvariantCultureDateTime();
             int useridNew = userId ?? 0;
             PdfResult pdf = null;
@@ -263,7 +270,7 @@ namespace BillingSystem.Controllers
                 case ReportingType.UserLoginActivity:
 
                     pdf = new PdfResult(
-                        bal.GetUserLoginActivityList(fromDate, tillDateNew, Convert.ToInt32(userId)),
+                        _service.GetUserLoginActivityList(fromDate, tillDateNew, Convert.ToInt32(userId)),
                         "ExportToPDF");
                     break;
 
@@ -272,43 +279,43 @@ namespace BillingSystem.Controllers
                     // corporateId = Helpers.GetDefaultCorporateId();
                     pdf =
                         new PdfResult(
-                            bal.GetPasswordDisableLog_SP(fromDate, tillDateNew, isAll, corporateId, facilityId),
+                            _service.GetPasswordDisableLog_SP(fromDate, tillDateNew, isAll, corporateId, facilityId),
                             "ExportToPDF");
                     break;
 
                 case ReportingType.PasswordChangeLog:
                     pdf =
                         new PdfResult(
-                            bal.GetPasswordChangeLog_SP(fromDate, tillDateNew, isAll, corporateId, facilityId),
+                            _service.GetPasswordChangeLog_SP(fromDate, tillDateNew, isAll, corporateId, facilityId),
                             "ExportToPDF");
                     break;
 
                 case ReportingType.DailyChargeReport:
-                    pdf = new PdfResult(bal.GetUserLoginActivityList(fromDate, tillDateNew, useridNew), "ExportToPDF");
+                    pdf = new PdfResult(_service.GetUserLoginActivityList(fromDate, tillDateNew, useridNew), "ExportToPDF");
                     break;
 
                 case ReportingType.ChargesByPayorReport:
-                    pdf = new PdfResult(bal.GetUserLoginActivityList(fromDate, tillDateNew, useridNew), "ExportToPDF");
+                    pdf = new PdfResult(_service.GetUserLoginActivityList(fromDate, tillDateNew, useridNew), "ExportToPDF");
                     break;
 
                 case ReportingType.PayorWiseAgeingReport:
                     pdf =
                         new PdfResult(
-                            bal.GetAgeingReport(corporateId, facilityId, fromDate, Convert.ToInt32(reportingId)),
+                            _service.GetAgeingReport(corporateId, facilityId, fromDate, Convert.ToInt32(reportingId)),
                             "ExportToPDF");
                     break;
 
                 case ReportingType.PatientWiseAgeingReport:
                     pdf =
                         new PdfResult(
-                            bal.GetAgeingReport(corporateId, facilityId, fromDate, Convert.ToInt32(reportingId)),
+                            _service.GetAgeingReport(corporateId, facilityId, fromDate, Convert.ToInt32(reportingId)),
                             "ExportToPDF");
                     break;
 
                 case ReportingType.DepartmentWiseAgeingReport:
                     pdf =
                         new PdfResult(
-                            bal.GetAgeingReport(corporateId, facilityId, fromDate, Convert.ToInt32(reportingId)),
+                            _service.GetAgeingReport(corporateId, facilityId, fromDate, Convert.ToInt32(reportingId)),
                             "ExportToPDF");
                     break;
 
@@ -317,7 +324,7 @@ namespace BillingSystem.Controllers
                 case ReportingType.PatientWiseReconciliationReport:
                     pdf =
                         new PdfResult(
-                            bal.GetReconciliationReport(
+                            _service.GetReconciliationReport(
                                 corporateId,
                                 facilityId,
                                 fromDate,
@@ -330,7 +337,7 @@ namespace BillingSystem.Controllers
                 case ReportingType.DepartmentUtilization:
                     pdf =
                         new PdfResult(
-                            bal.GetDepartmentUtilizationReport(
+                            _service.GetDepartmentUtilizationReport(
                                 corporateId,
                                 fromDate,
                                 tillDate,
@@ -343,14 +350,14 @@ namespace BillingSystem.Controllers
 
                 case ReportingType.PhysicianActivityReport:
                     pdf = new PdfResult(
-                        bal.GetPhysicianActivityReport(corporateId, facilityId, fromDate, tillDate, 0),
+                        _service.GetPhysicianActivityReport(corporateId, facilityId, fromDate, tillDate, 0),
                         "ExportToPDF");
                     break;
 
                 case ReportingType.PhysicianUtilization:
                     pdf =
                         new PdfResult(
-                            bal.GetPhysicianUtilizationReport(
+                            _service.GetPhysicianUtilizationReport(
                                 corporateId,
                                 fromDate,
                                 tillDate,
@@ -363,7 +370,7 @@ namespace BillingSystem.Controllers
                 case ReportingType.ClaimTransactionDetailReport:
                     pdf =
                         new PdfResult(
-                            bal.GetClaimTransDetails(
+                            _service.GetClaimTransDetails(
                                 corporateId,
                                 facilityId,
                                 fromDate,
@@ -372,7 +379,7 @@ namespace BillingSystem.Controllers
                             "ExportToPDF");
                     break;
                 default:
-                    pdf = new PdfResult(bal.GetUserLoginActivityList(fromDate, tillDateNew, useridNew), "ExportToPDF");
+                    pdf = new PdfResult(_service.GetUserLoginActivityList(fromDate, tillDateNew, useridNew), "ExportToPDF");
                     break;
             }
 
@@ -407,245 +414,242 @@ namespace BillingSystem.Controllers
                     "attachment; filename={0}",
                     reportingType + "-" + CurrentDateTime.ToShortDateString() + ".xls"));
 
-            using (var bal = new ReportingService())
+            int corporateid = Helpers.GetSysAdminCorporateID();
+            int facilityid = Helpers.GetDefaultFacilityId();
+            DateTime tillDateNew = tillDate ?? Helpers.GetInvariantCultureDateTime();
+            int useridNew = userId ?? 0;
+            DateTime selecteddate = fromDate;
+
+            if (isAll)
             {
-                int corporateid = Helpers.GetSysAdminCorporateID();
-                int facilityid = Helpers.GetDefaultFacilityId();
-                DateTime tillDateNew = tillDate ?? Helpers.GetInvariantCultureDateTime();
-                int useridNew = userId ?? 0;
-                DateTime selecteddate = fromDate;
+                userId = 0;
+            }
 
-                if (isAll)
-                {
-                    userId = 0;
-                }
+            switch (reportingType)
+            {
+                case ReportingType.UserLoginActivity:
+                    List<LoginTrackingCustomModel> userLoginList = _service.GetUserLoginActivityList(
+                        fromDate,
+                        tillDateNew,
+                        useridNew);
+                    return PartialView(PartialViews.UserLoginActivityView, userLoginList);
 
-                switch (reportingType)
-                {
-                    case ReportingType.UserLoginActivity:
-                        List<LoginTrackingCustomModel> userLoginList = bal.GetUserLoginActivityList(
-                            fromDate,
-                            tillDateNew,
-                            useridNew);
-                        return PartialView(PartialViews.UserLoginActivityView, userLoginList);
+                case ReportingType.PasswordDisablesLog:
 
-                    case ReportingType.PasswordDisablesLog:
+                    // corporateid = Helpers.GetDefaultCorporateId();
+                    List<AuditLogCustomModel> pwdDisabledLogs = _service.GetPasswordDisableLog_SP(
+                        fromDate,
+                        tillDateNew,
+                        isAll,
+                        corporateid,
+                        facilityid);
+                    return PartialView(PartialViews.PasswordDisablesLogView, pwdDisabledLogs);
 
-                        // corporateid = Helpers.GetDefaultCorporateId();
-                        List<AuditLogCustomModel> pwdDisabledLogs = bal.GetPasswordDisableLog_SP(
-                            fromDate,
-                            tillDateNew,
-                            isAll,
-                            corporateid,
-                            facilityid);
-                        return PartialView(PartialViews.PasswordDisablesLogView, pwdDisabledLogs);
+                case ReportingType.PasswordChangeLog:
+                    List<AuditLogCustomModel> passwordChangeLogs = _service.GetPasswordChangeLog_SP(
+                        fromDate,
+                        tillDateNew,
+                        isAll,
+                        corporateid,
+                        facilityid);
+                    return PartialView(PartialViews.PasswordChangeLogView, passwordChangeLogs);
 
-                    case ReportingType.PasswordChangeLog:
-                        List<AuditLogCustomModel> passwordChangeLogs = bal.GetPasswordChangeLog_SP(
-                            fromDate,
-                            tillDateNew,
-                            isAll,
-                            corporateid,
-                            facilityid);
-                        return PartialView(PartialViews.PasswordChangeLogView, passwordChangeLogs);
+                case ReportingType.DailyChargeReport:
+                    List<LoginTrackingCustomModel> dailyChargeReport = _service.GetUserLoginActivityList(
+                        fromDate,
+                        tillDateNew,
+                        useridNew);
+                    return PartialView(PartialViews.DailyChargeReportView, dailyChargeReport);
 
-                    case ReportingType.DailyChargeReport:
-                        List<LoginTrackingCustomModel> dailyChargeReport = bal.GetUserLoginActivityList(
-                            fromDate,
-                            tillDateNew,
-                            useridNew);
-                        return PartialView(PartialViews.DailyChargeReportView, dailyChargeReport);
+                case ReportingType.ChargesByPayorReport:
+                    List<LoginTrackingCustomModel> chargesByPayorReport = _service.GetUserLoginActivityList(
+                        fromDate,
+                        tillDateNew,
+                        useridNew);
+                    return PartialView(PartialViews.ChargesByPayorReportView, chargesByPayorReport);
 
-                    case ReportingType.ChargesByPayorReport:
-                        List<LoginTrackingCustomModel> chargesByPayorReport = bal.GetUserLoginActivityList(
-                            fromDate,
-                            tillDateNew,
-                            useridNew);
-                        return PartialView(PartialViews.ChargesByPayorReportView, chargesByPayorReport);
+                // ...................Ageing Report starts here
+                case ReportingType.PayorWiseAgeingReport: // .........By Payor wise
+                    List<AgingReportCustomModel> ageingPayorReportData = _service.GetAgeingReport(
+                        corporateid,
+                        facilityid,
+                        selecteddate,
+                        Convert.ToInt32(reportingId));
+                    return PartialView(PartialViews.PayorWiseAgeingReport, ageingPayorReportData);
 
-                    // ...................Ageing Report starts here
-                    case ReportingType.PayorWiseAgeingReport: // .........By Payor wise
-                        List<AgingReportCustomModel> ageingPayorReportData = bal.GetAgeingReport(
+                case ReportingType.PatientWiseAgeingReport: // .........By Patient wise
+                    List<AgingReportCustomModel> ageingPatientReportData = _service.GetAgeingReport(
+                        corporateid,
+                        facilityid,
+                        selecteddate,
+                        Convert.ToInt32(reportingId));
+                    return PartialView(PartialViews.PatientWiseAgeingReport, ageingPatientReportData);
+
+                case ReportingType.DepartmentWiseAgeingReport: // .........By Department wise
+                    List<AgingReportCustomModel> ageingDepartmentReportData = _service.GetAgeingReport(
+                        corporateid,
+                        facilityid,
+                        selecteddate,
+                        Convert.ToInt32(reportingId));
+                    return PartialView(PartialViews.DepartmentWiseAgeingReport, ageingDepartmentReportData);
+
+                // ................Ageing Report End Here
+
+                // ...................Reconciliation Report starts here
+                case ReportingType.DepartmentWiseReconciliationReport:
+                case ReportingType.PayorWiseReconciliationReport:
+                case ReportingType.PatientWiseReconciliationReport:
+                    List<ReconcilationReportCustomModel> reconciliationReportData =
+                        _service.GetReconciliationReport(
                             corporateid,
                             facilityid,
                             selecteddate,
+                            viewtype,
                             Convert.ToInt32(reportingId));
-                        return PartialView(PartialViews.PayorWiseAgeingReport, ageingPayorReportData);
+                    switch (viewtype)
+                    {
+                        case "M": // Monthly View
+                            return PartialView(PartialViews.ReconcilationARMonthWise, reconciliationReportData);
 
-                    case ReportingType.PatientWiseAgeingReport: // .........By Patient wise
-                        List<AgingReportCustomModel> ageingPatientReportData = bal.GetAgeingReport(
-                            corporateid,
-                            facilityid,
-                            selecteddate,
-                            Convert.ToInt32(reportingId));
-                        return PartialView(PartialViews.PatientWiseAgeingReport, ageingPatientReportData);
+                        case "Y": // Yearly View
+                            return PartialView(PartialViews.ReconcilationARYearWise, reconciliationReportData);
 
-                    case ReportingType.DepartmentWiseAgeingReport: // .........By Department wise
-                        List<AgingReportCustomModel> ageingDepartmentReportData = bal.GetAgeingReport(
-                            corporateid,
-                            facilityid,
-                            selecteddate,
-                            Convert.ToInt32(reportingId));
-                        return PartialView(PartialViews.DepartmentWiseAgeingReport, ageingDepartmentReportData);
+                        default: // Weekly View
+                            return PartialView(PartialViews.ReconcilationARWeekWise, reconciliationReportData);
+                    }
 
-                    // ................Ageing Report End Here
+                // ................Reconciliation Report End Here
+                case ReportingType.CorrectionLog:
+                    List<ScrubEditTrackCustomModel> correctionLogReport = _service.GetBillEditCorrectionLogs(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        isAll);
+                    return PartialView(PartialViews.ScrubEditTrackListReport, correctionLogReport);
 
-                    // ...................Reconciliation Report starts here
-                    case ReportingType.DepartmentWiseReconciliationReport:
-                    case ReportingType.PayorWiseReconciliationReport:
-                    case ReportingType.PatientWiseReconciliationReport:
-                        List<ReconcilationReportCustomModel> reconciliationReportData =
-                            bal.GetReconciliationReport(
-                                corporateid,
-                                facilityid,
-                                selecteddate,
-                                viewtype,
-                                Convert.ToInt32(reportingId));
-                        switch (viewtype)
-                        {
-                            case "M": // Monthly View
-                                return PartialView(PartialViews.ReconcilationARMonthWise, reconciliationReportData);
+                case ReportingType.ChargeReport:
+                    List<ChargesReportCustomModel> chargeReportIP = _service.GetChargesReport(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        Convert.ToDecimal(0.00),
+                        1);
+                    List<ChargesReportCustomModel> chargeReportOP = _service.GetChargesReport(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        Convert.ToDecimal(0.00),
+                        2);
+                    List<ChargesReportCustomModel> chargeReportER = _service.GetChargesReport(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        Convert.ToDecimal(0.00),
+                        3);
+                    var chargesReportViews = new ChargesReportViews
+                    {
+                        ERChargesList = chargeReportER,
+                        IPChargesList = chargeReportIP,
+                        OPChargesList = chargeReportOP
+                    };
+                    return PartialView(PartialViews.ChargesReport, chargesReportViews);
 
-                            case "Y": // Yearly View
-                                return PartialView(PartialViews.ReconcilationARYearWise, reconciliationReportData);
+                case ReportingType.ChargeDetailReport:
+                    List<ChargesReportCustomModel> chargeDetailReportIP = _service.GetChargesDetailReport(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        Convert.ToDecimal(0.00),
+                        1,
+                        3);
+                    List<ChargesReportCustomModel> chargeDetailReportOP = _service.GetChargesDetailReport(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        Convert.ToDecimal(0.00),
+                        2,
+                        3);
+                    List<ChargesReportCustomModel> chargeDetailReportER = _service.GetChargesDetailReport(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        Convert.ToDecimal(0.00),
+                        3,
+                        3);
+                    var chargesDetailReportViews = new ChargesReportViews
+                    {
+                        ERChargesList = chargeDetailReportER,
+                        IPChargesList = chargeDetailReportIP,
+                        OPChargesList = chargeDetailReportOP
+                    };
+                    return PartialView(PartialViews.ChargesDetailReport, chargesDetailReportViews);
 
-                            default: // Weekly View
-                                return PartialView(PartialViews.ReconcilationARWeekWise, reconciliationReportData);
-                        }
+                case ReportingType.DepartmentUtilization:
+                    List<PhysicianDepartmentUtilizationCustomModel> departmentUtilizationReport =
+                        _service.GetDepartmentUtilizationReport(corporateid, fromDate, tillDate, 2, facilityid, 0, 0);
+                    return PartialView(PartialViews.DepartmentUtilization, departmentUtilizationReport);
 
-                    // ................Reconciliation Report End Here
-                    case ReportingType.CorrectionLog:
-                        List<ScrubEditTrackCustomModel> correctionLogReport = bal.GetBillEditCorrectionLogs(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate,
-                            isAll);
-                        return PartialView(PartialViews.ScrubEditTrackListReport, correctionLogReport);
+                case ReportingType.PhysicianActivityReport:
+                    List<PhysicianActivityCustomModel> physicianActivityReport =
+                        _service.GetPhysicianActivityReport(corporateid, facilityid, fromDate, tillDate, 0);
+                    return PartialView(PartialViews.PhysicianActivityReport, physicianActivityReport);
 
-                    case ReportingType.ChargeReport:
-                        List<ChargesReportCustomModel> chargeReportIP = bal.GetChargesReport(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate,
-                            Convert.ToDecimal(0.00),
-                            1);
-                        List<ChargesReportCustomModel> chargeReportOP = bal.GetChargesReport(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate,
-                            Convert.ToDecimal(0.00),
-                            2);
-                        List<ChargesReportCustomModel> chargeReportER = bal.GetChargesReport(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate,
-                            Convert.ToDecimal(0.00),
-                            3);
-                        var chargesReportViews = new ChargesReportViews
-                        {
-                            ERChargesList = chargeReportER,
-                            IPChargesList = chargeReportIP,
-                            OPChargesList = chargeReportOP
-                        };
-                        return PartialView(PartialViews.ChargesReport, chargesReportViews);
+                case ReportingType.PhysicianUtilization:
+                    List<PhysicianDepartmentUtilizationCustomModel> physicianUtilizationReport =
+                        _service.GetPhysicianUtilizationReport(corporateid, fromDate, tillDate, 1, facilityid, 0, 0);
+                    return PartialView(PartialViews.PhysicianUtilization, physicianUtilizationReport);
 
-                    case ReportingType.ChargeDetailReport:
-                        List<ChargesReportCustomModel> chargeDetailReportIP = bal.GetChargesDetailReport(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate,
-                            Convert.ToDecimal(0.00),
-                            1,
-                            3);
-                        List<ChargesReportCustomModel> chargeDetailReportOP = bal.GetChargesDetailReport(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate,
-                            Convert.ToDecimal(0.00),
-                            2,
-                            3);
-                        List<ChargesReportCustomModel> chargeDetailReportER = bal.GetChargesDetailReport(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate,
-                            Convert.ToDecimal(0.00),
-                            3,
-                            3);
-                        var chargesDetailReportViews = new ChargesReportViews
-                        {
-                            ERChargesList = chargeDetailReportER,
-                            IPChargesList = chargeDetailReportIP,
-                            OPChargesList = chargeDetailReportOP
-                        };
-                        return PartialView(PartialViews.ChargesDetailReport, chargesDetailReportViews);
+                case ReportingType.ErrorSummary:
+                    List<ScrubHeaderCustomModel> errorSummaryList =
+                        _srService.GetErrorSummaryByRuleCode(corporateid, facilityid, fromDate, tillDate);
+                    return PartialView(PartialViews.ErrorSummary, errorSummaryList);
 
-                    case ReportingType.DepartmentUtilization:
-                        List<PhysicianDepartmentUtilizationCustomModel> departmentUtilizationReport =
-                            bal.GetDepartmentUtilizationReport(corporateid, fromDate, tillDate, 2, facilityid, 0, 0);
-                        return PartialView(PartialViews.DepartmentUtilization, departmentUtilizationReport);
+                case ReportingType.ErrorDetail:
+                    List<ScrubHeaderCustomModel> errorList =
+                        _srService.GetErrorDetailByRuleCode(corporateid, facilityid, fromDate, tillDate);
+                    return PartialView(PartialViews.ErrorDetail, errorList);
 
-                    case ReportingType.PhysicianActivityReport:
-                        List<PhysicianActivityCustomModel> physicianActivityReport =
-                            bal.GetPhysicianActivityReport(corporateid, facilityid, fromDate, tillDate, 0);
-                        return PartialView(PartialViews.PhysicianActivityReport, physicianActivityReport);
+                case ReportingType.ScrubbeSummary:
+                    List<ScrubHeaderCustomModel> scrubList = _srService.GetScrubSummaryList(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate);
+                    return PartialView(PartialViews.ScrubberSummary, scrubList);
 
-                    case ReportingType.PhysicianUtilization:
-                        List<PhysicianDepartmentUtilizationCustomModel> physicianUtilizationReport =
-                            bal.GetPhysicianUtilizationReport(corporateid, fromDate, tillDate, 1, facilityid, 0, 0);
-                        return PartialView(PartialViews.PhysicianUtilization, physicianUtilizationReport);
-
-                    case ReportingType.ErrorSummary:
-                        List<ScrubHeaderCustomModel> errorSummaryList =
-                            new ScrubReportService().GetErrorSummaryByRuleCode(corporateid, facilityid, fromDate, tillDate);
-                        return PartialView(PartialViews.ErrorSummary, errorSummaryList);
-
-                    case ReportingType.ErrorDetail:
-                        List<ScrubHeaderCustomModel> errorList =
-                            new ScrubReportService().GetErrorDetailByRuleCode(corporateid, facilityid, fromDate, tillDate);
-                        return PartialView(PartialViews.ErrorDetail, errorList);
-
-                    case ReportingType.ScrubbeSummary:
-                        List<ScrubHeaderCustomModel> scrubList = new ScrubReportService().GetScrubSummaryList(
-                            corporateid,
-                            facilityid,
-                            fromDate,
-                            tillDate);
-                        return PartialView(PartialViews.ScrubberSummary, scrubList);
-
-                    case ReportingType.ClaimTransactionDetailReport:
-                        List<BillTransmissionReportCustomModel> claimtransactionDetails =
-                            bal.GetClaimTransDetails(
-                                corporateid,
-                                facilityid,
-                                fromDate,
-                                tillDate,
-                                Convert.ToInt32(viewtype));
-                        return PartialView(PartialViews.ClaimTransDetailReport, claimtransactionDetails);
-
-                    case ReportingType.DenialReport:
-                        List<DenialReportCustomModel> denialreportDetail = bal.GetDenialCodesReport(
+                case ReportingType.ClaimTransactionDetailReport:
+                    List<BillTransmissionReportCustomModel> claimtransactionDetails =
+                        _service.GetClaimTransDetails(
                             corporateid,
                             facilityid,
                             fromDate,
                             tillDate,
                             Convert.ToInt32(viewtype));
-                        return PartialView(PartialViews.DenialReport, denialreportDetail);
-                    case ReportingType.JournalEntrySupport:
-                        List<JournalEntrySupportReportCustomModel> journalEntrySupportReportDetail =
-                            bal.GetJournalEntrySupport(corporateid, facilityid, fromDate, tillDate, Convert.ToInt32(1));
-                        return PartialView(PartialViews.JournalEntrySupportReport, journalEntrySupportReportDetail);
-                }
+                    return PartialView(PartialViews.ClaimTransDetailReport, claimtransactionDetails);
 
-                List<LoginTrackingCustomModel> list = bal.GetUserLoginActivityList(fromDate, tillDateNew, useridNew);
-                return PartialView(PartialViews.UserLoginActivityView, list);
+                case ReportingType.DenialReport:
+                    List<DenialReportCustomModel> denialreportDetail = _service.GetDenialCodesReport(
+                        corporateid,
+                        facilityid,
+                        fromDate,
+                        tillDate,
+                        Convert.ToInt32(viewtype));
+                    return PartialView(PartialViews.DenialReport, denialreportDetail);
+                case ReportingType.JournalEntrySupport:
+                    List<JournalEntrySupportReportCustomModel> journalEntrySupportReportDetail =
+                        _service.GetJournalEntrySupport(corporateid, facilityid, fromDate, tillDate, Convert.ToInt32(1));
+                    return PartialView(PartialViews.JournalEntrySupportReport, journalEntrySupportReportDetail);
             }
+
+            List<LoginTrackingCustomModel> list = _service.GetUserLoginActivityList(fromDate, tillDateNew, useridNew);
+            return PartialView(PartialViews.UserLoginActivityView, list);
         }
 
         /// <summary>
@@ -666,8 +670,7 @@ namespace BillingSystem.Controllers
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
             DateTime selecteddate = date ?? Helpers.GetInvariantCultureDateTime();
-            var bal = new ReportingService();
-            List<AgingReportCustomModel> ageingReportData = bal.GetAgeingReport(
+            List<AgingReportCustomModel> ageingReportData = _service.GetAgeingReport(
                 corporateid,
                 facilityid,
                 selecteddate,
@@ -710,8 +713,7 @@ namespace BillingSystem.Controllers
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
             DateTime selecteddate = date ?? Helpers.GetInvariantCultureDateTime();
-            var bal = new ReportingService();
-            List<ReconcilationReportCustomModel> reconciliationReportData = bal.GetReconciliationReport(
+            List<ReconcilationReportCustomModel> reconciliationReportData = _service.GetReconciliationReport(
                 corporateid,
                 facilityid,
                 selecteddate,
@@ -739,9 +741,9 @@ namespace BillingSystem.Controllers
         // {
         // var facilityId = Helpers.GetDefaultFacilityId();
         // var corporateId = Helpers.GetSysAdminCorporateID();
-        // using (var bal = new EncounterBal())
+        // using (var _service = new EncounterBal())
         // {
-        // var list = bal.GetUnclosedEncounters(facilityId, corporateId);
+        // var list = _service.GetUnclosedEncounters(facilityId, corporateId);
         // return PartialView(PartialViews.UnclosedEncountersView, list);
         // }
         // }
@@ -768,11 +770,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetRevenueReportByPatientId(int patientId)
         {
-            using (var bal = new ReportingService())
-            {
-                List<RevenueForecast> revenueReport = bal.GetRevenueForecastFacilityByPatient(patientId);
-                return PartialView(PartialViews.RevenueForecastFacilityViewByPatient, revenueReport);
-            }
+            List<RevenueForecast> revenueReport = _service.GetRevenueForecastFacilityByPatient(patientId);
+            return PartialView(PartialViews.RevenueForecastFacilityViewByPatient, revenueReport);
         }
 
         /// <summary>
@@ -788,8 +787,7 @@ namespace BillingSystem.Controllers
         {
             BillHeaderCustomModel billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
             int facilityId = billheaderObj.FacilityID ?? Helpers.GetDefaultFacilityId();
-            var facilityBal = new FacilityService();
-            Facility facilityObj = facilityBal.GetFacilityById(facilityId);
+            var facilityObj = _fService.GetFacilityById(facilityId);
 
             int patientId = billheaderObj.PatientID ?? 0;
             PatientInfo patientinfoObj = _piService.GetPatientInfoById(patientId);
@@ -826,8 +824,7 @@ namespace BillingSystem.Controllers
 
             BillHeaderCustomModel billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
             int facilityId = billheaderObj.FacilityID ?? Helpers.GetDefaultFacilityId();
-            var facilityBal = new FacilityService();
-            Facility facilityObj = facilityBal.GetFacilityById(facilityId);
+            var facilityObj = _fService.GetFacilityById(facilityId);
 
             int patientId = billheaderObj.PatientID ?? 0;
             PatientInfo patientinfoObj = _piService.GetPatientInfoById(patientId);
@@ -869,8 +866,7 @@ namespace BillingSystem.Controllers
         {
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingService();
-            List<LoginTrackingCustomModel> userLoginList = bal.GetUserLoginActivityDetailList(userid, tillDate);
+            var userLoginList = _service.GetUserLoginActivityDetailList(userid, tillDate);
             return PartialView(PartialViews.UserLoginActivityView, userLoginList);
         }
 
@@ -891,8 +887,7 @@ namespace BillingSystem.Controllers
             int corporateid = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
             DateTime selecteddate = date ?? Helpers.GetInvariantCultureDateTime();
-            var bal = new ReportingService();
-            List<AgingReportCustomModel> ageingReportData = bal.GetPatientAgeingPayorWise(
+            var ageingReportData = _service.GetPatientAgeingPayorWise(
                 corporateid,
                 facilityid,
                 selecteddate,
@@ -929,7 +924,6 @@ namespace BillingSystem.Controllers
             int payorId)
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
@@ -938,21 +932,21 @@ namespace BillingSystem.Controllers
             switch (reportingType)
             {
                 case ReportingType.ChargeReport:
-                    List<ChargesReportCustomModel> chargeReportIP = bal.GetChargesReport(
+                    List<ChargesReportCustomModel> chargeReportIP = _service.GetChargesReport(
                         corporateId,
                         facilityId,
                         fromDate,
                         tillDate,
                         departmentnumber,
                         1);
-                    List<ChargesReportCustomModel> chargeReportOP = bal.GetChargesReport(
+                    List<ChargesReportCustomModel> chargeReportOP = _service.GetChargesReport(
                         corporateId,
                         facilityId,
                         fromDate,
                         tillDate,
                         departmentnumber,
                         2);
-                    List<ChargesReportCustomModel> chargeReportER = bal.GetChargesReport(
+                    List<ChargesReportCustomModel> chargeReportER = _service.GetChargesReport(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -968,7 +962,7 @@ namespace BillingSystem.Controllers
                     return PartialView(PartialViews.ChargesReport, chargesReportViews);
 
                 case ReportingType.ChargeDetailReport:
-                    List<ChargesReportCustomModel> chargeDetailReportIP = bal.GetChargesDetailReport(
+                    List<ChargesReportCustomModel> chargeDetailReportIP = _service.GetChargesDetailReport(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -976,7 +970,7 @@ namespace BillingSystem.Controllers
                         departmentnumber,
                         1,
                         payorId);
-                    List<ChargesReportCustomModel> chargeDetailReportOP = bal.GetChargesDetailReport(
+                    List<ChargesReportCustomModel> chargeDetailReportOP = _service.GetChargesDetailReport(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -984,7 +978,7 @@ namespace BillingSystem.Controllers
                         departmentnumber,
                         2,
                         payorId);
-                    List<ChargesReportCustomModel> chargeDetailReportER = bal.GetChargesDetailReport(
+                    List<ChargesReportCustomModel> chargeDetailReportER = _service.GetChargesDetailReport(
                         corporateId,
                         facilityId,
                         fromDate,
@@ -1034,27 +1028,24 @@ namespace BillingSystem.Controllers
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
             int corporateId = Helpers.GetSysAdminCorporateID();
-            using (var bal = new ReportingService())
+            switch (reportingType)
             {
-                switch (reportingType)
-                {
-                    case ReportingType.PhysicianActivityReport:
-                        List<PhysicianActivityCustomModel> physicianActivityReport =
-                            bal.GetPhysicianActivityReport(corporateId, facilityId, fromDate, tillDate, physicianId);
-                        return PartialView(PartialViews.PhysicianActivityReport, physicianActivityReport);
+                case ReportingType.PhysicianActivityReport:
+                    List<PhysicianActivityCustomModel> physicianActivityReport =
+                        _service.GetPhysicianActivityReport(corporateId, facilityId, fromDate, tillDate, physicianId);
+                    return PartialView(PartialViews.PhysicianActivityReport, physicianActivityReport);
 
-                    case ReportingType.PhysicianUtilization:
-                        List<PhysicianDepartmentUtilizationCustomModel> physicianUtilizationReport =
-                            bal.GetPhysicianUtilizationReport(
-                                corporateId,
-                                fromDate,
-                                tillDate,
-                                1,
-                                facilityId,
-                                physicianId,
-                                0);
-                        return PartialView(PartialViews.PhysicianUtilization, physicianUtilizationReport);
-                }
+                case ReportingType.PhysicianUtilization:
+                    List<PhysicianDepartmentUtilizationCustomModel> physicianUtilizationReport =
+                        _service.GetPhysicianUtilizationReport(
+                            corporateId,
+                            fromDate,
+                            tillDate,
+                            1,
+                            facilityId,
+                            physicianId,
+                            0);
+                    return PartialView(PartialViews.PhysicianUtilization, physicianUtilizationReport);
             }
 
             return Content("There is error while sending request to Server! Please try some time.");
@@ -1085,9 +1076,7 @@ namespace BillingSystem.Controllers
             int departmentId)
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new ReportingService();
-            List<PhysicianDepartmentUtilizationCustomModel> departmentUtilization =
-                bal.GetDepartmentUtilizationReport(corporateId, fromDate, tillDate, 2, facilityId, 0, departmentId);
+            var departmentUtilization = _service.GetDepartmentUtilizationReport(corporateId, fromDate, tillDate, 2, facilityId, 0, departmentId);
             return PartialView(PartialViews.DepartmentUtilization, departmentUtilization);
         }
 
@@ -1109,8 +1098,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFutureChargeReport(DateTime? fromDate, DateTime? tillDate, int facilityId)
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new ReportingService();
-            List<FutureOpenOrderCustomModel> futureChargeReport = bal.GetFutureChargeReport(
+            var futureChargeReport = _service.GetFutureChargeReport(
                 corporateId,
                 fromDate,
                 tillDate,
@@ -1130,10 +1118,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPhysiciansByCorporateAndFacility(int facilityId)
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
-            var bal = new PhysicianService();
-
-            // Need to change later and get the list by type.
-            List<Physician> physicianList = bal.GetPhysicianByCorporateIdandfacilityId(corporateId, facilityId);
+            List<Physician> physicianList = _phService.GetPhysicianByCorporateIdandfacilityId(corporateId, facilityId);
             return Json(physicianList);
         }
 
@@ -1162,35 +1147,31 @@ namespace BillingSystem.Controllers
             int facilityId)
         {
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingTypeId);
-            using (var bal = new ReportingService())
+            int corporateId = Helpers.GetSysAdminCorporateID();
+            facilityId = facilityId != 0 ? facilityId : Helpers.GetDefaultFacilityId();
+            switch (reportingType)
             {
-                int corporateId = Helpers.GetSysAdminCorporateID();
-                facilityId = facilityId != 0 ? facilityId : Helpers.GetDefaultFacilityId();
-                var scrubReportBal = new ScrubReportService();
-                switch (reportingType)
-                {
-                    case ReportingType.ScrubbeSummary:
+                case ReportingType.ScrubbeSummary:
 
-                        List<ScrubHeaderCustomModel> scrubList = scrubReportBal.GetScrubSummaryList(
-                            corporateId,
-                            facilityId,
-                            fromDate,
-                            tillDate);
-                        return PartialView(PartialViews.ScrubberSummary, scrubList);
+                    List<ScrubHeaderCustomModel> scrubList = _srService.GetScrubSummaryList(
+                        corporateId,
+                        facilityId,
+                        fromDate,
+                        tillDate);
+                    return PartialView(PartialViews.ScrubberSummary, scrubList);
 
-                    case ReportingType.ErrorDetail:
-                        List<ScrubHeaderCustomModel> errorList = scrubReportBal.GetErrorDetailByRuleCode(
-                            corporateId,
-                            facilityId,
-                            fromDate,
-                            tillDate);
-                        return PartialView(PartialViews.ErrorDetail, errorList);
+                case ReportingType.ErrorDetail:
+                    List<ScrubHeaderCustomModel> errorList = _srService.GetErrorDetailByRuleCode(
+                        corporateId,
+                        facilityId,
+                        fromDate,
+                        tillDate);
+                    return PartialView(PartialViews.ErrorDetail, errorList);
 
-                    case ReportingType.ErrorSummary:
-                        List<ScrubHeaderCustomModel> errorSummaryList =
-                            scrubReportBal.GetErrorSummaryByRuleCode(corporateId, facilityId, fromDate, tillDate);
-                        return PartialView(PartialViews.ErrorSummary, errorSummaryList);
-                }
+                case ReportingType.ErrorSummary:
+                    List<ScrubHeaderCustomModel> errorSummaryList =
+                        _srService.GetErrorSummaryByRuleCode(corporateId, facilityId, fromDate, tillDate);
+                    return PartialView(PartialViews.ErrorSummary, errorSummaryList);
             }
 
             return Content("There is error while sending request to Server! Please try some time.");
@@ -1241,7 +1222,7 @@ namespace BillingSystem.Controllers
             var list = new List<DropdownListData>();
             int corporateId = Helpers.GetDefaultCorporateId();
 
-            // var usersList = bal.GetUsersByCorporateId(corporateId);
+            // var usersList = _service.GetUsersByCorporateId(corporateId);
             List<Users> usersList = _uService.GetUsersByCorporateandFacilityId(corporateId, facilityId);
             list.AddRange(
                 usersList.Select(
@@ -1359,7 +1340,6 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingService();
             var reportingType = (ReportingType)Enum.Parse(typeof(ReportingType), reportingId);
             var rpTitle = Helpers.ReportingTitleView(Convert.ToString(reportingId));
             try
@@ -1376,7 +1356,7 @@ namespace BillingSystem.Controllers
                 {
                     case ReportingType.ClaimTransactionDetailReport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "BillTransmissionReport.rdlc");
-                        var claimtransactionDetails = bal.GetClaimTransDetails(
+                        var claimtransactionDetails = _service.GetClaimTransDetails(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1386,7 +1366,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.PayorWiseAgeingReport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "PayorWiseAgeing.rdlc");
-                        var dataset = bal.GetAgeingReport(
+                        var dataset = _service.GetAgeingReport(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1396,7 +1376,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.PatientWiseAgeingReport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "PatientWiseAgeing.rdlc");
-                        var patientdataset = bal.GetAgeingReport(
+                        var patientdataset = _service.GetAgeingReport(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1406,7 +1386,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.CorrectionLog:
                         path = Path.Combine(Server.MapPath("~/Reports"), "CorrectionLog.rdlc");
-                        var correctionLogReport = bal.GetBillEditCorrectionLogs(
+                        var correctionLogReport = _service.GetBillEditCorrectionLogs(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1416,7 +1396,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ErrorSummary:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ErrorSummary.rdlc");
-                        var scrubList = new ScrubReportService().GetErrorSummaryByRuleCode(
+                        var scrubList = _srService.GetErrorSummaryByRuleCode(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1425,7 +1405,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ErrorDetail:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ErrorDetail.rdlc");
-                        var scrubErrorDetailList = new ScrubReportService().GetErrorDetailByRuleCode(
+                        var scrubErrorDetailList = _srService.GetErrorDetailByRuleCode(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1436,7 +1416,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ScrubbeSummary:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ScrubSummary.rdlc");
-                        var scrubbersummary = new ScrubReportService().GetScrubSummaryList(
+                        var scrubbersummary = _srService.GetScrubSummaryList(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1446,7 +1426,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.DenialReport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "DenialCode.rdlc");
-                        var denialreportDetail = bal.GetDenialCodesReport(
+                        var denialreportDetail = _service.GetDenialCodesReport(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1456,7 +1436,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ChargeDetailReport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ChargesDetailReport.rdlc");
-                        List<ChargesReportCustomModel> chargeDetailReportIP = bal.GetChargesDetailReport(
+                        List<ChargesReportCustomModel> chargeDetailReportIP = _service.GetChargesDetailReport(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1464,7 +1444,7 @@ namespace BillingSystem.Controllers
                             Convert.ToDecimal(userId),
                             1,
                             Convert.ToInt32(viewtype));
-                        List<ChargesReportCustomModel> chargeDetailReportOP = bal.GetChargesDetailReport(
+                        List<ChargesReportCustomModel> chargeDetailReportOP = _service.GetChargesDetailReport(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1472,7 +1452,7 @@ namespace BillingSystem.Controllers
                             Convert.ToDecimal(userId),
                             2,
                             Convert.ToInt32(viewtype));
-                        List<ChargesReportCustomModel> chargeDetailReportER = bal.GetChargesDetailReport(
+                        List<ChargesReportCustomModel> chargeDetailReportER = _service.GetChargesDetailReport(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1492,21 +1472,21 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.ChargeReport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "ChargesReport.rdlc");
-                        List<ChargesReportCustomModel> chargeReportIP = bal.GetChargesReport(
+                        List<ChargesReportCustomModel> chargeReportIP = _service.GetChargesReport(
                             corporateId,
                             facilityId,
                             fromDate,
                             tillDate,
                             Convert.ToDecimal(userId),
                             1);
-                        List<ChargesReportCustomModel> chargeReportOP = bal.GetChargesReport(
+                        List<ChargesReportCustomModel> chargeReportOP = _service.GetChargesReport(
                             corporateId,
                             facilityId,
                             fromDate,
                             tillDate,
                             Convert.ToDecimal(userId),
                             2);
-                        List<ChargesReportCustomModel> chargeReportER = bal.GetChargesReport(
+                        List<ChargesReportCustomModel> chargeReportER = _service.GetChargesReport(
                             corporateId,
                             facilityId,
                             fromDate,
@@ -1523,7 +1503,7 @@ namespace BillingSystem.Controllers
 
                     case ReportingType.PhysicianActivityReport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "PhysicianActivityReport.rdlc");
-                        var physicianActivityReport = bal.GetPhysicianActivityReport(
+                        var physicianActivityReport = _service.GetPhysicianActivityReport(
                             corporateId,
                             Convert.ToInt32(userId),
                             fromDate,
@@ -1534,7 +1514,7 @@ namespace BillingSystem.Controllers
                     case ReportingType.JournalEntrySupport:
                         path = Path.Combine(Server.MapPath("~/Reports"), "JournalEntrySupportChargesAccReport.rdlc");
                         List<JournalEntrySupportReportCustomModel> journalEntrySupportReportDetail =
-                            bal.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, Convert.ToInt32(1));
+                            _service.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, Convert.ToInt32(1));
                         ReportDataSourceOrderDetail = new ReportDataSource("DataSet1", journalEntrySupportReportDetail);
                         break;
                     case ReportingType.PayorWiseReconciliationReport:
@@ -1544,7 +1524,7 @@ namespace BillingSystem.Controllers
                                 Server.MapPath("~/Reports"),
                                 "PayorWiseReconciliationReportMonthly.rdlc");
                             List<ReconcilationReportCustomModel> reconciliationReportData =
-                                bal.GetReconciliationReport(
+                                _service.GetReconciliationReport(
                                     corporateId,
                                     facilityId,
                                     fromDate,
@@ -1556,7 +1536,7 @@ namespace BillingSystem.Controllers
                         {
                             path = Path.Combine(Server.MapPath("~/Reports"), "PayorWiseReconciliationReport.rdlc");
                             List<ReconcilationReportCustomModel> reconciliationReportData =
-                                bal.GetReconciliationReport(
+                                _service.GetReconciliationReport(
                                     corporateId,
                                     facilityId,
                                     fromDate,
@@ -1570,7 +1550,7 @@ namespace BillingSystem.Controllers
                                 Server.MapPath("~/Reports"),
                                 "PatientWiseReconciliationReportWeekly.rdlc");
                             List<ReconcilationReportCustomModel> reconciliationPatinetReportDataW =
-                                bal.GetReconciliationReport_Weekly(
+                                _service.GetReconciliationReport_Weekly(
                                     corporateId,
                                     facilityId,
                                     fromDate,
@@ -1588,7 +1568,7 @@ namespace BillingSystem.Controllers
                                 Server.MapPath("~/Reports"),
                                 "PatientWiseReconciliationReportMonthly.rdlc");
                             List<ReconcilationReportCustomModel> reconciliationPatinetReportDataM =
-                                bal.GetReconciliationReport_Monthly(
+                                _service.GetReconciliationReport_Monthly(
                                     corporateId,
                                     facilityId,
                                     fromDate,
@@ -1602,7 +1582,7 @@ namespace BillingSystem.Controllers
                         {
                             path = Path.Combine(Server.MapPath("~/Reports"), "PatientWiseReconciliationReport.rdlc");
                             List<ReconcilationReportCustomModel> reconciliationPatinetReportDataY =
-                                bal.GetReconciliationReport(
+                                _service.GetReconciliationReport(
                                     corporateId,
                                     facilityId,
                                     fromDate,
@@ -1618,7 +1598,7 @@ namespace BillingSystem.Controllers
                                 Server.MapPath("~/Reports"),
                                 "PatientWiseReconciliationReportWeekly.rdlc");
                             List<ReconcilationReportCustomModel> reconciliationPatinetReportDataW =
-                                bal.GetReconciliationReport_Weekly(
+                                _service.GetReconciliationReport_Weekly(
                                     corporateId,
                                     facilityId,
                                     fromDate,
@@ -1631,7 +1611,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.PasswordDisablesLog:
                         path = Path.Combine(Server.MapPath("~/Reports"), "PasswordDisableLog.rdlc");
-                        List<AuditLogCustomModel> pwdDisabledLogs = bal.GetPasswordDisableLog_SP(
+                        List<AuditLogCustomModel> pwdDisabledLogs = _service.GetPasswordDisableLog_SP(
                             fromDate,
                             Convert.ToDateTime(tillDate),
                             isAll,
@@ -1641,7 +1621,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.PasswordChangeLog:
                         path = Path.Combine(Server.MapPath("~/Reports"), "PasswordChangeLog.rdlc");
-                        List<AuditLogCustomModel> passwordChangeLogs = bal.GetPasswordChangeLog_SP(
+                        List<AuditLogCustomModel> passwordChangeLogs = _service.GetPasswordChangeLog_SP(
                             fromDate,
                             Convert.ToDateTime(tillDate),
                             isAll,
@@ -1651,7 +1631,7 @@ namespace BillingSystem.Controllers
                         break;
                     case ReportingType.UserLoginActivity:
                         path = Path.Combine(Server.MapPath("~/Reports"), "UserActivityLog.rdlc");
-                        List<LoginTrackingCustomModel> userLoginList = bal.GetUserLoginActivityList_SP(
+                        List<LoginTrackingCustomModel> userLoginList = _service.GetUserLoginActivityList_SP(
                             fromDate,
                             tillDate,
                             Convert.ToInt32(userId),
@@ -1662,7 +1642,7 @@ namespace BillingSystem.Controllers
                     case ReportingType.PhysicianUtilization:
                         path = Path.Combine(Server.MapPath("~/Reports"), "PhysicianUtilizationReport.rdlc");
                         List<PhysicianDepartmentUtilizationCustomModel> physicianUtilizationReport =
-                            bal.GetPhysicianUtilizationReport(
+                            _service.GetPhysicianUtilizationReport(
                                 corporateId,
                                 fromDate,
                                 tillDate,
@@ -1675,7 +1655,7 @@ namespace BillingSystem.Controllers
                     case ReportingType.DepartmentUtilization:
                         path = Path.Combine(Server.MapPath("~/Reports"), "PhysicianUtilizationReport.rdlc");
                         List<PhysicianDepartmentUtilizationCustomModel> departmentUtilization =
-                            bal.GetDepartmentUtilizationReport(
+                            _service.GetDepartmentUtilizationReport(
                                 corporateId,
                                 fromDate,
                                 tillDate,
@@ -1887,11 +1867,8 @@ namespace BillingSystem.Controllers
         {
             int fID = Helpers.GetDefaultFacilityId();
             int cID = Helpers.GetSysAdminCorporateID();
-            using (var xmlbal = new XmlReportingService())
-            {
-                List<XmlReportingBatchReport> listToReturn = xmlbal.GetBatchReort(cID, fID);
-                return PartialView(PartialViews.XMLBillingBatchReport, listToReturn);
-            }
+            List<XmlReportingBatchReport> listToReturn = _xrService.GetBatchReort(cID, fID);
+            return PartialView(PartialViews.XMLBillingBatchReport, listToReturn);
         }
 
         /// <summary>
@@ -1920,17 +1897,14 @@ namespace BillingSystem.Controllers
         {
             int fID = Helpers.GetDefaultFacilityId();
             int cID = Helpers.GetSysAdminCorporateID();
-            using (var xmlbal = new XmlReportingService())
-            {
-                List<XmlReportingInitialClaimErrorReport> listToReturn = xmlbal.GetInitialClaimErrorReport(
-                    cID,
-                    fID,
-                    startdate,
-                    enddate,
-                    encType,
-                    clinicalId);
-                return PartialView(PartialViews.XMLBillingInitialClaimErrorReport, listToReturn);
-            }
+            List<XmlReportingInitialClaimErrorReport> listToReturn = _xrService.GetInitialClaimErrorReport(
+                cID,
+                fID,
+                startdate,
+                enddate,
+                encType,
+                clinicalId);
+            return PartialView(PartialViews.XMLBillingInitialClaimErrorReport, listToReturn);
         }
 
         #endregion XmlReportingReports
@@ -1956,8 +1930,7 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingService();
-            List<AuditLogCustomModel> passwordChangeLogs = bal.GetPasswordChangeLog_SP(
+            List<AuditLogCustomModel> passwordChangeLogs = _service.GetPasswordChangeLog_SP(
                 fromDate,
                 tillDate,
                 isAll,
@@ -1990,11 +1963,10 @@ namespace BillingSystem.Controllers
             int facilityid = Helpers.GetDefaultFacilityId();
 
             // corporateId = Helpers.GetDefaultCorporateId();
-            var bal = new ReportingService();
             int useridnotnull = userId == null ? 0 : Convert.ToInt32(userId);
 
             corporateId = Helpers.GetDefaultCorporateId();
-            List<AuditLogCustomModel> pwdDisabledLogs = bal.GetPasswordDisableLog_SP(
+            List<AuditLogCustomModel> pwdDisabledLogs = _service.GetPasswordDisableLog_SP(
                 fromDate,
                 tillDate,
                 isAll,
@@ -2025,14 +1997,13 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingService();
             if (isAll)
             {
                 userId = 0;
             }
 
             corporateId = Helpers.GetDefaultCorporateId();
-            List<LoginActivityReportCustomModel> userLoginList = bal.GetLoginTimeDayNightShift(
+            List<LoginActivityReportCustomModel> userLoginList = _service.GetLoginTimeDayNightShift(
                 corporateId,
                 facilityId,
                 fromDate,
@@ -2061,13 +2032,11 @@ namespace BillingSystem.Controllers
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
-            var bal = new ReportingService();
-
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
                                            ? Convert.ToDecimal(departmentNumber)
                                            : Convert.ToDecimal(0.00);
 
-            List<ChargesReportCustomModel> chargeDetailReportIP = bal.GetChargesDetailReport(
+            List<ChargesReportCustomModel> chargeDetailReportIP = _service.GetChargesDetailReport(
                 corporateId,
                 facilityId,
                 fromDate,
@@ -2096,10 +2065,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortCollectionLogtGrid(DateTime fromDate, DateTime tillDate, bool isAll)
         {
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
-            List<ScrubEditTrackCustomModel> correctionLogReport = bal.GetBillEditCorrectionLogs(
+            List<ScrubEditTrackCustomModel> correctionLogReport = _service.GetBillEditCorrectionLogs(
                 corporateId,
                 facilityId,
                 fromDate,
@@ -2125,11 +2093,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortClaimTransReportGrid(DateTime fromDate, DateTime tillDate, int displayby)
         {
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
-            List<BillTransmissionReportCustomModel> claimtransactionDetails = bal.GetClaimTransDetails(
+            List<BillTransmissionReportCustomModel> claimtransactionDetails = _service.GetClaimTransDetails(
                 corporateId,
                 facilityId,
                 fromDate,
@@ -2152,11 +2119,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortRevenuForcastReportGrid(DateTime fromDate, DateTime tillDate)
         {
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
-            List<RevenueForecast> revenueReport = bal.GetRevenueForecastFacility(
+            List<RevenueForecast> revenueReport = _service.GetRevenueForecastFacility(
                 corporateId,
                 facilityId,
                 fromDate,
@@ -2181,12 +2147,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult JournalEntrySupportReportGrid(DateTime fromDate, DateTime tillDate, int displayby)
         {
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
 
             List<JournalEntrySupportReportCustomModel> journalEntrySupportReportDetail =
-                bal.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
+                _service.GetJournalEntrySupport(corporateId, facilityId, fromDate, tillDate, displayby);
             return PartialView(PartialViews.JournalEntrySupportReport, journalEntrySupportReportDetail);
         }
 
@@ -2201,8 +2166,7 @@ namespace BillingSystem.Controllers
         {
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityid = Helpers.GetDefaultFacilityId();
-            var bal = new ReportingService();
-            List<DenialReportCustomModel> denialreportDetail = bal.GetDenialCodesReport(
+            List<DenialReportCustomModel> denialreportDetail = _service.GetDenialCodesReport(
                 corporateId,
                 facilityid,
                 fromDate,
@@ -2225,13 +2189,12 @@ namespace BillingSystem.Controllers
             string departmentNumber,
             int payorId)
         {
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
                                            ? Convert.ToDecimal(departmentNumber)
                                            : Convert.ToDecimal(0.00);
-            List<ChargesReportCustomModel> chargeDetailReportIP = bal.GetChargesDetailReport(
+            List<ChargesReportCustomModel> chargeDetailReportIP = _service.GetChargesDetailReport(
                 corporateId,
                 facilityId,
                 fromDate,
@@ -2256,14 +2219,13 @@ namespace BillingSystem.Controllers
             string departmentNumber,
             int payorId)
         {
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
                                            ? Convert.ToDecimal(departmentNumber)
                                            : Convert.ToDecimal(0.00);
 
-            List<ChargesReportCustomModel> chargeDetailReportOP = bal.GetChargesDetailReport(
+            List<ChargesReportCustomModel> chargeDetailReportOP = _service.GetChargesDetailReport(
                 corporateId,
                 facilityId,
                 fromDate,
@@ -2288,14 +2250,13 @@ namespace BillingSystem.Controllers
             string departmentNumber,
             int payorId)
         {
-            var bal = new ReportingService();
             int corporateId = Helpers.GetSysAdminCorporateID();
             int facilityId = Helpers.GetDefaultFacilityId();
             decimal departmentnumber = !string.IsNullOrEmpty(departmentNumber)
                                            ? Convert.ToDecimal(departmentNumber)
                                            : Convert.ToDecimal(0.00);
 
-            List<ChargesReportCustomModel> chargeDetailReportER = bal.GetChargesDetailReport(
+            List<ChargesReportCustomModel> chargeDetailReportER = _service.GetChargesDetailReport(
                 corporateId,
                 facilityId,
                 fromDate,

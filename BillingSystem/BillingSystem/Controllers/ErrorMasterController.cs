@@ -3,11 +3,19 @@ using BillingSystem.Common;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ErrorMasterController : BaseController
     {
+        private readonly IErrorMasterService _service;
+
+        public ErrorMasterController(IErrorMasterService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the ErrorMaster View in the Model ErrorMaster such as ErrorMasterList, list of countries etc.
         /// </summary>
@@ -16,8 +24,6 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the ErrorMaster BAL object
-            var errorMasterBal = new ErrorMasterService();
 
             var cId = Helpers.GetDefaultCorporateId();
             var fId = Helpers.GetDefaultFacilityId();
@@ -25,7 +31,7 @@ namespace BillingSystem.Controllers
             //Intialize the View Model i.e. ErrorMasterView which is binded to Main View Index.cshtml under ErrorMaster
             var errorMasterView = new ErrorMasterView
             {
-                ErrorMasterList = errorMasterBal.GetErrorListByCorporateAndFacilityId(cId, fId, false),
+                ErrorMasterList = _service.GetErrorListByCorporateAndFacilityId(cId, fId, false),
                 CurrentErrorMaster = new ErrorMaster { IsActive = true }
             };
 
@@ -42,15 +48,11 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindErrorMasterList(bool? showInActive)
         {
-            //Initialize the ErrorMaster BAL object
-            using (var bal = new ErrorMasterService())
-            {
-                //Get the facilities list
-                var errorMasterList = bal.GetErrorListByCorporateAndFacilityId(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId(), showInActive);
+            //Get the facilities list
+            var errorMasterList = _service.GetErrorListByCorporateAndFacilityId(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId(), showInActive);
 
-                //Pass the ActionResult with List of ErrorMasterViewModel object to Partial View ErrorMasterList
-                return PartialView(PartialViews.ErrorMasterList, errorMasterList);
-            }
+            //Pass the ActionResult with List of ErrorMasterViewModel object to Partial View ErrorMasterList
+            return PartialView(PartialViews.ErrorMasterList, errorMasterList);
         }
 
         /// <summary>
@@ -69,25 +71,22 @@ namespace BillingSystem.Controllers
             //Check if ErrorMasterViewModel 
             if (model != null)
             {
-                using (var errorMasterBal = new ErrorMasterService())
+                if (model.ErrorMasterID > 0)
                 {
-                    if (model.ErrorMasterID > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                        var errorMasterobj = errorMasterBal.GetErrorMasterById(model.ErrorMasterID);
-                        model.CreatedBy = errorMasterobj.CreatedBy;
-                        model.CreatedDate = errorMasterobj.CreatedDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-                    //Call the AddErrorMaster Method to Add / Update current ErrorMaster
-                    newId = errorMasterBal.AddUptdateErrorMaster(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                    var errorMasterobj = _service.GetErrorMasterById(model.ErrorMasterID);
+                    model.CreatedBy = errorMasterobj.CreatedBy;
+                    model.CreatedDate = errorMasterobj.CreatedDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+
+                //Call the AddErrorMaster Method to Add / Update current ErrorMaster
+                newId = _service.AddUptdateErrorMaster(model);
             }
             return Json(newId);
         }
@@ -99,14 +98,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetErrorMaster(int ErrorMasterID)
         {
-            using (var errorMasterBal = new ErrorMasterService())
-            {
-                //Call the AddErrorMaster Method to Add / Update current ErrorMaster
-                var currentErrorMaster = errorMasterBal.GetErrorMasterById(ErrorMasterID);
+            //Call the AddErrorMaster Method to Add / Update current ErrorMaster
+            var currentErrorMaster = _service.GetErrorMasterById(ErrorMasterID);
 
-                //Pass the ActionResult with the current ErrorMasterViewModel object as model to PartialView ErrorMasterAddEdit
-                return PartialView(PartialViews.ErrorMasterAddEdit, currentErrorMaster);
-            }
+            //Pass the ActionResult with the current ErrorMasterViewModel object as model to PartialView ErrorMasterAddEdit
+            return PartialView(PartialViews.ErrorMasterAddEdit, currentErrorMaster);
         }
 
         /// <summary>
@@ -116,24 +112,20 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteErrorMaster(int ErrorMasterID)
         {
-            using (var bal = new ErrorMasterService())
+            var currentErrorMaster = _service.GetErrorMasterById(ErrorMasterID);
+
+            //Check If ErrorMaster model is not null
+            if (currentErrorMaster != null)
             {
-                //Get ErrorMaster model object by current ErrorMaster ID
-                var currentErrorMaster = bal.GetErrorMasterById(ErrorMasterID);
+                currentErrorMaster.IsActive = false;
+                currentErrorMaster.ModifiedBy = Helpers.GetLoggedInUserId();
+                currentErrorMaster.ModifiedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If ErrorMaster model is not null
-                if (currentErrorMaster != null)
-                {
-                    currentErrorMaster.IsActive = false;
-                    currentErrorMaster.ModifiedBy = Helpers.GetLoggedInUserId();
-                    currentErrorMaster.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                //Update Operation of current ErrorMaster
+                var result = _service.AddUptdateErrorMaster(currentErrorMaster);
 
-                    //Update Operation of current ErrorMaster
-                    var result = bal.AddUptdateErrorMaster(currentErrorMaster);
-
-                    //return deleted ID of current ErrorMaster as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current ErrorMaster as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             //Return the Json result as Action Result back JSON Call Success
@@ -160,14 +152,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDenialCodeById(int ErrorMasterID)
         {
-            using (var errorMasterBal = new ErrorMasterService())
-            {
-                //Call the AddErrorMaster Method to Add / Update current ErrorMaster
-                var currentErrorMaster = errorMasterBal.GetErrorMasterById(ErrorMasterID);
-
-                //Pass the ActionResult with the current ErrorMasterViewModel object as model to PartialView ErrorMasterAddEdit
-                return Json(currentErrorMaster, JsonRequestBehavior.AllowGet);
-            }
+            var currentErrorMaster = _service.GetErrorMasterById(ErrorMasterID);
+            return Json(currentErrorMaster, JsonRequestBehavior.AllowGet);
         }
     }
 }

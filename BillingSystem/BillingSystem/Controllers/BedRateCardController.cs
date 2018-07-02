@@ -17,11 +17,18 @@ namespace BillingSystem.Controllers
     public class BedRateCardController : BaseController
     {
         private readonly IBedRateCardService _service;
+        private readonly IServiceCodeService _scService;
+        private readonly IFacilityService _fService;
+        private readonly IGlobalCodeService _gService;
 
-        public BedRateCardController(IBedRateCardService service)
+        public BedRateCardController(IBedRateCardService service, IServiceCodeService scService, IFacilityService fService, IGlobalCodeService gService)
         {
             _service = service;
+            _scService = scService;
+            _fService = fService;
+            _gService = gService;
         }
+
 
         // GET: /BedRateCard/
 
@@ -160,20 +167,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetServiceCodeDetailById(int serviceCodeId)
         {
-            using (var bal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
-            {
-                var result = bal.GetServiceCodeById(serviceCodeId);
+                var result = _scService.GetServiceCodeById(serviceCodeId);
                 return Json(result);
-            }
         }
 
 
         public JsonResult GetServiceCodesList()
         {
             var list = new List<DropdownListData>();
-            using (var sBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber))
-            {
-                var sc = sBal.GetServiceCodesCustomModel();
+                var sc = _scService.GetServiceCodesCustomModel(Helpers.DefaultServiceCodeTableNumber);
                 if (sc.Count > 0)
                 {
                     list.AddRange(sc.Select(item => new DropdownListData
@@ -186,14 +188,12 @@ namespace BillingSystem.Controllers
                 }
                 return Json(list, JsonRequestBehavior.AllowGet);
             }
-        }
 
         public ActionResult GetFacilitiesbyCorporate()
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
             var finalList = new List<DropdownListData>();
-            var bal = new FacilityService();
-            var list = bal.GetFacilitiesByCorporateId(corporateid);
+            var list = _fService.GetFacilitiesByCorporateId(corporateid);
             if (list.Count > 0)
             {
                 var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
@@ -216,8 +216,7 @@ namespace BillingSystem.Controllers
             var categories = new List<string> { "1001", "18", };
             List<DropdownListData> list;
             var corporateid = Helpers.GetSysAdminCorporateID();
-            using (var bal = new GlobalCodeService())
-                list = bal.GetListByCategoriesRange(categories);
+                list = _gService.GetListByCategoriesRange(categories);
 
             //****Bind facility
             //var finalList = new List<DropdownListData>();

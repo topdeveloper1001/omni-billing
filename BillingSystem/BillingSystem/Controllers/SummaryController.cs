@@ -6,9 +6,8 @@ using System.Linq;
 using System.Web.Hosting;
 using System.Web.Http;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
+using AutoMapper;
 using BillingSystem.Bal.Interfaces;
-using BillingSystem.Bal.Mapper;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
@@ -28,57 +27,44 @@ namespace BillingSystem.Controllers
         private readonly IEncounterService _eService;
         private readonly ICPTCodesService _cptService;
         private readonly ICarePlanTaskService _cpService;
-        //public static string BarCodePath = "/Codes/BarCode/";
-        /// <summary>
-        ///     The bar code path
-        /// </summary>
+        private readonly IOpenOrderService _ooService;
+        private readonly IMedicalVitalService _mvService;
+        private readonly IOrderActivityService _oaService;
+        private readonly IMedicalNotesService _mnService;
+        private readonly IDocumentsTemplatesService _docService;
+        private readonly IMedicalHistoryService _mhService;
+        private readonly IFutureOpenOrderService _fooService;
+        private readonly IPatientCareActivitiesService _pcaService;
+        private readonly IDiagnosisService _diaService;
+        private readonly IFavoritesService _favService;
+        private readonly IGlobalCodeService _gService;
+        private readonly IPatientEvaluationService _peService;
+        private readonly IOpenOrderActivityScheduleService _ooasService;
+        private readonly IHCPCSCodesService _hcpcService;
+        private readonly IDRGCodesService _drgService;
+        private readonly IDrugService _drugService;
+        private readonly IMedicalRecordService _mrService;
+        private readonly IPatientCarePlanService _pcpService;
+        private readonly IGlobalCodeCategoryService _gcService;
+        private readonly IMapper _mapper;
+
+
         private static readonly string BarCodePath = Helpers.BarCodeImagePathForSaving;
 
-        //public JsonResult GetDataByCategories( )
-        //{
-        //    using (var gbal = new GlobalCodeBal())
-        //    {
-        //        var categories = new[] { "1024", "3102", "1011" };
-        //        var list = gbal.GetListByCategoriesRange(categories);
-        //        var jsonData = new
-        //        {
-        //            listFrequency = list.Where(g => g.ExternalValue1.Equals("1024")).ToList(),
-        //            listOrderStatus = list.Where(g => g.ExternalValue1.Equals("3102")).ToList(),
-        //            listQuantity = list.Where(g => g.ExternalValue1.Equals("1011")).OrderBy(m => Convert.ToDecimal(m.Value)).ToList(),
-        //        };
-        //        return Json(jsonData, JsonRequestBehavior.AllowGet);
-        //    }
-        //}
 
         /****************************Methods Below NOT IN USE***************************************/
 
-        /// <summary>
-        ///     Generates the bar code images.
-        /// </summary>
-        /// <param name="oGenerateBarCode">The o generate bar code.</param>
-        /// <returns></returns>
         public ActionResult GenerateBarCodeImages(GenerateBarCode oGenerateBarCode)
         {
             return CreateCode(oGenerateBarCode);
         }
 
-        /// <summary>
-        ///     Creates the code.
-        /// </summary>
-        /// <param name="vm">The vm.</param>
-        /// <returns></returns>
         public ActionResult CreateCode(GenerateBarCode vm)
         {
             var facilityId = Helpers.GetDefaultFacilityId();
-            var currentDateTime = Helpers.GetInvariantCultureDateTime(facilityId);
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var patientInfo = orderBal.GetPatientDetailsByPatientId(Convert.ToInt32(vm.PatientId));
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+
+            var patientInfo = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(vm.PatientId));
             vm.PatientName = patientInfo.PatientName;
             vm.Age = Convert.ToString(patientInfo.PersonAge);
             vm.DateOfBirth = Convert.ToDateTime(patientInfo.PatientInfo.PersonBirthDate).ToString("dd/MM/yyyy HH:mm:ss");
@@ -106,263 +92,125 @@ namespace BillingSystem.Controllers
 
         #region  Medical Vitals Tab
 
-        /// <summary>
-        ///     Binds the medical vitals tab data.
-        /// </summary>
-        /// <param name="patientId">
-        ///     The patient identifier.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="ActionResult" />.
-        /// </returns>
         public ActionResult BindMedicalVitalsTabData(int patientId)
         {
-            using (var medicalVitals = new MedicalVitalService())
-            {
-                var medicalvitals = medicalVitals.GetCustomMedicalVitals(patientId, (int)MedicalRecordType.Vitals);
+            var medicalvitals = _mvService.GetCustomMedicalVitals(patientId, (int)MedicalRecordType.Vitals);
 
-                var medicalvitalsview = new MedicalVitalView
-                {
-                    CurrentMedicalVital = new MedicalVitalCustomModel(),
-                    MedicalVitalList = medicalvitals
-                };
-                return PartialView(PartialViews.VitalsTabView, medicalvitalsview);
-            }
+            var medicalvitalsview = new MedicalVitalView
+            {
+                CurrentMedicalVital = new MedicalVitalCustomModel(),
+                MedicalVitalList = medicalvitals
+            };
+            return PartialView(PartialViews.VitalsTabView, medicalvitalsview);
         }
 
         #endregion
 
         #region Physician Tab
 
-        /// <summary>
-        ///     Binds the lab orders list by physician.
-        /// </summary>
-        /// <param name="orderType">
-        ///     Type of the order.
-        /// </param>
-        /// <param name="orderStatus">
-        ///     The order status.
-        /// </param>
-        /// <param name="encounterId">
-        ///     The encounter identifier.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="ActionResult" />.
-        /// </returns>
         public ActionResult BindLabOrdersListByPhysician(string orderType, int orderStatus, int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list = bal.GetLabOrderActivitiesByPhysician(
-                    Helpers.GetLoggedInUserId(),
-                    orderStatus,
-                    orderType,
-                    1,
-                    encounterId);
-                list = list != null ? list.OrderBy(x => x.LabResultTypeStr).ToList() : null;
-                return PartialView(PartialViews.PhysicianLabTestView, list);
-            }
+
+            var list = _oaService.GetLabOrderActivitiesByPhysician(
+                Helpers.GetLoggedInUserId(),
+                orderStatus,
+                orderType,
+                1,
+                encounterId);
+            list = list != null ? list.OrderBy(x => x.LabResultTypeStr).ToList() : null;
+            return PartialView(PartialViews.PhysicianLabTestView, list);
         }
 
-
-        /// <summary>
-        ///     Binds the medical notes data.
-        /// </summary>
-        /// <param name="patientId">
-        ///     The patient identifier.
-        /// </param>
-        /// <param name="type">
-        ///     The type.
-        /// </param>
-        /// <param name="encounterid">
-        ///     The encounterid.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="ActionResult" />.
-        /// </returns>
         public ActionResult BindAllPhysicianNurseTaskTabs(int patientId, int type, int encounterid)
         {
-            using (var medicalnotesbal = new MedicalNotesService())
+            var encounterListData = _eService.GetPreActiveEncounters(encounterid, patientId);
+            var nurseAssessmentfrom = _eService.GetNurseAssessmentData(encounterid, patientId);
+
+            var notesList = _mnService.GetCustomMedicalNotes(
+                patientId,
+                type == Convert.ToInt32(NotesUserType.Physician)
+                    ? Convert.ToInt32(NotesUserType.Physician)
+                    : Convert.ToInt32(NotesUserType.Nurse));
+            var openOrdersList = _ooService.GetPhysicianOrders(encounterid, OrderStatus.Open.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var closedOrdersList = _ooService.GetPhysicianOrders(encounterid, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+
+            // var activitesobj = _oaService.GetOrderActivitiesByEncounterId(encounterid);
+            var opNurseAssessmentList = _docService.GetNurseDocuments(patientId, encounterid);
+            var activitesobj1 = _oaService.GetPCActivitiesByEncounterId(encounterid);
+            var activitesListObj = activitesobj1;
+
+            // activitesobj.Where(x => x.OrderCategoryID != Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory))
+            // .ToList();
+            var activitesClosedListObj =
+                activitesListObj.Where(
+                    x =>
+                    x.OrderActivityStatus != 0
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    && x.OrderActivityStatus
+                    != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            var activitesOpenListObj =
+                activitesListObj.Where(
+                    x =>
+                    x.OrderActivityStatus == 0
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    || x.OrderActivityStatus
+                    == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            var medicalvitals = _mvService.GetCustomMedicalVitals(
+                patientId,
+                Convert.ToInt32(MedicalRecordType.Vitals));
+
+            var medicalnotesview = new MedicalNotesView
             {
-                using (
-                    var orderbal = new OpenOrderService(
-                        Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDrgTableNumber,
-                        Helpers.DefaultDrugTableNumber,
-                        Helpers.DefaultHcPcsTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber))
+                CurrentMedicalNotes = new MedicalNotes
                 {
-                    var encounterListData = _eService.GetPreActiveEncounters(encounterid, patientId);
-                    var nurseAssessmentfrom = _eService.GetNurseAssessmentData(encounterid, patientId);
+                    NotesUserType = type,
+                    IsDeleted = false
+                },
+                MedicalNotesList = notesList,
+                OpenOrdersList = openOrdersList,
+                ClosedOrdersList = closedOrdersList,
+                OpenActvitiesList = activitesOpenListObj,
+                ClosedActvitiesList = activitesClosedListObj,
+                ClosedLabOrdersActivitesList = new List<OrderActivityCustomModel>(),
+                LabOpenOrdersActivitesList = new List<OrderActivityCustomModel>(),
+                EncounterOrder = new OpenOrder(),
+                IsLabTest = false,
+                CurrentMedicalVital =
+                                               new MedicalVitalCustomModel(),
+                MedicalVitalList = medicalvitals,
+                PatientInfoId = patientId,
+                PatientEncounterId = encounterid,
+                EncounterList = encounterListData,
+                NurseEnteredFormList =
+                                               opNurseAssessmentList.ToList(),
+                NurseDocList = nurseAssessmentfrom
+            };
+            return PartialView(PartialViews.NotesTabView, medicalnotesview);
 
-                    var notesList = medicalnotesbal.GetCustomMedicalNotes(
-                        patientId,
-                        type == Convert.ToInt32(NotesUserType.Physician)
-                            ? Convert.ToInt32(NotesUserType.Physician)
-                            : Convert.ToInt32(NotesUserType.Nurse));
-                    var openOrdersList = orderbal.GetPhysicianOrders(encounterid, OrderStatus.Open.ToString());
-                    var closedOrdersList = orderbal.GetPhysicianOrders(encounterid, OrderStatus.Closed.ToString());
-                    using (
-                        var orderActivityBal = new OrderActivityService(
-                            Helpers.DefaultCptTableNumber,
-                            Helpers.DefaultServiceCodeTableNumber,
-                            Helpers.DefaultDrgTableNumber,
-                            Helpers.DefaultDrugTableNumber,
-                            Helpers.DefaultHcPcsTableNumber,
-                            Helpers.DefaultDiagnosisTableNumber))
-                    {
-                        // var activitesobj = orderActivityBal.GetOrderActivitiesByEncounterId(encounterid);
-                        var opNurseAssessmentList = new DocumentsTemplatesService().GetNurseDocuments(
-                            patientId,
-                            encounterid);
-                        var activitesobj1 = orderActivityBal.GetPCActivitiesByEncounterId(encounterid);
-                        var activitesListObj = activitesobj1;
-
-                        // activitesobj.Where(x => x.OrderCategoryID != Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory))
-                        // .ToList();
-                        var activitesClosedListObj =
-                            activitesListObj.Where(
-                                x =>
-                                x.OrderActivityStatus != 0
-                                && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                                && x.OrderActivityStatus
-                                != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                                .OrderBy(x => x.ExecutedDate)
-                                .ToList();
-                        var activitesOpenListObj =
-                            activitesListObj.Where(
-                                x =>
-                                x.OrderActivityStatus == 0
-                                || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                                || x.OrderActivityStatus
-                                == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                                .OrderBy(x => x.OrderScheduleDate)
-                                .ToList();
-                        var medicalVitals = new MedicalVitalService();
-                        var medicalvitals = medicalVitals.GetCustomMedicalVitals(
-                            patientId,
-                            Convert.ToInt32(MedicalRecordType.Vitals));
-
-                        var medicalnotesview = new MedicalNotesView
-                        {
-                            CurrentMedicalNotes = new MedicalNotes
-                            {
-                                NotesUserType = type,
-                                IsDeleted = false
-                            },
-                            MedicalNotesList = notesList,
-                            OpenOrdersList = openOrdersList,
-                            ClosedOrdersList = closedOrdersList,
-                            OpenActvitiesList = activitesOpenListObj,
-                            ClosedActvitiesList = activitesClosedListObj,
-                            ClosedLabOrdersActivitesList = new List<OrderActivityCustomModel>(),
-                            LabOpenOrdersActivitesList = new List<OrderActivityCustomModel>(),
-                            EncounterOrder = new OpenOrder(),
-                            IsLabTest = false,
-                            CurrentMedicalVital =
-                                                           new MedicalVitalCustomModel(),
-                            MedicalVitalList = medicalvitals,
-                            PatientInfoId = patientId,
-                            PatientEncounterId = encounterid,
-                            EncounterList = encounterListData,
-                            NurseEnteredFormList =
-                                                           opNurseAssessmentList.ToList(),
-                            NurseDocList = nurseAssessmentfrom
-                        };
-                        return PartialView(PartialViews.NotesTabView, medicalnotesview);
-                    }
-                }
-            }
         }
 
         #endregion
 
         #region Medical History Allergy
-
-        /// <summary>
-        ///     Binds the medical history allergy data.
-        /// </summary>
-        /// <param name="patientId">
-        ///     The patient identifier.
-        /// </param>
-        /// <param name="encounterid">
-        ///     The encounterid.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="ActionResult" />.
-        /// </returns>
         public ActionResult BindMedicalHistoryAllergyData(int patientId, int encounterid)
         {
-            var mhBal = new MedicalHistoryService(Helpers.DefaultDrugTableNumber);
-            //var gccBal = new GlobalCodeCategoryBal();
-            //var gcBal = new GlobalCodeBal();
-            //var gcList = new List<GlobalCodes>();
-            //var aList = new List<GlobalCodes>();
-            //var mrBal = new MedicalRecordBal();
-
-
-            //// Get the Entity list
-            //var mhList = mhBal.GetMedicalHistory(patientId, encounterid);
-
-            //// Intialize the View Model i.e. MedicalHistoryView which is binded to Main View Index.cshtml under MedicalHistory
-            //var mhView = new MedicalHistoryView
-            //{
-            //    MedicalHistoryList = mhList,
-            //    CurrentMedicalHistory = new MedicalHistory()
-            //};
-
-
-
-            //var gccList = gccBal.GetGlobalCodeCategoriesRange((int)GlobalCodeCategoryValue.AlergyStartRange
-            //                , (int)GlobalCodeCategoryValue.AlergyEndRange);
-
-
-            //foreach (var item in gccList)
-            //{
-            //    gcList = gcBal.GetGCodesListByCategoryValue(item.GlobalCodeCategoryValue);
-            //    aList.AddRange(gcList);
-            //}
-
-            //var objAlergyView = new AlergyView
-            //{
-            //    AlergyList = mrBal.GetAlergyRecords(patientId, Convert.ToInt32(MedicalRecordType.Allergies)),
-            //    AllergiesHistoriesGCC = gccList,
-            //    AllergiesHistoryGC = aList,
-            //    MedicalHistoryView = mhView
-            //};
-            var result = mhBal.GetAlergyAndMedicalHistorDataOnLoad(patientId, Helpers.GetLoggedInUserId(), encounterid);
+            var result = _mhService.GetAlergyAndMedicalHistorDataOnLoad(patientId, Helpers.GetLoggedInUserId(), encounterid);
             return PartialView(PartialViews.AllergiesHistoryView, result);
         }
 
         #endregion
 
         #region BarCodeBlock
-
-        /// <summary>
-        ///     Creates the code in lab specimen.
-        /// </summary>
-        /// <param name="vm">The vm.</param>
-        /// <returns></returns>
         public GenerateBarCode CreateCodeInLabSpecimen(GenerateBarCode vm)
         {
             var facilityId = Helpers.GetDefaultFacilityId();
-            var currentDateTime = Helpers.GetInvariantCultureDateTime(facilityId);
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var patientInfo = orderBal.GetPatientDetailsByPatientId(Convert.ToInt32(vm.PatientId), vm.EncounterId, vm.EncounterId > 0);
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+
+            var patientInfo = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(vm.PatientId), vm.EncounterId, vm.EncounterId > 0);
             vm.PatientName = patientInfo.PatientName;
             vm.Age = Convert.ToString(patientInfo.PersonAge) + "y";
             vm.DateOfBirth = Convert.ToDateTime(patientInfo.PatientInfo.PersonBirthDate).ToString("dd/MM/yyyy HH:mm:ss");
@@ -393,71 +241,53 @@ namespace BillingSystem.Controllers
 
         #region EHR Performance Events
 
-        /// <summary>
-        ///     P_s the orders view data.
-        /// </summary>
-        /// <param name="encounterId">The encounter identifier.</param>
-        /// <returns></returns>
+
         public ActionResult P_OrdersViewData(string encounterId)
         {
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var mostRecentOrders = orderBal.GetMostOrderedList(userId, 100);
-            var allPhysicianOrders = orderBal.GetOrdersByPhysician(userId, corporateid, facilityid);
 
-            // var favoriteOrders = orderBal.GetFavoriteOrders(userId);
-            var favoriteOrders = orderBal.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
+            var mostRecentOrders = _ooService.GetMostOrderedList(userId, 100);
+            var allPhysicianOrders = _ooService.GetOrdersByPhysician(userId, corporateid, facilityid);
 
-            var allEncounterOrders = orderBal.GetAllOrdersByEncounterId(Convert.ToInt32(encounterId));
+            // var favoriteOrders = _ooService.GetFavoriteOrders(userId);
+            var favoriteOrders = _ooService.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
+
+            var allEncounterOrders = _ooService.GetAllOrdersByEncounterId(Convert.ToInt32(encounterId));
             var closedOrdersList = new List<OpenOrderCustomModel>();
             var openOrderList = new List<OpenOrderCustomModel>();
 
             var closedOrderActivityList = new List<OrderActivityCustomModel>();
             var openOrderActivityList = new List<OrderActivityCustomModel>();
 
-            using (
-                var orderActivityBal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var encounterActivitesobj = orderActivityBal.GetOrderActivitiesByEncounterIdSP(Convert.ToInt32(encounterId));
-                var encounterActivitesClosedListObj =
-                    encounterActivitesobj.Where(
-                        x =>
-                        x.OrderActivityStatus != 0
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                        && x.OrderActivityStatus
-                        != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                var encounterActivitesOpenListObj =
-                    encounterActivitesobj.Where(
-                        x =>
-                        x.OrderActivityStatus == 0
-                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                        || x.OrderActivityStatus
-                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
-                closedOrderActivityList = encounterActivitesClosedListObj;
-                openOrderActivityList = encounterActivitesOpenListObj;
-            }
+
+            var encounterActivitesobj = _oaService.GetOrderActivitiesByEncounterIdSP(Convert.ToInt32(encounterId));
+            var encounterActivitesClosedListObj =
+                encounterActivitesobj.Where(
+                    x =>
+                    x.OrderActivityStatus != 0
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                    && x.OrderActivityStatus
+                    != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            var encounterActivitesOpenListObj =
+                encounterActivitesobj.Where(
+                    x =>
+                    x.OrderActivityStatus == 0
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                    || x.OrderActivityStatus
+                    == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            closedOrderActivityList = encounterActivitesClosedListObj;
+            openOrderActivityList = encounterActivitesOpenListObj;
+
 
             if (allEncounterOrders.Count > 0)
             {
@@ -468,15 +298,8 @@ namespace BillingSystem.Controllers
                         a.OrderStatus.Equals("3") || a.OrderStatus.Equals("4") || a.OrderStatus.Equals("2")
                         || a.OrderStatus.Equals("9")).ToList();
             }
-            var patientId = orderBal.GetPatientIdByEncounterId(Convert.ToInt32(encounterId));
-            var futureOrdersList =
-                new FutureOpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber).GetFutureOpenOrderByPatientId(Convert.ToInt32(patientId));
+            var patientId = _piService.GetPatientIdByEncounterId(Convert.ToInt32(encounterId));
+            var futureOrdersList = _fooService.GetFutureOpenOrderByPatientId(Convert.ToInt32(patientId));
 
             var ordersFullView = new OrdersFullView
             {
@@ -528,12 +351,32 @@ namespace BillingSystem.Controllers
 
         private readonly bool _print = false;
 
-        public SummaryController(IPatientInfoService piService, IEncounterService eService, ICPTCodesService cptService, ICarePlanTaskService cpService)
+        public SummaryController(IPatientInfoService piService, IEncounterService eService, ICPTCodesService cptService, ICarePlanTaskService cpService, IOpenOrderService ooService, IMedicalVitalService mvService, IOrderActivityService oaService, IMedicalNotesService mnService, IDocumentsTemplatesService docService, IMedicalHistoryService mhService, IFutureOpenOrderService fooService, IPatientCareActivitiesService pcaService, IDiagnosisService diaService, IFavoritesService favService, IGlobalCodeService gService, IPatientEvaluationService peService, IOpenOrderActivityScheduleService ooasService, IHCPCSCodesService hcpcService, IDRGCodesService drgService, IDrugService drugService, IMedicalRecordService mrService, IPatientCarePlanService pcpService, IGlobalCodeCategoryService gcService, IMapper mapper)
         {
             _piService = piService;
             _eService = eService;
             _cptService = cptService;
             _cpService = cpService;
+            _ooService = ooService;
+            _mvService = mvService;
+            _oaService = oaService;
+            _mnService = mnService;
+            _docService = docService;
+            _mhService = mhService;
+            _fooService = fooService;
+            _pcaService = pcaService;
+            _diaService = diaService;
+            _favService = favService;
+            _gService = gService;
+            _peService = peService;
+            _ooasService = ooasService;
+            _hcpcService = hcpcService;
+            _drgService = drgService;
+            _drugService = drugService;
+            _mrService = mrService;
+            _pcpService = pcpService;
+            _gcService = gcService;
+            _mapper = mapper;
         }
 
 
@@ -561,52 +404,44 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult AddPhysicianOrder1(OpenOrder order)
         {
-            using (
-                var encounterComm = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
+            //var periodDays = days <= 0 ? 1.0 : days + 1;
+            var periodDays = days + 1;
+            order.PeriodDays = Convert.ToString(periodDays);
+            order.FacilityID = facilityId;
+            order.CorporateID = corporateId;
+            if (order.OrderStatus == Convert.ToString((int)OrderStatus.Closed)) order.IsActivitySchecduled = true;
+            else order.IsApproved = order.CategoryId != Convert.ToInt32(OrderTypeCategory.Pharmacy);
+
+            if (order.OpenOrderID > 0)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
-                //var periodDays = days <= 0 ? 1.0 : days + 1;
-                var periodDays = days + 1;
-                order.PeriodDays = Convert.ToString(periodDays);
-                order.FacilityID = facilityId;
-                order.CorporateID = corporateId;
-                if (order.OrderStatus == Convert.ToString((int)OrderStatus.Closed)) order.IsActivitySchecduled = true;
-                else order.IsApproved = order.CategoryId != Convert.ToInt32(OrderTypeCategory.Pharmacy);
+                order.ModifiedBy = userId;
+                order.PhysicianID = userId;
+                order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
 
-                if (order.OpenOrderID > 0)
-                {
-                    order.ModifiedBy = userId;
-                    order.PhysicianID = userId;
-                    order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-
-                    // order.CreatedBy = userId;
-                    // order.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                }
-                else
-                {
-                    order.CreatedBy = userId;
-                    order.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    order.PhysicianID = userId;
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-                    order.IsActivitySchecduled = null;
-                    order.ActivitySchecduledOn = null;
-
-                    // order.EncounterID = EncounterId;
-                }
-
-                var orderId = encounterComm.AddUpdatePhysicianOpenOrder(order);
-                return Json(orderId);
+                // order.CreatedBy = userId;
+                // order.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
+            else
+            {
+                order.CreatedBy = userId;
+                order.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                order.PhysicianID = userId;
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
+                order.IsActivitySchecduled = null;
+                order.ActivitySchecduledOn = null;
+
+                // order.EncounterID = EncounterId;
+            }
+
+            var orderId = _ooService.AddUpdatePhysicianOpenOrder(order);
+            return Json(orderId);
+
         }
 
         /// <summary>
@@ -623,16 +458,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult AdministerCarePlanActivity(int careplanActivityId, int encounterid)
         {
-            var carePlanActivityBal = new PatientCareActivitiesService();
-            var isUpdated = carePlanActivityBal.AddUptdatePatientCareActivity(
-                careplanActivityId,
-                Helpers.GetDefaultFacilityId(),
-                "3");
+            var isUpdated = _pcaService.AddUptdatePatientCareActivity(careplanActivityId, Helpers.GetDefaultFacilityId(), "3");
 
             // ... Send 3 as status for Administring the activity
             if (isUpdated != -1)
             {
-                var getClosedOrderActivities = new OrderActivityService().GetPCClosedActivitiesByEncounterId(encounterid);
+                var getClosedOrderActivities = _oaService.GetPCClosedActivitiesByEncounterId(encounterid);
                 return PartialView(PartialViews.OrderClosedActivityScheduleList, getClosedOrderActivities);
             }
 
@@ -647,8 +478,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CancelCarePlanActivity(int careplanActivityId, int encounterid)
         {
-            var carePlanActivityBal = new PatientCareActivitiesService();
-            var isUpdated = carePlanActivityBal.AddUptdatePatientCareActivity(
+            var isUpdated = _pcaService.AddUptdatePatientCareActivity(
                 careplanActivityId,
                 Helpers.GetDefaultFacilityId(),
                 "9");
@@ -656,7 +486,7 @@ namespace BillingSystem.Controllers
             // ... Send 9 as status for canceling the activity
             if (isUpdated != -1)
             {
-                var getClosedOrderActivities = new OrderActivityService().GetPCClosedActivitiesByEncounterId(encounterid);
+                var getClosedOrderActivities = _oaService.GetPCClosedActivitiesByEncounterId(encounterid);
                 return PartialView(PartialViews.OrderClosedActivityScheduleList, getClosedOrderActivities);
             }
 
@@ -674,25 +504,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindClosedActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderActivityStatus != 0
-                            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                return PartialView(PartialViews.OrderClosedActivityScheduleList, list);
-            }
+
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber).Where(x => x.OrderActivityStatus != 0 && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)).OrderBy(x => x.ExecutedDate).ToList();
+            return PartialView(PartialViews.OrderClosedActivityScheduleList, list);
+
         }
 
         /// <summary>
@@ -706,19 +521,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindClosedOrders(int encounterId)
         {
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list = bal.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString())
-                    .OrderBy(x => x.OpenOrderID);
-                return PartialView(PartialViews.ClosedOrdersList, list);
-            }
+            var list = _ooService.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                .OrderBy(x => x.OpenOrderID);
+            return PartialView(PartialViews.ClosedOrdersList, list);
+
         }
 
         /// <summary>
@@ -735,37 +541,28 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterClosedActivityList(int encounterId, int type)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderActivityStatus != 0
-                            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                            && x.OrderActivityStatus
-                            != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                            && x.OrderActivityStatus
-                            != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                            && x.OrderActivityStatus
-                            != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
-                return
-                    PartialView(
-                        type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            ? PartialViews.LabClosedActivtiesList
-                            : PartialViews.OrderClosedActivityScheduleList,
-                        list);
-            }
+            var list =
+                _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderActivityStatus != 0
+                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
+                        && x.OrderActivityStatus
+                        != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                        && x.OrderActivityStatus
+                        != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                        && x.OrderActivityStatus
+                        != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
+            return
+                PartialView(
+                    type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        ? PartialViews.LabClosedActivtiesList
+                        : PartialViews.OrderClosedActivityScheduleList,
+                    list);
+
         }
 
         /// <summary>
@@ -782,38 +579,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterClosedActivityPCList(int encounterId, int type)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                // var activitesobj1 = orderActivityBal.GetPCActivitiesByEncounterId(encounterid);
-                var list =
-                    bal.GetPCActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderActivityStatus != 0
-                            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                            && x.OrderActivityStatus
-                            != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                            && x.OrderActivityStatus
-                            != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                            && x.OrderActivityStatus
-                            != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
-                return
-                    PartialView(
-                        type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            ? PartialViews.LabClosedActivtiesList
-                            : PartialViews.OrderClosedActivityScheduleList,
-                        list);
-            }
+            // var activitesobj1 = _oaService.GetPCActivitiesByEncounterId(encounterid);
+            var list = _oaService.GetPCActivitiesByEncounterId(encounterId).Where(x => x.OrderActivityStatus != 0 && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open) && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult) && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen) && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult)).OrderBy(x => x.ExecutedDate).ToList();
+            list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
+            return
+                PartialView(
+                    type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        ? PartialViews.LabClosedActivtiesList
+                        : PartialViews.OrderClosedActivityScheduleList,
+                    list);
+
         }
 
         /// <summary>
@@ -830,27 +605,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterClosedOrdersByType(int encounterId, int type)
         {
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+            var list = _ooService.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .OrderBy(x => x.OpenOrderID)
+                    .ToList();
+            list = type == 0 ? list : list.Where(x => x.CategoryId == type).ToList();
+            if (type == 11080)
             {
-                var list =
-                    bal.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString())
-                        .OrderBy(x => x.OpenOrderID)
-                        .ToList();
-                list = type == 0 ? list : list.Where(x => x.CategoryId == type).ToList();
-                if (type == 11080)
-                {
-                    return PartialView(PartialViews.LabClosedOrderList, list);
-                }
-
-                return PartialView(PartialViews.ClosedOrdersList, list);
+                return PartialView(PartialViews.LabClosedOrderList, list);
             }
+
+            return PartialView(PartialViews.ClosedOrdersList, list);
+
         }
 
         /// <summary>
@@ -878,7 +643,7 @@ namespace BillingSystem.Controllers
             int encounterId)
         {
             List<DiagnosisCustomModel> listOfOrders;
-            using (var dbal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber)) listOfOrders = dbal.GetDiagnosisList(patientId, encounterId);
+            listOfOrders = _diaService.GetDiagnosisList(patientId, encounterId);
             if (listOfOrders.Count > 0)
             {
                 listOfOrders = listOfOrders.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
@@ -899,16 +664,9 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterLabOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var status = OrderStatus.Open.ToString();
-            var listOfOrders =
-                encounterOrderbal.GetPhysicianOrders(encounterIdint, status)
+            var listOfOrders = _ooService.GetPhysicianOrders(encounterIdint, status, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
                     .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory))
                     .OrderBy(x => x.OpenOrderID)
                     .ToList();
@@ -929,37 +687,27 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterOpenActivityList(int encounterId, int type)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderActivityStatus == 0
-                            || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                            || x.OrderActivityStatus
-                            == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                            || x.OrderActivityStatus
-                            == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                            || x.OrderActivityStatus
-                            == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
-                list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
-                return
-                    PartialView(
-                        type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            ? PartialViews.LabOpenActivtiesList
-                            : PartialViews.OrderActivityScheduleList,
-                        list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderActivityStatus == 0
+                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                        || x.OrderActivityStatus
+                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                        || x.OrderActivityStatus
+                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                        || x.OrderActivityStatus
+                        == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
+            return
+                PartialView(
+                    type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        ? PartialViews.LabOpenActivtiesList
+                        : PartialViews.OrderActivityScheduleList,
+                    list);
+
         }
 
         /// <summary>
@@ -976,37 +724,27 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterOpenActivityPCList(int encounterId, int type)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetPCActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderActivityStatus == 0
-                            || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                            || x.OrderActivityStatus
-                            == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                            || x.OrderActivityStatus
-                            == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                            || x.OrderActivityStatus
-                            == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
-                list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
-                return
-                    PartialView(
-                        type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            ? PartialViews.LabOpenActivtiesList
-                            : PartialViews.OrderActivityScheduleList,
-                        list);
-            }
+            var list = _oaService.GetPCActivitiesByEncounterId(encounterId)
+                    .Where(
+                        x =>
+                        x.OrderActivityStatus == 0
+                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                        || x.OrderActivityStatus
+                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                        || x.OrderActivityStatus
+                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                        || x.OrderActivityStatus
+                        == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            list = type == 0 ? list : list.Where(x => x.OrderCategoryID == type).ToList();
+            return
+                PartialView(
+                    type == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        ? PartialViews.LabOpenActivtiesList
+                        : PartialViews.OrderActivityScheduleList,
+                    list);
+
         }
 
         /// <summary>
@@ -1023,27 +761,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterOpenOrdersByType(int encounterId, int type)
         {
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+            var list = _ooService.GetPhysicianOrders(encounterId, OrderStatus.Open.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .OrderBy(x => x.OpenOrderID)
+                    .ToList();
+            list = type == 0 ? list : list.Where(x => x.CategoryId == type).ToList();
+            if (type == 11080)
             {
-                var list =
-                    bal.GetPhysicianOrders(encounterId, OrderStatus.Open.ToString())
-                        .OrderBy(x => x.OpenOrderID)
-                        .ToList();
-                list = type == 0 ? list : list.Where(x => x.CategoryId == type).ToList();
-                if (type == 11080)
-                {
-                    return PartialView(PartialViews.LabOpenOrderList, list);
-                }
-
-                return PartialView(PartialViews.PhysicianOpenOrderList, list);
+                return PartialView(PartialViews.LabOpenOrderList, list);
             }
+
+            return PartialView(PartialViews.PhysicianOpenOrderList, list);
+
         }
 
         /// <summary>
@@ -1058,15 +786,9 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var status = Convert.ToInt32(OrderStatus.Open).ToString();
-            var listOfOrders = encounterOrderbal.GetOrdersByEncounterid(encounterIdint).ToList();
+            var listOfOrders = _ooService.GetOrdersByEncounterid(encounterIdint, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber).ToList();
             listOfOrders = listOfOrders.Where(x => x.OrderStatus == status || x.OrderStatus == "0").ToList();
             return PartialView(PartialViews.PhysicianOpenOrderList, listOfOrders);
         }
@@ -1088,14 +810,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindEncounterOrderListSorted(string sort, string sortdir, int encounterId, int type)
         {
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var listOfOrders = encounterOrderbal.GetPhysicianOrders(encounterId, OrderStatus.Open.ToString());
+            var listOfOrders = _ooService.GetPhysicianOrders(encounterId, OrderStatus.Open.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             listOfOrders = type == 0 ? listOfOrders : listOfOrders.Where(x => x.CategoryId == type).ToList();
             if (listOfOrders.Count > 0)
             {
@@ -1117,16 +832,10 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterPharmacyOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var status = OrderStatus.Open.ToString();
             var listOfOrders =
-                encounterOrderbal.GetPhysicianOrders(encounterIdint, status)
+                _ooService.GetPhysicianOrders(encounterIdint, status, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
                     .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.Pharmacy))
                     .OrderBy(x => x.OpenOrderID)
                     .ToList();
@@ -1145,16 +854,10 @@ namespace BillingSystem.Controllers
         public ActionResult BindEncounterRadOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var status = OrderStatus.Open.ToString();
             var listOfOrders =
-                encounterOrderbal.GetPhysicianOrders(encounterIdint, status)
+                _ooService.GetPhysicianOrders(encounterIdint, status, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
                     .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.Radiology))
                     .OrderBy(x => x.OpenOrderID)
                     .ToList();
@@ -1190,32 +893,28 @@ namespace BillingSystem.Controllers
             var nurseAssessmentfrom = _eService.GetNurseAssessmentData(encounterid, patientId);
 
             //Get Medical Notes 
-            var medicalnotesbal = new MedicalNotesService();
-            var notesList = medicalnotesbal.GetCustomMedicalNotes(patientId, type);
+            var notesList = _mnService.GetCustomMedicalNotes(patientId, type);
 
-            using (var orderbal = new OpenOrderService(Helpers.DefaultCptTableNumber,
-                         Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber,
-                         Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+
+            // ################### Get Open Orders ##################
+            var ordersData = _ooService.GetOrdersAndActivitiesByEncounter(encounterid);
+            var orders = ordersData != null && ordersData.OpenOrders != null && ordersData.OpenOrders.Any()
+                           ? ordersData.OpenOrders : new List<OpenOrderCustomModel>();
+
+            if (orders.Any())
             {
-                // ################### Get Open Orders ##################
-                var ordersData = orderbal.GetOrdersAndActivitiesByEncounter(encounterid);
-                var orders = ordersData != null && ordersData.OpenOrders != null && ordersData.OpenOrders.Any()
-                               ? ordersData.OpenOrders : new List<OpenOrderCustomModel>();
-
-                if (orders.Any())
-                {
-                    openOrdersList = orders.Where(a => a.Status.Equals(OrderStatus.Open.ToString())).ToList();
-                    closedOrdersList = orders.Where(a => !a.Status.Equals(OrderStatus.Open.ToString())).ToList();
-                }
-                // ################### Get Open Orders ##################
+                openOrdersList = orders.Where(a => a.Status.Equals(OrderStatus.Open.ToString())).ToList();
+                closedOrdersList = orders.Where(a => !a.Status.Equals(OrderStatus.Open.ToString())).ToList();
+            }
+            // ################### Get Open Orders ##################
 
 
-                // ################### Get Order Activities ##################
-                var orderActivities = ordersData != null && ordersData.OrderActivities != null && ordersData.OrderActivities.Any()
-                               ? ordersData.OrderActivities : new List<OrderActivityCustomModel>();
-                if (orderActivities.Any())
-                {
-                    var activityOpenStatuses = new[] {
+            // ################### Get Order Activities ##################
+            var orderActivities = ordersData != null && ordersData.OrderActivities != null && ordersData.OrderActivities.Any()
+                           ? ordersData.OrderActivities : new List<OrderActivityCustomModel>();
+            if (orderActivities.Any())
+            {
+                var activityOpenStatuses = new[] {
                                                 0,
                                                 (int)OpenOrderActivityStatus.Open,
                                                 (int)OpenOrderActivityStatus.LabSectionWaitingForResult,
@@ -1223,45 +922,43 @@ namespace BillingSystem.Controllers
                                                 (int)OpenOrderActivityStatus.PartiallyExecutedForResult
                                                };
 
-                    openActivities = orderActivities.Where(x => activityOpenStatuses.Any(o => o == x.OrderActivityStatus.Value))
-                                                    .OrderBy(x => x.ExecutedDate).ToList();
+                openActivities = orderActivities.Where(x => activityOpenStatuses.Any(o => o == x.OrderActivityStatus.Value))
+                                                .OrderBy(x => x.ExecutedDate).ToList();
 
-                    closedActivities = orderActivities.Where(x => !activityOpenStatuses.Any(o => o == x.OrderActivityStatus.Value))
-                                                    .OrderBy(x => x.ExecutedDate).ToList();
-                }
-                // ################### Get Order Activities ##################
-
-                //Get Medical Vitals...
-                var medicalVitals = new MedicalVitalService();
-                var medicalvitals = medicalVitals.GetCustomMedicalVitals(patientId, Convert.ToInt32(MedicalRecordType.Vitals));
-
-                //Get Nurse Assessment Forms and Other Docs....
-                var docsBal = new DocumentsTemplatesService();
-                var opNurseAssessmentList = docsBal.GetNurseDocuments(patientId, encounterid);
-
-                var medicalnotesview = new MedicalNotesView
-                {
-                    CurrentMedicalNotes = new MedicalNotes { NotesUserType = type, IsDeleted = false },
-                    MedicalNotesList = notesList,
-                    OpenOrdersList = openOrdersList,
-                    ClosedOrdersList = closedOrdersList,
-                    OpenActvitiesList = openActivities,
-                    ClosedActvitiesList = closedActivities,
-                    ClosedLabOrdersActivitesList = new List<OrderActivityCustomModel>(),
-                    LabOpenOrdersActivitesList = new List<OrderActivityCustomModel>(),
-                    EncounterOrder = new OpenOrder(),
-                    IsLabTest = false,
-                    CurrentMedicalVital = new MedicalVitalCustomModel(),
-                    MedicalVitalList = medicalvitals,
-                    PatientInfoId = patientId,
-                    PatientEncounterId = encounterid,
-                    EncounterList = encounterListData,
-                    NurseEnteredFormList = opNurseAssessmentList.ToList(),
-                    NurseDocList = nurseAssessmentfrom
-                };
-
-                return PartialView(PartialViews.NotesTabView, medicalnotesview);
+                closedActivities = orderActivities.Where(x => !activityOpenStatuses.Any(o => o == x.OrderActivityStatus.Value))
+                                                .OrderBy(x => x.ExecutedDate).ToList();
             }
+            // ################### Get Order Activities ##################
+
+            //Get Medical Vitals...
+            var medicalvitals = _mvService.GetCustomMedicalVitals(patientId, Convert.ToInt32(MedicalRecordType.Vitals));
+
+            //Get Nurse Assessment Forms and Other Docs....
+            var opNurseAssessmentList = _docService.GetNurseDocuments(patientId, encounterid);
+
+            var medicalnotesview = new MedicalNotesView
+            {
+                CurrentMedicalNotes = new MedicalNotes { NotesUserType = type, IsDeleted = false },
+                MedicalNotesList = notesList,
+                OpenOrdersList = openOrdersList,
+                ClosedOrdersList = closedOrdersList,
+                OpenActvitiesList = openActivities,
+                ClosedActvitiesList = closedActivities,
+                ClosedLabOrdersActivitesList = new List<OrderActivityCustomModel>(),
+                LabOpenOrdersActivitesList = new List<OrderActivityCustomModel>(),
+                EncounterOrder = new OpenOrder(),
+                IsLabTest = false,
+                CurrentMedicalVital = new MedicalVitalCustomModel(),
+                MedicalVitalList = medicalvitals,
+                PatientInfoId = patientId,
+                PatientEncounterId = encounterid,
+                EncounterList = encounterListData,
+                NurseEnteredFormList = opNurseAssessmentList.ToList(),
+                NurseDocList = nurseAssessmentfrom
+            };
+
+            return PartialView(PartialViews.NotesTabView, medicalnotesview);
+
         }
 
         /// <summary>
@@ -1275,26 +972,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindOpenOrderActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID != Convert.ToInt32(OrderTypeCategory.LabTest)
-                            && x.OrderCategoryID != Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            && (x.OrderActivityStatus == 0
-                                || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)))
-                        .OrderBy(x => x.OrderScheduleDate);
-                return PartialView(PartialViews.OrderActivityScheduleList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID != Convert.ToInt32(OrderTypeCategory.LabTest)
+                        && x.OrderCategoryID != Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        && (x.OrderActivityStatus == 0
+                            || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)))
+                    .OrderBy(x => x.OrderScheduleDate);
+            return PartialView(PartialViews.OrderActivityScheduleList, list);
+
         }
 
         /// <summary>
@@ -1314,15 +1001,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPhyFavOrdersBySort(string sort, string sortdir, int encounterId)
         {
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
             var userId = Helpers.GetLoggedInUserId();
-            var listOfOrders = encounterOrderbal.GetFavoriteOrders(userId);
+            var listOfOrders = _ooService.GetFavoriteOrders(userId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             if (listOfOrders.Count > 0)
             {
                 listOfOrders = listOfOrders.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
@@ -1348,15 +1028,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPhyMostOrdersBySort(string sort, string sortdir, int encounterId)
         {
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
             var userId = Helpers.GetLoggedInUserId();
-            var listOfOrders = encounterOrderbal.GetMostOrderedList(userId, 0);
+            var listOfOrders = _ooService.GetMostOrderedList(userId, 0);
             if (listOfOrders.Count > 0)
             {
                 listOfOrders = listOfOrders.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
@@ -1382,15 +1055,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPhysicianFavDiagnosisListSorted(string sort, string sortdir, int encounterId)
         {
-            var favDiagnosisBal = new FavoritesService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
             var userid = Helpers.GetLoggedInUserId();
-            var favDiagnosisList = favDiagnosisBal.GetFavoriteOrders(userid);
+            var favDiagnosisList = _favService.GetFavoriteOrders(userid, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             var listOfOrders =
                 favDiagnosisList.Where(
                     _ =>
@@ -1430,7 +1096,7 @@ namespace BillingSystem.Controllers
             int encounterId)
         {
             List<DiagnosisCustomModel> listOfOrders;
-            using (var dbal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber)) listOfOrders = dbal.GetPreviousDiagnosisList(patientId, encounterId);
+            listOfOrders = _diaService.GetPreviousDiagnosisList(patientId, encounterId);
             if (listOfOrders.Count > 0)
             {
                 listOfOrders = listOfOrders.OrderBy(string.Format("{0} {1}", sort, sortdir)).ToList();
@@ -1450,26 +1116,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindRadClosedActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Radiology)
-                            && x.OrderActivityStatus != 0
-                            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                return PartialView(PartialViews.OrderClosedActivityScheduleList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Radiology)
+                        && x.OrderActivityStatus != 0
+                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            return PartialView(PartialViews.OrderClosedActivityScheduleList, list);
+
         }
 
         /// <summary>
@@ -1483,22 +1139,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindRadClosedOrders(int encounterId)
         {
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString())
-                        .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.Radiology))
-                        .OrderBy(x => x.OpenOrderID)
-                        .ToList();
-                return PartialView(PartialViews.ClosedOrdersList, list);
-            }
+            var list = _ooService.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.Radiology))
+                    .OrderBy(x => x.OpenOrderID)
+                    .ToList();
+            return PartialView(PartialViews.ClosedOrdersList, list);
         }
 
         /// <summary>
@@ -1512,26 +1157,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindRadOpenActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Radiology)
-                            && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                                || x.OrderActivityStatus == 0))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
-                return PartialView(PartialViews.OrderActivityScheduleList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Radiology)
+                        && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                            || x.OrderActivityStatus == 0))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            return PartialView(PartialViews.OrderActivityScheduleList, list);
+
         }
 
         /// <summary>
@@ -1545,12 +1180,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindSummaryNotes(int patientId)
         {
-            using (var medicalnotesbal = new MedicalNotesService())
-            {
-                var patientSummaryNotes = medicalnotesbal.GetMedicalNotesByPatientId(patientId);
-                var view = "../MedicalNotes/" + PartialViews.MedicalNotesListPatientSummary;
-                return PartialView(view, patientSummaryNotes);
-            }
+            var patientSummaryNotes = _mnService.GetMedicalNotesByPatientId(patientId);
+            var view = "../MedicalNotes/" + PartialViews.MedicalNotesListPatientSummary;
+            return PartialView(view, patientSummaryNotes);
+
         }
 
         /// <summary>
@@ -1563,20 +1196,11 @@ namespace BillingSystem.Controllers
         public ActionResult CancelOrderActivity(int OpenOrderActivityId)
         {
             // ... Send 9 as status for canceling the activity
-            var encounterId = new OrderActivityService().CloseOrderActivity(OpenOrderActivityId); // Returns EncounterId for Binding of List --------- Changes Done by Abhishek 11 June 2018
-
-
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+            var encounterId = _oaService.CloseOrderActivity(OpenOrderActivityId); // Returns EncounterId for Binding of List --------- Changes Done by Abhishek 11 June 2018
 
 
             //DB Call to get all records related to Orders tab
-            var orderActivities = orderBal.OrderActivitiesByEncounterId(encounterId);
+            var orderActivities = _ooService.OrderActivitiesByEncounterId(encounterId);
 
             // Order Activities Section, starts here
             var openActStatuses = new[] { 0, 1, 30, 20, 40 };
@@ -1610,25 +1234,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckCodeForFav(string codeid)
         {
-            var openOrder = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
             var userid = Helpers.GetLoggedInUserId();
-            var orderCode = openOrder.GetOrderIdByOrderCode(userid, codeid);
+            var orderCode = _ooService.GetOrderIdByOrderCode(userid, codeid);
             if (orderCode != 0)
             {
-                var userDefDescBal = new FavoritesService();
-                var isFav = userDefDescBal.GetFavoriteByCodeIdPhyId(orderCode.ToString(), userid);
+                var isFav = _favService.GetFavoriteByCodeIdPhyId(orderCode.ToString(), userid);
                 if (isFav != null)
                 {
                     return Json(isFav);
                 }
 
-                isFav = userDefDescBal.GetFavoriteByCodeIdPhyId(codeid, userid);
+                isFav = _favService.GetFavoriteByCodeIdPhyId(codeid, userid);
 
                 if (isFav != null)
                 {
@@ -1658,14 +1274,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckDurgAllergy(string ordercode, int patientId, int encounterId)
         {
-            var openOrderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var isAllergic = openOrderBal.CheckDurgAllergy(ordercode, patientId, encounterId);
+            var isAllergic = _ooService.CheckDurgAllergy(ordercode, patientId, encounterId);
             var jsonResult = new { isAllergic };
             return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
@@ -1681,11 +1290,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckIfAnyPrimaryDiagnosisExists(int encounterId)
         {
-            using (var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
-            {
-                var primaryDiagnosisId = bal.CheckIfAnyDiagnosisExists(encounterId);
-                return Json(primaryDiagnosisId);
-            }
+            var primaryDiagnosisId = _diaService.CheckIfAnyDiagnosisExists(encounterId);
+            return Json(primaryDiagnosisId);
+
         }
 
         /// <summary>
@@ -1699,18 +1306,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult CheckMulitpleOpenActivites(int orderId)
         {
-            using (
-                var openOrderBaL = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var isMulitpleActivitesOpen = openOrderBaL.CheckMulitpleOpenActivites(orderId);
-                return Json(isMulitpleActivitesOpen);
-            }
+            var isMulitpleActivitesOpen = _ooService.CheckMulitpleOpenActivites(orderId);
+            return Json(isMulitpleActivitesOpen);
         }
 
         /// <summary>
@@ -1724,18 +1321,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult EditLabOpenOrderActivity(int OpenOrderActivityId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var result = bal.GetLabOrderActivityByActivityId(OpenOrderActivityId);
-                return PartialView(PartialViews.LabAdministerOrder, result);
-            }
+            var result = _oaService.GetLabOrderActivityByActivityId(OpenOrderActivityId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            return PartialView(PartialViews.LabAdministerOrder, result);
         }
 
         /// <summary>
@@ -1749,18 +1336,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult EditLabSpecimanOpenOrderActivity(int OpenOrderActivityId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var result = bal.GetLabOrderActivityByActivityId(OpenOrderActivityId);
-                return PartialView(PartialViews.LabSpecimanMGT, result);
-            }
+            var result = _oaService.GetLabOrderActivityByActivityId(OpenOrderActivityId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            return PartialView(PartialViews.LabSpecimanMGT, result);
+
         }
 
         /// <summary>
@@ -1774,18 +1352,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult EditOpenOrderActivity(int OpenOrderActivityId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var result = bal.GetOrderActivityByID(OpenOrderActivityId);
-                return PartialView(PartialViews.AdministerOrdersByNurse, result);
-            }
+            var result = _oaService.GetOrderActivityByID(OpenOrderActivityId);
+            return PartialView(PartialViews.AdministerOrdersByNurse, result);
+
         }
 
         /// <summary>
@@ -1799,15 +1368,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetCodeCustomValueById(int id)
         {
-            using (var bal = new GlobalCodeService())
-            {
-                var globalCode =
-                    bal.GetGlobalCodeByCategoryAndCodeValue(
-                        Convert.ToInt32(GlobalCodeCategoryValue.CodeTypes).ToString(),
-                        id.ToString());
-                var value = globalCode != null ? globalCode.GlobalCodeName : string.Empty;
-                return Json(value);
-            }
+            var globalCode = _gService.GetGlobalCodeByCategoryAndCodeValue(
+                    Convert.ToInt32(GlobalCodeCategoryValue.CodeTypes).ToString(),
+                    id.ToString());
+            var value = globalCode != null ? globalCode.GlobalCodeName : string.Empty;
+            return Json(value);
+
         }
 
         /// <summary>
@@ -1821,12 +1387,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetCodeValueById(int id)
         {
-            using (var bal = new GlobalCodeService())
-            {
-                var globalCode = bal.GetGlobalCodeByGlobalCodeId(id);
-                var value = globalCode != null ? globalCode.GlobalCodeName : string.Empty;
-                return Json(value);
-            }
+            var globalCode = _gService.GetGlobalCodeByGlobalCodeId(id);
+            var value = globalCode != null ? globalCode.GlobalCodeName : string.Empty;
+            return Json(value);
+
         }
 
         /// <summary>
@@ -1843,11 +1407,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public PartialViewResult GetEmList(int eId, int pId)
         {
-            using (var bal = new PatientEvaluationService())
-            {
-                var list = bal.ListPatientEvaluation(pId, eId);
-                return PartialView(PartialViews.EvaluationList, list);
-            }
+            var list = _peService.ListPatientEvaluation(pId, eId);
+            return PartialView(PartialViews.EvaluationList, list);
         }
 
         /// <summary>
@@ -1863,41 +1424,10 @@ namespace BillingSystem.Controllers
         {
             var fId = Helpers.GetDefaultFacilityId();
             var cList = new List<GlobalCodeCategory>();
-            var bal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
 
             //Get Favorite Order 
-            var order = bal.GetFavOpenOrderDetail(favorderId, fId, Helpers.GetLoggedInUserId());
+            var order = _ooService.GetFavOpenOrderDetail(favorderId, fId, Helpers.GetLoggedInUserId());
 
-            ////Get the list of Order Frequency, Order Statuses, Order Quantity, Order Document Types and Order Note Types (All From GlobalCodes)
-            //using (var gbal = new GlobalCodeBal())
-            //{
-            //    var categories = new[] { "1024", "3102", "1011", "2305", "963" };
-            //    var list = gbal.GetListByCategoriesRange(categories);
-            //    var jsonData =
-            //        new
-            //        {
-            //            listFrequency = list.Where(g => g.ExternalValue1.Equals("1024")).ToList(),
-            //            listOrderStatus = list.Where(g => g.ExternalValue1.Equals("3102")).ToList(),
-            //            listQuantity =
-            //                    list.Where(g => g.ExternalValue1.Equals("1011"))
-            //                        .OrderBy(m => Convert.ToDecimal(m.Value))
-            //                        .ToList(),
-            //            listDocumentType = list.Where(g => g.ExternalValue1.Equals("2305")).ToList(),
-            //            listNoteType = list.Where(g => g.ExternalValue1.Equals("963")).ToList()
-            //        };
-            //}
-
-            ////Get Categories and SubCategories list to fill up the dropdowns in the Orders Tabs or others wherever applicable in EHR
-            //using (var cBal = new GlobalCodeCategoryBal())
-            //{
-            //    cList = cBal.GetGlobalCodeCategoriesByExternalValue(Convert.ToString(fId));
-            //}
 
             return PartialView(PartialViews.PhysicianOpenOrderAddEdit, order);
         }
@@ -1913,23 +1443,20 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetFavoriteByCodeId(string codeId)
         {
-            using (var bal = new FavoritesService())
+            var fav = _favService.GetFavoriteByCodeId(codeId);
+            if (fav != null)
             {
-                var fav = bal.GetFavoriteByCodeId(codeId);
-                if (fav != null)
-                {
-                    var jsonResult =
-                        new
-                        {
-                            id = fav.UserDefinedDescriptionID,
-                            isFavorite = fav.IsDeleted == null || !(bool)fav.IsDeleted,
-                            description = fav.UserDefineDescription
-                        };
-                    return Json(jsonResult, JsonRequestBehavior.AllowGet);
-                }
-
-                return Json(null);
+                var jsonResult =
+                    new
+                    {
+                        id = fav.UserDefinedDescriptionID,
+                        isFavorite = fav.IsDeleted == null || !(bool)fav.IsDeleted,
+                        description = fav.UserDefineDescription
+                    };
+                return Json(jsonResult, JsonRequestBehavior.AllowGet);
             }
+
+            return Json(null);
         }
 
         /// <summary>
@@ -1941,14 +1468,8 @@ namespace BillingSystem.Controllers
         public ActionResult GetFavoritesOrders()
         {
             var list = new List<OpenOrderCustomModel>();
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber)) list = bal.GetFavoriteOrders(Helpers.GetLoggedInUserId());
+
+            list = _ooService.GetFavoriteOrders(Helpers.GetLoggedInUserId(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             return PartialView(PartialViews.FavoriteOrders, list);
         }
 
@@ -1965,11 +1486,8 @@ namespace BillingSystem.Controllers
         {
             string value;
             var categoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType));
-            using (var bal = new GlobalCodeService())
-            {
-                var gc = bal.GetGlobalCodeByCategoryAndCodeValue(categoryValue, frequencyCodeId);
-                value = gc != null ? gc.ExternalValue6 : string.Empty;
-            }
+            var gc = _gService.GetGlobalCodeByCategoryAndCodeValue(categoryValue, frequencyCodeId);
+            value = gc != null ? gc.ExternalValue6 : string.Empty;
 
             return Json(value);
         }
@@ -1985,26 +1503,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetLabSpecimanOrder(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                                || x.OrderActivityStatus == 0))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
-                return PartialView(PartialViews.LabSpecimanListing, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                            || x.OrderActivityStatus == 0))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            return PartialView(PartialViews.LabSpecimanListing, list);
+
         }
 
         /// <summary>
@@ -2016,14 +1524,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetMostRecentOrders()
         {
             var list = new List<OpenOrderCustomModel>();
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber)) list = bal.GetMostRecentOrders(Helpers.GetLoggedInUserId());
+            list = _ooService.GetMostRecentOrders(Helpers.GetLoggedInUserId());
 
             return PartialView(PartialViews.MostRecentOrders, list);
         }
@@ -2039,11 +1540,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOpenOrderActivityDetailById(int id)
         {
-            using (var bal = new OpenOrderActivityScheduleService())
-            {
-                var model = bal.GetOpenOrderActivityScheduleById(id);
-                return PartialView(PartialViews.AddressAddEdit, model);
-            }
+            var model = _ooasService.GetOpenOrderActivityScheduleById(id);
+            return PartialView(PartialViews.AddressAddEdit, model);
+
         }
 
         /// <summary>
@@ -2057,35 +1556,27 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOpenOrderDetailByOrderId(int orderId)
         {
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+
+            var current = _ooService.GetOpenOrderDetail(orderId);
+            var openOrderActivity = new OrderActivity
             {
-                var current = bal.GetOpenOrderDetail(orderId);
-                var openOrderActivity = new OrderActivity
-                {
-                    OrderType = Convert.ToInt32(current.OrderType),
-                    OrderCode = current.OrderCode,
-                    CorporateID = current.CorporateID,
-                    FacilityID = current.FacilityID,
-                    PatientID = current.PatientID,
-                    EncounterID = current.EncounterID,
-                    OrderScheduleDate = current.StartDate,
-                    OrderActivityQuantity = current.Quantity,
-                    IsActive = current.IsActive,
-                    ModifiedBy = current.ModifiedBy,
-                    ModifiedDate = current.ModifiedDate,
-                    CreatedDate = current.CreatedDate,
-                    OrderSubCategoryID = current.SubCategoryId,
-                    OrderCategoryID = current.CategoryId
-                };
-                return PartialView(PartialViews.AdministerOrdersByNurse, openOrderActivity);
-            }
+                OrderType = Convert.ToInt32(current.OrderType),
+                OrderCode = current.OrderCode,
+                CorporateID = current.CorporateID,
+                FacilityID = current.FacilityID,
+                PatientID = current.PatientID,
+                EncounterID = current.EncounterID,
+                OrderScheduleDate = current.StartDate,
+                OrderActivityQuantity = current.Quantity,
+                IsActive = current.IsActive,
+                ModifiedBy = current.ModifiedBy,
+                ModifiedDate = current.ModifiedDate,
+                CreatedDate = current.CreatedDate,
+                OrderSubCategoryID = current.SubCategoryId,
+                OrderCategoryID = current.CategoryId
+            };
+            return PartialView(PartialViews.AdministerOrdersByNurse, openOrderActivity);
+
         }
 
         /// <summary>
@@ -2106,15 +1597,12 @@ namespace BillingSystem.Controllers
                     var cptcodeslist = _cptService.GetCPTCodes(Helpers.DefaultCptTableNumber);
                     return Json(cptcodeslist);
                 case 2:
-                    var hcpcsCodesBal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber);
-                    var hcpcsCodeslist = hcpcsCodesBal.GetHCPCSCodes();
+                    var hcpcsCodeslist = _hcpcService.GetHCPCSCodes(Helpers.DefaultHcPcsTableNumber);
                     return Json(hcpcsCodeslist);
                 case 3:
-                    return Json(null);
                 case 4:
                 case 5:
-                    var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
-                    var drgCodeslist = drgCodesBal.GetDrgCodes();
+                    var drgCodeslist = _drgService.GetDrgCodes(Helpers.DefaultDrgTableNumber);
                     return Json(drgCodeslist);
             }
 
@@ -2132,98 +1620,89 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOrderCodesBySubCategory(int subCategoryId)
         {
-            using (var bal = new GlobalCodeService())
+            // Get Sub-category Details from table Global Codes
+            var subCategory = _gService.GetGlobalCodeByGlobalCodeId(subCategoryId);
+
+            // Get Order Type Name by Order Type Id, from table Global Codes
+            var codeType = _gService.GetGlobalCodeByCategoryAndCodeValue(Convert.ToString((int)GlobalCodeCategoryValue.CodeTypes), subCategory.ExternalValue1);
+
+            var type = (OrderType)Enum.Parse(typeof(OrderType), subCategory.ExternalValue1);
+            switch (type)
             {
-                // Get Sub-category Details from table Global Codes
-                var subCategory = bal.GetGlobalCodeByGlobalCodeId(subCategoryId);
-
-                // Get Order Type Name by Order Type Id, from table Global Codes
-                var codeType =
-                    bal.GetGlobalCodeByCategoryAndCodeValue(
-                        Convert.ToString((int)GlobalCodeCategoryValue.CodeTypes),
-                        subCategory.ExternalValue1);
-
-                var type = (OrderType)Enum.Parse(typeof(OrderType), subCategory.ExternalValue1);
-                switch (type)
-                {
-                    case OrderType.CPT:
-                        var result = _cptService.GetCodesByRange(Convert.ToInt32(subCategory.ExternalValue2), Convert.ToInt32(subCategory.ExternalValue3), Helpers.DefaultCptTableNumber);
-                        var filteredList = result.Select(
-                            item => new
-                            {
-                                Value = item.CodeNumbering,
-
-                                // Text = !string.IsNullOrEmpty(item.CodeDescription) ? item.CodeDescription:string.Empty
-                                // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.CodeDescription) && item.CodeDescription.Length > 25 ? item.CodeDescription.Substring(0, 25) + "..." : item.CodeDescription, item.CodeNumbering)
-                                Text =
-                                        string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription)
-                            })
-                            .ToList();
-                        var jsonResult =
-                            new
-                            {
-                                codeList = filteredList,
-                                codeTypeName = codeType.GlobalCodeName,
-                                codeTypeId = codeType.GlobalCodeValue
-                            };
-                        return Json(jsonResult, JsonRequestBehavior.AllowGet);
-                    case OrderType.HCPCS:
-                        using (var cbal = new HCPCSCodesService(Helpers.DefaultHcPcsTableNumber))
+                case OrderType.CPT:
+                    var result = _cptService.GetCodesByRange(Convert.ToInt32(subCategory.ExternalValue2), Convert.ToInt32(subCategory.ExternalValue3), Helpers.DefaultCptTableNumber);
+                    var filteredList = result.Select(
+                        item => new
                         {
-                            var result1 = cbal.GetHCPCSCodes();
-                            var filteredList1 = result1.Select(
-                                item => new
-                                {
-                                    Value = item.CodeNumbering,
+                            Value = item.CodeNumbering,
 
-                                    // Text = !string.IsNullOrEmpty(item.CodeDescription) ? item.CodeDescription : string.Empty
-                                    // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.CodeDescription) && item.CodeDescription.Length > 25 ? item.CodeDescription.Substring(0, 25) + "..." : item.CodeDescription, item.CodeNumbering)
-                                    Text =
-                                            string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription)
-                                })
-                                .ToList();
-                            var jsonResult1 =
-                                new
-                                {
-                                    codeList = filteredList1,
-                                    codeTypeName = codeType.GlobalCodeName,
-                                    codeTypeId = codeType.GlobalCodeValue
-                                };
-                            return Json(jsonResult1, JsonRequestBehavior.AllowGet);
-                        }
-
-                    case OrderType.DRG:
-                        break;
-                    case OrderType.DRUG:
-                        using (var dbal = new DrugService(Helpers.DefaultDrugTableNumber))
+                            // Text = !string.IsNullOrEmpty(item.CodeDescription) ? item.CodeDescription:string.Empty
+                            // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.CodeDescription) && item.CodeDescription.Length > 25 ? item.CodeDescription.Substring(0, 25) + "..." : item.CodeDescription, item.CodeNumbering)
+                            Text =
+                                    string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription)
+                        })
+                        .ToList();
+                    var jsonResult =
+                        new
                         {
-                            var result2 = dbal.GetDrugList();
-                            var filteredList2 = result2.Select(
-                                item => new
-                                {
-                                    Value = item.DrugCode,
+                            codeList = filteredList,
+                            codeTypeName = codeType.GlobalCodeName,
+                            codeTypeId = codeType.GlobalCodeValue
+                        };
+                    return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                case OrderType.HCPCS:
 
-                                    // Text = !string.IsNullOrEmpty(item.DrugPackageName) ? item.DrugPackageName : string.Empty
-                                    // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.DrugPackageName) && item.DrugPackageName.Length > 25 ? item.DrugPackageName.Substring(0, 25) + "..." : item.DrugPackageName, item.DrugCode),
-                                    Text = string.Format("{0} - {1}", item.DrugCode, item.DrugPackageName)
-                                })
-                                .ToList();
-                            var jsonResult2 =
-                                new
-                                {
-                                    codeList = filteredList2,
-                                    codeTypeName = codeType.GlobalCodeName,
-                                    codeTypeId = codeType.GlobalCodeValue
-                                };
-                            return Json(jsonResult2, JsonRequestBehavior.AllowGet);
-                        }
+                    var result1 = _hcpcService.GetHCPCSCodes(Helpers.DefaultHcPcsTableNumber);
+                    var filteredList1 = result1.Select(
+                        item => new
+                        {
+                            Value = item.CodeNumbering,
 
-                    default:
-                        break;
-                }
+                            // Text = !string.IsNullOrEmpty(item.CodeDescription) ? item.CodeDescription : string.Empty
+                            // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.CodeDescription) && item.CodeDescription.Length > 25 ? item.CodeDescription.Substring(0, 25) + "..." : item.CodeDescription, item.CodeNumbering)
+                            Text =
+                                    string.Format("{0} - {1}", item.CodeNumbering, item.CodeDescription)
+                        })
+                        .ToList();
+                    var jsonResult1 =
+                        new
+                        {
+                            codeList = filteredList1,
+                            codeTypeName = codeType.GlobalCodeName,
+                            codeTypeId = codeType.GlobalCodeValue
+                        };
+                    return Json(jsonResult1, JsonRequestBehavior.AllowGet);
 
-                return Json(null);
+                case OrderType.DRG:
+                    break;
+                case OrderType.DRUG:
+
+                    var result2 = _drugService.GetDrugList(Helpers.DefaultDrugTableNumber);
+                    var filteredList2 = result2.Select(
+                        item => new
+                        {
+                            Value = item.DrugCode,
+
+                            // Text = !string.IsNullOrEmpty(item.DrugPackageName) ? item.DrugPackageName : string.Empty
+                            // Text = string.Format("{0} - {1}", !string.IsNullOrEmpty(item.DrugPackageName) && item.DrugPackageName.Length > 25 ? item.DrugPackageName.Substring(0, 25) + "..." : item.DrugPackageName, item.DrugCode),
+                            Text = string.Format("{0} - {1}", item.DrugCode, item.DrugPackageName)
+                        })
+                        .ToList();
+                    var jsonResult2 =
+                        new
+                        {
+                            codeList = filteredList2,
+                            codeTypeName = codeType.GlobalCodeName,
+                            codeTypeId = codeType.GlobalCodeValue
+                        };
+                    return Json(jsonResult2, JsonRequestBehavior.AllowGet);
+
+
+                default:
+                    break;
             }
+
+            return Json(null);
         }
 
         /// <summary>
@@ -2238,20 +1717,13 @@ namespace BillingSystem.Controllers
         [System.Web.Mvc.HttpPost]
         public ActionResult GetOrderDetailById(string orderId)
         {
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
             var id = 0;
             if (!string.IsNullOrEmpty(orderId))
             {
                 id = Convert.ToInt32(orderId);
             }
 
-            var orderDetail = encounterOrderbal.GetOpenOrderDetail(Convert.ToInt32(orderId));
+            var orderDetail = _ooService.GetOpenOrderDetail(Convert.ToInt32(orderId));
 
             return PartialView(PartialViews.PhysicianOpenOrderAddEdit, orderDetail);
         }
@@ -2267,14 +1739,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOrderDetails(int orderId)
         {
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var orderDetail = encounterOrderbal.GetOpenOrderDetail(Convert.ToInt32(orderId));
+            var orderDetail = _ooService.GetOpenOrderDetail(Convert.ToInt32(orderId));
             if (orderDetail != null)
             {
                 return Json(orderDetail, JsonRequestBehavior.AllowGet);
@@ -2294,24 +1759,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetOrderDetailsByActivityId(int orderActivityId)
         {
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var orderActivitybal = new OrderActivityService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var orderActivityDetail = orderActivitybal.GetOrderActivityByID(Convert.ToInt32(orderActivityId));
+            var orderActivityDetail = _oaService.GetOrderActivityByID(Convert.ToInt32(orderActivityId));
             if (orderActivityDetail != null)
             {
-                var orderDetail = encounterOrderbal.GetOpenOrderDetail(Convert.ToInt32(orderActivityDetail.OrderID));
+                var orderDetail = _ooService.GetOpenOrderDetail(Convert.ToInt32(orderActivityDetail.OrderID));
                 if (orderDetail != null)
                 {
                     return Json(orderDetail, JsonRequestBehavior.AllowGet);
@@ -2333,42 +1784,28 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrdersTabData(int encounterId)
         {
             var userId = Helpers.GetLoggedInUserId();
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var allEncounterOrders = orderBal.GetAllOrdersByEncounterId(Convert.ToInt32(encounterId));
+
+            var allEncounterOrders = _ooService.GetAllOrdersByEncounterId(Convert.ToInt32(encounterId));
             var closedOrdersList = new List<OpenOrderCustomModel>();
             var openOrderList = new List<OpenOrderCustomModel>();
             var closedOrderActivityList = new List<OrderActivityCustomModel>();
             var openOrderActivityList = new List<OrderActivityCustomModel>();
-            using (
-                var orderActivityBal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var encounterActivitesobj =
-                    orderActivityBal.GetOrderActivitiesByEncounterId(Convert.ToInt32(encounterId));
-                var encounterActivitesClosedListObj =
-                    encounterActivitesobj.Where(
-                        x =>
-                        x.OrderActivityStatus != 0
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
-                var encounterActivitesOpenListObj =
-                    encounterActivitesobj.Where(
-                        x =>
-                        x.OrderActivityStatus == 0
-                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
-                closedOrderActivityList = encounterActivitesClosedListObj;
-                openOrderActivityList = encounterActivitesOpenListObj;
-            }
+
+            var encounterActivitesobj =
+                _oaService.GetOrderActivitiesByEncounterId(Convert.ToInt32(encounterId), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var encounterActivitesClosedListObj =
+                encounterActivitesobj.Where(
+                    x =>
+                    x.OrderActivityStatus != 0
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
+            var encounterActivitesOpenListObj =
+                encounterActivitesobj.Where(
+                    x =>
+                    x.OrderActivityStatus == 0
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
+            closedOrderActivityList = encounterActivitesClosedListObj;
+            openOrderActivityList = encounterActivitesOpenListObj;
+
 
             if (allEncounterOrders.Count > 0)
             {
@@ -2396,19 +1833,6 @@ namespace BillingSystem.Controllers
                 };
             return Json(jsonResult, JsonRequestBehavior.AllowGet);
 
-            // var ordersFullView = new OrdersFullView
-            // {
-            // AllPhysicianOrders = allPhysicianOrders.DistinctBy(x => x.OrderCode).ToList(),
-            // ClosedOrdersList = closedOrdersList,
-            // EncounterOrder = new OpenOrder { StartDate = Helpers.GetInvariantCultureDateTime(), EndDate = Helpers.GetInvariantCultureDateTime(), OrderStatus = Convert.ToInt32(OrderStatus.Open).ToString() },
-            // FavoriteOrders = favoriteOrders,
-            // MostRecentOrders = mostRecentOrders,
-            // OpenOrdersList = openOrderList,
-            // SearchedOrders = new List<OpenOrderCustomModel>(),
-            // ClosedOrderActivityList = closedOrderActivityList,
-            // OpenOrderActivityList = openOrderActivityList,
-            // CurrentOrderActivity = new OrderActivity()
-            // }; 
         }
 
         /// <summary>
@@ -2422,11 +1846,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPatientNotes(int patientId)
         {
-            using (var bal = new MedicalNotesService())
-            {
-                var patientSummaryNotes = bal.GetMedicalNotesByPatientId(patientId);
-                return PartialView(PartialViews.MedicalNotesListPatientSummary, patientSummaryNotes);
-            }
+            var patientSummaryNotes = _mnService.GetMedicalNotesByPatientId(patientId);
+            return PartialView(PartialViews.MedicalNotesListPatientSummary, patientSummaryNotes);
         }
 
         /// <summary>
@@ -2440,49 +1861,41 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPharmacyOrderCodesBySubCategory(int subCategoryId)
         {
-            using (var bal = new GlobalCodeService())
-            {
-                // Get Sub-category Details from table Global Codes
-                var subCategory = bal.GetGlobalCodeByGlobalCodeId(subCategoryId);
-                using (var dbal = new DrugService(Helpers.DefaultDrugTableNumber))
+            // Get Sub-category Details from table Global Codes
+            var subCategory = _gService.GetGlobalCodeByGlobalCodeId(subCategoryId);
+            /*
+             * Earlier it was fetching the Orders based on 
+             * GlobalCodeID (which is Sub-Category ID) which should be GlobalCode Value
+             */
+
+            // Old Code
+            // var result = dbal.GetDrugListbyBrandCode(Convert.ToString(subCategoryId));
+
+            // New Code
+            var result = _drugService.GetDrugListbyBrandCode(subCategory.GlobalCodeValue, Helpers.DefaultDrugTableNumber);
+
+            var filteredList =
+                result.Select(
+                    item =>
+                    new
+                    {
+                        Value = item.DrugCode,
+                        Text =
+                        string.Format(
+                            "{0} - {1} - {2} - {3}",
+                            item.DrugCode,
+                            item.DrugGenericName,
+                            item.DrugStrength,
+                            item.DrugDosage)
+                    }).ToList();
+            var jsonResult =
+                new
                 {
-                    /*
-                     * Earlier it was fetching the Orders based on 
-                     * GlobalCodeID (which is Sub-Category ID) which should be GlobalCode Value
-                     */
-
-                    // Old Code
-                    // var result = dbal.GetDrugListbyBrandCode(Convert.ToString(subCategoryId));
-
-                    // New Code
-                    var result = dbal.GetDrugListbyBrandCode(subCategory.GlobalCodeValue);
-
-                    var filteredList =
-                        result.Select(
-                            item =>
-                            new
-                            {
-                                Value = item.DrugCode,
-                                Text =
-                                string.Format(
-                                    "{0} - {1} - {2} - {3}",
-                                    item.DrugCode,
-                                    item.DrugGenericName,
-                                    item.DrugStrength,
-                                    item.DrugDosage)
-                            }).ToList();
-                    var jsonResult =
-                        new
-                        {
-                            codeList = filteredList,
-                            codeTypeName = OrderType.DRUG.ToString(),
-                            codeTypeId = Convert.ToString((int)OrderType.DRUG)
-                        };
-                    return Json(jsonResult, JsonRequestBehavior.AllowGet);
-                }
-            }
-
-            return Json(null);
+                    codeList = filteredList,
+                    codeTypeName = OrderType.DRUG.ToString(),
+                    codeTypeId = Convert.ToString((int)OrderType.DRUG)
+                };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -2499,14 +1912,7 @@ namespace BillingSystem.Controllers
             var list = new List<OpenOrderCustomModel>();
             if (!string.IsNullOrEmpty(text))
             {
-                using (
-                    var bal = new OpenOrderService(
-                        Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDrgTableNumber,
-                        Helpers.DefaultDrugTableNumber,
-                        Helpers.DefaultHcPcsTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber)) list = bal.GetSearchedOrders(text);
+                list = _ooService.GetSearchedOrders(text, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             }
 
             return PartialView(PartialViews.OpenOrdersInSearch);
@@ -2519,14 +1925,7 @@ namespace BillingSystem.Controllers
             var list = new List<OpenOrderCustomModel>();
             if (!string.IsNullOrEmpty(text))
             {
-                using (
-                    var bal = new OpenOrderService(
-                        Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDrgTableNumber,
-                        Helpers.DefaultDrugTableNumber,
-                        Helpers.DefaultHcPcsTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber)) list = bal.GetSearchedOrders(text);
+                list = _ooService.GetSearchedOrders(text, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
             }
 
             //json data to return to view
@@ -2555,18 +1954,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetSpecimanString(string orderCode)
         {
-            using (
-                var openOrderBaL = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var specimanrquired = openOrderBaL.CalculateLabResultSpecimanType(orderCode, null, null);
-                return Json(specimanrquired, JsonRequestBehavior.AllowGet);
-            }
+            var specimanrquired = _ooService.CalculateLabResultSpecimanType(orderCode, null, null);
+            return Json(specimanrquired, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -2586,10 +1976,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public bool IsAlreadyFav(int userid, string codeId, string categoryId)
         {
-            using (var bal = new FavoritesService())
-            {
-                return bal.CheckIfAlreadyFav(userid, codeId, categoryId);
-            }
+            return _favService.CheckIfAlreadyFav(userid, codeId, categoryId);
         }
 
 
@@ -2614,59 +2001,6 @@ namespace BillingSystem.Controllers
             return PartialView(PartialViews.PhysicianOpenOrderAddEdit, encounterOrder);
         }
 
-        // public ActionResult SaveCarePlanTask(CarePlanTask model)
-        // {
-        // // Initialize the newId variable 
-        // var corporateId = Helpers.GetSysAdminCorporateID();
-        // var facilityId = Helpers.GetDefaultFacilityId();
-        // var dateTime = Helpers.GetInvariantCultureDateTime();
-        // int newId = -1;
-        // int userId = Helpers.GetLoggedInUserId();
-
-        // // Check if Model is not null 
-        // if (model != null)
-        // {
-        // using (var bal = new CarePlanTaskBal())
-        // {
-        // if (model.Id > 0)
-        // {
-        // model.ModifiedBy = userId;
-        // model.ModifiedDate = dateTime;
-        // model.FacilityId = facilityId;
-        // model.CorporateId = corporateId;
-        // }
-        // else
-        // {
-        // model.CreatedBy = userId;
-        // model.CreatedDate = dateTime;
-        // model.FacilityId = facilityId;
-        // model.CorporateId = corporateId;
-        // model.CreatedDate = dateTime;
-        // }
-        // // Call the AddCarePlanTask Method to Add / Update current CarePlanTask
-        // newId = bal.SaveCarePlanTask(model);
-
-        // //var cModel = bal.GetCarePlanTaskById(Convert.ToInt32(model.TaskNumber));
-        // var pcBal = new PatientCarePlanBal();
-        // var patinetCareModel = new PatientCarePlan
-        // {
-        // TaskId = model.TaskNumber,
-        // CorporateId = model.CorporateId,
-        // FacilityId = model.FacilityId,
-        // PatientId = Convert.ToString(model.PatientId),
-        // EncounterId = model.EncounterId,
-        // CreatedBy = model.CreatedBy,
-        // CreatedDate = model.CreatedDate,
-        // IsActive = model.IsActive,
-
-        // };
-        // pcBal.SavePatientCarePlan(patinetCareModel);
-        // }
-        // }
-
-        // return Json(newId);
-        // }
-
         /// <summary>
         ///     Saves the lab speciman order activity.
         /// </summary>
@@ -2679,37 +2013,28 @@ namespace BillingSystem.Controllers
         public ActionResult SaveLabSpecimanOrderActivity(OrderActivity model)
         {
             var result = -1;
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var currentdatetime = Helpers.GetInvariantCultureDateTime();
-                var activityId = model.OrderActivityID;
-                var labOrderactivity = bal.GetOrderActivityByID(activityId);
-                labOrderactivity.CorporateID = corporateId;
-                labOrderactivity.FacilityID = facilityId;
-                if (model.OrderActivityID > 0)
-                {
-                    labOrderactivity.ModifiedBy = userId;
-                    labOrderactivity.ModifiedDate = currentdatetime;
-                    labOrderactivity.OrderActivityStatus = labOrderactivity.OrderActivityStatus != 4
-                                                           || labOrderactivity.OrderActivityStatus != 3
-                                                               ? 30
-                                                               : model.OrderActivityStatus;
-                    labOrderactivity.ResultValueMax = model.ResultValueMax;
-                    bal.AddUptdateOrderActivity(labOrderactivity);
-                }
 
-                result = labOrderactivity.OrderActivityID;
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var currentdatetime = Helpers.GetInvariantCultureDateTime();
+            var activityId = model.OrderActivityID;
+            var labOrderactivity = _oaService.GetOrderActivityByID(activityId);
+            labOrderactivity.CorporateID = corporateId;
+            labOrderactivity.FacilityID = facilityId;
+            if (model.OrderActivityID > 0)
+            {
+                labOrderactivity.ModifiedBy = userId;
+                labOrderactivity.ModifiedDate = currentdatetime;
+                labOrderactivity.OrderActivityStatus = labOrderactivity.OrderActivityStatus != 4
+                                                       || labOrderactivity.OrderActivityStatus != 3
+                                                           ? 30
+                                                           : model.OrderActivityStatus;
+                labOrderactivity.ResultValueMax = model.ResultValueMax;
+                _oaService.AddUptdateOrderActivity(labOrderactivity);
             }
+
+            result = labOrderactivity.OrderActivityID;
 
             return Json(result);
         }
@@ -2726,149 +2051,100 @@ namespace BillingSystem.Controllers
         public ActionResult SaveOpenOrderActivitySchedule(OrderActivityCustomModel model)
         {
             var result = -1;
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var currentdatetime = Helpers.GetInvariantCultureDateTime();
+            var activityId = model.OrderActivityID;
+            model.ExecutedBy = userId;
+            //model.ExecutedDate = DateTime.Now;
+            //model.ExecutedDate = Helpers.GetInvariantCultureDateTime();
+            model.CorporateID = corporateId;
+            model.FacilityID = facilityId;
+            if (model.OrderActivityID > 0)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var currentdatetime = Helpers.GetInvariantCultureDateTime();
-                var activityId = model.OrderActivityID;
-                model.ExecutedBy = userId;
-                //model.ExecutedDate = DateTime.Now;
-                //model.ExecutedDate = Helpers.GetInvariantCultureDateTime();
-                model.CorporateID = corporateId;
-                model.FacilityID = facilityId;
-                if (model.OrderActivityID > 0)
-                {
-                    var objOrderActivityBal = new OrderActivityService();
-                    var obj = objOrderActivityBal.GetOrderActivityByID(model.OrderActivityID);
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentdatetime;
-                    model.ExecutedQuantity = model.OrderCategoryID
-                                             == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                                                 ? 1
-                                                 : model.ExecutedQuantity;
-                    model.OrderActivityStatus = model.OrderActivityStatus == 2 || model.OrderActivityStatus == 4
-                                                    ? model.OrderCategoryID
-                                                      == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                                                          ? model.OrderActivityStatus == 4
-                                                                ? model.OrderActivityStatus
-                                                                : 2
-                                                          : model.OrderActivityStatus
-                                                    : model.OrderActivityStatus;
-                    model.BarCodeValue = obj.BarCodeValue;
-                    model.BarCodeHtml = obj.BarCodeHtml;
-                    var openActivityItemObj = new OrderActivityMapper().MapCustomModelToModel(model);
-                    bal.AddUptdateOrderActivity(openActivityItemObj);
-                }
-                else
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentdatetime;
-                }
-
-                if (model.PartiallyExecutedBool != null && model.ExecutedQuantity != model.OrderActivityQuantity
-                    && (bool)model.PartiallyExecutedBool)
-                {
-                    var quantityRemaining = Convert.ToDecimal(model.OrderActivityQuantity - model.ExecutedQuantity);
-                    var isExecuted = bal.CreatePartiallyexecutedActivity(
-                        model.OrderActivityID,
-                        quantityRemaining,
-                        model.PartiallyExecutedstatus);
-                }
-                // Apply Order Activity To Bill, added by Amit Jain on 24122014
-                bal.ApplyOrderActivityToBill(
-                    corporateId,
-                    facilityId,
-                    Convert.ToInt32(model.EncounterID),
-                    string.Empty,
-                    0);
-                var orderActivities = bal.GetOrderActivitiesByOrderId(Convert.ToInt32(model.OrderID));
-                var openorderactivties =
-                    orderActivities.Any(
-                        x =>
-                        x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                        || x.OrderActivityStatus == 0 || x.OrderActivityStatus == 40);
-
-                // Update the Order Status
-                if (openorderactivties)
-                {
-                    if (activityId == 0)
-                    {
-                        openorderactivties = !UpdateCurrentOpenOrderActivties(Convert.ToInt32(model.OrderID));
-                    }
-                }
-
-                if (!openorderactivties)
-                {
-                    using (
-                        var ordersBal = new OpenOrderService(
-                            Helpers.DefaultCptTableNumber,
-                            Helpers.DefaultServiceCodeTableNumber,
-                            Helpers.DefaultDrgTableNumber,
-                            Helpers.DefaultDrugTableNumber,
-                            Helpers.DefaultHcPcsTableNumber,
-                            Helpers.DefaultDiagnosisTableNumber))
-                    {
-                        /*
-                         * Changes By: Amit Jain
-                         * On: 01 March, 2016
-                         * Purpose: Just updates Current Open Order Status, nothing to do with Order Activities here below
-                         * Earlier, Order Activities having ExecutedQuantities were deleted by using the Method AddUpdatePhysicianOrder
-                         * And that method has been updated and so, now commented below
-                         * Now, changed the Method with the new one i.e. UpdateOpenOrderStatus
-                         */
-
-                        //***************************Code Changes start here*******************************************************
-
-                        //var openorder = ordersBal.GetOpenOrderDetail(Convert.ToInt32(model.OrderID));
-                        //openorder.OrderStatus = Convert.ToString((int)OrderStatus.OnBill);
-                        //openorder.ModifiedBy = userId;
-                        //openorder.ModifiedDate = currentdatetime;
-                        //ordersBal.AddUpdatePhysicianOpenOrder(openorder);
-
-                        ordersBal.UpdateOpenOrderStatus(
-                            Convert.ToInt32(model.OrderID),
-                            Convert.ToString((int)OrderStatus.OnBill),
-                            userId,
-                            currentdatetime);
-
-                        //***************************Code Changes End here*********************************************************
-                    }
-                }
-
-                result = model.OrderActivityID;
+                var obj = _oaService.GetOrderActivityByID(model.OrderActivityID);
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentdatetime;
+                model.ExecutedQuantity = model.OrderCategoryID
+                                         == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                                             ? 1
+                                             : model.ExecutedQuantity;
+                model.OrderActivityStatus = model.OrderActivityStatus == 2 || model.OrderActivityStatus == 4
+                                                ? model.OrderCategoryID
+                                                  == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                                                      ? model.OrderActivityStatus == 4
+                                                            ? model.OrderActivityStatus
+                                                            : 2
+                                                      : model.OrderActivityStatus
+                                                : model.OrderActivityStatus;
+                model.BarCodeValue = obj.BarCodeValue;
+                model.BarCodeHtml = obj.BarCodeHtml;
+                var openActivityItemObj = _mapper.Map<OrderActivity>(model);
+                _oaService.AddUptdateOrderActivity(openActivityItemObj);
             }
+            else
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentdatetime;
+            }
+
+            if (model.PartiallyExecutedBool != null && model.ExecutedQuantity != model.OrderActivityQuantity
+                && (bool)model.PartiallyExecutedBool)
+            {
+                var quantityRemaining = Convert.ToDecimal(model.OrderActivityQuantity - model.ExecutedQuantity);
+                var isExecuted = _oaService.CreatePartiallyexecutedActivity(
+                    model.OrderActivityID,
+                    quantityRemaining,
+                    model.PartiallyExecutedstatus);
+            }
+            // Apply Order Activity To Bill, added by Amit Jain on 24122014
+            _oaService.ApplyOrderActivityToBill(
+                corporateId,
+                facilityId,
+                Convert.ToInt32(model.EncounterID),
+                string.Empty,
+                0);
+            var orderActivities = _oaService.GetOrderActivitiesByOrderId(Convert.ToInt32(model.OrderID));
+            var openorderactivties =
+                orderActivities.Any(
+                    x =>
+                    x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    || x.OrderActivityStatus == 0 || x.OrderActivityStatus == 40);
+
+            // Update the Order Status
+            if (openorderactivties)
+            {
+                if (activityId == 0)
+                {
+                    openorderactivties = !UpdateCurrentOpenOrderActivties(Convert.ToInt32(model.OrderID));
+                }
+            }
+
+            if (!openorderactivties)
+            {
+                _ooService.UpdateOpenOrderStatus(Convert.ToInt32(model.OrderID), Convert.ToString((int)OrderStatus.OnBill), userId, currentdatetime);
+
+            }
+
+            result = model.OrderActivityID;
+
             if (result > 0)
             {
                 var encounterId = model.EncounterID.Value;
-                var userId = Helpers.GetLoggedInUserId();
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
-                var orderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber);
 
 
                 //DB Call to get all records related to Orders tab
-                var ordersViewData = orderBal.OrdersViewData(userId, 100, corporateid, facilityid, Convert.ToInt32(encounterId), "1024,3102,1011,2305,963", 0, "7", string.Empty);
+                var ordersViewData = _ooService.OrdersViewData(userId, 100, corporateid, facilityid, Convert.ToInt32(encounterId), "1024,3102,1011,2305,963", 0, "7", string.Empty);
 
-                var orderActivities = ordersViewData.OrderActivities;
+                var orderActivities1 = ordersViewData.OrderActivities;
 
                 // Order Activities Section, starts here
                 var openActStatuses = new[] { 0, 1, 30, 20, 40 };
-                var openOrderActivityList = orderActivities.Where(a => openActStatuses.Contains(Convert.ToInt32(a.OrderActivityStatus))).ToList();
+                var openOrderActivityList = orderActivities1.Where(a => openActStatuses.Contains(Convert.ToInt32(a.OrderActivityStatus))).ToList();
                 //Orders Section
                 var orders = ordersViewData.OpenOrders.ToList();
                 var openOrderList = orders.Where(a => a.OrderStatus.Equals("1")).ToList();
@@ -2899,47 +2175,7 @@ namespace BillingSystem.Controllers
             return Json(result);
         }
 
-        //public ActionResult SavePatientCarePlan(List<PatientCarePlanCustomModel> model)
-        //{
-        //    // Initialize the newId variable 
-        //    int corporateId = Helpers.GetSysAdminCorporateID();
-        //    int facilityId = Helpers.GetDefaultFacilityId();
-        //    DateTime dateTime = Helpers.GetInvariantCultureDateTime();
-        //    int newId = -1;
-        //    int userId = Helpers.GetLoggedInUserId();
-        //    var cBal = new CarePlanTaskBal();
 
-        //    // Check if Model is not null 
-        //    if (model != null)
-        //    {
-        //        using (var bal = new PatientCarePlanBal())
-        //        {
-        //            foreach (var patientCarePlan in model)
-        //            {
-        //                var careId = cBal.CarePlanId(corporateId, facilityId, Convert.ToInt32(patientCarePlan.TaskId));
-        //                patientCarePlan.CorporateId = corporateId;
-        //                patientCarePlan.FacilityId = facilityId;
-        //                patientCarePlan.IsActive = true;
-        //                if (patientCarePlan.Id > 0)
-        //                {
-        //                    patientCarePlan.ModifiedBy = userId;
-        //                    patientCarePlan.ModifiedDate = dateTime;
-        //                    patientCarePlan.CarePlanId = careId.ToString();
-        //                }
-        //                else
-        //                {
-        //                    patientCarePlan.CreatedDate = dateTime;
-        //                    patientCarePlan.CreatedBy = userId;
-        //                    patientCarePlan.CarePlanId = careId.ToString();
-        //                }
-        //            }
-        //            // Call the AddPatientCarePlan Method to Add / Update current PatientCarePlan
-        //            newId = bal.SavePatientCarePlanData(model, true);
-        //        }
-        //    }
-
-        //    return Json(newId);
-        //}
 
         /// <summary>
         ///     Updates the lab order actvity status.
@@ -2952,28 +2188,19 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult UpdateLabOrderActvityStatus(int OrderActivityID)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+            var orderActivity = _oaService.GetOrderActivityByID(OrderActivityID);
+            orderActivity.OrderActivityStatus = Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult);
+            var oGenerateBarCode = new GenerateBarCode
             {
-                var orderActivity = bal.GetOrderActivityByID(OrderActivityID);
-                orderActivity.OrderActivityStatus = Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult);
-                var oGenerateBarCode = new GenerateBarCode
-                {
-                    PatientId = Convert.ToString(orderActivity.PatientID),
-                    EncounterId = Convert.ToInt32(orderActivity.EncounterID),
-                    OrderActivityId = OrderActivityID
-                };
-                var obj = CreateCodeInLabSpecimen(oGenerateBarCode);
-                orderActivity.BarCodeHtml = obj.BarCodeHtml;
-                orderActivity.BarCodeValue = obj.BarCodeReadValue;
-                bal.AddUptdateOrderActivity(orderActivity);
-            }
+                PatientId = Convert.ToString(orderActivity.PatientID),
+                EncounterId = Convert.ToInt32(orderActivity.EncounterID),
+                OrderActivityId = OrderActivityID
+            };
+            var obj = CreateCodeInLabSpecimen(oGenerateBarCode);
+            orderActivity.BarCodeHtml = obj.BarCodeHtml;
+            orderActivity.BarCodeValue = obj.BarCodeReadValue;
+            _oaService.AddUptdateOrderActivity(orderActivity);
+
 
             return Json(1);
         }
@@ -2985,34 +2212,31 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ShowGeneratedBarCode(string orderActivityId)
         {
-            //string retValue;
-            using (var bal = new OrderActivityService())
+            //var bc = bal.GetOrderActivityByID(Convert.ToInt32(orderActivityId));
+            //retValue = bc.BarCodeHtml;
+
+            var bc = _oaService.GetBarCodeDetails(Convert.ToInt32(orderActivityId));
+            if (bc != null && !string.IsNullOrEmpty(bc.BarCodeReadValue))
             {
-                //var bc = bal.GetOrderActivityByID(Convert.ToInt32(orderActivityId));
-                //retValue = bc.BarCodeHtml;
-
-                var bc = bal.GetBarCodeDetails(Convert.ToInt32(orderActivityId));
-                if (bc != null && !string.IsNullOrEmpty(bc.BarCodeReadValue))
+                var barCodeHtmlTemplate = ResourceKeyValues.GetFileText("barcodeview");
+                if (!string.IsNullOrEmpty(barCodeHtmlTemplate))
                 {
-                    var barCodeHtmlTemplate = ResourceKeyValues.GetFileText("barcodeview");
-                    if (!string.IsNullOrEmpty(barCodeHtmlTemplate))
-                    {
-                        var html =
-                            barCodeHtmlTemplate.Replace("@PatientFullName", bc.PatientName)
-                                .Replace("@BarCodeDate", bc.CollectionDateTime)
-                                .Replace("@PatientAge", bc.Age)
-                                .Replace("@Gender", bc.Gender)
-                                .Replace("@ImageUrl", Helpers.ResolveUrl2(bc.BarCodeHtml))
-                                .Replace("@EncounterNumber", bc.BarCodeNumbering)
-                                .Replace("@CurrentSite", string.Empty)
-                                .Replace("@CurrentDateTime", Helpers.GetInvariantCultureDateTime().ToString("g"))
-                                .Replace("@User", bc.LoggedInUserName)
-                                .Replace("@OrderType", bc.OrderType);
+                    var html =
+                        barCodeHtmlTemplate.Replace("@PatientFullName", bc.PatientName)
+                            .Replace("@BarCodeDate", bc.CollectionDateTime)
+                            .Replace("@PatientAge", bc.Age)
+                            .Replace("@Gender", bc.Gender)
+                            .Replace("@ImageUrl", Helpers.ResolveUrl2(bc.BarCodeHtml))
+                            .Replace("@EncounterNumber", bc.BarCodeNumbering)
+                            .Replace("@CurrentSite", string.Empty)
+                            .Replace("@CurrentDateTime", Helpers.GetInvariantCultureDateTime().ToString("g"))
+                            .Replace("@User", bc.LoggedInUserName)
+                            .Replace("@OrderType", bc.OrderType);
 
-                        return Json(html, JsonRequestBehavior.AllowGet);
-                    }
+                    return Json(html, JsonRequestBehavior.AllowGet);
                 }
             }
+
             return Json("0", JsonRequestBehavior.AllowGet);
         }
 
@@ -3033,52 +2257,42 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult UpdateLabtestOrder(int Id, int orserstatus, string comments)
         {
-            // var EncounterId = 100220141;
-            using (
-                var encounterComm = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+            var order = _ooService.GetOpenOrderDetail(Id);
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetDefaultCorporateId();
+            if (corporateId == 0 && userId > 0)
             {
-                var order = encounterComm.GetOpenOrderDetail(Id);
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetDefaultCorporateId();
-                if (corporateId == 0 && userId > 0)
-                {
-                    corporateId = Helpers.GetSysAdminCorporateID();
-                }
-
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
-                var periodDays = days <= 0 ? 1.0 : days;
-                order.PeriodDays = Convert.ToString(periodDays);
-                order.FacilityID = facilityId;
-                order.CorporateID = corporateId;
-                if (order.OpenOrderID > 0)
-                {
-                    order.ModifiedBy = userId;
-                    order.PhysicianID = userId;
-                    order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-                    order.OrderStatus = Convert.ToString((int)OrderStatus.Closed);
-                }
-                else
-                {
-                    order.CreatedBy = userId;
-                    order.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    order.PhysicianID = userId;
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-
-                    // order.EncounterID = EncounterId;
-                }
-
-                var orderId = encounterComm.AddUpdatePhysicianOpenOrder(order);
-                return Json(orderId);
+                corporateId = Helpers.GetSysAdminCorporateID();
             }
+
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
+            var periodDays = days <= 0 ? 1.0 : days;
+            order.PeriodDays = Convert.ToString(periodDays);
+            order.FacilityID = facilityId;
+            order.CorporateID = corporateId;
+            if (order.OpenOrderID > 0)
+            {
+                order.ModifiedBy = userId;
+                order.PhysicianID = userId;
+                order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
+                order.OrderStatus = Convert.ToString((int)OrderStatus.Closed);
+            }
+            else
+            {
+                order.CreatedBy = userId;
+                order.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                order.PhysicianID = userId;
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
+
+                // order.EncounterID = EncounterId;
+            }
+
+            var orderId = _ooService.AddUpdatePhysicianOpenOrder(order);
+            return Json(orderId);
         }
+
 
         /// <summary>
         ///     Updates the open order activities.
@@ -3495,8 +2709,7 @@ namespace BillingSystem.Controllers
                 EncounterID = Convert.ToInt32(data.EncounterId),
                 ExternalValue3 = "4950"
             };
-            var oDocumentsTemplatesBal = new DocumentsTemplatesService();
-            oDocumentsTemplatesBal.AddUpdateDocumentTempate(oDocumentsTemplates);
+            _docService.AddUpdateDocumentTempate(oDocumentsTemplates);
             if (System.IO.File.Exists(serverPath + "/AssessmentForm/" + data.FileName))
             {
                 System.IO.File.Delete(serverPath + "/AssessmentForm/" + data.FileName);
@@ -3576,8 +2789,7 @@ namespace BillingSystem.Controllers
                 EncounterID = Convert.ToInt32(data.EncounterId)
                 //ExternalValue3 = "4950"
             };
-            var oDocumentsTemplatesBal = new DocumentsTemplatesService();
-            oDocumentsTemplatesBal.AddUpdateDocumentTempate(oDocumentsTemplates);
+            _docService.AddUpdateDocumentTempate(oDocumentsTemplates);
             if (System.IO.File.Exists(serverPath + "/EvaluationForm/" + data.EnmFileName))
             {
                 System.IO.File.Delete(serverPath + "/EvaluationForm/" + data.EnmFileName);
@@ -3632,68 +2844,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult PatientSummaryTabData(int patientId, int encounterId)
         {
-            //using (var orderBal = new OpenOrderBal(
-            //        Helpers.DefaultCptTableNumber,
-            //        Helpers.DefaultServiceCodeTableNumber,
-            //        Helpers.DefaultDrgTableNumber,
-            //        Helpers.DefaultDrugTableNumber,
-            //        Helpers.DefaultHcPcsTableNumber,
-            //        Helpers.DefaultDiagnosisTableNumber))
-            //{
-            //    var enList = orderBal.GetEncountersListByPatientId(patientId);
-            //    using (var mrBal = new MedicalRecordBal())
-            //    {
-            //        // Updated by Shashank on Oct 28, 2014
-            //        using (var nBal = new MedicalNotesBal())
-            //        {
-            //            // Updated by Shashank on Oct 28, 2014
-            //            using (var medicalVitals = new MedicalVitalBal())
-            //            {
-            //                using (var diagnosisBal = new DiagnosisBal(Helpers.DefaultDiagnosisTableNumber
-            //                    , Helpers.DefaultDrgTableNumber))
-            //                {
-            //                    var currentEncounterId = encounterId;
-            //                    var medicalrecords = mrBal.GetMedicalRecord();
-            //                    var medicalvitals = medicalVitals.GetCustomMedicalVitalsByPidEncounterId(patientId
-            //                        , (int)MedicalRecordType.Vitals, currentEncounterId);
 
-            //                    var mNotes = nBal.GetMedicalNotesByPatientIdEncounterId(patientId, currentEncounterId);
-            //                    var allergies = mrBal.GetAlergyRecords(patientId, (int)MedicalRecordType.Allergies);
-
-            //                    var orderStatus = Convert.ToString(OrderStatus.Open);
-            //                    var openOrdersList = orderBal.GetPhysicianOrders(currentEncounterId, orderStatus);
-            //                    var primarydiagnosisId = 0;
-            //                    var dList = diagnosisBal.GetDiagnosisList(patientId, currentEncounterId);
-            //                    if (dList.Any())
-            //                    {
-            //                        var dVm = dList.FirstOrDefault(x => x.DiagnosisType == (int)DiagnosisType.Primary);
-            //                        if (dVm != null)
-            //                            primarydiagnosisId = dVm.DiagnosisID;
-            //                    }
-
-            //                    var riskFactors = medicalVitals.GetRiskFactors(patientId);
-            //                    var summaryView = new PatientSummaryView
-            //                    {
-            //                        PatientInfo = orderBal.GetPatientDetailsByPatientId(patientId),
-            //                        OpenOrdersList = openOrdersList,
-            //                        EncountersList = enList,
-            //                        CurrentEncounterId = currentEncounterId,
-            //                        PatientId = patientId,
-            //                        MedicalRecordList = medicalrecords,
-            //                        DiagnosisId = primarydiagnosisId,
-            //                        MedicalVitalList = medicalvitals,
-            //                        PatientSummaryNotes = mNotes,
-            //                        ClosedOrdersList = orderBal.GetPhysicianOrders(currentEncounterId, OrderStatus.Closed.ToString()),
-            //                        AlergyList = allergies,
-            //                        DiagnosisList = dList,
-            //                        Riskfactors = riskFactors
-            //                    };
-            //                    return PartialView(PartialViews.PatientSummaryTabView, summaryView);
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
             var vmData = GetSummaryDetails(patientId, 0);
             return PartialView(PartialViews.PatientSummaryTabView, vmData);
         }
@@ -3709,18 +2860,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortEncounterGrid(int patientId)
         {
-            using (
-                var orderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var enList = orderBal.GetEncountersListByPatientId(patientId);
-                return PartialView(PartialViews.EncounterList, enList);
-            }
+
+            var enList = _ooService.GetEncountersListByPatientId(patientId);
+            return PartialView(PartialViews.EncounterList, enList);
+
         }
 
         /// <summary>
@@ -3731,12 +2874,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortDiagnosisGrid(int patientId, int encId)
         {
-            using (
-                var diagnosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber))
-            {
-                var diagnosisList = diagnosisBal.GetDiagnosisList(patientId, encId);
-                return PartialView(PartialViews.PatientDiagnosisList, diagnosisList);
-            }
+            var diagnosisList = _diaService.GetDiagnosisList(patientId, encId);
+            return PartialView(PartialViews.PatientDiagnosisList, diagnosisList);
+
         }
 
         /// <summary>
@@ -3747,19 +2887,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPatientOpenOrders(int patientId, int encId)
         {
-            using (
-                var orderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var orderStatus = OrderStatus.Open.ToString();
-                var openOrdersList = orderBal.GetPhysicianOrders(encId, orderStatus);
-                return PartialView(PartialViews.PatientOpenOrderList, openOrdersList);
-            }
+            var orderStatus = OrderStatus.Open.ToString();
+            var openOrdersList = _ooService.GetPhysicianOrders(encId, orderStatus, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            return PartialView(PartialViews.PatientOpenOrderList, openOrdersList);
+
         }
 
         /// <summary>
@@ -3769,8 +2900,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPatientMedicalVital(int pId)
         {
-            var medicalVitals = new MedicalVitalService();
-            var medicalvitals = medicalVitals.GetCustomMedicalVitals(pId, Convert.ToInt32(MedicalRecordType.Vitals));
+            var medicalvitals = _mvService.GetCustomMedicalVitals(pId, Convert.ToInt32(MedicalRecordType.Vitals));
             return PartialView(PartialViews.PatientMedicalVitalList, medicalvitals);
         }
 
@@ -3785,9 +2915,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortPatientAllergiesList(int patientId)
         {
-            var medicalRecordbal = new MedicalRecordService();
             var viewpath = string.Format("../MedicalRecord/{0}", PartialViews.AlergiesList);
-            var allergiesList = medicalRecordbal.GetAlergyRecords(
+            var allergiesList = _mrService.GetAlergyRecords(
                 patientId,
                 Convert.ToInt32(MedicalRecordType.Allergies));
             return PartialView(viewpath, allergiesList);
@@ -3808,9 +2937,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortAllergiesList(int patientId)
         {
-            var medicalRecordbal = new MedicalRecordService();
             var viewpath = string.Format("../MedicalRecord/{0}", PartialViews.AlergiesList);
-            var allergiesList = medicalRecordbal.GetAlergyRecords(
+            var allergiesList = _mrService.GetAlergyRecords(
                 patientId,
                 Convert.ToInt32(MedicalRecordType.Allergies));
             return PartialView(viewpath, allergiesList);
@@ -3830,10 +2958,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortCurrentNotesbyPhysician(int patientId, int encounterId)
         {
-            var medicalnotesbal = new MedicalNotesService();
             var viewpath = string.Format("../MedicalNotes/{0}", PartialViews.MedicalNotesListPatientSummary);
             var currentEncounterId = encounterId;
-            var patientSummaryNotes = medicalnotesbal.GetMedicalNotesByPatientIdEncounterId(
+            var patientSummaryNotes = _mnService.GetMedicalNotesByPatientIdEncounterId(
                 patientId,
                 currentEncounterId);
             return PartialView(viewpath, patientSummaryNotes);
@@ -3853,20 +2980,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortCurrentOrderGrid(int patientId, int encounterId)
         {
-            using (
-                var orderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var currentEncounterId = encounterId;
-                var orderStatus = OrderStatus.Open.ToString();
-                var openOrdersList = orderBal.GetPhysicianOrders(currentEncounterId, orderStatus);
-                return PartialView(PartialViews.EncounterList, openOrdersList);
-            }
+            var currentEncounterId = encounterId;
+            var orderStatus = OrderStatus.Open.ToString();
+            var openOrdersList = _ooService.GetPhysicianOrders(currentEncounterId, orderStatus, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            return PartialView(PartialViews.EncounterList, openOrdersList);
+
         }
 
         /// <summary>
@@ -3880,26 +2998,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortLabClosedOrderList(int encounterid)
         {
-            using (
-                var orderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var allEncounterOrders = orderBal.GetOrdersByEncounterid(Convert.ToInt32(encounterid));
-                var labordersList =
-                    allEncounterOrders.Where(
-                        x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)).ToList();
-                var labclosedordersList =
-                    labordersList.Where(
-                        x => x.OrderStatus != "0" && x.OrderStatus != Convert.ToInt32(OrderStatus.Open).ToString())
-                        .ToList();
-                return PartialView(PartialViews.LabClosedOrderList, labclosedordersList);
-            }
+            var allEncounterOrders = _ooService.GetOrdersByEncounterid(Convert.ToInt32(encounterid), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var labordersList =
+                allEncounterOrders.Where(
+                    x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)).ToList();
+            var labclosedordersList =
+                labordersList.Where(
+                    x => x.OrderStatus != "0" && x.OrderStatus != Convert.ToInt32(OrderStatus.Open).ToString())
+                    .ToList();
+            return PartialView(PartialViews.LabClosedOrderList, labclosedordersList);
         }
+
 
         /// <summary>
         ///     The sort lab open order list.
@@ -3912,27 +3021,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortLabOpenOrderList(int encounterid)
         {
-            using (
-                var orderbal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var allPhysicianOrders = orderbal.GetOrdersByEncounterid(encounterid);
-                var labordersList =
-                    allPhysicianOrders.Where(
-                        x =>
-                        x.EncounterID == encounterid && x.CategoryId == Convert.ToInt32(GlobalCodeCategoryValue.LabTest))
-                        .ToList();
-                var labopenordersList =
-                    labordersList.Where(
-                        x => x.OrderStatus == "0" || x.OrderStatus == Convert.ToInt32(OrderStatus.Open).ToString())
-                        .ToList();
-                return PartialView(PartialViews.LabOpenOrderList, labopenordersList);
-            }
+            var allPhysicianOrders = _ooService.GetOrdersByEncounterid(encounterid, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+            var labordersList =
+                allPhysicianOrders.Where(
+                    x =>
+                    x.EncounterID == encounterid && x.CategoryId == Convert.ToInt32(GlobalCodeCategoryValue.LabTest))
+                    .ToList();
+            var labopenordersList =
+                labordersList.Where(
+                    x => x.OrderStatus == "0" || x.OrderStatus == Convert.ToInt32(OrderStatus.Open).ToString())
+                    .ToList();
+            return PartialView(PartialViews.LabOpenOrderList, labopenordersList);
+
         }
 
         /// <summary>
@@ -3952,18 +3052,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortMedicalNotesInNurseTab(int patientId, int type, int currentEncounterId)
         {
-            using (var medicalnotesbal = new MedicalNotesService())
-            {
-                // var notesList = medicalnotesbal.GetCustomMedicalNotes(patientId,
-                // type == Convert.ToInt32(NotesUserType.Physician)
-                // ? Convert.ToInt32(NotesUserType.Physician)
-                // : Convert.ToInt32(NotesUserType.Nurse));
-                var patientSummaryNotes = medicalnotesbal.GetMedicalNotesByPatientIdEncounterId(
-                    patientId,
-                    currentEncounterId);
+            var patientSummaryNotes = _mnService.GetMedicalNotesByPatientIdEncounterId(
+                patientId,
+                currentEncounterId);
 
-                return PartialView(PartialViews.MedicalNotesList, patientSummaryNotes);
-            }
+            return PartialView(PartialViews.MedicalNotesList, patientSummaryNotes);
         }
 
         /// <summary>
@@ -3977,8 +3070,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortMedicalVital(int pId)
         {
-            var medicalVitals = new MedicalVitalService();
-            var medicalvitals = medicalVitals.GetCustomMedicalVitals(pId, Convert.ToInt32(MedicalRecordType.Vitals));
+            var medicalvitals = _mvService.GetCustomMedicalVitals(pId, Convert.ToInt32(MedicalRecordType.Vitals));
             var viewpath = String.Format("../MedicalVital/{0}", PartialViews.MedicalVitalList);
             return PartialView(viewpath, medicalvitals);
         }
@@ -3997,17 +3089,14 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortNoteType(int patientId, int type)
         {
-            using (var medicalnotesbal = new MedicalNotesService())
-            {
-                // Updated by Krishna on Sep 22, 2015
-                var notesList = medicalnotesbal.GetCustomMedicalNotes(
-                    patientId,
-                    type == Convert.ToInt32(NotesUserType.Physician)
-                        ? Convert.ToInt32(NotesUserType.Physician)
-                        : Convert.ToInt32(NotesUserType.Nurse));
-                var viewpath = string.Format("../MedicalNotes/{0}", PartialViews.MedicalNotesList);
-                return PartialView(viewpath, notesList);
-            }
+            // Updated by Krishna on Sep 22, 2015
+            var notesList = _mnService.GetCustomMedicalNotes(
+                patientId,
+                type == Convert.ToInt32(NotesUserType.Physician)
+                    ? Convert.ToInt32(NotesUserType.Physician)
+                    : Convert.ToInt32(NotesUserType.Nurse));
+            var viewpath = string.Format("../MedicalNotes/{0}", PartialViews.MedicalNotesList);
+            return PartialView(viewpath, notesList);
         }
 
         /// <summary>
@@ -4024,18 +3113,8 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            using (
-                var orderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var favoriteOrders = orderBal.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
-                return PartialView(PartialViews.FavoriteOrders, favoriteOrders);
-            }
+            var favoriteOrders = _ooService.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
+            return PartialView(PartialViews.FavoriteOrders, favoriteOrders);
         }
 
         /// <summary>
@@ -4049,18 +3128,8 @@ namespace BillingSystem.Controllers
             List<DiagnosisCustomModel> previouslist;
             var pid = Convert.ToInt32(patientId);
             var eid = Convert.ToInt32(encounterId);
-            using (
-                var bal = new DiagnosisService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var previousDlist = bal.GetPreviousDiagnosisList(pid, eid);
-                previouslist = previousDlist.Any() ? previousDlist : new List<DiagnosisCustomModel>();
-            }
+            var previousDlist = _diaService.GetPreviousDiagnosisList(pid, eid);
+            previouslist = previousDlist.Any() ? previousDlist : new List<DiagnosisCustomModel>();
             var viewpath = string.Format("../Diagnosis/{0}", PartialViews.PreviousDiagnosisList);
             return PartialView(viewpath, previouslist);
         }
@@ -4076,27 +3145,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SortLabSpecimanOpenOrderList(int encounterid)
         {
-            using (
-                var orderActivityBal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var labactivitesobj =
-                    //orderActivityBal.GetOrderActivitiesByEncounterId(encounterid);
-                    orderActivityBal.GetOrderActivitiesByEncounterIdSP(encounterid);
-                var labActivitesListObj =
-                    labactivitesobj.Where(
-                        x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)).ToList();
-                var labActivitesOpenListObj =
-                    labActivitesListObj.Where(
-                        x => x.OrderActivityStatus == 0 || x.OrderActivityStatus == 1 || x.OrderActivityStatus == 20)
-                        .ToList();
-                return PartialView(PartialViews.LabSpecimanListing, labActivitesOpenListObj);
-            }
+            var labactivitesobj =
+                //_oaService.GetOrderActivitiesByEncounterId(encounterid);
+                _oaService.GetOrderActivitiesByEncounterIdSP(encounterid);
+            var labActivitesListObj =
+                labactivitesobj.Where(
+                    x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)).ToList();
+            var labActivitesOpenListObj =
+                labActivitesListObj.Where(
+                    x => x.OrderActivityStatus == 0 || x.OrderActivityStatus == 1 || x.OrderActivityStatus == 20)
+                    .ToList();
+            return PartialView(PartialViews.LabSpecimanListing, labActivitesOpenListObj);
+
         }
 
         /// <summary>
@@ -4106,32 +3166,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortLabClosedOrderActivityList(int encounterid)
         {
-            using (
-                var orderActivityBal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var labactivitesobj = orderActivityBal.GetOrderActivitiesByEncounterIdSP(encounterid);
-                var labActivitesListObj =
-                    labactivitesobj.Where(
-                        x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)).ToList();
-                var labActivitesList =
-                    labActivitesListObj.Where(
-                        x =>
-                        x.OrderActivityStatus != 0
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                        && x.OrderActivityStatus
-                        != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                return PartialView(PartialViews.LabClosedActivtiesList, labActivitesList);
-            }
+            var labactivitesobj = _oaService.GetOrderActivitiesByEncounterIdSP(encounterid);
+            var labActivitesListObj =
+                labactivitesobj.Where(
+                    x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)).ToList();
+            var labActivitesList =
+                labActivitesListObj.Where(
+                    x =>
+                    x.OrderActivityStatus != 0
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                    && x.OrderActivityStatus
+                    != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            return PartialView(PartialViews.LabClosedActivtiesList, labActivitesList);
+
         }
 
         /// <summary>
@@ -4143,24 +3194,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortLabOrdersListByPhysician(string orderType, int orderStatus, int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list = bal.GetLabOrderActivitiesByPhysician(
-                    Helpers.GetLoggedInUserId(),
-                    orderStatus,
-                    orderType,
-                    1,
-                    encounterId);
-                list = list != null ? list.OrderBy(x => x.LabResultTypeStr).ToList() : null;
-                return PartialView(PartialViews.PhysicianLabTestView, list);
-            }
+            var list = _oaService.GetLabOrderActivitiesByPhysician(
+                Helpers.GetLoggedInUserId(),
+                orderStatus,
+                orderType,
+                1,
+                encounterId);
+            list = list != null ? list.OrderBy(x => x.LabResultTypeStr).ToList() : null;
+            return PartialView(PartialViews.PhysicianLabTestView, list);
+
         }
 
         /// <summary>
@@ -4183,12 +3225,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortMedicalHistoryList(int encounterId, int patientid)
         {
-            using (var bal = new MedicalHistoryService(Helpers.DefaultDrugTableNumber))
-            {
-                var list = bal.GetMedicalHistory(patientid, encounterId);
-                var viewpath = string.Format("../MedicalHistory/{0}", PartialViews.MedicalHistoryList);
-                return PartialView(viewpath, list);
-            }
+            var list = _mhService.GetMedicalHistory(patientid, encounterId);
+            var viewpath = string.Format("../MedicalHistory/{0}", PartialViews.MedicalHistoryList);
+            return PartialView(viewpath, list);
         }
 
         /// <summary>
@@ -4198,17 +3237,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPhysiciansAllorders(int encounterid)
         {
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var allPhysicianOrders = orderBal.GetOrdersByPhysician(userId, corporateid, facilityid);
+            var allPhysicianOrders = _ooService.GetOrdersByPhysician(userId, corporateid, facilityid);
             return PartialView(PartialViews.PhyAllOrdersSummary, allPhysicianOrders);
 
         }
@@ -4224,14 +3257,8 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var favoriteOrders = orderBal.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
+
+            var favoriteOrders = _ooService.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
             var viewpath = string.Format("../PhysicianFavorites/{0}", PartialViews.FavoriteOrders);
             return PartialView(viewpath, favoriteOrders);
         }
@@ -4247,14 +3274,8 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var favoriteOrders = orderBal.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
+
+            var favoriteOrders = _ooService.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
             return PartialView(PartialViews.FavoriteOrdersSearch, favoriteOrders);
         }
 
@@ -4265,17 +3286,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortPhysicianAllSearch(int encounterid)
         {
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var allPhysicianOrders = orderBal.GetOrdersByPhysician(userId, corporateid, facilityid);
+            var allPhysicianOrders = _ooService.GetOrdersByPhysician(userId, corporateid, facilityid);
             var viewpath = string.Format("../PhysicianFavorites/{0}", PartialViews.PhyAllOrders);
             return PartialView(viewpath, allPhysicianOrders);
 
@@ -4289,8 +3303,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SortDiagnosisTabGrid(int? patientId, int? encounterId)
         {
-            var daignosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
-            var diagnosislist = daignosisBal.GetDiagnosisList(Convert.ToInt32(patientId), Convert.ToInt32(encounterId));
+            var diagnosislist = _diaService.GetDiagnosisList(Convert.ToInt32(patientId), Convert.ToInt32(encounterId));
             return PartialView(PartialViews.DiagnosisListEHR, diagnosislist);
         }
 
@@ -4298,182 +3311,8 @@ namespace BillingSystem.Controllers
 
         #region Orders Tab Data
 
-        /// <summary>
-        ///     Orderses the view data.
-        /// </summary>
-        /// <param name="encounterId">
-        ///     The encounter identifier.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="ActionResult" />.
-        /// </returns>
-        //public ActionResult OrdersViewData(string encounterId)
-        //{
-        //    var userId = Helpers.GetLoggedInUserId();
-        //    var corporateid = Helpers.GetSysAdminCorporateID();
-        //    var facilityid = Helpers.GetDefaultFacilityId();
-        //    var orderBal = new OpenOrderBal(
-        //        Helpers.DefaultCptTableNumber,
-        //        Helpers.DefaultServiceCodeTableNumber,
-        //        Helpers.DefaultDrgTableNumber,
-        //        Helpers.DefaultDrugTableNumber,
-        //        Helpers.DefaultHcPcsTableNumber,
-        //        Helpers.DefaultDiagnosisTableNumber);
-        //    var mostRecentOrders = orderBal.GetMostOrderedList(userId, 100); //---- Complexity has reduced to 1
-        //    var allPhysicianOrders = orderBal.GetOrdersByPhysician(userId, corporateid, facilityid);
-        //    //---- Complexity has reduced to 1
-
-        //    var favoriteOrders = orderBal.GetPhysicanFavoriteOrderedList(userId, facilityid, corporateid);
-        //    //---- Complexity has reduced to 1
-
-        //    var allEncounterOrders = orderBal.GetOpenOrdersByEncounterId(Convert.ToInt32(encounterId));
-        //    //---- Complexity was 7 now reduced to 1
-        //    var closedOrdersList = new List<OpenOrderCustomModel>();
-        //    var openOrderList = new List<OpenOrderCustomModel>();
-
-        //    var closedOrderActivityList = new List<OrderActivityCustomModel>();
-        //    var openOrderActivityList = new List<OrderActivityCustomModel>();
-
-        //    using (
-        //        var orderActivityBal = new OrderActivityBal(
-        //            Helpers.DefaultCptTableNumber,
-        //            Helpers.DefaultServiceCodeTableNumber,
-        //            Helpers.DefaultDrgTableNumber,
-        //            Helpers.DefaultDrugTableNumber,
-        //            Helpers.DefaultHcPcsTableNumber,
-        //            Helpers.DefaultDiagnosisTableNumber))
-        //    {
-        //        var encounterActivitesobj =
-        //            orderActivityBal.GetOrderActivitiesByEncounterIdSP(Convert.ToInt32(encounterId));
-        //        var encounterActivitesClosedListObj =
-        //            encounterActivitesobj.Where(
-        //                x =>
-        //                x.OrderActivityStatus != 0
-        //                && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-        //                && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-        //                && x.OrderActivityStatus
-        //                != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-        //                && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-        //                .OrderBy(x => x.ExecutedDate)
-        //                .ToList();
-        //        var encounterActivitesOpenListObj =
-        //            encounterActivitesobj.Where(
-        //                x =>
-        //                x.OrderActivityStatus == 0
-        //                || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-        //                || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-        //                || x.OrderActivityStatus
-        //                == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-        //                || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-        //                .OrderBy(x => x.OrderScheduleDate)
-        //                .ToList();
-        //        closedOrderActivityList = encounterActivitesClosedListObj;
-        //        openOrderActivityList = encounterActivitesOpenListObj;
-        //    }
-
-        //    if (allEncounterOrders.Count > 0)
-        //    {
-        //        openOrderList = allEncounterOrders.Where(a => a.OrderStatus.Equals("1")).ToList();
-        //        closedOrdersList =
-        //            allEncounterOrders.Where(
-        //                a =>
-        //                a.OrderStatus.Equals("3") || a.OrderStatus.Equals("4") || a.OrderStatus.Equals("2")
-        //                || a.OrderStatus.Equals("9")).ToList();
-        //    }
-        //    var patientId = orderBal.GetPatientIdByEncounterId(Convert.ToInt32(encounterId));
-        //    var futureOrdersList =
-        //        new FutureOpenOrderBal(
-        //            Helpers.DefaultCptTableNumber,
-        //            Helpers.DefaultServiceCodeTableNumber,
-        //            Helpers.DefaultDrgTableNumber,
-        //            Helpers.DefaultDrugTableNumber,
-        //            Helpers.DefaultHcPcsTableNumber,
-        //            Helpers.DefaultDiagnosisTableNumber).GetFutureOpenOrderByPatientId(Convert.ToInt32(patientId));
-
-        //    var ordersFullView = new OrdersFullView
-        //    {
-        //        AllPhysicianOrders =
-        //                                     allPhysicianOrders.DistinctBy(x => x.OrderCode).ToList(),
-        //        ClosedOrdersList = closedOrdersList,
-        //        EncounterOrder =
-        //                                     new OpenOrder
-        //                                     {
-        //                                         StartDate =
-        //                                                 Helpers.GetInvariantCultureDateTime(),
-        //                                         EndDate =
-        //                                                 Helpers.GetInvariantCultureDateTime(),
-        //                                         OrderStatus =
-        //                                                 Convert.ToInt32(OrderStatus.Open)
-        //                                                 .ToString()
-        //                                     },
-        //        FavoriteOrders = favoriteOrders,
-        //        MostRecentOrders = mostRecentOrders,
-        //        OpenOrdersList = openOrderList,
-        //        SearchedOrders = new List<OpenOrderCustomModel>(),
-        //        ClosedOrderActivityList = closedOrderActivityList,
-        //        OpenOrderActivityList = openOrderActivityList,
-        //        CurrentOrderActivity = new OrderActivity(),
-        //        FutureOpenOrdersList = futureOrdersList
-        //    };
-        //    var gccvalues = orderBal.GetGlobalCodesByCategoriesSp("1024,3102,1011,2305,963");
-        //    var jsonData =
-        //        new
-        //        {
-        //            listFrequency = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("1024")).OrderBy(d=>d.GlobalCodeName).ToList(),
-        //            listOrderStatus = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("3102")).OrderBy(d => d.GlobalCodeName).ToList(),
-        //            listQuantity =
-        //                    gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("1011"))
-        //                        .OrderBy(m => Convert.ToDecimal(m.GlobalCodeValue))
-        //                        .ToList(),
-        //            listDocumentType = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("2305")).ToList(),
-        //            listNoteType = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("963")).ToList(),
-        //            partialView = RenderPartialViewToStringBase(PartialViews.OrdersFullView, ordersFullView)
-        //        };
-        //    //return PartialView(PartialViews.OrdersFullView, ordersFullView);
-        //    return Json(jsonData, JsonRequestBehavior.AllowGet);
-        //}
-
-
-
         public ActionResult OrdersViewData(string encounterId)
         {
-            //var userId = Helpers.GetLoggedInUserId();
-            //var corporateid = Helpers.GetSysAdminCorporateID();
-            //var facilityid = Helpers.GetDefaultFacilityId();
-            //var orderBal = new OpenOrderBal(
-            //    Helpers.DefaultCptTableNumber,
-            //    Helpers.DefaultServiceCodeTableNumber,
-            //    Helpers.DefaultDrgTableNumber,
-            //    Helpers.DefaultDrugTableNumber,
-            //    Helpers.DefaultHcPcsTableNumber,
-            //    Helpers.DefaultDiagnosisTableNumber);
-
-
-            ////DB Call to get all records related to Orders tab
-            //var ordersViewData = orderBal.OrdersViewData(userId, 100, corporateid, facilityid, Convert.ToInt32(encounterId), "1024,3102,1011,2305,963", 0, "7", string.Empty);
-
-            //// Order Activities Section, starts here
-            //var orderActivities = ordersViewData.OrderActivities;
-            //var openActStatuses = new[] { 0, 1, 30, 20, 40 };
-            //var openOrderActivityList = orderActivities.Where(a => openActStatuses.Contains(Convert.ToInt32(a.OrderActivityStatus))).ToList();
-            //var closedOrderActivityList = orderActivities.Where(a => !openActStatuses.Contains(Convert.ToInt32(a.OrderActivityStatus))).ToList();
-            //// Order Activities Section, ends here
-
-            ////Orders Section
-            //var orders = ordersViewData.OpenOrders.ToList();
-            //var closedOrderStatuses = new[] { "2", "3", "4", "9" };
-            //var openOrderList = orders.Where(a => a.OrderStatus.Equals("1")).ToList();
-            //var closedOrdersList = orders.Where(a => closedOrderStatuses.Contains(a.OrderStatus)).ToList();
-            ////Orders Section
-
-            //var newEncOrder = new OpenOrder
-            //{
-            //    StartDate = Helpers.GetInvariantCultureDateTime(),
-            //    EndDate = Helpers.GetInvariantCultureDateTime(),
-            //    OrderStatus = Convert.ToString((int)OrderStatus.Open)
-            //};
-
-            //View Model, containing data
             var ordersFullView = new OrdersFullView
             {
                 AllPhysicianOrders = new List<OpenOrderCustomModel>(),// ordersViewData.PreviousOrders,
@@ -4497,11 +3336,6 @@ namespace BillingSystem.Controllers
             var jsonData =
                 new
                 {
-                    //listFrequency = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("1024")).OrderBy(d => d.GlobalCodeName).ToList(),
-                    //listOrderStatus = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("3102")).OrderBy(d => d.GlobalCodeName).ToList(),
-                    //listQuantity = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("1011")).OrderBy(m => Convert.ToDecimal(m.GlobalCodeValue)).ToList(),
-                    //listDocumentType = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("2305")).ToList(),
-                    //listNoteType = gccvalues.Where(g => g.GlobalCodeCategoryValue.Equals("963")).ToList(),
                     partialView = RenderPartialViewToStringBase(PartialViews.OrdersFullView, ordersFullView)
                 };
             //json data to return to view
@@ -4519,20 +3353,14 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOrderDetailJsonById(string orderId)
         {
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var id = 0;
             if (!string.IsNullOrEmpty(orderId))
             {
                 id = Convert.ToInt32(orderId);
             }
 
-            var orderDetail = encounterOrderbal.GetOpenOrderDetail(Convert.ToInt32(orderId));
+            var orderDetail = _ooService.GetOpenOrderDetail(Convert.ToInt32(orderId));
             var jsonObject =
                 new
                 {
@@ -4555,45 +3383,35 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddPhysicianFutureOrder(FutureOpenOrder order)
         {
-            // var EncounterId = 100220141;
-            using (
-                var futureOpenOrderBal = new FutureOpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
-                var periodDays = days <= 0 ? 1.0 : days + 1;
-                order.PeriodDays = Convert.ToString(periodDays);
-                order.FacilityID = facilityId;
-                order.CorporateID = corporateId;
-                if (order.OrderStatus == Convert.ToString((int)OrderStatus.Closed)) order.IsActivitySchecduled = true;
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
+            var periodDays = days <= 0 ? 1.0 : days + 1;
+            order.PeriodDays = Convert.ToString(periodDays);
+            order.FacilityID = facilityId;
+            order.CorporateID = corporateId;
+            if (order.OrderStatus == Convert.ToString((int)OrderStatus.Closed)) order.IsActivitySchecduled = true;
 
-                if (order.FutureOpenOrderID > 0)
-                {
-                    order.ModifiedBy = userId;
-                    order.PhysicianID = userId;
-                    order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-                }
-                else
-                {
-                    order.CreatedBy = userId;
-                    order.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    order.PhysicianID = userId;
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-                    order.IsActivitySchecduled = null;
-                    order.ActivitySchecduledOn = null;
-                }
-                var orderId = futureOpenOrderBal.SaveFutureOpenOrder(order);
-                return Json(orderId);
+            if (order.FutureOpenOrderID > 0)
+            {
+                order.ModifiedBy = userId;
+                order.PhysicianID = userId;
+                order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
             }
+            else
+            {
+                order.CreatedBy = userId;
+                order.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                order.PhysicianID = userId;
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
+                order.IsActivitySchecduled = null;
+                order.ActivitySchecduledOn = null;
+            }
+            var orderId = _fooService.SaveFutureOpenOrder(order);
+            return Json(orderId);
+
         }
 
         /// <summary>
@@ -4603,18 +3421,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientFutureOrder(int patientId)
         {
-            using (
-                var futureOpenOrderBal = new FutureOpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var futureOrderList = futureOpenOrderBal.GetFutureOpenOrderByPatientId(patientId);
-                return PartialView(PartialViews.FutureOpenOrders, futureOrderList);
-            }
+            var futureOrderList = _fooService.GetFutureOpenOrderByPatientId(patientId);
+            return PartialView(PartialViews.FutureOpenOrders, futureOrderList);
+
         }
 
         /// <summary>
@@ -4624,18 +3433,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFutureOpenOrders(int patientId)
         {
-            using (
-                var futureOpenOrderBal = new FutureOpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var futureOrderList = futureOpenOrderBal.GetFutureOpenOrderByPatientId(patientId);
-                return PartialView(PartialViews.FutureOpenOrders, futureOrderList);
-            }
+            var futureOrderList = _fooService.GetFutureOpenOrderByPatientId(patientId);
+            return PartialView(PartialViews.FutureOpenOrders, futureOrderList);
+
         }
 
         #endregion
@@ -4655,22 +3455,16 @@ namespace BillingSystem.Controllers
 
             var orderId = AddOpenOrder(order); // ---- Add orders
             var tabid = Convert.ToInt32(order.TabId);
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
 
-            var mostRecentOrders = orderBal.GetMostOrderedList(userId, 100); //---- Complexity has reduced to 1
-            var allPhysicianOrders = orderBal.GetOrdersByPhysician(userId, corporateId, facilityId);
+
+            var mostRecentOrders = _ooService.GetMostOrderedList(userId, 100); //---- Complexity has reduced to 1
+            var allPhysicianOrders = _ooService.GetOrdersByPhysician(userId, corporateId, facilityId);
             //---- Complexity has reduced to 1
 
-            var favoriteOrders = orderBal.GetPhysicanFavoriteOrderedList(userId, corporateId, facilityId);
+            var favoriteOrders = _ooService.GetPhysicanFavoriteOrderedList(userId, corporateId, facilityId);
             //---- Complexity has reduced to 1
 
-            var allEncounterOrders = orderBal.GetAllOrdersByEncounterId(Convert.ToInt32(order.EncounterID));
+            var allEncounterOrders = _ooService.GetAllOrdersByEncounterId(Convert.ToInt32(order.EncounterID));
             //---- Complexity was 7 now reduced to 1
             var closedOrdersList = new List<OpenOrderCustomModel>();
             var openOrderList = new List<OpenOrderCustomModel>();
@@ -4678,47 +3472,39 @@ namespace BillingSystem.Controllers
             var closedOrderActivityList = new List<OrderActivityCustomModel>();
             var openOrderActivityList = new List<OrderActivityCustomModel>();
             var labWaitingSpecimenList = new List<OrderActivityCustomModel>();
-            using (
-                var orderActivityBal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var encounterActivitesobj =
-                    orderActivityBal.GetOrderActivitiesByEncounterIdSP(Convert.ToInt32(order.EncounterID));
-                var encounterActivitesClosedListObj =
-                    encounterActivitesobj.Where(
-                        x =>
-                        x.OrderActivityStatus != 0
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                        && x.OrderActivityStatus
-                        != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                var encounterActivitesOpenListObj =
-                    encounterActivitesobj.Where(
-                        x =>
-                        x.OrderActivityStatus == 0
-                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                        || x.OrderActivityStatus
-                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
 
-                labWaitingSpecimenList =
-                    encounterActivitesOpenListObj.Where(
-                        x => x.OrderActivityStatus == 0 || x.OrderActivityStatus == 1 || x.OrderActivityStatus == 20)
-                        .ToList();
-                closedOrderActivityList = encounterActivitesClosedListObj;
-                openOrderActivityList = encounterActivitesOpenListObj;
-            }
+            var encounterActivitesobj =
+                _oaService.GetOrderActivitiesByEncounterIdSP(Convert.ToInt32(order.EncounterID));
+            var encounterActivitesClosedListObj =
+                encounterActivitesobj.Where(
+                    x =>
+                    x.OrderActivityStatus != 0
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                    && x.OrderActivityStatus
+                    != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            var encounterActivitesOpenListObj =
+                encounterActivitesobj.Where(
+                    x =>
+                    x.OrderActivityStatus == 0
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
+                    || x.OrderActivityStatus
+                    == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
+                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+
+            labWaitingSpecimenList =
+                encounterActivitesOpenListObj.Where(
+                    x => x.OrderActivityStatus == 0 || x.OrderActivityStatus == 1 || x.OrderActivityStatus == 20)
+                    .ToList();
+            closedOrderActivityList = encounterActivitesClosedListObj;
+            openOrderActivityList = encounterActivitesOpenListObj;
+
 
             if (allEncounterOrders.Count > 0)
             {
@@ -4729,15 +3515,8 @@ namespace BillingSystem.Controllers
                         a.OrderStatus.Equals("3") || a.OrderStatus.Equals("4") || a.OrderStatus.Equals("2")
                         || a.OrderStatus.Equals("9")).ToList();
             }
-            var patientId = orderBal.GetPatientIdByEncounterId(Convert.ToInt32(order.EncounterID));
-            var futureOrdersList =
-                new FutureOpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber).GetFutureOpenOrderByPatientId(Convert.ToInt32(patientId));
+            var patientId = _piService.GetPatientIdByEncounterId(Convert.ToInt32(order.EncounterID));
+            var futureOrdersList = _fooService.GetFutureOpenOrderByPatientId(Convert.ToInt32(patientId));
 
             closedOrdersList = tabid == 0
                                    ? closedOrdersList
@@ -4799,256 +3578,65 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult BindOrdersGrid(int encounterId, int type)
         {
-            using (var openOrdersbal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+
+            var listopenOrders = new List<OpenOrderCustomModel>();
+            var closedorderlist = new List<OpenOrderCustomModel>();
+            var oActivities = new List<OrderActivityCustomModel>();
+            var cActivities = new List<OrderActivityCustomModel>();
+            var labWActivities = new List<OrderActivityCustomModel>();
+
+            var orderActivityStatuses = new[] { 0, 1, 30, 20, 40 };
+            var labOrderActStatuses = new[] { 0, 1, 20 };
+
+            //Get all orders and Activities by Encounter ID, from the database
+            var vm = _ooService.GetPhysicianOrderPlusActivityList(encounterId, withActivities: true, categoryId: type);
+
+            if (vm != null)
             {
-                #region Commented Code
-                //using (
-                //    var orderActivitybal = new OrderActivityBal(
-                //        Helpers.DefaultCptTableNumber,
-                //        Helpers.DefaultServiceCodeTableNumber,
-                //        Helpers.DefaultDrgTableNumber,
-                //        Helpers.DefaultDrugTableNumber,
-                //        Helpers.DefaultHcPcsTableNumber,
-                //        Helpers.DefaultDiagnosisTableNumber))
-                //{
-                //    var listopenOrders =
-                //        openOrdersbal.GetPhysicianOrders(encounterId, OrderStatus.Open.ToString())
-                //            .OrderBy(x => x.OpenOrderID)
-                //            .ToList();
-                //    listopenOrders = type == 0
-                //                         ? listopenOrders
-                //                         : listopenOrders.Where(x => x.CategoryId == type).ToList();
-
-                //    var closedorderlist =
-                //        openOrdersbal.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString())
-                //            .OrderBy(x => x.OpenOrderID)
-                //            .ToList();
-                //    closedorderlist = type == 0
-                //                          ? closedorderlist
-                //                          : closedorderlist.Where(x => x.CategoryId == type).ToList();
-
-                //    var openorderActivitylist = orderActivitybal.GetOrderActivitiesByEncounterId(encounterId)
-                //            .Where(
-                //                x =>
-                //                x.OrderActivityStatus == 0
-                //                || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                //                || x.OrderActivityStatus
-                //                == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                //                || x.OrderActivityStatus
-                //                == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                //                || x.OrderActivityStatus
-                //                == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                //            .OrderBy(x => x.OrderScheduleDate)
-                //            .ToList();
-                //    openorderActivitylist = type == 0
-                //                                ? openorderActivitylist
-                //                                : openorderActivitylist.Where(x => x.OrderCategoryID == type).ToList();
-
-                //    var closedorderActivitylist =
-                //        orderActivitybal.GetOrderActivitiesByEncounterId(encounterId)
-                //            .Where(
-                //                x =>
-                //                x.OrderActivityStatus != 0
-                //                && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                //                && x.OrderActivityStatus
-                //                != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-                //                && x.OrderActivityStatus
-                //                != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-                //                && x.OrderActivityStatus
-                //                != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                //            .OrderBy(x => x.ExecutedDate)
-                //            .ToList();
-                //    closedorderActivitylist = type == 0
-                //                                  ? closedorderActivitylist
-                //                                  : closedorderActivitylist.Where(x => x.OrderCategoryID == type)
-                //                                        .ToList();
-                //    var labWaitingSpecimenList =
-                //        openorderActivitylist.Where(
-                //            x => x.OrderActivityStatus == 0 || x.OrderActivityStatus == 1 || x.OrderActivityStatus == 20)
-                //            .ToList();
-                //    labWaitingSpecimenList = type == 0
-                //                                 ? labWaitingSpecimenList
-                //                                 : labWaitingSpecimenList.Where(x => x.OrderCategoryID == type).ToList();
-                //} 
-                #endregion
-
-
-                var listopenOrders = new List<OpenOrderCustomModel>();
-                var closedorderlist = new List<OpenOrderCustomModel>();
-                var oActivities = new List<OrderActivityCustomModel>();
-                var cActivities = new List<OrderActivityCustomModel>();
-                var labWActivities = new List<OrderActivityCustomModel>();
-
-                var orderActivityStatuses = new[] { 0, 1, 30, 20, 40 };
-                var labOrderActStatuses = new[] { 0, 1, 20 };
-
-                //Get all orders and Activities by Encounter ID, from the database
-                var vm = openOrdersbal.GetPhysicianOrderPlusActivityList(encounterId, withActivities: true, categoryId: type);
-
-                if (vm != null)
+                //Bind Orders Data
+                if (vm.OpenOrders.Any())
                 {
-                    //Bind Orders Data
-                    if (vm.OpenOrders.Any())
-                    {
-                        listopenOrders = vm.OpenOrders.Where(a => a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).OrderBy(o => o.OpenOrderID).ToList();
-                        closedorderlist = vm.OpenOrders.Where(a => !a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).OrderBy(o => o.OpenOrderID).ToList();
-                    }
-
-
-                    //Bind Orders Activities Data
-                    if (vm.OrderActivities.Any())
-                    {
-                        var allActivities = vm.OrderActivities;
-                        oActivities = allActivities.Where(a => orderActivityStatuses.Contains(a.OrderActivityStatus.Value) && (type == 0 || a.OrderCategoryID == type)).OrderBy(x => x.OrderScheduleDate).ToList();
-                        cActivities = allActivities.Where(a => !orderActivityStatuses.Contains(a.OrderActivityStatus.Value) && (type == 0 || a.OrderCategoryID == type)).OrderBy(x => x.ExecutedDate).ToList();
-                        labWActivities = allActivities.Where(a => labOrderActStatuses.Contains(a.OrderActivityStatus.Value) && (type == 0 || a.OrderCategoryID == type)).OrderBy(x => x.OrderScheduleDate).ToList();
-                    }
+                    listopenOrders = vm.OpenOrders.Where(a => a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).OrderBy(o => o.OpenOrderID).ToList();
+                    closedorderlist = vm.OpenOrders.Where(a => !a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).OrderBy(o => o.OpenOrderID).ToList();
                 }
 
-                //Bind JSON Data
-                var jsonData = new
-                {
-                    closedorderslist = RenderPartialViewToStringBase(type == 11080 ? PartialViews.LabClosedOrderList
-                                        : PartialViews.ClosedOrdersList, closedorderlist),
-                    closedorderActivityslist = RenderPartialViewToStringBase(type == 11080 ? PartialViews.LabClosedActivtiesList
-                                        : PartialViews.OrderClosedActivityScheduleList, cActivities),
-                    openorderActivityslist = RenderPartialViewToStringBase(
-                                    type == 11080 ? PartialViews.LabOpenActivtiesList
-                                        : PartialViews.OrderActivityScheduleList, oActivities),
-                    openOrderslist = RenderPartialViewToStringBase(
-                                    type == 11080 ? PartialViews.LabOpenOrderList
-                                        : PartialViews.PhysicianOpenOrderList, listopenOrders),
-                    labWaitingSpecimenList = RenderPartialViewToStringBase(
-                                    PartialViews.LabSpecimanListing, labWActivities)
-                };
 
-                //Bind JSON Result to view
-                var jsonResult = Json(jsonData, JsonRequestBehavior.AllowGet);
-                jsonResult.MaxJsonLength = int.MaxValue;
-                return jsonResult;
+                //Bind Orders Activities Data
+                if (vm.OrderActivities.Any())
+                {
+                    var allActivities = vm.OrderActivities;
+                    oActivities = allActivities.Where(a => orderActivityStatuses.Contains(a.OrderActivityStatus.Value) && (type == 0 || a.OrderCategoryID == type)).OrderBy(x => x.OrderScheduleDate).ToList();
+                    cActivities = allActivities.Where(a => !orderActivityStatuses.Contains(a.OrderActivityStatus.Value) && (type == 0 || a.OrderCategoryID == type)).OrderBy(x => x.ExecutedDate).ToList();
+                    labWActivities = allActivities.Where(a => labOrderActStatuses.Contains(a.OrderActivityStatus.Value) && (type == 0 || a.OrderCategoryID == type)).OrderBy(x => x.OrderScheduleDate).ToList();
+                }
             }
+
+            //Bind JSON Data
+            var jsonData = new
+            {
+                closedorderslist = RenderPartialViewToStringBase(type == 11080 ? PartialViews.LabClosedOrderList
+                                    : PartialViews.ClosedOrdersList, closedorderlist),
+                closedorderActivityslist = RenderPartialViewToStringBase(type == 11080 ? PartialViews.LabClosedActivtiesList
+                                    : PartialViews.OrderClosedActivityScheduleList, cActivities),
+                openorderActivityslist = RenderPartialViewToStringBase(
+                                type == 11080 ? PartialViews.LabOpenActivtiesList
+                                    : PartialViews.OrderActivityScheduleList, oActivities),
+                openOrderslist = RenderPartialViewToStringBase(
+                                type == 11080 ? PartialViews.LabOpenOrderList
+                                    : PartialViews.PhysicianOpenOrderList, listopenOrders),
+                labWaitingSpecimenList = RenderPartialViewToStringBase(
+                                PartialViews.LabSpecimanListing, labWActivities)
+            };
+
+            //Bind JSON Result to view
+            var jsonResult = Json(jsonData, JsonRequestBehavior.AllowGet);
+            jsonResult.MaxJsonLength = int.MaxValue;
+            return jsonResult;
+
         }
 
 
-        ///// <summary>
-        /////     Binds the orders grid.
-        ///// </summary>
-        ///// <param name="encounterId">The encounter identifier.</param>
-        ///// <param name="type">The type.</param>
-        ///// <returns></returns>
-        //public ActionResult BindOrdersGrid(int encounterId, int type)
-        //{
-        //    using (
-        //        var openOrdersbal = new OpenOrderBal(
-        //            Helpers.DefaultCptTableNumber,
-        //            Helpers.DefaultServiceCodeTableNumber,
-        //            Helpers.DefaultDrgTableNumber,
-        //            Helpers.DefaultDrugTableNumber,
-        //            Helpers.DefaultHcPcsTableNumber,
-        //            Helpers.DefaultDiagnosisTableNumber))
-        //    {
-        //        using (
-        //            var orderActivitybal = new OrderActivityBal(
-        //                Helpers.DefaultCptTableNumber,
-        //                Helpers.DefaultServiceCodeTableNumber,
-        //                Helpers.DefaultDrgTableNumber,
-        //                Helpers.DefaultDrugTableNumber,
-        //                Helpers.DefaultHcPcsTableNumber,
-        //                Helpers.DefaultDiagnosisTableNumber))
-        //        {
-        //            var listopenOrders =
-        //                openOrdersbal.GetPhysicianOrders(encounterId, OrderStatus.Open.ToString())
-        //                    .OrderBy(x => x.OpenOrderID)
-        //                    .ToList();
-        //            listopenOrders = type == 0
-        //                                 ? listopenOrders
-        //                                 : listopenOrders.Where(x => x.CategoryId == type).ToList();
-        //            var openorderActivitylist =
-        //                orderActivitybal.GetOrderActivitiesByEncounterId(encounterId)
-        //                    .Where(
-        //                        x =>
-        //                        x.OrderActivityStatus == 0
-        //                        || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-        //                        || x.OrderActivityStatus
-        //                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-        //                        || x.OrderActivityStatus
-        //                        == Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-        //                        || x.OrderActivityStatus
-        //                        == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-        //                    .OrderBy(x => x.OrderScheduleDate)
-        //                    .ToList();
-        //            openorderActivitylist = type == 0
-        //                                        ? openorderActivitylist
-        //                                        : openorderActivitylist.Where(x => x.OrderCategoryID == type).ToList();
 
-        //            var closedorderActivitylist =
-        //                orderActivitybal.GetOrderActivitiesByEncounterId(encounterId)
-        //                    .Where(
-        //                        x =>
-        //                        x.OrderActivityStatus != 0
-        //                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-        //                        && x.OrderActivityStatus
-        //                        != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForResult)
-        //                        && x.OrderActivityStatus
-        //                        != Convert.ToInt32(OpenOrderActivityStatus.LabSectionWaitingForSpecimen)
-        //                        && x.OrderActivityStatus
-        //                        != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-        //                    .OrderBy(x => x.ExecutedDate)
-        //                    .ToList();
-        //            closedorderActivitylist = type == 0
-        //                                          ? closedorderActivitylist
-        //                                          : closedorderActivitylist.Where(x => x.OrderCategoryID == type)
-        //                                                .ToList();
-        //            var labWaitingSpecimenList =
-        //                openorderActivitylist.Where(
-        //                    x => x.OrderActivityStatus == 0 || x.OrderActivityStatus == 1 || x.OrderActivityStatus == 20)
-        //                    .ToList();
-        //            labWaitingSpecimenList = type == 0
-        //                                         ? labWaitingSpecimenList
-        //                                         : labWaitingSpecimenList.Where(x => x.OrderCategoryID == type).ToList();
-        //            var closedorderlist =
-        //                openOrdersbal.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString())
-        //                    .OrderBy(x => x.OpenOrderID)
-        //                    .ToList();
-        //            closedorderlist = type == 0
-        //                                  ? closedorderlist
-        //                                  : closedorderlist.Where(x => x.CategoryId == type).ToList();
-        //            var objToRerturn =
-        //                new
-        //                {
-        //                    closedorderslist =
-        //                            RenderPartialViewToStringBase(
-        //                                type == 11080 ? PartialViews.LabClosedOrderList : PartialViews.ClosedOrdersList,
-        //                                closedorderlist),
-        //                    closedorderActivityslist =
-        //                            RenderPartialViewToStringBase(
-        //                                type == 11080
-        //                                    ? PartialViews.LabClosedActivtiesList
-        //                                    : PartialViews.OrderClosedActivityScheduleList,
-        //                                closedorderActivitylist),
-        //                    openorderActivityslist =
-        //                            RenderPartialViewToStringBase(
-        //                                type == 11080
-        //                                    ? PartialViews.LabOpenActivtiesList
-        //                                    : PartialViews.OrderActivityScheduleList,
-        //                                openorderActivitylist),
-        //                    openOrderslist =
-        //                            RenderPartialViewToStringBase(
-        //                                type == 11080
-        //                                    ? PartialViews.LabOpenOrderList
-        //                                    : PartialViews.PhysicianOpenOrderList,
-        //                                listopenOrders),
-        //                    labWaitingSpecimenList =
-        //                            RenderPartialViewToStringBase(
-        //                                PartialViews.LabSpecimanListing,
-        //                                labWaitingSpecimenList)
-        //                };
-        //            return Json(objToRerturn, JsonRequestBehavior.AllowGet);
-        //        }
-        //    }
-        //}
 
         /// <summary>
         ///     Gets the data by categories.
@@ -5056,24 +3644,22 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDataByCategories()
         {
-            using (var gbal = new GlobalCodeService())
-            {
-                var categories = new[] { "1024", "3102", "1011", "2305", "963" };
-                var list = gbal.GetListByCategoriesRange(categories);
-                var jsonData =
-                    new
-                    {
-                        listFrequency = list.Where(g => g.ExternalValue1.Equals("1024")).ToList(),
-                        listOrderStatus = list.Where(g => g.ExternalValue1.Equals("3102")).ToList(),
-                        listQuantity =
-                                list.Where(g => g.ExternalValue1.Equals("1011"))
-                                    .OrderBy(m => Convert.ToDecimal(m.Value))
-                                    .ToList(),
-                        listDocumentType = list.Where(g => g.ExternalValue1.Equals("2305")).ToList(),
-                        listNoteType = list.Where(g => g.ExternalValue1.Equals("963")).ToList()
-                    };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-            }
+            var categories = new[] { "1024", "3102", "1011", "2305", "963" };
+            var list = _gService.GetListByCategoriesRange(categories);
+            var jsonData =
+                new
+                {
+                    listFrequency = list.Where(g => g.ExternalValue1.Equals("1024")).ToList(),
+                    listOrderStatus = list.Where(g => g.ExternalValue1.Equals("3102")).ToList(),
+                    listQuantity =
+                            list.Where(g => g.ExternalValue1.Equals("1011"))
+                                .OrderBy(m => Convert.ToDecimal(m.Value))
+                                .ToList(),
+                    listDocumentType = list.Where(g => g.ExternalValue1.Equals("2305")).ToList(),
+                    listNoteType = list.Where(g => g.ExternalValue1.Equals("963")).ToList()
+                };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -5083,17 +3669,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult CancelOpenOrder(int cancelOrderId)
         {
-            using (
-                var openorderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                openorderBal.CancelOpenOrder(cancelOrderId, Helpers.GetLoggedInUserId());
-            }
+            _ooService.CancelOpenOrder(cancelOrderId, Helpers.GetLoggedInUserId());
+
             return Json(true, JsonRequestBehavior.AllowGet);
         }
 
@@ -5130,67 +3707,41 @@ namespace BillingSystem.Controllers
             string Dtype)
         {
             UserDefinedDescriptions model = null;
-            using (var bal = new FavoritesService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
+
+            if (id > 0) model = _favService.GetFavoriteById(id);
+            else
             {
-                if (id > 0) model = bal.GetFavoriteById(id);
-                else
-                {
-                    if (IsAlreadyFav(Helpers.GetLoggedInUserId(), codeId, categoryId)) return Json(1);
-                    model = new UserDefinedDescriptions { CategoryId = categoryId, CodeId = codeId };
-                }
-
-                model.UserDefineDescription = favoriteDesc;
-                model.UserID = Helpers.GetLoggedInUserId();
-                model.RoleID = Helpers.GetDefaultRoleId();
-                if (model.UserDefinedDescriptionID > 0)
-                {
-                    model.ModifiedBy = model.UserID;
-                    model.Modifieddate = Helpers.GetInvariantCultureDateTime();
-                }
-                else
-                {
-                    model.CreatedBy = model.UserID;
-                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                }
-
-                var result = bal.AddToFavorites(model, isFavorite);
-                if (Dtype != "true")
-                {
-                    var ordersBal = new OpenOrderService(
-                        Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDrgTableNumber,
-                        Helpers.DefaultDrugTableNumber,
-                        Helpers.DefaultHcPcsTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber);
-                    var list = ordersBal.GetFavoriteOrders(Helpers.GetLoggedInUserId());
-                    list = list.Where(_ => _.CategoryId == Convert.ToInt32(OrderType.Diagnosis)).ToList();
-                    return PartialView(PartialViews.FavoriteOrders, list);
-                }
-
-                //var favDiagnosisBal = new FavoritesBal(
-                //    Helpers.DefaultCptTableNumber,
-                //    Helpers.DefaultServiceCodeTableNumber,
-                //    Helpers.DefaultDrgTableNumber,
-                //    Helpers.DefaultDrugTableNumber,
-                //    Helpers.DefaultHcPcsTableNumber,
-                //    Helpers.DefaultDiagnosisTableNumber);
-                //var favDiagnosisList = favDiagnosisBal.GetFavoriteOrders(Helpers.GetLoggedInUserId());
-                //favDiagnosisList =
-                //    favDiagnosisList.Where(
-                //        _ =>
-                //        _.CategoryId == Convert.ToInt32(OrderType.Diagnosis).ToString()
-                //        || _.CategoryId == Convert.ToInt32(OrderType.DRG).ToString())
-
-                //        // || _.CategoryId == Convert.ToInt32(OrderType.CPT).ToString())
-                //        .ToList();
-                //return PartialView("../Diagnosis/" + PartialViews.PhyFavDiagnosisList, favDiagnosisList);
-
-                var dlist = bal.GetFavoriteDiagnosisData(Helpers.GetLoggedInUserId());
-                var jsonData = dlist.Select(f => new[] { Convert.ToString(f.UserDefinedDescriptionID), f.CategoryName, f.CodeId, f.CodeDesc, f.UserDefineDescription, f.CodeId });
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
+                if (IsAlreadyFav(Helpers.GetLoggedInUserId(), codeId, categoryId)) return Json(1);
+                model = new UserDefinedDescriptions { CategoryId = categoryId, CodeId = codeId };
             }
+
+            model.UserDefineDescription = favoriteDesc;
+            model.UserID = Helpers.GetLoggedInUserId();
+            model.RoleID = Helpers.GetDefaultRoleId();
+            if (model.UserDefinedDescriptionID > 0)
+            {
+                model.ModifiedBy = model.UserID;
+                model.Modifieddate = Helpers.GetInvariantCultureDateTime();
+            }
+            else
+            {
+                model.CreatedBy = model.UserID;
+                model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+            }
+
+            var result = _favService.AddToFavorites(model, isFavorite);
+            if (Dtype != "true")
+            {
+                var list = _ooService.GetFavoriteOrders(Helpers.GetLoggedInUserId(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+                list = list.Where(_ => _.CategoryId == Convert.ToInt32(OrderType.Diagnosis)).ToList();
+                return PartialView(PartialViews.FavoriteOrders, list);
+            }
+
+
+            var dlist = _favService.GetFavoriteDiagnosisData(Helpers.GetLoggedInUserId(), Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            var jsonData = dlist.Select(f => new[] { Convert.ToString(f.UserDefinedDescriptionID), f.CategoryName, f.CodeId, f.CodeDesc, f.UserDefineDescription, f.CodeId });
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+
         }
 
         #endregion
@@ -5210,10 +3761,8 @@ namespace BillingSystem.Controllers
         public ActionResult GetDiagnosisCodes(int patientId)
         {
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
-            var list = bal.GetAllDiagnosisCodes(facilityId);
-            var diagnosisBal = new DiagnosisService(Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
-            var ClientDiagnosislst = diagnosisBal.GetDiagnosisList(patientId).ToList();
+            var list = _diaService.GetAllDiagnosisCodes(facilityId, Helpers.DefaultDiagnosisTableNumber);
+            var ClientDiagnosislst = _diaService.GetDiagnosisList(patientId).ToList();
             if (ClientDiagnosislst.Count > 0)
             {
                 list =
@@ -5228,210 +3777,6 @@ namespace BillingSystem.Controllers
 
             return Json(list);
         }
-
-        ///// <summary>
-        /////     Gets the diagnosis tab data.
-        ///// </summary>
-        ///// <param name="patientId">
-        /////     The patient identifier.
-        ///// </param>
-        ///// <param name="encounterId">
-        /////     The encounter identifier.
-        ///// </param>
-        ///// <returns>
-        /////     The <see cref="ActionResult" />.
-        ///// </returns>
-        //public ActionResult GetDiagnosisTabData(int patientId, int encounterId)
-        //{
-        //    DiagnosisCustomModel diagnosisModel;
-        //    PatientInfoCustomModel patientInfo;
-        //    List<DiagnosisCustomModel> list;
-        //    List<DiagnosisCustomModel> previouslist;
-
-        //    // string patientId, string encounterId
-        //    var pid = Convert.ToInt32(patientId);
-        //    var eid = Convert.ToInt32(encounterId);
-        //    bool isPrimary;
-        //    var userid = Helpers.GetLoggedInUserId();
-        //    using (
-        //        var bal = new DiagnosisBal(
-        //            Helpers.DefaultCptTableNumber,
-        //            Helpers.DefaultServiceCodeTableNumber,
-        //            Helpers.DefaultDrgTableNumber,
-        //            Helpers.DefaultDrugTableNumber,
-        //            Helpers.DefaultHcPcsTableNumber,
-        //            Helpers.DefaultDiagnosisTableNumber))
-        //    {
-        //        var dModel = bal.GetNewDiagnosisByEncounterId(eid, pid);
-        //        var dList = bal.GetDiagnosisList(pid, eid);
-        //        var previousDlist = bal.GetPreviousDiagnosisList(pid, eid);
-        //        var isMajorCpt = dList.All(x => x.DiagnosisType != 4);
-        //        dModel.IsMajorCPT = isMajorCpt;
-        //        dModel.IsMajorDRG = dList.All(x => x.DiagnosisType != 3);
-        //        list = dList != null && dList.Count > 0 ? dList : new List<DiagnosisCustomModel>();
-        //        previouslist = previousDlist.Any() ? previousDlist : new List<DiagnosisCustomModel>();
-        //        diagnosisModel = dModel;
-        //        patientInfo = bal.GetPatientDetailsByPatientId(pid);
-        //        isPrimary = list.Count(x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary)) == 0;
-        //    }
-
-        //    if (patientInfo != null)
-        //    {
-        //        diagnosisModel.PatientID = patientInfo.PatientInfo.PatientID;
-        //        diagnosisModel.EncounterID = eid > 0
-        //                                         ? eid
-        //                                         : (patientInfo.CurrentEncounter != null
-        //                                                ? patientInfo.CurrentEncounter.EncounterID
-        //                                                : 0);
-        //        diagnosisModel.CorporateID = patientInfo.CorporateId;
-        //        diagnosisModel.FacilityID = patientInfo.PatientInfo.FacilityId;
-        //    }
-
-        //    var primarydiagnosisId = 0;
-        //    if (list.Any())
-        //    {
-        //        var diagnosisCustomModel =
-        //            list.SingleOrDefault(x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary));
-        //        if (diagnosisCustomModel != null)
-        //        {
-        //            primarydiagnosisId = diagnosisCustomModel.DiagnosisID;
-        //        }
-        //    }
-
-        //    diagnosisModel.IsPrimary = isPrimary;
-        //    diagnosisModel.PrimaryDiagnosisId = primarydiagnosisId;
-        //    var favDiagnosisBal = new FavoritesBal(
-        //        Helpers.DefaultCptTableNumber,
-        //        Helpers.DefaultServiceCodeTableNumber,
-        //        Helpers.DefaultDrgTableNumber,
-        //        Helpers.DefaultDrugTableNumber,
-        //        Helpers.DefaultHcPcsTableNumber,
-        //        Helpers.DefaultDiagnosisTableNumber);
-        //    var favDiagnosisList = favDiagnosisBal.GetFavoriteOrders(userid);
-        //    favDiagnosisList =
-        //        favDiagnosisList.Where(
-        //            _ =>
-        //            _.CategoryId == Convert.ToInt32(OrderType.Diagnosis).ToString()
-        //            || _.CategoryId == Convert.ToInt32(OrderType.DRG).ToString())
-
-        //            // || _.CategoryId == Convert.ToInt32(OrderType.CPT).ToString())
-        //            .ToList();
-        //    var diagnosisView = new DiagnosisView
-        //    {
-        //        CurrentDiagnosis = diagnosisModel,
-        //        PatientInfo = patientInfo,
-        //        DiagnosisList = list,
-        //        previousDiagnosisList = previouslist,
-        //        FavoriteDiagnosisList = favDiagnosisList
-        //    };
-
-        //    return PartialView(PartialViews.DiagnosisViewUC, diagnosisView);
-        //}
-
-
-        ///// <summary>
-        /////     Gets the diagnosis tab data.
-        ///// </summary>
-        ///// <param name="patientId">
-        /////     The patient identifier.
-        ///// </param>
-        ///// <param name="encounterId">
-        /////     The encounter identifier.
-        ///// </param>
-        ///// <returns>
-        /////     The <see cref="ActionResult" />.
-        ///// </returns>
-        //public ActionResult GetDiagnosisTabData(int patientId, int encounterId)
-        //{
-        //    DiagnosisCustomModel diagnosisModel;
-        //    PatientInfoCustomModel patientInfo;
-        //    List<DiagnosisCustomModel> list;
-        //    List<DiagnosisCustomModel> previouslist;
-
-        //    // string patientId, string encounterId
-        //    var pid = Convert.ToInt32(patientId);
-        //    var eid = Convert.ToInt32(encounterId);
-        //    bool isPrimary;
-        //    var userid = Helpers.GetLoggedInUserId();
-        //    using (
-        //        var bal = new DiagnosisBal(
-        //            Helpers.DefaultCptTableNumber,
-        //            Helpers.DefaultServiceCodeTableNumber,
-        //            Helpers.DefaultDrgTableNumber,
-        //            Helpers.DefaultDrugTableNumber,
-        //            Helpers.DefaultHcPcsTableNumber,
-        //            Helpers.DefaultDiagnosisTableNumber))
-        //    {
-        //        var dModel = bal.GetNewDiagnosisByEncounterId(eid, pid);
-        //        var dList = bal.GetDiagnosisList(pid, eid);
-        //        var previousDlist = bal.GetPreviousDiagnosisList(pid, eid);
-        //        var isMajorCpt = dList.All(x => x.DiagnosisType != 4);
-        //        dModel.IsMajorCPT = isMajorCpt;
-        //        dModel.IsMajorDRG = dList.All(x => x.DiagnosisType != 3);
-        //        list = dList != null && dList.Count > 0 ? dList : new List<DiagnosisCustomModel>();
-        //        previouslist = previousDlist.Any() ? previousDlist : new List<DiagnosisCustomModel>();
-        //        diagnosisModel = dModel;
-        //        //patientInfo = bal.GetPatientDetailsByPatientId(pid);
-        //        isPrimary = list.Count(x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary)) == 0;
-        //    }
-
-        //    diagnosisModel.PatientID = patientId;
-        //    diagnosisModel.EncounterID = eid;
-        //    diagnosisModel.CorporateID = Helpers.GetSysAdminCorporateID();
-        //    diagnosisModel.FacilityID = Helpers.GetDefaultFacilityId();
-        //    //if (patientInfo != null)
-        //    //{
-        //    //    diagnosisModel.PatientID = patientInfo.PatientInfo.PatientID;
-        //    //    diagnosisModel.EncounterID = eid > 0
-        //    //                                     ? eid
-        //    //                                     : (patientInfo.CurrentEncounter != null
-        //    //                                            ? patientInfo.CurrentEncounter.EncounterID
-        //    //                                            : 0);
-        //    //    diagnosisModel.CorporateID = patientInfo.CorporateId;
-        //    //    diagnosisModel.FacilityID = patientInfo.PatientInfo.FacilityId;
-        //    //}
-
-        //    var primarydiagnosisId = 0;
-        //    if (list.Any())
-        //    {
-        //        var diagnosisCustomModel =
-        //            list.SingleOrDefault(x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary));
-        //        if (diagnosisCustomModel != null)
-        //        {
-        //            primarydiagnosisId = diagnosisCustomModel.DiagnosisID;
-        //        }
-        //    }
-
-        //    diagnosisModel.IsPrimary = isPrimary;
-        //    diagnosisModel.PrimaryDiagnosisId = primarydiagnosisId;
-        //    var favDiagnosisBal = new FavoritesBal(
-        //        Helpers.DefaultCptTableNumber,
-        //        Helpers.DefaultServiceCodeTableNumber,
-        //        Helpers.DefaultDrgTableNumber,
-        //        Helpers.DefaultDrugTableNumber,
-        //        Helpers.DefaultHcPcsTableNumber,
-        //        Helpers.DefaultDiagnosisTableNumber);
-        //    var favDiagnosisList = favDiagnosisBal.GetFavoriteOrders(userid);
-        //    favDiagnosisList =
-        //        favDiagnosisList.Where(
-        //            _ =>
-        //            _.CategoryId == Convert.ToInt32(OrderType.Diagnosis).ToString()
-        //            || _.CategoryId == Convert.ToInt32(OrderType.DRG).ToString())
-
-        //            // || _.CategoryId == Convert.ToInt32(OrderType.CPT).ToString())
-        //            .ToList();
-        //    var diagnosisView = new DiagnosisView
-        //    {
-        //        CurrentDiagnosis = diagnosisModel,
-        //        //PatientInfo = patientInfo,
-        //        DiagnosisList = list,
-        //        previousDiagnosisList = previouslist,
-        //        FavoriteDiagnosisList = favDiagnosisList
-        //    };
-
-        //    return PartialView(PartialViews.DiagnosisViewUC, diagnosisView);
-        //}
-
 
 
         /// <summary>
@@ -5467,7 +3812,7 @@ namespace BillingSystem.Controllers
             return PartialView(PartialViews.DiagnosisViewUC, vm);
 
 
-            //using (var bal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
+            //using (var bal = new _diaService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
             //        Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             //{
             //    viewData = bal.GetDiagnosisTabData(pid, eid, userid, Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
@@ -5510,26 +3855,15 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindLabClosedActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            && x.OrderActivityStatus != 0
-                            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                return PartialView(PartialViews.LabClosedActivtiesList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        && x.OrderActivityStatus != 0
+                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            return PartialView(PartialViews.LabClosedActivtiesList, list);
         }
 
         /// <summary>
@@ -5543,22 +3877,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindLabClosedOrders(int encounterId)
         {
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString())
-                        .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory))
-                        .OrderBy(x => x.OpenOrderID)
-                        .ToList();
-                return PartialView(PartialViews.LabClosedOrderList, list);
-            }
+            var list = _ooService.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory))
+                    .OrderBy(x => x.OpenOrderID)
+                    .ToList();
+            return PartialView(PartialViews.LabClosedOrderList, list);
         }
 
         /// <summary>
@@ -5572,26 +3895,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindLabOpenActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                            && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                                || x.OrderActivityStatus == 0))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
-                return PartialView(PartialViews.LabOpenActivtiesList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                        && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                            || x.OrderActivityStatus == 0))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            return PartialView(PartialViews.LabOpenActivtiesList, list);
+
         }
 
         /// <summary>
@@ -5606,16 +3919,10 @@ namespace BillingSystem.Controllers
         public ActionResult BindLabOpenOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var status = OrderStatus.Open.ToString();
             var listOfOrders =
-                encounterOrderbal.GetPhysicianOrders(encounterIdint, status).OrderBy(x => x.OpenOrderID).ToList();
+                _ooService.GetPhysicianOrders(encounterIdint, status, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber).OrderBy(x => x.OpenOrderID).ToList();
             return PartialView(PartialViews.LabOpenOrderList, listOfOrders);
         }
 
@@ -5646,64 +3953,26 @@ namespace BillingSystem.Controllers
             var openActivities = new List<OrderActivityCustomModel>();
             var closedActivities = new List<OrderActivityCustomModel>();
 
-            using (var medicalVitals = new MedicalVitalService())
-                vitals = medicalVitals.GetCustomMedicalVitals(patientId, Convert.ToInt32(MedicalRecordType.LabTest), encounterid);
+            vitals = _mvService.GetCustomMedicalVitals(patientId, Convert.ToInt32(MedicalRecordType.LabTest), encounterid);
 
 
-            using (var orderbal = new OpenOrderService(Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber,
-                        Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-            {
-                //var allPhysicianOrders = orderbal.GetAllOrdersByEncounterId(encounterid);
-                //var labordersList = allPhysicianOrders.Where(x => x.EncounterID == encounterid
-                //                    && x.CategoryId == (int)GlobalCodeCategoryValue.LabTest);
-                //var labopenordersList = labordersList.Where(
-                //        x => x.OrderStatus == "0" || x.OrderStatus == Convert.ToInt32(OrderStatus.Open).ToString())
-                //        .ToList();
+            var ordersAndActivities = _ooService.GetOrdersAndActivitiesByEncounter(encounterid);
+            var labOrders = ordersAndActivities.OpenOrders.Where(a => a.CategoryId == (int)GlobalCodeCategoryValue.LabTest);
 
-                //var labclosedordersList =
-                //    labordersList.Where(
-                //        x => x.OrderStatus != "0" && x.OrderStatus != Convert.ToInt32(OrderStatus.Open).ToString())
-                //        .ToList();
+            openOrders = labOrders
+                .Where(a => a.OrderStatus == "0" || a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
+            closedOrders = labOrders
+                .Where(a => a.OrderStatus != "0" && !a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
 
 
-                //using (var aBal = new OrderActivityBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
-                //        Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber
-                //        , Helpers.DefaultDiagnosisTableNumber))
-                //{
-                //    var allActivities = aBal.GetOrderActivitiesByEncounterIdSP(encounterid);
+            var activities = ordersAndActivities.OrderActivities
+                .Where(x => x.OrderCategoryID == (int)OrderTypeCategory.PathologyandLaboratory);
 
+            openActivities = activities.Where(x => openStatuses.Any(o => o == x.OrderActivityStatus.Value))
+                                        .OrderBy(x => x.OrderScheduleDate).ToList();
+            closedActivities = activities.Where(x => !openStatuses.Any(o => o == x.OrderActivityStatus.Value))
+                                        .OrderBy(x => x.ExecutedDate).ToList();
 
-
-
-                //    var labActivitesListObj = allActivities.Where(x => x.OrderCategoryID == (int)OrderTypeCategory.PathologyandLaboratory);
-                //    closedActivities = labActivitesListObj.Where(x => !openStatuses.Any(o => o == x.OrderActivityStatus.Value))
-                //                                .OrderBy(x => x.ExecutedDate).ToList();
-
-                //    openActivities = labActivitesListObj.Where(x => openStatuses.Any(o => o == x.OrderActivityStatus.Value))
-                //                            .OrderBy(x => x.OrderScheduleDate).ToList();
-
-
-                //}
-
-
-                var ordersAndActivities = orderbal.GetOrdersAndActivitiesByEncounter(encounterid);
-                var labOrders = ordersAndActivities.OpenOrders.Where(a => a.CategoryId == (int)GlobalCodeCategoryValue.LabTest);
-
-                openOrders = labOrders
-                    .Where(a => a.OrderStatus == "0" || a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-                closedOrders = labOrders
-                    .Where(a => a.OrderStatus != "0" && !a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-
-
-                var activities = ordersAndActivities.OrderActivities
-                    .Where(x => x.OrderCategoryID == (int)OrderTypeCategory.PathologyandLaboratory);
-
-                openActivities = activities.Where(x => openStatuses.Any(o => o == x.OrderActivityStatus.Value))
-                                            .OrderBy(x => x.OrderScheduleDate).ToList();
-                closedActivities = activities.Where(x => !openStatuses.Any(o => o == x.OrderActivityStatus.Value))
-                                            .OrderBy(x => x.ExecutedDate).ToList();
-            }
 
             var medicalvitalsview = new MedicalVitalView
             {
@@ -5737,26 +4006,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPharmacyClosedActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Pharmacy)
-                            && x.OrderActivityStatus != 0
-                            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))
-                        .OrderBy(x => x.ExecutedDate)
-                        .ToList();
-                return PartialView(PartialViews.OrderClosedActivityScheduleList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Pharmacy)
+                        && x.OrderActivityStatus != 0
+                        && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open))
+                    .OrderBy(x => x.ExecutedDate)
+                    .ToList();
+            return PartialView(PartialViews.OrderClosedActivityScheduleList, list);
+
         }
 
         /// <summary>
@@ -5770,22 +4029,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPharmacyClosedOrders(int encounterId)
         {
-            using (
-                var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString())
-                        .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.Pharmacy))
-                        .OrderBy(x => x.OpenOrderID)
-                        .ToList();
-                return PartialView(PartialViews.ClosedOrdersList, list);
-            }
+            var list = _ooService.GetPhysicianOrders(encounterId, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(x => x.CategoryId == Convert.ToInt32(OrderTypeCategory.Pharmacy))
+                    .OrderBy(x => x.OpenOrderID)
+                    .ToList();
+            return PartialView(PartialViews.ClosedOrdersList, list);
+
         }
 
         /// <summary>
@@ -5799,26 +4048,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPharmacyOpenActivityList(int encounterId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list =
-                    bal.GetOrderActivitiesByEncounterId(encounterId)
-                        .Where(
-                            x =>
-                            x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Pharmacy)
-                            && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                                || x.OrderActivityStatus == 0))
-                        .OrderBy(x => x.OrderScheduleDate)
-                        .ToList();
-                return PartialView(PartialViews.OrderActivityScheduleList, list);
-            }
+            var list = _oaService.GetOrderActivitiesByEncounterId(encounterId, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber)
+                    .Where(
+                        x =>
+                        x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Pharmacy)
+                        && (x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                            || x.OrderActivityStatus == 0))
+                    .OrderBy(x => x.OrderScheduleDate)
+                    .ToList();
+            return PartialView(PartialViews.OrderActivityScheduleList, list);
+
         }
 
         /// <summary>
@@ -5833,100 +4072,13 @@ namespace BillingSystem.Controllers
         public ActionResult BindPharmacyOpenOrderList(string encounterId)
         {
             var encounterIdint = Convert.ToInt32(encounterId);
-            var encounterOrderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
+
             var status = OrderStatus.Open.ToString();
             var listOfOrders =
-                encounterOrderbal.GetPhysicianOrders(encounterIdint, status).OrderBy(x => x.OpenOrderID).ToList();
+                _ooService.GetPhysicianOrders(encounterIdint, status, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber).OrderBy(x => x.OpenOrderID).ToList();
             return PartialView(PartialViews.PhysicianOpenOrderList, listOfOrders);
         }
 
-        ///// <summary>
-        /////     Binds the pharmacy tab data.
-        ///// </summary>
-        ///// <param name="patientId">
-        /////     The patient identifier.
-        ///// </param>
-        ///// <param name="encounterid">
-        /////     The encounterid.
-        ///// </param>
-        ///// <returns>
-        /////     The <see cref="ActionResult" />.
-        ///// </returns>
-        //public ActionResult BindPharmacyTabData(int patientId, int encounterid)
-        //{
-        //    using (
-        //        var orderbal = new OpenOrderBal(
-        //            Helpers.DefaultCptTableNumber,
-        //            Helpers.DefaultServiceCodeTableNumber,
-        //            Helpers.DefaultDrgTableNumber,
-        //            Helpers.DefaultDrugTableNumber,
-        //            Helpers.DefaultHcPcsTableNumber,
-        //            Helpers.DefaultDiagnosisTableNumber))
-        //    {
-        //        var openOrdersList = orderbal.GetPhysicianOrdersList(
-        //            encounterid,
-        //            Convert.ToInt32(OrderStatus.Open).ToString());
-        //        var closedOrdersList = orderbal.GetPhysicianOrdersList(
-        //            encounterid,
-        //            Convert.ToInt32(OrderStatus.Closed).ToString());
-        //        using (
-        //            var orderActivityBal = new OrderActivityBal(
-        //                Helpers.DefaultCptTableNumber,
-        //                Helpers.DefaultServiceCodeTableNumber,
-        //                Helpers.DefaultDrgTableNumber,
-        //                Helpers.DefaultDrugTableNumber,
-        //                Helpers.DefaultHcPcsTableNumber,
-        //                Helpers.DefaultDiagnosisTableNumber))
-        //        {
-        //            var labactivitesobj = //new List<OrderActivityCustomModel>();
-        //                                  //orderActivityBal.GetOrderActivitiesByEncounterId(encounterid);
-        //                orderActivityBal.GetOrderActivitiesByEncounterIdSP(encounterid); //new changes
-        //            var labActivitesListObj =
-        //                labactivitesobj.Where(x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Pharmacy))
-        //                    .ToList();
-        //            var labActivitesClosedListObj =
-        //                labActivitesListObj.Where(
-        //                    x =>
-        //                    x.OrderActivityStatus != 0
-        //                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-        //                    && x.OrderActivityStatus
-        //                    != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-        //                    .OrderBy(x => x.ExecutedDate)
-        //                    .ToList();
-        //            var labActivitesOpenListObj =
-        //                labActivitesListObj.Where(
-        //                    x =>
-        //                    x.OrderActivityStatus == 0
-        //                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-        //                    || x.OrderActivityStatus
-        //                    == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-        //                    .OrderBy(x => x.OrderScheduleDate)
-        //                    .ToList();
-        //            var pharmacyActivityView = new OrderActivityView
-        //            {
-        //                CurrentOrderActivity = new OrderActivity(),
-        //                OpenOrdersList = openOrdersList,
-        //                OrderActivityList = labActivitesOpenListObj,
-        //                ClosedOrderActivityList =
-        //                                                   labActivitesClosedListObj,
-        //                ClosedOrdersList = closedOrdersList,
-        //                ClosedLabOrderActivityList =
-        //                                                   new List<OrderActivityCustomModel>(),
-        //                labOrderActivityList =
-        //                                                   new List<OrderActivityCustomModel>(),
-        //                EncounterOrder = new OpenOrder(),
-        //                IsLabTest = false
-        //            };
-        //            return PartialView(PartialViews.PharmacyActivitesView, pharmacyActivityView);
-        //        }
-        //    }
-        //}
 
         /// <summary>
         ///     Binds the pharmacy tab data.
@@ -5942,101 +4094,53 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPharmacyTabData(int patientId, int encounterid)
         {
-            using (
-                var orderbal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+
+
+
+            //Get Orders and Activities From Database
+            var vm = _ooService.GetPhysicianOrderPlusActivityList(encounterid, withActivities: true, categoryId: (int)OrderTypeCategory.Pharmacy);
+
+            /* Intialize all required lists */
+            var openOrdersList = new List<OpenOrderCustomModel>();
+            var closedOrdersList = new List<OpenOrderCustomModel>();
+            var oActivities = new List<OrderActivityCustomModel>();
+            var cActivities = new List<OrderActivityCustomModel>();
+            /* Intialize all required lists */
+
+
+            //Initialize the activity statuses for further filterations
+            var actStatuses = new[] { 0, 1, 40 };   //0: New, 1: Open and 40: PartiallyExecutedForResult
+
+            //Check if object is null, If No, then filterations done, otherwise leave this block.
+            if (vm != null)
             {
-                #region Commented Code
-                //var openOrdersList = orderbal.GetPhysicianOrdersList(
-                //    encounterid,
-                //    Convert.ToInt32(OrderStatus.Open).ToString());
-                //var closedOrdersList = orderbal.GetPhysicianOrdersList(
-                //    encounterid,
-                //    Convert.ToInt32(OrderStatus.Closed).ToString());
-
-
-                //using (
-                //    var orderActivityBal = new OrderActivityBal(
-                //        Helpers.DefaultCptTableNumber,
-                //        Helpers.DefaultServiceCodeTableNumber,
-                //        Helpers.DefaultDrgTableNumber,
-                //        Helpers.DefaultDrugTableNumber,
-                //        Helpers.DefaultHcPcsTableNumber,
-                //        Helpers.DefaultDiagnosisTableNumber))
-                //{
-                //    var labactivitesobj = orderActivityBal.GetOrderActivitiesByEncounterIdSP(encounterid); //new changes
-                //    var labActivitesListObj =
-                //        labactivitesobj.Where(x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Pharmacy))
-                //            .ToList();
-                //    var labActivitesClosedListObj =
-                //        labActivitesListObj.Where(
-                //            x =>
-                //            x.OrderActivityStatus != 0
-                //            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)
-                //            && x.OrderActivityStatus
-                //            != Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                //            .OrderBy(x => x.ExecutedDate)
-                //            .ToList();
-                //    var labActivitesOpenListObj =
-                //        labActivitesListObj.Where(
-                //            x =>
-                //            x.OrderActivityStatus == 0
-                //            || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                //            || x.OrderActivityStatus
-                //            == Convert.ToInt32(OpenOrderActivityStatus.PartiallyExecutedForResult))
-                //            .OrderBy(x => x.OrderScheduleDate)
-                //            .ToList(); 
-                #endregion
-
-                //Get Orders and Activities From Database
-                var vm = orderbal.GetPhysicianOrderPlusActivityList(encounterid, withActivities: true, categoryId: (int)OrderTypeCategory.Pharmacy);
-
-                /* Intialize all required lists */
-                var openOrdersList = new List<OpenOrderCustomModel>();
-                var closedOrdersList = new List<OpenOrderCustomModel>();
-                var oActivities = new List<OrderActivityCustomModel>();
-                var cActivities = new List<OrderActivityCustomModel>();
-                /* Intialize all required lists */
-
-
-                //Initialize the activity statuses for further filterations
-                var actStatuses = new[] { 0, 1, 40 };   //0: New, 1: Open and 40: PartiallyExecutedForResult
-
-                //Check if object is null, If No, then filterations done, otherwise leave this block.
-                if (vm != null)
+                if (vm.OpenOrders.Any())
                 {
-                    if (vm.OpenOrders.Any())
-                    {
-                        openOrdersList = vm.OpenOrders.Where(a => a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-                        closedOrdersList = vm.OpenOrders.Where(a => !a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-                    }
-                    if (vm.OrderActivities.Any())
-                    {
-                        oActivities = vm.OrderActivities.Where(a => actStatuses.Contains(a.OrderActivityStatus.Value)).OrderBy(s => s.ExecutedDate).ToList();
-                        cActivities = vm.OrderActivities.Where(a => !actStatuses.Contains(a.OrderActivityStatus.Value)).OrderBy(s => s.ExecutedDate).ToList();
-                    }
+                    openOrdersList = vm.OpenOrders.Where(a => a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
+                    closedOrdersList = vm.OpenOrders.Where(a => !a.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
                 }
-
-                var pharmacyActivityView = new OrderActivityView
+                if (vm.OrderActivities.Any())
                 {
-                    CurrentOrderActivity = new OrderActivity(),
-                    OpenOrdersList = openOrdersList,
-                    OrderActivityList = oActivities,            //labActivitesOpenListObj,
-                    ClosedOrderActivityList = cActivities,      //labActivitesClosedListObj,
-                    ClosedOrdersList = closedOrdersList,
-                    ClosedLabOrderActivityList = new List<OrderActivityCustomModel>(),
-                    labOrderActivityList = new List<OrderActivityCustomModel>(),
-                    EncounterOrder = new OpenOrder(),
-                    IsLabTest = false
-                };
-
-                return PartialView(PartialViews.PharmacyActivitesView, pharmacyActivityView);
+                    oActivities = vm.OrderActivities.Where(a => actStatuses.Contains(a.OrderActivityStatus.Value)).OrderBy(s => s.ExecutedDate).ToList();
+                    cActivities = vm.OrderActivities.Where(a => !actStatuses.Contains(a.OrderActivityStatus.Value)).OrderBy(s => s.ExecutedDate).ToList();
+                }
             }
+
+            var pharmacyActivityView = new OrderActivityView
+            {
+                CurrentOrderActivity = new OrderActivity(),
+                OpenOrdersList = openOrdersList,
+                OrderActivityList = oActivities,            //labActivitesOpenListObj,
+                ClosedOrderActivityList = cActivities,      //labActivitesClosedListObj,
+                ClosedOrdersList = closedOrdersList,
+                ClosedLabOrderActivityList = new List<OrderActivityCustomModel>(),
+                labOrderActivityList = new List<OrderActivityCustomModel>(),
+                EncounterOrder = new OpenOrder(),
+                IsLabTest = false
+            };
+
+            return PartialView(PartialViews.PharmacyActivitesView, pharmacyActivityView);
+
         }
 
         /// <summary>
@@ -6057,18 +4161,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult PharamacyOrderActivityAdministered(int orderId)
         {
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                bool isTrue = bal.PharamacyOrderActivityAdministered(orderId);
-                return Json(isTrue, JsonRequestBehavior.AllowGet);
-            }
+            bool isTrue = _oaService.PharamacyOrderActivityAdministered(orderId);
+            return Json(isTrue, JsonRequestBehavior.AllowGet);
+
         }
 
         #endregion
@@ -6083,7 +4178,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindNurseAssessmentList(int patientId, int encounterid)
         {
-            var list = new DocumentsTemplatesService().GetNurseDocuments(patientId, encounterid).ToList();
+            var list = _docService.GetNurseDocuments(patientId, encounterid).ToList();
             // Pass the View Model in ActionResult to View PatientCarePlan
             return PartialView(PartialViews.NurseEnteredList, list);
         }
@@ -6147,8 +4242,7 @@ namespace BillingSystem.Controllers
                 EncounterID = Convert.ToInt32(data.EncounterId)
                 //ExternalValue3 = "4950"
             };
-            var oDocumentsTemplatesBal = new DocumentsTemplatesService();
-            oDocumentsTemplatesBal.AddUpdateDocumentTempate(oDocumentsTemplates);
+            _docService.AddUpdateDocumentTempate(oDocumentsTemplates);
             if (System.IO.File.Exists(serverPath + "/AssessmentForm/" + data.EnmFileName))
             {
                 System.IO.File.Delete(serverPath + "/AssessmentForm/" + data.EnmFileName);
@@ -6172,8 +4266,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindCarePlanTaskData(string careId, string patientId, int encounterId)
         {
-            var cBal = new PatientCarePlanService();
-            var careTaskList = cBal.BindCarePlanTaskData(careId, patientId, encounterId);
+            var careTaskList = _pcpService.BindCarePlanTaskData(careId, patientId, encounterId);
             if (careTaskList.Count > 0)
             {
                 var list = new List<PatientCarePlanCustomModel>();
@@ -6211,12 +4304,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult PatientCarePlanMain(int patientId, int encounterid)
         {
-            // Initialize the PatientCarePlan BAL object
-            var patientCarePlanBal = new PatientCarePlanService();
 
             // Get the Entity list
             var patientCarePlanList =
-                patientCarePlanBal.GetPatientCarePlanByPatientIdAndEncounterId(Convert.ToString(patientId), encounterid);
+                _pcpService.GetPatientCarePlanByPatientIdAndEncounterId(Convert.ToString(patientId), encounterid);
 
             // Intialize the View Model i.e. PatientCarePlanView which is binded to Main View Index.cshtml under PatientCarePlan
             var patientCarePlanView = new PatientCarePlanView
@@ -6244,18 +4335,14 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindPatientCarePlanList(int patientId, int encounterId)
         {
-            // Initialize the PatientCarePlan BAL object
-            using (var patientCarePlanBal = new PatientCarePlanService())
-            {
-                // Get the facilities list
-                var patientCarePlanList =
-                    patientCarePlanBal.GetPatientCarePlanByPatientIdAndEncounterId(
-                        Convert.ToString(patientId),
-                        encounterId);
+            // Get the facilities list
+            var patientCarePlanList =
+                _pcpService.GetPatientCarePlanByPatientIdAndEncounterId(
+                    Convert.ToString(patientId),
+                    encounterId);
 
-                // Pass the ActionResult with List of PatientCarePlanViewModel object to Partial View PatientCarePlanList
-                return PartialView(PartialViews.PatientCarePlanList, patientCarePlanList);
-            }
+            // Pass the ActionResult with List of PatientCarePlanViewModel object to Partial View PatientCarePlanList
+            return PartialView(PartialViews.PatientCarePlanList, patientCarePlanList);
         }
 
         /// <summary>
@@ -6269,28 +4356,24 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePatientCarePlan(int id)
         {
-            using (var bal = new PatientCarePlanService())
+            // Get PatientCarePlan model object by current PatientCarePlan ID
+            var currentPatientCarePlan = _pcpService.GetPatientCarePlanById(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            // Check If PatientCarePlan model is not null
+            if (currentPatientCarePlan != null)
             {
-                // Get PatientCarePlan model object by current PatientCarePlan ID
-                var currentPatientCarePlan = bal.GetPatientCarePlanById(id);
-                var userId = Helpers.GetLoggedInUserId();
+                currentPatientCarePlan.IsActive = false;
 
-                // Check If PatientCarePlan model is not null
-                if (currentPatientCarePlan != null)
-                {
-                    currentPatientCarePlan.IsActive = false;
+                currentPatientCarePlan.ModifiedBy = userId;
+                currentPatientCarePlan.ModifiedDate = Helpers.GetInvariantCultureDateTime();
 
-                    currentPatientCarePlan.ModifiedBy = userId;
-                    currentPatientCarePlan.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                // Update Operation of current PatientCarePlan
+                _pcpService.DeletePatientCarePlan(currentPatientCarePlan);
 
-                    // Update Operation of current PatientCarePlan
-                    bal.DeletePatientCarePlan(currentPatientCarePlan);
-
-                    // return deleted ID of current PatientCarePlan as Json Result to the Ajax Call.
-                    return Json(true);
-                }
+                // return deleted ID of current PatientCarePlan as Json Result to the Ajax Call.
+                return Json(true);
             }
-
             // Return the Json result as Action Result back JSON Call Success
             return Json(null);
         }
@@ -6306,31 +4389,29 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPatientCarePlanData(int id)
         {
-            using (var bal = new PatientCarePlanService())
-            {
-                var currentCarePlanTask = bal.GetPatientCarePlanById(id);
+            var currentCarePlanTask = _pcpService.GetPatientCarePlanById(id);
 
-                var fromdateStr = currentCarePlanTask.FromDate != null
-                                      ? currentCarePlanTask.FromDate.Value.ToShortDateString()
-                                      : "";
-                var tillDateStr = currentCarePlanTask.TillDate != null
-                                      ? currentCarePlanTask.TillDate.Value.ToShortDateString()
-                                      : "";
-                var jsonResult =
-                    new
-                    {
-                        currentCarePlanTask.Id,
-                        currentCarePlanTask.CorporateId,
-                        currentCarePlanTask.FacilityId,
-                        fromdateStr,
-                        tillDateStr,
-                        currentCarePlanTask.TaskId,
-                        currentCarePlanTask.IsActive,
-                        currentCarePlanTask.CarePlanId
-                    };
+            var fromdateStr = currentCarePlanTask.FromDate != null
+                                  ? currentCarePlanTask.FromDate.Value.ToShortDateString()
+                                  : "";
+            var tillDateStr = currentCarePlanTask.TillDate != null
+                                  ? currentCarePlanTask.TillDate.Value.ToShortDateString()
+                                  : "";
+            var jsonResult =
+                new
+                {
+                    currentCarePlanTask.Id,
+                    currentCarePlanTask.CorporateId,
+                    currentCarePlanTask.FacilityId,
+                    fromdateStr,
+                    tillDateStr,
+                    currentCarePlanTask.TaskId,
+                    currentCarePlanTask.IsActive,
+                    currentCarePlanTask.CarePlanId
+                };
 
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -6373,7 +4454,6 @@ namespace BillingSystem.Controllers
                 newId = _cpService.SaveCarePlanTaskCustomModel(model);
 
                 // var cModel = bal.GetCarePlanTaskById(Convert.ToInt32(model.TaskNumber));
-                var pcBal = new PatientCarePlanService();
                 var listoadd = new List<PatientCarePlan>();
 
                 var patinetCareModel = new PatientCarePlan
@@ -6393,8 +4473,8 @@ namespace BillingSystem.Controllers
                 };
                 listoadd.Add(patinetCareModel);
 
-                //pcBal.SavePatientCarePlanData(listoadd, false);
-                pcBal.SavePatientCarePlanData(listoadd, false);
+                //_pcpService.SavePatientCarePlanData(listoadd, false);
+                _pcpService.SavePatientCarePlanData(listoadd, false);
             }
 
             return Json(newId);
@@ -6411,7 +4491,6 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SavePatientCarePlan(List<PatientCarePlan> model)
         {
-            var pBal = new PatientCarePlanService();
             // Initialize the newId variable 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
@@ -6422,31 +4501,29 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PatientCarePlanService())
+                foreach (var patientCarePlan in model)
                 {
-                    foreach (var patientCarePlan in model)
+                    var careId = _cpService.CarePlanId(corporateId, facilityId, Convert.ToInt32(patientCarePlan.TaskId));
+                    patientCarePlan.CorporateId = corporateId;
+                    patientCarePlan.FacilityId = facilityId;
+                    patientCarePlan.IsActive = true;
+                    if (patientCarePlan.Id > 0)
                     {
-                        var careId = _cpService.CarePlanId(corporateId, facilityId, Convert.ToInt32(patientCarePlan.TaskId));
-                        patientCarePlan.CorporateId = corporateId;
-                        patientCarePlan.FacilityId = facilityId;
-                        patientCarePlan.IsActive = true;
-                        if (patientCarePlan.Id > 0)
-                        {
-                            patientCarePlan.ModifiedBy = userId;
-                            patientCarePlan.ModifiedDate = dateTime;
-                            patientCarePlan.CarePlanId = careId.ToString();
-                        }
-                        else
-                        {
-                            patientCarePlan.CreatedDate = dateTime;
-                            patientCarePlan.CreatedBy = userId;
-                            patientCarePlan.CarePlanId = careId.ToString();
-                        }
-                        //}
+                        patientCarePlan.ModifiedBy = userId;
+                        patientCarePlan.ModifiedDate = dateTime;
+                        patientCarePlan.CarePlanId = careId.ToString();
                     }
-                    // Call the AddPatientCarePlan Method to Add / Update current PatientCarePlan
-                    newId = bal.SavePatientCarePlanData(model, true);
+                    else
+                    {
+                        patientCarePlan.CreatedDate = dateTime;
+                        patientCarePlan.CreatedBy = userId;
+                        patientCarePlan.CarePlanId = careId.ToString();
+                    }
+                    //}
                 }
+                // Call the AddPatientCarePlan Method to Add / Update current PatientCarePlan
+                newId = _pcpService.SavePatientCarePlanData(model, true);
+
             }
 
             return Json(newId);
@@ -6476,24 +4553,15 @@ namespace BillingSystem.Controllers
             List<DiagnosisCustomModel> previouslist = null;
             var isPrimary = true;
 
-            using (
-                var bal = new DiagnosisService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
-            {
-                var dModel = bal.GetNewDiagnosisByEncounterId(encounterId, patientId);
-                var dList = bal.GetDiagnosisList(patientId, encounterId);
-                var previousDlist = bal.GetPreviousDiagnosisList(patientId, encounterId);
-                list = dList != null && dList.Count > 0 ? dList : new List<DiagnosisCustomModel>();
-                previouslist = previousDlist.Any() ? previousDlist : new List<DiagnosisCustomModel>();
-                diagnosisModel = dModel ?? new DiagnosisCustomModel();
-                patientInfo = bal.GetPatientDetailsByPatientId(patientId);
-                isPrimary = list.Count(x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary)) == 0;
-            }
+            var dModel = _diaService.GetNewDiagnosisByEncounterId(encounterId, patientId);
+            var dList = _diaService.GetDiagnosisList(patientId, encounterId);
+            var previousDlist = _diaService.GetPreviousDiagnosisList(patientId, encounterId);
+            list = dList != null && dList.Count > 0 ? dList : new List<DiagnosisCustomModel>();
+            previouslist = previousDlist.Any() ? previousDlist : new List<DiagnosisCustomModel>();
+            diagnosisModel = dModel ?? new DiagnosisCustomModel();
+            patientInfo = _piService.GetPatientDetailsByPatientId(patientId);
+            isPrimary = list.Count(x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary)) == 0;
+
 
             if (patientInfo != null)
             {
@@ -6573,22 +4641,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         private bool UpdateCurrentOpenOrderActivties(int orderid)
         {
-            var orderActivityBal = new OrderActivityService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var orderbal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-            var orderDetail = orderActivityBal.GetOrderActivitiesByOrderId(Convert.ToInt32(orderid));
-            var orderObj = orderbal.GetOpenOrderDetail(orderid);
+
+            var orderDetail = _oaService.GetOrderActivitiesByOrderId(Convert.ToInt32(orderid));
+            var orderObj = _ooService.GetOpenOrderDetail(orderid);
             if (orderDetail.Any())
             {
                 var openorderActivities =
@@ -6608,14 +4663,14 @@ namespace BillingSystem.Controllers
                     orderactivityobj.ExecutedDate = currentDatetime;
                     orderactivityobj.ExecutedQuantity = orderObj.Quantity;
                     encounterId = Convert.ToInt32(orderactivityobj.EncounterID);
-                    orderActivityBal.AddUptdateOrderActivity(orderactivityobj);
+                    _oaService.AddUptdateOrderActivity(orderactivityobj);
                 }
 
                 var corporateId = Helpers.GetSysAdminCorporateID();
                 var facilityId = Helpers.GetDefaultFacilityId();
 
                 // Apply Order Activity To Bill, added by Amit Jain on 24122014
-                return orderActivityBal.ApplyOrderActivityToBill(
+                return _oaService.ApplyOrderActivityToBill(
                     corporateId,
                     facilityId,
                     Convert.ToInt32(encounterId),
@@ -6633,46 +4688,37 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private int AddOpenOrder(OpenOrderCustomModel order)
         {
-            using (
-                var encounterComm = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
+            var periodDays = days + 1;
+            order.PeriodDays = Convert.ToString(periodDays);
+            order.FacilityID = facilityId;
+            order.CorporateID = corporateId;
+            if (order.OrderStatus == Convert.ToString((int)OrderStatus.Closed)) order.IsActivitySchecduled = true;
+            else order.IsApproved = order.CategoryId != Convert.ToInt32(OrderTypeCategory.Pharmacy);
+
+            if (order.OpenOrderID > 0)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var days = (Convert.ToDateTime(order.EndDate) - Convert.ToDateTime(order.StartDate)).TotalDays;
-                var periodDays = days + 1;
-                order.PeriodDays = Convert.ToString(periodDays);
-                order.FacilityID = facilityId;
-                order.CorporateID = corporateId;
-                if (order.OrderStatus == Convert.ToString((int)OrderStatus.Closed)) order.IsActivitySchecduled = true;
-                else order.IsApproved = order.CategoryId != Convert.ToInt32(OrderTypeCategory.Pharmacy);
-
-                if (order.OpenOrderID > 0)
-                {
-                    order.ModifiedBy = userId;
-                    order.PhysicianID = userId;
-                    order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-                }
-                else
-                {
-                    order.CreatedBy = userId;
-                    order.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    order.PhysicianID = userId;
-                    order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
-                    order.IsActivitySchecduled = null;
-                    order.ActivitySchecduledOn = null;
-                }
-
-                var orderId = encounterComm.AddUpdateOpenOrderCustomModel(order);
-                return orderId;
+                order.ModifiedBy = userId;
+                order.PhysicianID = userId;
+                order.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
             }
+            else
+            {
+                order.CreatedBy = userId;
+                order.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                order.PhysicianID = userId;
+                order.OpenOrderPrescribedDate = Helpers.GetInvariantCultureDateTime();
+                order.IsActivitySchecduled = null;
+                order.ActivitySchecduledOn = null;
+            }
+
+            var orderId = _ooService.AddUpdateOpenOrderCustomModel(order);
+            return orderId;
+
         }
 
 
@@ -6683,14 +4729,8 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindOrderAdministratorOrder()
         {
-            var orderBal = new OpenOrderService(
-           Helpers.DefaultCptTableNumber,
-           Helpers.DefaultServiceCodeTableNumber,
-           Helpers.DefaultDrgTableNumber,
-           Helpers.DefaultDrugTableNumber,
-           Helpers.DefaultHcPcsTableNumber,
-           Helpers.DefaultDiagnosisTableNumber);
-            var gccvalues = orderBal.GetGlobalCodesByCategoriesSp("3103,1024,3102,1011");
+
+            var gccvalues = _gService.GetGlobalCodesByCategoriesSp("3103,1024,3102,1011");
             var jsonData =
                 new
                 {
@@ -6722,15 +4762,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult ApprovePharmacyOrderOld(int id, string type, string comment)
         {
-            var bal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber);
 
-            var isExecuted = bal.ApprovePharmacyOrder(id, type, comment);
+            var isExecuted = _ooService.ApprovePharmacyOrder(id, type, comment);
 
             return Json(isExecuted, JsonRequestBehavior.AllowGet);
         }
@@ -6744,10 +4777,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult ApprovePharmacyOrder(int id, string type, string comment, int encounterId, int categoryId)
         {
-            var bal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
-                            Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-
-            var vm = bal.ApprovePharmacyOrder(id, type, comment, encounterId, true, categoryId, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+            var vm = _ooService.ApprovePharmacyOrder(id, type, comment, encounterId, true, categoryId, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
             if (vm != null)
             {
                 var listopenOrders = new List<OpenOrderCustomModel>();
@@ -6805,71 +4835,61 @@ namespace BillingSystem.Controllers
 
         public ActionResult PhysicianOrNurseTabData(int patientId, int type, int encounterid)
         {
-            using (var oBal = new OpenOrderService(
-                        Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDrgTableNumber,
-                        Helpers.DefaultDrugTableNumber,
-                        Helpers.DefaultHcPcsTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber))
+            var tData = _ooService.GetPhysicianOrNurseTabData(encounterid, patientId, Helpers.GetLoggedInUserId(), type);
+            var openOrdersList = new List<OpenOrderCustomModel>();
+            var closedOrdersList = new List<OpenOrderCustomModel>();
+            var oActivitiesList = new List<OrderActivityCustomModel>();
+            var cActivitiesList = new List<OrderActivityCustomModel>();
+
+            if (tData != null && tData.OpenOrders.Any())
             {
-                var tData = oBal.GetPhysicianOrNurseTabData(encounterid, patientId, Helpers.GetLoggedInUserId(), type);
-                var openOrdersList = new List<OpenOrderCustomModel>();
-                var closedOrdersList = new List<OpenOrderCustomModel>();
-                var oActivitiesList = new List<OrderActivityCustomModel>();
-                var cActivitiesList = new List<OrderActivityCustomModel>();
+                openOrdersList = tData.OpenOrders.Where(o => o.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
+                closedOrdersList = tData.OpenOrders.Where(o => !o.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
 
-                if (tData != null && tData.OpenOrders.Any())
+                if (tData.PatientCareActivities.Any())
                 {
-                    openOrdersList = tData.OpenOrders.Where(o => o.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-                    closedOrdersList = tData.OpenOrders.Where(o => !o.OrderStatus.Equals(Convert.ToString((int)OrderStatus.Open))).ToList();
-
-                    if (tData.PatientCareActivities.Any())
-                    {
-                        var orderActivityStatuses = new[] { 0, 1, 40 };
-                        cActivitiesList = tData.PatientCareActivities.Where(a => !orderActivityStatuses.Contains(a.OrderActivityStatus.Value))
-                            .OrderByDescending(a => a.ExecutedDate)
-                            .ToList();
-                        oActivitiesList = tData.PatientCareActivities.Where(a => orderActivityStatuses.Contains(a.OrderActivityStatus.Value))
-                            .OrderByDescending(a => a.ExecutedDate)
-                            .ToList();
-                    }
+                    var orderActivityStatuses = new[] { 0, 1, 40 };
+                    cActivitiesList = tData.PatientCareActivities.Where(a => !orderActivityStatuses.Contains(a.OrderActivityStatus.Value))
+                        .OrderByDescending(a => a.ExecutedDate)
+                        .ToList();
+                    oActivitiesList = tData.PatientCareActivities.Where(a => orderActivityStatuses.Contains(a.OrderActivityStatus.Value))
+                        .OrderByDescending(a => a.ExecutedDate)
+                        .ToList();
                 }
-
-                var viewData = new MedicalNotesView
-                {
-                    CurrentMedicalNotes = new MedicalNotes { NotesUserType = type, IsDeleted = false },
-                    MedicalNotesList = tData != null ? tData.MedicalNotes2 : new List<MedicalNotesCustomModel>(),
-                    OpenOrdersList = openOrdersList,
-                    ClosedOrdersList = closedOrdersList,
-                    OpenActvitiesList = cActivitiesList,
-                    ClosedActvitiesList = oActivitiesList,
-                    ClosedLabOrdersActivitesList = new List<OrderActivityCustomModel>(),
-                    LabOpenOrdersActivitesList = new List<OrderActivityCustomModel>(),
-                    EncounterOrder = new OpenOrder(),
-                    IsLabTest = false,
-                    CurrentMedicalVital = new MedicalVitalCustomModel(),
-                    MedicalVitalList = tData.Vitals2,
-                    PatientInfoId = patientId,
-                    PatientEncounterId = encounterid,
-                    EncounterList = tData.EncounterListData,
-                    NurseEnteredFormList = tData.NurseDocuments,
-                    NurseDocList = tData.EncounterListData.Where(e => e.ExtValue2.Trim().Equals("99")).ToList(),
-                };
-
-                var pViewResult = RenderPartialViewToStringBase(PartialViews.NotesTabView, viewData);
-                var jsonData = new
-                {
-                    pViewResult,
-                    dropdownlistdata = tData.DropdownListData,
-                    orderTypeCategories = tData.OrderTypes,
-                    LabOrders = tData.LabOrders
-                };
-                var ss = Json(jsonData, JsonRequestBehavior.AllowGet);
-                ss.MaxJsonLength = int.MaxValue;
-                return ss;
             }
 
+            var viewData = new MedicalNotesView
+            {
+                CurrentMedicalNotes = new MedicalNotes { NotesUserType = type, IsDeleted = false },
+                MedicalNotesList = tData != null ? tData.MedicalNotes2 : new List<MedicalNotesCustomModel>(),
+                OpenOrdersList = openOrdersList,
+                ClosedOrdersList = closedOrdersList,
+                OpenActvitiesList = cActivitiesList,
+                ClosedActvitiesList = oActivitiesList,
+                ClosedLabOrdersActivitesList = new List<OrderActivityCustomModel>(),
+                LabOpenOrdersActivitesList = new List<OrderActivityCustomModel>(),
+                EncounterOrder = new OpenOrder(),
+                IsLabTest = false,
+                CurrentMedicalVital = new MedicalVitalCustomModel(),
+                MedicalVitalList = tData.Vitals2,
+                PatientInfoId = patientId,
+                PatientEncounterId = encounterid,
+                EncounterList = tData.EncounterListData,
+                NurseEnteredFormList = tData.NurseDocuments,
+                NurseDocList = tData.EncounterListData.Where(e => e.ExtValue2.Trim().Equals("99")).ToList(),
+            };
+
+            var pViewResult = RenderPartialViewToStringBase(PartialViews.NotesTabView, viewData);
+            var jsonData = new
+            {
+                pViewResult,
+                dropdownlistdata = tData.DropdownListData,
+                orderTypeCategories = tData.OrderTypes,
+                LabOrders = tData.LabOrders
+            };
+            var ss = Json(jsonData, JsonRequestBehavior.AllowGet);
+            ss.MaxJsonLength = int.MaxValue;
+            return ss;
         }
 
 
@@ -6882,11 +4902,9 @@ namespace BillingSystem.Controllers
         public ActionResult AddPhysicianOrderNew(OpenOrderCustomModel order)
         {
             var tabid = Convert.ToInt32(order.TabId);
-            var orderBal = new OpenOrderService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
 
             //Add / Update Order Details 
-            var newOrder = orderBal.SavePhysicianOrder(order, Helpers.GetLoggedInUserId(), 100, Helpers.GetSysAdminCorporateID(),
+            var newOrder = _ooService.SavePhysicianOrder(order, Helpers.GetLoggedInUserId(), 100, Helpers.GetSysAdminCorporateID(),
                 Helpers.GetDefaultFacilityId(), order.EncounterID.Value, "", order.PatientID.Value, "7");
 
             // Order Activities Section, starts here
@@ -6944,125 +4962,74 @@ namespace BillingSystem.Controllers
         public ActionResult AdministerOrderActivity(OrderActivityCustomModel model)
         {
             var result = -1;
-            using (
-                var bal = new OrderActivityService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+
+            var userId = Helpers.GetLoggedInUserId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var currentdatetime = Helpers.GetInvariantCultureDateTime();
+            var activityId = model.OrderActivityID;
+            model.ExecutedBy = userId;
+            model.ExecutedDate = Helpers.GetInvariantCultureDateTime();
+            model.CorporateID = corporateId;
+            model.FacilityID = facilityId;
+            if (model.OrderActivityID > 0)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var currentdatetime = Helpers.GetInvariantCultureDateTime();
-                var activityId = model.OrderActivityID;
-                model.ExecutedBy = userId;
-                model.ExecutedDate = Helpers.GetInvariantCultureDateTime();
-                model.CorporateID = corporateId;
-                model.FacilityID = facilityId;
-                if (model.OrderActivityID > 0)
-                {
-                    var objOrderActivityBal = new OrderActivityService();
-                    var obj = objOrderActivityBal.GetOrderActivityByID(model.OrderActivityID);
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentdatetime;
-                    model.ExecutedQuantity = model.OrderCategoryID
-                                             == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                                                 ? 1
-                                                 : model.ExecutedQuantity;
-                    model.OrderActivityStatus = model.OrderActivityStatus == 2 || model.OrderActivityStatus == 4
-                                                    ? (model.OrderCategoryID
-                                                      == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
-                                                          ? (model.OrderActivityStatus == 4
-                                                                ? model.OrderActivityStatus
-                                                                : 2)
-                                                          : model.OrderActivityStatus)
-                                                    : model.OrderActivityStatus;
-                    model.BarCodeValue = obj.BarCodeValue;
-                    model.BarCodeHtml = obj.BarCodeHtml;
-                    var openActivityItemObj = new OrderActivityMapper().MapCustomModelToModel(model);
-                    bal.AddUptdateOrderActivity(openActivityItemObj);
-                }
-                else
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentdatetime;
-                }
-
-                if (model.PartiallyExecutedBool != null && model.ExecutedQuantity != model.OrderActivityQuantity
-                    && (bool)model.PartiallyExecutedBool)
-                {
-                    var quantityRemaining = Convert.ToDecimal(model.OrderActivityQuantity - model.ExecutedQuantity);
-                    var isExecuted = bal.CreatePartiallyexecutedActivity(
-                        model.OrderActivityID,
-                        quantityRemaining,
-                        model.PartiallyExecutedstatus);
-                }
-                // Apply Order Activity To Bill, added by Amit Jain on 24122014
-                bal.ApplyOrderActivityToBill(
-                    corporateId,
-                    facilityId,
-                    Convert.ToInt32(model.EncounterID),
-                    string.Empty,
-                    0);
-                var orderActivities = bal.GetOrderActivitiesByOrderId(Convert.ToInt32(model.OrderID));
-                var openorderactivties =
-                    orderActivities.Any(
-                        x =>
-                        x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
-                        || x.OrderActivityStatus == 0 || x.OrderActivityStatus == 40);
-
-                // Update the Order Status
-                if (openorderactivties)
-                {
-                    if (activityId == 0)
-                    {
-                        openorderactivties = !UpdateCurrentOpenOrderActivties(Convert.ToInt32(model.OrderID));
-                    }
-                }
-
-                if (!openorderactivties)
-                {
-                    using (
-                        var ordersBal = new OpenOrderService(
-                            Helpers.DefaultCptTableNumber,
-                            Helpers.DefaultServiceCodeTableNumber,
-                            Helpers.DefaultDrgTableNumber,
-                            Helpers.DefaultDrugTableNumber,
-                            Helpers.DefaultHcPcsTableNumber,
-                            Helpers.DefaultDiagnosisTableNumber))
-                    {
-                        /*
-                         * Changes By: Amit Jain
-                         * On: 01 March, 2016
-                         * Purpose: Just updates Current Open Order Status, nothing to do with Order Activities here below
-                         * Earlier, Order Activities having ExecutedQuantities were deleted by using the Method AddUpdatePhysicianOrder
-                         * And that method has been updated and so, now commented below
-                         * Now, changed the Method with the new one i.e. UpdateOpenOrderStatus
-                         */
-
-                        //***************************Code Changes start here*******************************************************
-
-                        //var openorder = ordersBal.GetOpenOrderDetail(Convert.ToInt32(model.OrderID));
-                        //openorder.OrderStatus = Convert.ToString((int)OrderStatus.OnBill);
-                        //openorder.ModifiedBy = userId;
-                        //openorder.ModifiedDate = currentdatetime;
-                        //ordersBal.AddUpdatePhysicianOpenOrder(openorder);
-
-                        ordersBal.UpdateOpenOrderStatus(
-                            Convert.ToInt32(model.OrderID),
-                            Convert.ToString((int)OrderStatus.OnBill),
-                            userId,
-                            currentdatetime);
-
-                        //***************************Code Changes End here*********************************************************
-                    }
-                }
-
-                result = model.OrderActivityID;
+                var obj = _oaService.GetOrderActivityByID(model.OrderActivityID);
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentdatetime;
+                model.ExecutedQuantity = model.OrderCategoryID
+                                         == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                                             ? 1
+                                             : model.ExecutedQuantity;
+                model.OrderActivityStatus = model.OrderActivityStatus == 2 || model.OrderActivityStatus == 4
+                                                ? (model.OrderCategoryID
+                                                  == Convert.ToInt32(OrderTypeCategory.PathologyandLaboratory)
+                                                      ? (model.OrderActivityStatus == 4
+                                                            ? model.OrderActivityStatus
+                                                            : 2)
+                                                      : model.OrderActivityStatus)
+                                                : model.OrderActivityStatus;
+                model.BarCodeValue = obj.BarCodeValue;
+                model.BarCodeHtml = obj.BarCodeHtml;
+                var openActivityItemObj = _mapper.Map<OrderActivity>(model);
+                _oaService.AddUptdateOrderActivity(openActivityItemObj);
             }
+            else
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentdatetime;
+            }
+
+            if (model.PartiallyExecutedBool != null && model.ExecutedQuantity != model.OrderActivityQuantity
+                && (bool)model.PartiallyExecutedBool)
+            {
+                var quantityRemaining = Convert.ToDecimal(model.OrderActivityQuantity - model.ExecutedQuantity);
+                var isExecuted = _oaService.CreatePartiallyexecutedActivity(model.OrderActivityID, quantityRemaining, model.PartiallyExecutedstatus);
+            }
+            // Apply Order Activity To Bill, added by Amit Jain on 24122014
+            _oaService.ApplyOrderActivityToBill(corporateId, facilityId, Convert.ToInt32(model.EncounterID), string.Empty, 0);
+            var orderActivities = _oaService.GetOrderActivitiesByOrderId(Convert.ToInt32(model.OrderID));
+            var openorderactivties =
+                orderActivities.Any(
+                    x =>
+                    x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)
+                    || x.OrderActivityStatus == 0 || x.OrderActivityStatus == 40);
+
+            // Update the Order Status
+            if (openorderactivties)
+            {
+                if (activityId == 0)
+                {
+                    openorderactivties = !UpdateCurrentOpenOrderActivties(Convert.ToInt32(model.OrderID));
+                }
+            }
+
+            if (!openorderactivties)
+            {
+                _ooService.UpdateOpenOrderStatus(Convert.ToInt32(model.OrderID), Convert.ToString((int)OrderStatus.OnBill), userId, currentdatetime);
+            }
+
+            result = model.OrderActivityID;
 
             return Json(result);
         }
@@ -7074,22 +5041,19 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrderTypeCategoriesInSummary(string startRange, string endRange)
         {
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-            using (var bal = new GlobalCodeCategoryService())
-            {
-                var list = bal.GetGlobalCodeCategoriesByExternalValue(fn);
-                return Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategoriesByExternalValue(fn);
+            return Json(list);
         }
+
         public ActionResult GetOrderTypeCategoriesInSummaryNew(string externalValue = "")
         {
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-            using (var bal = new GlobalCodeCategoryService())
-            {
-                var list = bal.GetGlobalCodeCategoriesByExternalValue(fn);
-                if (externalValue != "0")
-                    list = list.Where(x => x.ExternalValue4 != null && x.ExternalValue4.Contains(externalValue)).ToList();
-                return Json(list);
-            }
+
+            var list = _gcService.GetGlobalCodeCategoriesByExternalValue(fn);
+            if (externalValue != "0")
+                list = list.Where(x => x.ExternalValue4 != null && x.ExternalValue4.Contains(externalValue)).ToList();
+            return Json(list);
+
         }
 
         /// <summary>
@@ -7103,44 +5067,23 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetOrderTypeSubCategories(string categoryId)
         {
-            using (var bal = new GlobalCodeService())
+            var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
+            var globalCodes = _gService.GetGlobalCodesByCategoryValue(categoryId, fn);
+            var list = new List<DropdownListData>();
+
+            /*New Code*/
+            list.AddRange(globalCodes.Select(items => new DropdownListData
             {
-                var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-                var globalCodes = bal.GetGlobalCodesByCategoryValue(categoryId, fn);
-                var list = new List<DropdownListData>();
-
-                /*
-                 * Code Changes by Amit Jain on 02 December, 2015
-                 * Issue: Order Codes were not coming based on the selected Sub-Category.
-                 * Reason: Sub-Category ID which is considered as Global Code Value was using with Global Code ID instead of GC Value
-                 */
-
-                /*Old Code*/
-                //list.AddRange(
-                //    globalCodes.Select(
-                //        items =>
-                //        new DropdownListData
-                //        {
-                //            Text = items.GlobalCodeName,
-                //            Value = Convert.ToString(items.GlobalCodeID),
-                //            ExternalValue1 = items.ExternalValue1,
-                //            ExternalValue2 = items.ExternalValue2,
-                //            ExternalValue3 = items.ExternalValue3
-                //        }));
-
-                /*New Code*/
-                list.AddRange(globalCodes.Select(items => new DropdownListData
-                {
-                    Text = items.GlobalCodeName,
-                    Value = items.GlobalCodeValue,
-                    ExternalValue1 = string.IsNullOrEmpty(items.ExternalValue1) ? string.Empty : items.ExternalValue1,
-                    ExternalValue2 = string.IsNullOrEmpty(items.ExternalValue2) ? string.Empty : items.ExternalValue2,
-                    ExternalValue3 = string.IsNullOrEmpty(items.ExternalValue3) ? string.Empty : items.ExternalValue3,
-                    CategoryValue = string.IsNullOrEmpty(items.GlobalCodeCategoryValue) ? string.Empty : items.GlobalCodeCategoryValue,
-                }));
-                return Json(list);
-            }
+                Text = items.GlobalCodeName,
+                Value = items.GlobalCodeValue,
+                ExternalValue1 = string.IsNullOrEmpty(items.ExternalValue1) ? string.Empty : items.ExternalValue1,
+                ExternalValue2 = string.IsNullOrEmpty(items.ExternalValue2) ? string.Empty : items.ExternalValue2,
+                ExternalValue3 = string.IsNullOrEmpty(items.ExternalValue3) ? string.Empty : items.ExternalValue3,
+                CategoryValue = string.IsNullOrEmpty(items.GlobalCodeCategoryValue) ? string.Empty : items.GlobalCodeCategoryValue,
+            }));
+            return Json(list);
         }
+
 
 
         /// <summary>
@@ -7155,34 +5098,31 @@ namespace BillingSystem.Controllers
         public JsonResult GetCodesBySubCategory(string subCategoryValue, string gcc, string orderCodeType, long startRange, long endRange)
         {
 
-            using (var bal = new GlobalCodeService())
+            var tableNumber = string.Empty;
+            switch (orderCodeType)
             {
-                var tableNumber = string.Empty;
-                switch (orderCodeType)
-                {
-                    case "3":
-                        tableNumber = Helpers.DefaultCptTableNumber;
-                        break;
-                    case "4":
-                        tableNumber = Helpers.DefaultHcPcsTableNumber;
-                        break;
-                    case "5":
-                        tableNumber = Helpers.DefaultDrugTableNumber;
-                        break;
-                    default:
-                        break;
-                }
-
-                var vm = bal.GetOrderCodesByRange(tableNumber, gcc, subCategoryValue, orderCodeType, startRange, endRange, Helpers.GetDefaultFacilityId());
-                var jsonResult =
-                                new
-                                {
-                                    codeList = vm.OrderCodeList,
-                                    codeTypeName = vm.GlobalCode.GlobalCodeName,
-                                    codeTypeId = vm.GlobalCode.GlobalCodeValue
-                                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
+                case "3":
+                    tableNumber = Helpers.DefaultCptTableNumber;
+                    break;
+                case "4":
+                    tableNumber = Helpers.DefaultHcPcsTableNumber;
+                    break;
+                case "5":
+                    tableNumber = Helpers.DefaultDrugTableNumber;
+                    break;
+                default:
+                    break;
             }
+
+            var vm = _gService.GetOrderCodesByRange(tableNumber, gcc, subCategoryValue, orderCodeType, startRange, endRange, Helpers.GetDefaultFacilityId());
+            var jsonResult =
+                            new
+                            {
+                                codeList = vm.OrderCodeList,
+                                codeTypeName = vm.GlobalCode.GlobalCodeName,
+                                codeTypeId = vm.GlobalCode.GlobalCodeValue
+                            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
         #endregion
 
@@ -7220,8 +5160,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult BindSummaryTabData(long pId, long? eId)
         {
-            var oBal = new OpenOrderService();
-            var vm = oBal.GetPatientSummaryDataOnLoad(eId ?? 0, pId);
+            var vm = _ooService.GetPatientSummaryDataOnLoad(eId ?? 0, pId);
 
             if (vm != null)
             {
@@ -7277,101 +5216,75 @@ namespace BillingSystem.Controllers
         {
             var vmData = new PatientSummaryView { ExternalLinkId = sTab, PatientId = patientId };
 
-            using (
-                var orderBal = new OpenOrderService(
-                    Helpers.DefaultCptTableNumber,
-                    Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber,
-                    Helpers.DefaultDrugTableNumber,
-                    Helpers.DefaultHcPcsTableNumber,
-                    Helpers.DefaultDiagnosisTableNumber))
+            var currentEncounterId = encounterId ?? _ooService.GetActiveEncounterId(patientId);
+
+            var patientInfo = _piService.GetPatientDetailsByPatientId(patientId);
+            vmData.PatientInfo = patientInfo;
+            vmData.PatientInfo.PersonAge = Convert.ToInt32(vmData.PatientInfo.PatientInfo.PersonAge);
+            vmData.CurrentEncounterId = currentEncounterId;
+            vmData.PatientId = patientId;
+            if (sTab == 0)
             {
-                var currentEncounterId = encounterId ?? orderBal.GetActiveEncounterId(patientId);
+                var enList = _ooService.GetEncountersListByPatientId(patientId);
+                var medicalrecords = _mrService.GetMedicalRecord();
+                var medicalvitals = _mvService.GetCustomMedicalVitalsByPidEncounterId(
+                    patientId,
+                    Convert.ToInt32(MedicalRecordType.Vitals),
+                    currentEncounterId);
 
-                var patientInfo = orderBal.GetPatientDetailsByPatientId(patientId);
-                vmData.PatientInfo = patientInfo;
-                vmData.PatientInfo.PersonAge = Convert.ToInt32(vmData.PatientInfo.PatientInfo.PersonAge);
-                vmData.CurrentEncounterId = currentEncounterId;
-                vmData.PatientId = patientId;
-                if (sTab == 0)
+                var patientSummaryNotes =
+                    _mnService.GetMedicalNotesByPatientIdEncounterId(
+                        patientId,
+                        currentEncounterId);
+                var allergiesList = _mrService.GetAlergyRecords(
+                    patientId,
+                    Convert.ToInt32(MedicalRecordType.Allergies));
+
+                var orderStatus = OrderStatus.Open.ToString();
+                var openOrdersList = _ooService.GetPhysicianOrders(currentEncounterId, orderStatus, Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+                var primarydiagnosisId = 0;
+                var diagnosisList = _diaService.GetDiagnosisList(patientId, currentEncounterId);
+                if (diagnosisList.Any())
                 {
-                    var enList = orderBal.GetEncountersListByPatientId(patientId);
-                    using (var medicalRecordbal = new MedicalRecordService())
+                    var diagnosisCustomModel =
+                        diagnosisList.SingleOrDefault(
+                            x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary));
+                    if (diagnosisCustomModel != null)
                     {
-                        using (var medicalnotesbal = new MedicalNotesService())
-                        {
-                            using (var medicalVitals = new MedicalVitalService())
-                            {
-                                using (
-                                    var diagnosisBal = new DiagnosisService(
-                                        Helpers.DefaultDiagnosisTableNumber,
-                                        Helpers.DefaultDrgTableNumber))
-                                {
-                                    var medicalrecords = medicalRecordbal.GetMedicalRecord();
-                                    var medicalvitals = medicalVitals.GetCustomMedicalVitalsByPidEncounterId(
-                                        patientId,
-                                        Convert.ToInt32(MedicalRecordType.Vitals),
-                                        currentEncounterId);
-
-                                    var patientSummaryNotes =
-                                        medicalnotesbal.GetMedicalNotesByPatientIdEncounterId(
-                                            patientId,
-                                            currentEncounterId);
-                                    var allergiesList = medicalRecordbal.GetAlergyRecords(
-                                        patientId,
-                                        Convert.ToInt32(MedicalRecordType.Allergies));
-
-                                    var orderStatus = OrderStatus.Open.ToString();
-                                    var openOrdersList = orderBal.GetPhysicianOrders(currentEncounterId, orderStatus);
-                                    var primarydiagnosisId = 0;
-                                    var diagnosisList = diagnosisBal.GetDiagnosisList(patientId, currentEncounterId);
-                                    if (diagnosisList.Any())
-                                    {
-                                        var diagnosisCustomModel =
-                                            diagnosisList.SingleOrDefault(
-                                                x => x.DiagnosisType == Convert.ToInt32(DiagnosisType.Primary));
-                                        if (diagnosisCustomModel != null)
-                                        {
-                                            primarydiagnosisId = diagnosisCustomModel.DiagnosisID;
-                                        }
-                                    }
-
-                                    var riskFactors = medicalVitals.GetRiskFactors(patientId);
-
-                                    vmData.OpenOrdersList = openOrdersList;
-                                    vmData.EncountersList = enList;
-                                    vmData.CurrentEncounterId = currentEncounterId;
-                                    vmData.PatientId = patientId;
-                                    vmData.MedicalRecordList = medicalrecords;
-                                    vmData.DiagnosisId = primarydiagnosisId;
-                                    vmData.MedicalVitalList = medicalvitals;
-                                    vmData.PatientSummaryNotes = patientSummaryNotes;
-                                    vmData.ClosedOrdersList = orderBal.GetPhysicianOrders(
-                                        currentEncounterId,
-                                        OrderStatus.Closed.ToString());
-                                    vmData.AlergyList = allergiesList;
-                                    vmData.DiagnosisList = diagnosisList;
-                                    vmData.Riskfactors = riskFactors;
-                                }
-                            }
-                        }
+                        primarydiagnosisId = diagnosisCustomModel.DiagnosisID;
                     }
                 }
-                else
-                {
-                    vmData.OpenOrdersList = new List<OpenOrderCustomModel>();
-                    vmData.EncountersList = new List<EncounterCustomModel>();
-                    vmData.CurrentEncounterId = currentEncounterId;
-                    vmData.MedicalRecordList = new List<MedicalRecord>();
-                    vmData.DiagnosisId = 0;
-                    vmData.MedicalVitalList = new List<MedicalVitalCustomModel>();
-                    vmData.PatientSummaryNotes = new List<MedicalNotesCustomModel>();
-                    vmData.ClosedOrdersList = new List<OpenOrderCustomModel>();
-                    vmData.AlergyList = new List<AlergyCustomModel>();
-                    vmData.DiagnosisList = new List<DiagnosisCustomModel>();
-                    vmData.Riskfactors = new RiskFactorViewModel();
-                }
+
+                var riskFactors = _mvService.GetRiskFactors(patientId);
+
+                vmData.OpenOrdersList = openOrdersList;
+                vmData.EncountersList = enList;
+                vmData.CurrentEncounterId = currentEncounterId;
+                vmData.PatientId = patientId;
+                vmData.MedicalRecordList = medicalrecords;
+                vmData.DiagnosisId = primarydiagnosisId;
+                vmData.MedicalVitalList = medicalvitals;
+                vmData.PatientSummaryNotes = patientSummaryNotes;
+                vmData.ClosedOrdersList = _ooService.GetPhysicianOrders(currentEncounterId, OrderStatus.Closed.ToString(), Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
+                vmData.AlergyList = allergiesList;
+                vmData.DiagnosisList = diagnosisList;
+                vmData.Riskfactors = riskFactors;
             }
+            else
+            {
+                vmData.OpenOrdersList = new List<OpenOrderCustomModel>();
+                vmData.EncountersList = new List<EncounterCustomModel>();
+                vmData.CurrentEncounterId = currentEncounterId;
+                vmData.MedicalRecordList = new List<MedicalRecord>();
+                vmData.DiagnosisId = 0;
+                vmData.MedicalVitalList = new List<MedicalVitalCustomModel>();
+                vmData.PatientSummaryNotes = new List<MedicalNotesCustomModel>();
+                vmData.ClosedOrdersList = new List<OpenOrderCustomModel>();
+                vmData.AlergyList = new List<AlergyCustomModel>();
+                vmData.DiagnosisList = new List<DiagnosisCustomModel>();
+                vmData.Riskfactors = new RiskFactorViewModel();
+            }
+
 
             return vmData;
         }
@@ -7404,18 +5317,14 @@ namespace BillingSystem.Controllers
             var userid = Helpers.GetLoggedInUserId();
 
 
+            viewData = _diaService.GetDiagnosisTabData(pid, eid, userid, Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
+            list = viewData.CurrentDiagnosisList;
+            previouslist = viewData.PreviousDiagnosisList;
+            favOrders = viewData.FavOrdersList;
+            var isMajorCpt = list.All(x => x.DiagnosisType != 4);
+            vm.IsMajorCPT = isMajorCpt;
+            vm.IsMajorDRG = list.All(x => x.DiagnosisType != 3);
 
-            using (var bal = new DiagnosisService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
-                    Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-            {
-                viewData = bal.GetDiagnosisTabData(pid, eid, userid, Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
-                list = viewData.CurrentDiagnosisList;
-                previouslist = viewData.PreviousDiagnosisList;
-                favOrders = viewData.FavOrdersList;
-                var isMajorCpt = list.All(x => x.DiagnosisType != 4);
-                vm.IsMajorCPT = isMajorCpt;
-                vm.IsMajorDRG = list.All(x => x.DiagnosisType != 3);
-            }
 
             vm.PatientID = patientId;
             vm.EncounterID = eid;
@@ -7474,7 +5383,7 @@ namespace BillingSystem.Controllers
 
 
 
-            //using (var bal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
+            //using (var bal = new _diaService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber,
             //        Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
             //{
             //    viewData = bal.GetDiagnosisTabData(pid, eid, userid, Helpers.DefaultDiagnosisTableNumber, Helpers.DefaultDrgTableNumber);
@@ -7512,17 +5421,10 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-
+            
 
             //DB Call to get all records related to Orders tab
-            var ordersViewData = orderBal.OrdersViewData(userId, 100, corporateid, facilityid, Convert.ToInt32(encounterId), "1024,3102,1011,2305,963", 0, "7", string.Empty);
+            var ordersViewData = _ooService.OrdersViewData(userId, 100, corporateid, facilityid, Convert.ToInt32(encounterId), "1024,3102,1011,2305,963", 0, "7", string.Empty);
 
             // Order Activities Section, starts here
             var orderActivities = ordersViewData.OrderActivities;
@@ -7582,6 +5484,7 @@ namespace BillingSystem.Controllers
             jsonResult.MaxJsonLength = int.MaxValue;
             return jsonResult;
         }
+
         public ActionResult AddPhysicianOrderinSummary(OpenOrderCustomModel order)
         {
             var userId = Helpers.GetLoggedInUserId();
@@ -7590,17 +5493,9 @@ namespace BillingSystem.Controllers
             var encounterId = order.EncounterID;
             var orderId = AddOpenOrder(order); // ---- Add orders
             var tabid = Convert.ToInt32(order.TabId);
-            var orderBal = new OpenOrderService(
-                Helpers.DefaultCptTableNumber,
-                Helpers.DefaultServiceCodeTableNumber,
-                Helpers.DefaultDrgTableNumber,
-                Helpers.DefaultDrugTableNumber,
-                Helpers.DefaultHcPcsTableNumber,
-                Helpers.DefaultDiagnosisTableNumber);
-
-
+         
             //DB Call to get all records related to Orders tab
-            var ordersViewData = orderBal.OrdersViewData(userId, 100, corporateId, facilityId, Convert.ToInt32(encounterId), "1024,3102,1011,2305,963", 0, "7", string.Empty);
+            var ordersViewData = _ooService.OrdersViewData(userId, 100, corporateId, facilityId, Convert.ToInt32(encounterId), "1024,3102,1011,2305,963", 0, "7", string.Empty);
 
             // Order Activities Section, starts here
             var orderActivities = ordersViewData.OrderActivities;

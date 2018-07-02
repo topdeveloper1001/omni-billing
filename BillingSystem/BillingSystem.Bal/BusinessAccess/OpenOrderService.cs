@@ -145,7 +145,7 @@ namespace BillingSystem.Bal.BusinessAccess
                     }));
             return list;
         }
-        private string CalculateLabResultSpecimanType(string ordercode, decimal? resultminvalue, int? patientId)
+        public string CalculateLabResultSpecimanType(string ordercode, decimal? resultminvalue, int? patientId)
         {
             try
             {

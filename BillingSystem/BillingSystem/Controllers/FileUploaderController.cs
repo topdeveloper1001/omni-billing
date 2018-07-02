@@ -16,8 +16,7 @@ namespace BillingSystem.Controllers
     using System.Transactions;
     using System.Web;
     using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using Common;
     using Common.Common;
     using Model;
@@ -32,6 +31,31 @@ namespace BillingSystem.Controllers
 
     public class FileUploaderController : BaseController
     {
+        private readonly IDocumentsTemplatesService _service;
+        private readonly IOpenOrderService _ooService;
+        private readonly IMedicalNotesService _mnService;
+        private readonly IOrderActivityService _oaService;
+        private readonly IXFileHeaderService _xfService;
+        private readonly IXMLBillingService _xbService;
+        private readonly IXAdviceXMLParsedDataService _xpdService;
+        private readonly IXclaimService _xcService;
+        private readonly ITPXMLParsedDataService _xtpService;
+        private readonly ITpFileHeaderService _tpService;
+
+        public FileUploaderController(IDocumentsTemplatesService service, IOpenOrderService ooService, IMedicalNotesService mnService, IOrderActivityService oaService, IXFileHeaderService xfService, IXMLBillingService xbService, IXAdviceXMLParsedDataService xpdService, IXclaimService xcService, ITPXMLParsedDataService xtpService, ITpFileHeaderService tpService)
+        {
+            _service = service;
+            _ooService = ooService;
+            _mnService = mnService;
+            _oaService = oaService;
+            _xfService = xfService;
+            _xbService = xbService;
+            _xpdService = xpdService;
+            _xcService = xcService;
+            _xtpService = xtpService;
+            _tpService = tpService;
+        }
+
         // GET: /FileUploader/
         /// <summary>
         ///     Indexes this instance.
@@ -50,101 +74,77 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDocumentsByType(int associatedType, int pid)
         {
-            //Initialize the MedicalNotes BAL object
-            using (var documentTemplatesBal = new DocumentsTemplatesService())
-            {
-                var userid = Helpers.GetLoggedInUserId();
-                //Get the facilities list
-                var documentslist = documentTemplatesBal.GetDocumentsCustomModelByType(associatedType, pid).ToList();
-                //GetDocumentsByType
+            var userid = Helpers.GetLoggedInUserId();
+            //Get the facilities list
+            var documentslist = _service.GetDocumentsCustomModelByType(associatedType, pid).ToList();
+            //GetDocumentsByType
 
-                var fileUploaderView = new FileUploaderView
+            var fileUploaderView = new FileUploaderView
+            {
+                Attachments = documentslist,
+                CurrentAttachment = new DocumentsTemplates()
+            };
+            if (associatedType == 2) //Radiology
+            {
+                var patientActiveEncounter = _ooService.GetActiveEncounterId(pid);
+                //var patientOrders = _ooService.GetOrdersByPatientId(pid);
+                var patientOrders = _ooService.GetAllOrdersByEncounterId(patientActiveEncounter);
+                var patientOpenOrders =
+                    patientOrders.Where(
+                        _ =>
+                        _.OrderStatus == Convert.ToInt32(OrderStatus.Open).ToString()
+                        && _.CategoryId == Convert.ToInt32(GlobalCodeCategoryValue.Radiology)).ToList();
+                var patientClosedOrders =
+                    patientOrders.Where(
+                        _ =>
+                        _.OrderStatus != Convert.ToInt32(OrderStatus.Open).ToString()
+                        && _.CategoryId == Convert.ToInt32(GlobalCodeCategoryValue.Radiology)).ToList();
+                fileUploaderView.OpenOrdersList = patientOpenOrders;
+                fileUploaderView.ClosedOrdersList = patientClosedOrders;
+                var phyMedicalnotes = _mnService.GetCustomMedicalNotes(
+                    pid,
+                    Convert.ToInt32(NotesUserType.Physician));
+                fileUploaderView.CurrentMedicalNotes = new MedicalNotes();
+                fileUploaderView.MedicalNotesList = phyMedicalnotes;
+                fileUploaderView.ViewType = "2";
+                if (patientActiveEncounter != 0)
                 {
-                    Attachments = documentslist,
-                    CurrentAttachment = new DocumentsTemplates()
-                };
-                if (associatedType == 2) //Radiology
-                {
-                    var openorderBal = new OpenOrderService(
-                        Helpers.DefaultCptTableNumber,
-                        Helpers.DefaultServiceCodeTableNumber,
-                        Helpers.DefaultDrgTableNumber,
-                        Helpers.DefaultDrugTableNumber,
-                        Helpers.DefaultHcPcsTableNumber,
-                        Helpers.DefaultDiagnosisTableNumber);
-                    var patientActiveEncounter = openorderBal.GetActiveEncounterId(pid);
-                    //var patientOrders = openorderBal.GetOrdersByPatientId(pid);
-                    var patientOrders = openorderBal.GetAllOrdersByEncounterId(patientActiveEncounter);
-                    var patientOpenOrders =
-                        patientOrders.Where(
-                            _ =>
-                            _.OrderStatus == Convert.ToInt32(OrderStatus.Open).ToString()
-                            && _.CategoryId == Convert.ToInt32(GlobalCodeCategoryValue.Radiology)).ToList();
-                    var patientClosedOrders =
-                        patientOrders.Where(
-                            _ =>
-                            _.OrderStatus != Convert.ToInt32(OrderStatus.Open).ToString()
-                            && _.CategoryId == Convert.ToInt32(GlobalCodeCategoryValue.Radiology)).ToList();
-                    fileUploaderView.OpenOrdersList = patientOpenOrders;
+                    //var labactivitesobj =
+                    //    _oaService.GetOrderActivitiesByEncounterId(patientActiveEncounter);
+                    var radactivitesobj =
+                       _oaService.GetOrderActivitiesByEncounterIdSP(patientActiveEncounter);
+                    var radActivitesListObj =
+                        radactivitesobj.Where(
+                            x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Radiology)).ToList();
+                    var radActivitesClosedListObj =
+                        radActivitesListObj.Where(
+                            x =>
+                            x.OrderActivityStatus != 0
+                            && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
+                    var radActivitesOpenListObj =
+                        radActivitesListObj.Where(
+                            x =>
+                            x.OrderActivityStatus == 0
+                            || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
+                    fileUploaderView.OpenActvitiesList = radActivitesOpenListObj;
+                    fileUploaderView.ClosedActvitiesList = radActivitesClosedListObj;
+                    fileUploaderView.CurrentOrderActivity = new OrderActivity();
+                    fileUploaderView.EncounterOrder = new OpenOrder();
                     fileUploaderView.ClosedOrdersList = patientClosedOrders;
-                    using (var medicalnotesbal = new MedicalNotesService()) //Updated by Shashank on Oct 28, 2014
-                    {
-                        var phyMedicalnotes = medicalnotesbal.GetCustomMedicalNotes(
-                            pid,
-                            Convert.ToInt32(NotesUserType.Physician));
-                        fileUploaderView.CurrentMedicalNotes = new MedicalNotes();
-                        fileUploaderView.MedicalNotesList = phyMedicalnotes;
-                        fileUploaderView.ViewType = "2";
-                    }
-                    using (
-                        var orderActivityBal = new OrderActivityService(
-                            Helpers.DefaultCptTableNumber,
-                            Helpers.DefaultServiceCodeTableNumber,
-                            Helpers.DefaultDrgTableNumber,
-                            Helpers.DefaultDrugTableNumber,
-                            Helpers.DefaultHcPcsTableNumber,
-                            Helpers.DefaultDiagnosisTableNumber))
-                    {
-                        if (patientActiveEncounter != 0)
-                        {
-                            //var labactivitesobj =
-                            //    orderActivityBal.GetOrderActivitiesByEncounterId(patientActiveEncounter);
-                            var radactivitesobj =
-                               orderActivityBal.GetOrderActivitiesByEncounterIdSP(patientActiveEncounter);
-                            var radActivitesListObj =
-                                radactivitesobj.Where(
-                                    x => x.OrderCategoryID == Convert.ToInt32(OrderTypeCategory.Radiology)).ToList();
-                            var radActivitesClosedListObj =
-                                radActivitesListObj.Where(
-                                    x =>
-                                    x.OrderActivityStatus != 0
-                                    && x.OrderActivityStatus != Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
-                            var radActivitesOpenListObj =
-                                radActivitesListObj.Where(
-                                    x =>
-                                    x.OrderActivityStatus == 0
-                                    || x.OrderActivityStatus == Convert.ToInt32(OpenOrderActivityStatus.Open)).ToList();
-                            fileUploaderView.OpenActvitiesList = radActivitesOpenListObj;
-                            fileUploaderView.ClosedActvitiesList = radActivitesClosedListObj;
-                            fileUploaderView.CurrentOrderActivity = new OrderActivity();
-                            fileUploaderView.EncounterOrder = new OpenOrder();
-                            fileUploaderView.ClosedOrdersList = patientClosedOrders;
-                        }
-                        else
-                        {
-                            fileUploaderView.OpenActvitiesList = new List<OrderActivityCustomModel>();
-                            fileUploaderView.ClosedActvitiesList = new List<OrderActivityCustomModel>();
-                            fileUploaderView.CurrentOrderActivity = new OrderActivity();
-                            fileUploaderView.EncounterOrder = new OpenOrder();
-                            fileUploaderView.OpenOrdersList = new List<OpenOrderCustomModel>();
-                            fileUploaderView.ClosedOrdersList = new List<OpenOrderCustomModel>();
-                        }
-                    }
                 }
-                fileUploaderView.CurrentAttachment.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                //Pass the ActionResult with List of MedicalNotesViewModel object to Partial View MedicalNotesList
-                return PartialView(PartialViews.FileUploader, fileUploaderView);
+                else
+                {
+                    fileUploaderView.OpenActvitiesList = new List<OrderActivityCustomModel>();
+                    fileUploaderView.ClosedActvitiesList = new List<OrderActivityCustomModel>();
+                    fileUploaderView.CurrentOrderActivity = new OrderActivity();
+                    fileUploaderView.EncounterOrder = new OpenOrder();
+                    fileUploaderView.OpenOrdersList = new List<OpenOrderCustomModel>();
+                    fileUploaderView.ClosedOrdersList = new List<OpenOrderCustomModel>();
+                }
             }
+            fileUploaderView.CurrentAttachment.CreatedDate = Helpers.GetInvariantCultureDateTime();
+            //Pass the ActionResult with List of MedicalNotesViewModel object to Partial View MedicalNotesList
+            return PartialView(PartialViews.FileUploader, fileUploaderView);
         }
 
         /// <summary>
@@ -157,9 +157,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult PatientDocumentsGrid(string associatedType, string pid, string sort, string sortdir)
         {
-            var oDocumentTemplatesBal = new DocumentsTemplatesService();
 
-            var documentslist = oDocumentTemplatesBal.GetDocumentsCustomModelByType(
+            var documentslist = _service.GetDocumentsCustomModelByType(
                 Convert.ToInt32(associatedType),
                 Convert.ToInt32(pid));
             switch (sort.ToLower())
@@ -387,7 +386,6 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SaveDocuments(DocumentsTemplates documentsTemplates)
         {
-            var documentsTemplatesBal = new DocumentsTemplatesService();
             var newId = -1;
             var userid = Helpers.GetLoggedInUserId();
             var corporateId = Helpers.GetDefaultCorporateId();
@@ -396,7 +394,7 @@ namespace BillingSystem.Controllers
             if (documentsTemplates.DocumentsTemplatesID > 0)
             {
                 var documentTemplatetoupdate =
-                    documentsTemplatesBal.GetDocumentById(documentsTemplates.DocumentsTemplatesID);
+                    _service.GetDocumentById(documentsTemplates.DocumentsTemplatesID);
                 documentTemplatetoupdate.DocumentTypeID = documentsTemplates.DocumentTypeID;
                 documentTemplatetoupdate.DocumentName = documentsTemplates.DocumentName;
                 documentTemplatetoupdate.AssociatedType = documentsTemplates.AssociatedType;
@@ -414,7 +412,7 @@ namespace BillingSystem.Controllers
                 documentTemplatetoupdate.CorporateID = corporateId;
                 documentTemplatetoupdate.ExternalValue1 = documentsTemplates.ExternalValue1;
                 documentTemplatetoupdate.ExternalValue2 = documentsTemplates.ExternalValue2;
-                newId = documentsTemplatesBal.AddUpdateDocumentTempate(documentTemplatetoupdate);
+                newId = _service.AddUpdateDocumentTempate(documentTemplatetoupdate);
             }
             else
             {
@@ -427,7 +425,7 @@ namespace BillingSystem.Controllers
                 documentsTemplates.CreatedDate = documentsTemplates.CreatedDate;
                 documentsTemplates.FacilityID = facilityId;
                 documentsTemplates.CorporateID = corporateId;
-                newId = documentsTemplatesBal.AddUpdateDocumentTempate(documentsTemplates);
+                newId = _service.AddUpdateDocumentTempate(documentsTemplates);
             }
             Session["FileName"] = null;
             return Json(newId);
@@ -441,8 +439,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetPatientDocument(string documentid)
         {
             var documentidInt = Convert.ToInt32(documentid);
-            var documentsTemplatesBal = new DocumentsTemplatesService();
-            var objDocumentTemplateData = documentsTemplatesBal.GetDocumentById(documentidInt);
+            var objDocumentTemplateData = _service.GetDocumentById(documentidInt);
             if (objDocumentTemplateData != null)
             {
                 return PartialView(PartialViews.PatientDocumentsAddEdit, objDocumentTemplateData);
@@ -459,9 +456,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetDocuments(string patientId, int associatedtype)
         {
             var patientIdint = Convert.ToInt32(patientId);
-            var documentsTemplatesBal = new DocumentsTemplatesService();
-            //var objDocumentTemplateData = documentsTemplatesBal.GetPatientDocuments(patientIdint, associatedtype);
-            var objDocumentTemplateData = documentsTemplatesBal.GetPatientCustomDocuments(patientIdint, associatedtype);
+            var objDocumentTemplateData = _service.GetPatientCustomDocuments(patientIdint, associatedtype);
             //GetPatientCustomDocuments
             return PartialView(PartialViews.FilesListing, objDocumentTemplateData);
         }
@@ -474,8 +469,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetDocumentById(int documentid)
         {
             var documentidInt = Convert.ToInt32(documentid);
-            var documentsTemplatesBal = new DocumentsTemplatesService();
-            var objDocumentTemplateData = documentsTemplatesBal.GetDocumentById(documentidInt);
+            var objDocumentTemplateData = _service.GetDocumentById(documentidInt);
             if (objDocumentTemplateData != null)
             {
                 return PartialView(PartialViews.FilesView, objDocumentTemplateData);
@@ -490,25 +484,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFile(int Id)
         {
-            using (var bal = new DocumentsTemplatesService())
+            //Get facility model object by current facility ID
+            var model = _service.GetDocumentById(Convert.ToInt32(Id));
+
+            //Check If facility model is not null
+            if (model != null)
             {
-                //Get facility model object by current facility ID
-                var model = bal.GetDocumentById(Convert.ToInt32(Id));
+                model.IsDeleted = true;
+                model.DeletedBy = Helpers.GetLoggedInUserId();
+                model.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If facility model is not null
-                if (model != null)
-                {
-                    model.IsDeleted = true;
-                    model.DeletedBy = Helpers.GetLoggedInUserId();
-                    model.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                //Update Operation of current facility
+                var result = _service.AddUpdateDocumentTempate(model);
 
-                    //Update Operation of current facility
-                    var result = bal.AddUpdateDocumentTempate(model);
-
-                    //return deleted ID of current facility as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current facility as Json Result to the Ajax Call.
+                return Json(result);
             }
+
 
             //Return the Json result as Action Result back JSON Call Success
             return Json(null);
@@ -538,25 +530,22 @@ namespace BillingSystem.Controllers
             var result = false;
             using (var transcope = new TransactionScope())
             {
-                using (var bal = new DocumentsTemplatesService())
+                if (id > 0 && patientId > 0)
                 {
-                    if (id > 0 && patientId > 0)
+                    var model = _service.GetDocumentById(id);
+                    if (model != null)
                     {
-                        var model = bal.GetDocumentById(id);
-                        if (model != null)
+                        //Update Operation of current facility
+                        var deleteId = _service.DeleteDocument(id);
+                        if (deleteId > 0)
                         {
-                            //Update Operation of current facility
-                            var deleteId = bal.DeleteDocument(id);
-                            if (deleteId > 0)
+                            var fileName = model.FilePath;
+                            var filePath = Server.MapPath(fileName);
+                            if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
                             {
-                                var fileName = model.FilePath;
-                                var filePath = Server.MapPath(fileName);
-                                if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
-                                {
-                                    System.IO.File.Delete(filePath);
-                                    transcope.Complete();
-                                    result = true;
-                                }
+                                System.IO.File.Delete(filePath);
+                                transcope.Complete();
+                                result = true;
                             }
                         }
                     }
@@ -594,11 +583,8 @@ namespace BillingSystem.Controllers
 
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingService())
-                    {
-                        var result = bal.XMLBillFileParser(xml, filePath, true, corporateId, facilityId, string.Empty);
-                        msg = result;
-                    }
+                    var result = _xbService.XMLBillFileParser(xml, filePath, true, corporateId, facilityId, string.Empty);
+                    msg = result;
                 }
             }
             return Content(msg);
@@ -616,8 +602,8 @@ namespace BillingSystem.Controllers
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             if (!string.IsNullOrEmpty(message)) ViewBag.Message = message;
-            var xFileHeaderBal = new XFileHeaderService();
-            var xFileHeaderList = xFileHeaderBal.GetXFileHeaderByCId(corporateId, facilityId);
+
+            var xFileHeaderList = _xfService.GetXFileHeaderByCId(corporateId, facilityId);
             var dataView = new RemittanceAdviceView
             {
                 XAdviceXMLData = new List<XAdviceXMLParsedDataCustomModel>(),
@@ -654,18 +640,10 @@ namespace BillingSystem.Controllers
                 var xml = Helpers.GetXML(completePath + fileN);
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingService())
-                    {
-                        var result = bal.RemittanceXMLParser(xml, filePath, true, corporateId, facilityId);
-                        var msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
-                        return RedirectToAction("RemittanceXMLBilling", new { message = msg });
-                        //if (result)
-                        //    return RedirectToAction("RemittanceXMLBilling", new { message = msg });
-                        //else
-                        //{
-                        //    return RedirectToAction("RemittanceXMLBilling", new { message = "2" });
-                        //}
-                    }
+                    var result = _xbService.RemittanceXMLParser(xml, filePath, true, corporateId, facilityId);
+                    var msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
+                    return RedirectToAction("RemittanceXMLBilling", new { message = msg });
+
                 }
             }
             return RedirectToAction("RemittanceXMLBilling");
@@ -678,11 +656,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public string ViewRemittanceFile(int id)
         {
-            using (var xFileHeaderBal = new XFileHeaderService())
-            {
-                var xmlString = xFileHeaderBal.GetRemittanceFormattedXmlStringByFileId(id);
-                return (xmlString);
-            }
+            var xmlString = _xfService.GetRemittanceFormattedXmlStringByFileId(id);
+            return (xmlString);
+
         }
 
         /// <summary>
@@ -695,10 +671,9 @@ namespace BillingSystem.Controllers
             var listToreturn = new List<XAdviceXMLParsedDataCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            using (var objBal = new XAdviceXMLParsedDataService())
-            {
-                listToreturn = objBal.GetXAdviceXmlParsedDataById(corporateId, facilityId, id);
-            }
+
+            listToreturn = _xpdService.GetXAdviceXmlParsedDataById(corporateId, facilityId, id);
+
             var systemClaims = RenderPartialViewToString(
                 PartialViews.RemittanceXMLParsedDataView,
                 listToreturn.Where(x => x.IsFacilityEncounter != 0).ToList());
@@ -720,21 +695,16 @@ namespace BillingSystem.Controllers
         public ActionResult ApplyChargesInRemittanceAdvice(int fileId)
         {
             var parsedList = new List<XFileHeaderCustomModel>();
-            using (var bal = new XclaimService())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var facilityid = Helpers.GetDefaultFacilityId();
+            var xclaimList = _xcService.ApplyAdvicePaymentInRemittanceAdvice(corporateid, facilityid, fileId);
+            if (xclaimList)
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var facilityid = Helpers.GetDefaultFacilityId();
-                var xclaimList = bal.ApplyAdvicePaymentInRemittanceAdvice(corporateid, facilityid, fileId);
-                if (xclaimList)
-                {
-                    using (var xFileHeaderBal = new XFileHeaderService())
-                    {
-                        parsedList = xFileHeaderBal.GetXFileHeaderByCId(corporateid, facilityid);
-                    }
-                }
-                var stringpartialView = RenderPartialViewToString(PartialViews.XMLRemittanceFile, parsedList);
-                return Json(new { xclaimList, parsedList = stringpartialView });
+                parsedList = _xfService.GetXFileHeaderByCId(corporateid, facilityid);
             }
+
+            var stringpartialView = RenderPartialViewToString(PartialViews.XMLRemittanceFile, parsedList);
+            return Json(new { xclaimList, parsedList = stringpartialView });
         }
 
         /// <summary>
@@ -778,12 +748,10 @@ namespace BillingSystem.Controllers
                 ViewBag.Message = msg;
             }
 
-            var objBal = new TPXMLParsedDataService();
             var dataView = new XMLBillFileView
             {
                 XAdviceXMLData = new List<TPXMLParsedDataCustomModel>(),
-                // objBal.TPXMLParsedDataListCIDFID(corporateId, facilityId),
-                XMLBillFile = objBal.TPXMLFilesListCIDFID(corporateId, facilityId)
+                XMLBillFile = _xtpService.TPXMLFilesListCIDFID(corporateId, facilityId)
             };
             return View(dataView);
         }
@@ -820,7 +788,7 @@ namespace BillingSystem.Controllers
             // filePath = filePath + fileN; //file.SaveAs(completePath + fileN);
 
             // var xml = Helpers.GetXML(completePath + fileN); if (!string.IsNullOrEmpty(xml)) {
-            // using (var bal = new XMLBillingBal()) { var result = bal.XMLBillFileParser(xml,
+            // using (var _service = new XMLBillingBal()) { var result = _service.XMLBillFileParser(xml,
             // filePath, true, corporateId, facilityId, string.Empty); if
             // (string.IsNullOrEmpty(result) || result == "1") { return
             // RedirectToAction("ImportBillFile", new { msg = "1" }); }
@@ -850,11 +818,8 @@ namespace BillingSystem.Controllers
 
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingService())
-                    {
-                        var result = bal.XMLBillFileParser(xml, filePath, true, corporateId, facilityId, string.Empty, executeDetails, loggedInUserId);
-                        msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
-                    }
+                    var result = _xbService.XMLBillFileParser(xml, filePath, true, corporateId, facilityId, string.Empty, executeDetails, loggedInUserId);
+                    msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
                 }
                 else msg = "3";
             }
@@ -869,11 +834,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public string ViewFile(int id)
         {
-            using (var xFileHeaderBal = new TpFileHeaderService())
-            {
-                var xmlString = xFileHeaderBal.GetFormattedXmlStringByXFileId(id);
-                return (xmlString);
-            }
+            var xmlString = _tpService.GetFormattedXmlStringByXFileId(id);
+            return (xmlString);
+
         }
 
         /// <summary>
@@ -1062,79 +1025,76 @@ namespace BillingSystem.Controllers
 
             #region Data Rows
 
-            //var listToreturn = new List<TPXMLParsedDataCustomModel>();
-            using (var objBal = new TPXMLParsedDataService())
+            //listToreturn = objBal.TPXMLParsedDataList(Convert.ToInt32(FileHeaderId));
+            var result = _xtpService.GetXmlParsedData(Convert.ToInt32(FileHeaderId));
+            foreach (var item in result)
             {
-                //listToreturn = objBal.TPXMLParsedDataList(Convert.ToInt32(FileHeaderId));
-                var result = objBal.GetXmlParsedData(Convert.ToInt32(FileHeaderId));
-                foreach (var item in result)
-                {
-                    row = sheet.CreateRow(rowIndex);
-                    row.CreateCell(0);
-                    row.CreateCell(1);
-                    row.CreateCell(2);
-                    row.CreateCell(3);
-                    row.CreateCell(4);
-                    row.CreateCell(5);
-                    row.CreateCell(6);
-                    row.CreateCell(7);
-                    row.CreateCell(8);
-                    row.CreateCell(9);
-                    row.CreateCell(10);
-                    row.CreateCell(11);
-                    row.CreateCell(12);
-                    row.CreateCell(13);
-                    row.CreateCell(14);
-                    row.CreateCell(15);
-                    row.CreateCell(16);
-                    row.CreateCell(17);
-                    row.CreateCell(18);
-                    row.CreateCell(19);
-                    row.CreateCell(20);
-                    row.CreateCell(21);
-                    row.CreateCell(22);
-                    row.CreateCell(23);
-                    row.CreateCell(24);
-                    row.CreateCell(25);
-                    row.CreateCell(26);
-                    row.CreateCell(27);
-                    row.CreateCell(28);
-                    row.CreateCell(29);
-                    row.CreateCell(30);
-                    row.GetCell(0).SetCellValue(Convert.ToString(item.SystemBatchNumber));
-                    row.GetCell(1).SetCellValue(Convert.ToString(item.TPFileID));
-                    row.GetCell(2).SetCellValue(Convert.ToString(item.CClaimID));
-                    row.GetCell(3).SetCellValue(Convert.ToString(item.BillNumber));
-                    row.GetCell(4).SetCellValue(Convert.ToString(item.CMemberID));
-                    row.GetCell(5).SetCellValue(Convert.ToString(item.CPayerID));
-                    row.GetCell(6).SetCellValue(Convert.ToString(item.CProviderID));
-                    row.GetCell(7).SetCellValue(Convert.ToString(item.CEmiratesIDNumber));
-                    row.GetCell(8).SetCellValue(Convert.ToString(item.CGross));
-                    row.GetCell(9).SetCellValue(Convert.ToString(item.CPatientShare));
-                    row.GetCell(10).SetCellValue(Convert.ToString(item.CNet));
-                    row.GetCell(11).SetCellValue(Convert.ToString(item.EFacilityID));
-                    row.GetCell(12).SetCellValue(Convert.ToString(item.EncounterType));
-                    row.GetCell(13).SetCellValue(Convert.ToString(item.PatientName));
-                    row.GetCell(14).SetCellValue(Convert.ToString(item.EligibilityIDPayer));
-                    row.GetCell(15).SetCellValue(Convert.ToString(item.EStart));
-                    row.GetCell(16).SetCellValue(Convert.ToString(item.EEnd));
-                    row.GetCell(17).SetCellValue(Convert.ToString(item.EncounterStartType));
-                    row.GetCell(18).SetCellValue(Convert.ToString(item.EncounterEndType));
-                    row.GetCell(19).SetCellValue(Convert.ToString(item.DType));
-                    row.GetCell(20).SetCellValue(Convert.ToString(item.DCode));
-                    row.GetCell(21).SetCellValue(Convert.ToString(item.AStart));
-                    row.GetCell(22).SetCellValue(Convert.ToString(item.AType));
-                    row.GetCell(23).SetCellValue(Convert.ToString(item.ACode));
-                    row.GetCell(24).SetCellValue(Convert.ToString(item.AQuantity));
-                    row.GetCell(25).SetCellValue(Convert.ToString(item.ANet));
-                    row.GetCell(26).SetCellValue(Convert.ToString(item.AOrderingClinician));
-                    row.GetCell(27).SetCellValue(Convert.ToString(item.AExecutingClinician));
-                    row.GetCell(28).SetCellValue(Convert.ToString(item.APriorAuthorizationID));
-                    row.GetCell(29).SetCellValue(Convert.ToString(item.CNPackageName));
-                    row.GetCell(30).SetCellValue(Convert.ToString(item.PStatus));
-                    rowIndex++;
-                }
+                row = sheet.CreateRow(rowIndex);
+                row.CreateCell(0);
+                row.CreateCell(1);
+                row.CreateCell(2);
+                row.CreateCell(3);
+                row.CreateCell(4);
+                row.CreateCell(5);
+                row.CreateCell(6);
+                row.CreateCell(7);
+                row.CreateCell(8);
+                row.CreateCell(9);
+                row.CreateCell(10);
+                row.CreateCell(11);
+                row.CreateCell(12);
+                row.CreateCell(13);
+                row.CreateCell(14);
+                row.CreateCell(15);
+                row.CreateCell(16);
+                row.CreateCell(17);
+                row.CreateCell(18);
+                row.CreateCell(19);
+                row.CreateCell(20);
+                row.CreateCell(21);
+                row.CreateCell(22);
+                row.CreateCell(23);
+                row.CreateCell(24);
+                row.CreateCell(25);
+                row.CreateCell(26);
+                row.CreateCell(27);
+                row.CreateCell(28);
+                row.CreateCell(29);
+                row.CreateCell(30);
+                row.GetCell(0).SetCellValue(Convert.ToString(item.SystemBatchNumber));
+                row.GetCell(1).SetCellValue(Convert.ToString(item.TPFileID));
+                row.GetCell(2).SetCellValue(Convert.ToString(item.CClaimID));
+                row.GetCell(3).SetCellValue(Convert.ToString(item.BillNumber));
+                row.GetCell(4).SetCellValue(Convert.ToString(item.CMemberID));
+                row.GetCell(5).SetCellValue(Convert.ToString(item.CPayerID));
+                row.GetCell(6).SetCellValue(Convert.ToString(item.CProviderID));
+                row.GetCell(7).SetCellValue(Convert.ToString(item.CEmiratesIDNumber));
+                row.GetCell(8).SetCellValue(Convert.ToString(item.CGross));
+                row.GetCell(9).SetCellValue(Convert.ToString(item.CPatientShare));
+                row.GetCell(10).SetCellValue(Convert.ToString(item.CNet));
+                row.GetCell(11).SetCellValue(Convert.ToString(item.EFacilityID));
+                row.GetCell(12).SetCellValue(Convert.ToString(item.EncounterType));
+                row.GetCell(13).SetCellValue(Convert.ToString(item.PatientName));
+                row.GetCell(14).SetCellValue(Convert.ToString(item.EligibilityIDPayer));
+                row.GetCell(15).SetCellValue(Convert.ToString(item.EStart));
+                row.GetCell(16).SetCellValue(Convert.ToString(item.EEnd));
+                row.GetCell(17).SetCellValue(Convert.ToString(item.EncounterStartType));
+                row.GetCell(18).SetCellValue(Convert.ToString(item.EncounterEndType));
+                row.GetCell(19).SetCellValue(Convert.ToString(item.DType));
+                row.GetCell(20).SetCellValue(Convert.ToString(item.DCode));
+                row.GetCell(21).SetCellValue(Convert.ToString(item.AStart));
+                row.GetCell(22).SetCellValue(Convert.ToString(item.AType));
+                row.GetCell(23).SetCellValue(Convert.ToString(item.ACode));
+                row.GetCell(24).SetCellValue(Convert.ToString(item.AQuantity));
+                row.GetCell(25).SetCellValue(Convert.ToString(item.ANet));
+                row.GetCell(26).SetCellValue(Convert.ToString(item.AOrderingClinician));
+                row.GetCell(27).SetCellValue(Convert.ToString(item.AExecutingClinician));
+                row.GetCell(28).SetCellValue(Convert.ToString(item.APriorAuthorizationID));
+                row.GetCell(29).SetCellValue(Convert.ToString(item.CNPackageName));
+                row.GetCell(30).SetCellValue(Convert.ToString(item.PStatus));
+                rowIndex++;
             }
+
 
             #endregion Data Rows
 
@@ -1152,31 +1112,22 @@ namespace BillingSystem.Controllers
 
         private List<TPXMLParsedDataCustomModel> GetXmlParsedData(long id)
         {
-            using (var bal = new TPXMLParsedDataService())
-            {
-                var result = bal.GetXmlParsedData(id);
-                return result;
-            }
+            var result = _xtpService.GetXmlParsedData(id);
+            return result;
         }
 
 
         public PartialViewResult DeleteByFileIdAndGetXmlData(int fileId)
         {
-            using (var bal = new TPXMLParsedDataService())
-            {
-                var result = bal.DeleteAndThenGetXmlFileData(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), fileId, withDetails: true);
-                return PartialView(PartialViews.XMLBillFile, result);
-            }
+            var result = _xtpService.DeleteAndThenGetXmlFileData(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), fileId, withDetails: true);
+            return PartialView(PartialViews.XMLBillFile, result);
         }
 
 
         public JsonResult ExecuteXmlDetails(int fileId)
         {
-            using (var bal = new TPXMLParsedDataService())
-            {
-                var result = bal.ExecuteXmlFileDetails(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), fileId);
-                return Json(result, JsonRequestBehavior.AllowGet);
-            }
+            var result = _xtpService.ExecuteXmlFileDetails(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), fileId);
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
         #endregion XML Billing Methods
 
@@ -1188,25 +1139,22 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult OnlineHelp()
         {
-            using (var bal = new DocumentsTemplatesService())
+            var associatedTypeId = Convert.ToInt32(AttachmentType.OnlineHelp);
+            var docTypeId = (int)DocumentTemplateTypes.OnlineHelp;
+            var view = new FileUploaderView
             {
-                var associatedTypeId = Convert.ToInt32(AttachmentType.OnlineHelp);
-                var docTypeId = (int)DocumentTemplateTypes.OnlineHelp;
-                var view = new FileUploaderView
+                Attachments = _service.GetListByAssociateType(associatedTypeId),
+                Model = new DocumentsTemplatesCustomModel
                 {
-                    Attachments = bal.GetListByAssociateType(associatedTypeId),
-                    Model = new DocumentsTemplatesCustomModel
-                    {
-                        IsDeleted = false,
-                        IsRequired = false,
-                        IsTemplate = false,
-                        AssociatedType = (int)AttachmentType.OnlineHelp,
-                        AssociatedID = (int)GlobalCodeCategoryValue.OnlineHelp,
-                        DocumentTypeID = docTypeId
-                    }
-                };
-                return View(view);
-            }
+                    IsDeleted = false,
+                    IsRequired = false,
+                    IsTemplate = false,
+                    AssociatedType = (int)AttachmentType.OnlineHelp,
+                    AssociatedID = (int)GlobalCodeCategoryValue.OnlineHelp,
+                    DocumentTypeID = docTypeId
+                }
+            };
+            return View(view);
         }
 
         /// <summary>
@@ -1222,45 +1170,42 @@ namespace BillingSystem.Controllers
                 var associatedTypeId = Convert.ToInt32(DocAssociatedType.OnlineHelp);
                 var docTypeId = (int)DocumentTemplateTypes.OnlineHelp;
 
-                using (var bal = new DocumentsTemplatesService())
+                if (ModelState.IsValid)
                 {
-                    if (ModelState.IsValid)
+                    //TO:DO
+                    var fileName = Path.GetFileName(model.File.FileName);
+                    if (!string.IsNullOrEmpty(fileName))
                     {
-                        //TO:DO
-                        var fileName = Path.GetFileName(model.File.FileName);
-                        if (!string.IsNullOrEmpty(fileName))
+                        var dirPath = Server.MapPath("~/" + CommonConfig.OnlineHelpFilePath);
+                        if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+
+                        var path = Path.Combine(dirPath, fileName);
+                        var dbFilePath = CommonConfig.OnlineHelpFilePath + fileName;
+                        model.File.SaveAs(path);
+                        var currentModel = new DocumentsTemplates
                         {
-                            var dirPath = Server.MapPath("~/" + CommonConfig.OnlineHelpFilePath);
-                            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+                            FileName = fileName,
+                            FilePath = dbFilePath,
+                            DocumentTypeID = docTypeId,
+                            DocumentName = model.DocumentName,
+                            DocumentNotes = model.DocumentNotes,
+                            DocumentsTemplatesID = 0,
+                            AssociatedID = associatedId,
+                            AssociatedType = associatedTypeId,
+                            ExternalValue1 = model.ExternalValue1,
+                            ExternalValue2 = model.ExternalValue2,
+                            CorporateID = Helpers.GetDefaultCorporateId(),
+                            FacilityID = Helpers.GetDefaultFacilityId(),
+                            IsDeleted = false,
+                            IsRequired = false,
+                            IsTemplate = false,
+                            CreatedBy = Helpers.GetLoggedInUserId(),
+                            CreatedDate = Helpers.GetInvariantCultureDateTime()
+                        };
 
-                            var path = Path.Combine(dirPath, fileName);
-                            var dbFilePath = CommonConfig.OnlineHelpFilePath + fileName;
-                            model.File.SaveAs(path);
-                            var currentModel = new DocumentsTemplates
-                            {
-                                FileName = fileName,
-                                FilePath = dbFilePath,
-                                DocumentTypeID = docTypeId,
-                                DocumentName = model.DocumentName,
-                                DocumentNotes = model.DocumentNotes,
-                                DocumentsTemplatesID = 0,
-                                AssociatedID = associatedId,
-                                AssociatedType = associatedTypeId,
-                                ExternalValue1 = model.ExternalValue1,
-                                ExternalValue2 = model.ExternalValue2,
-                                CorporateID = Helpers.GetDefaultCorporateId(),
-                                FacilityID = Helpers.GetDefaultFacilityId(),
-                                IsDeleted = false,
-                                IsRequired = false,
-                                IsTemplate = false,
-                                CreatedBy = Helpers.GetLoggedInUserId(),
-                                CreatedDate = Helpers.GetInvariantCultureDateTime()
-                            };
-
-                            bal.AddUpdateDocumentTempate(currentModel);
-                            ViewBag.Message = "File has been uploaded successfully";
-                            ModelState.Clear();
-                        }
+                        _service.AddUpdateDocumentTempate(currentModel);
+                        ViewBag.Message = "File has been uploaded successfully";
+                        ModelState.Clear();
                     }
                 }
             }
@@ -1275,26 +1220,18 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDocumentTemplate(int id, int associatedTypeId)
         {
-            using (var documentTemplateBal = new DocumentsTemplatesService())
+            var currentFacility = _service.GetDocumentById(id);
+            if (currentFacility != null)
             {
-                //Get facility model object by current facility ID
-                var currentFacility = documentTemplateBal.GetDocumentById(id);
+                currentFacility.IsDeleted = true;
+                currentFacility.DeletedBy = Helpers.GetLoggedInUserId();
+                currentFacility.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                //Update Operation of current facility
+                var result = _service.AddUpdateDocumentTempate(currentFacility);
 
-                //Check If facility model is not null
-                if (currentFacility != null)
-                {
-                    currentFacility.IsDeleted = true;
-                    currentFacility.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentFacility.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    //Update Operation of current facility
-                    var result = documentTemplateBal.AddUpdateDocumentTempate(currentFacility);
-
-                    var list = documentTemplateBal.GetListByAssociateType(associatedTypeId);
-                    return PartialView(PartialViews.OnlineHelpDocsListView, list);
-                }
+                var list = _service.GetListByAssociateType(associatedTypeId);
+                return PartialView(PartialViews.OnlineHelpDocsListView, list);
             }
-
-            //Return the Json result as Action Result back JSON Call Success
             return Json(null);
         }
 

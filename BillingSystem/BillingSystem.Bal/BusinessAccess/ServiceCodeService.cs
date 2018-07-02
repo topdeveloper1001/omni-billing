@@ -10,21 +10,26 @@ using BillingSystem.Model.CustomModel;
 using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
-{ 
+{
     public class ServiceCodeService : IServiceCodeService
     {
         private readonly IRepository<ServiceCode> _repository;
         private readonly IRepository<BedRateCard> _bedRepository;
+        private readonly IRepository<GlobalCodes> _gRepository;
+        private readonly IRepository<GlobalCodeCategory> _ggRepository;
         private readonly IMapper _mapper;
         private readonly BillingEntities _context;
 
-        public ServiceCodeService(IRepository<ServiceCode> repository, IRepository<BedRateCard> bedRepository, IMapper mapper, BillingEntities context)
+        public ServiceCodeService(IRepository<ServiceCode> repository, IRepository<BedRateCard> bedRepository, IRepository<GlobalCodes> gRepository, IRepository<GlobalCodeCategory> ggRepository, IMapper mapper, BillingEntities context)
         {
             _repository = repository;
             _bedRepository = bedRepository;
+            _gRepository = gRepository;
+            _ggRepository = ggRepository;
             _mapper = mapper;
             _context = context;
         }
+
 
 
         #region Public Methods and Operators
@@ -96,15 +101,30 @@ namespace BillingSystem.Bal.BusinessAccess
             foreach (var model in m)
             {
                 var vm = _mapper.Map<ServiceCodeCustomModel>(model);
-                using (var bal = new BaseBal())
-                {
-                    vm.ServiceCodeServiceCodeMainText = bal.GetExternalValue1ById(model.ServiceCodeServiceCodeMain);
-                    vm.ServiceServiceCodeSubText = bal.GetNameByGlobalCodeValue(model.ServiceServiceCodeSub, model.ServiceCodeServiceCodeMain);
-                }
+                vm.ServiceCodeServiceCodeMainText = GetExternalValue1ById(model.ServiceCodeServiceCodeMain);
+                vm.ServiceServiceCodeSubText = GetNameByGlobalCodeValue(model.ServiceServiceCodeSub, model.ServiceCodeServiceCodeMain);
 
                 lst.Add(vm);
             }
             return lst;
+        }
+        private string GetExternalValue1ById(string categoryValue)
+        {
+            if (!string.IsNullOrEmpty(categoryValue))
+            {
+                    var category = _ggRepository.Where(g => g.GlobalCodeCategoryValue.Equals(categoryValue)).FirstOrDefault();
+                    return category != null ? category.ExternalValue1 : string.Empty;
+            }
+            return string.Empty;
+        }
+        private string GetNameByGlobalCodeValue(string codeValue, string categoryValue, string fId = "")
+        {
+            if (!string.IsNullOrEmpty(codeValue))
+            {
+                var gl = _gRepository.Where(g => g.GlobalCodeValue.Equals(codeValue) && !g.IsDeleted.Value && g.GlobalCodeCategoryValue.Equals(categoryValue) && (string.IsNullOrEmpty(fId) || g.FacilityNumber.Equals(fId))).FirstOrDefault();
+                return gl != null ? gl.GlobalCodeName : string.Empty;
+            }
+            return string.Empty;
         }
         public List<ServiceCodeCustomModel> GetFilteredServiceCodes(string text, string tableNumber)
         {

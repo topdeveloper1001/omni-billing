@@ -2,12 +2,19 @@
 using BillingSystem.Common;
 using System;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class OrderActivityController : BaseController
     {
+        private readonly IOrderActivityService _service;
+
+        public OrderActivityController(IOrderActivityService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the OrderActivity View in the Model OrderActivity such as OrderActivityList, list of countries etc.
         /// </summary>
@@ -16,17 +23,15 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult OrderActivityMain()
         {
-            //Initialize the OrderActivity BAL object
-            var orderActivityBal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
 
             //Get the Entity list
-            var orderActivityList = orderActivityBal.GetOrderActivityCustom();
+            var orderActivityList = _service.GetOrderActivityCustom(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
 
             //Intialize the View Model i.e. OrderActivityView which is binded to Main View Index.cshtml under OrderActivity
             var orderActivityView = new OrderActivityView
             {
-               OrderActivityList = orderActivityList,
-               CurrentOrderActivity = new Model.OrderActivity()
+                OrderActivityList = orderActivityList,
+                CurrentOrderActivity = new Model.OrderActivity()
             };
 
             //Pass the View Model in ActionResult to View OrderActivity
@@ -42,16 +47,13 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindOrderActivityList()
         {
-            //Initialize the OrderActivity BAL object
-            using (var orderActivityBal = new OrderActivityService(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-            {
-                //Get the facilities list
-                var orderActivityList = orderActivityBal.GetOrderActivityCustom();
+            //Get the facilities list
+            var orderActivityList = _service.GetOrderActivityCustom(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDiagnosisTableNumber);
 
-                //Pass the ActionResult with List of OrderActivityViewModel object to Partial View OrderActivityList
-                return PartialView(PartialViews.OrderActivityList, orderActivityList);
-            }
+            //Pass the ActionResult with List of OrderActivityViewModel object to Partial View OrderActivityList
+            return PartialView(PartialViews.OrderActivityList, orderActivityList);
         }
+
 
         /// <summary>
         /// Add New or Update the OrderActivity based on if we pass the OrderActivity ID in the OrderActivityViewModel object.
@@ -64,20 +66,17 @@ namespace BillingSystem.Controllers
         {
             //Initialize the newId variable 
             var newId = -1;
-			var userId = Helpers.GetLoggedInUserId();
+            var userId = Helpers.GetLoggedInUserId();
             //Check if OrderActivityViewModel 
             if (OrderActivityModel != null)
             {
-                using (var orderActivityBal = new OrderActivityService())
+                if (OrderActivityModel.OrderActivityID > 0)
                 {
-                    if (OrderActivityModel.OrderActivityID > 0)
-                    {
-                        OrderActivityModel.ModifiedBy = userId;
-                        OrderActivityModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    //Call the AddOrderActivity Method to Add / Update current OrderActivity
-                    newId = orderActivityBal.AddUptdateOrderActivity(OrderActivityModel);
+                    OrderActivityModel.ModifiedBy = userId;
+                    OrderActivityModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                //Call the AddOrderActivity Method to Add / Update current OrderActivity
+                newId = _service.AddUptdateOrderActivity(OrderActivityModel);
             }
             return Json(newId);
         }
@@ -89,17 +88,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOrderActivity(int OrderActivityID)
         {
-            using (var orderActivityBal = new OrderActivityService())
-            {
-                //Call the AddOrderActivity Method to Add / Update current OrderActivity
-                var currentOrderActivity = orderActivityBal.GetOrderActivityByID(Convert.ToInt32(OrderActivityID));
-
-                //If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
-                //ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
-
-                //Pass the ActionResult with the current OrderActivityViewModel object as model to PartialView OrderActivityAddEdit
-                return PartialView(PartialViews.OrderActivityAddEdit, currentOrderActivity);
-            }
+            var currentOrderActivity = _service.GetOrderActivityByID(Convert.ToInt32(OrderActivityID));
+            return PartialView(PartialViews.OrderActivityAddEdit, currentOrderActivity);
         }
 
         /// <summary>
@@ -109,27 +99,20 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteOrderActivity(int OrderActivityID)
         {
-            using (var orderActivityBal = new OrderActivityService())
+            var currentOrderActivity = _service.GetOrderActivityByID(Convert.ToInt32(OrderActivityID));
+            var userId = Helpers.GetLoggedInUserId();
+            if (currentOrderActivity != null)
             {
-                //Get OrderActivity model object by current OrderActivity ID
-                var currentOrderActivity = orderActivityBal.GetOrderActivityByID(Convert.ToInt32(OrderActivityID));
-				var userId = Helpers.GetLoggedInUserId();
-                //Check If OrderActivity model is not null
-                if (currentOrderActivity != null)
-                {
-                    currentOrderActivity.IsActive = false;
-                    currentOrderActivity.ModifiedBy = userId;
-                    currentOrderActivity.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                currentOrderActivity.IsActive = false;
+                currentOrderActivity.ModifiedBy = userId;
+                currentOrderActivity.ModifiedDate = Helpers.GetInvariantCultureDateTime();
 
-                    //Update Operation of current OrderActivity
-                    var result = orderActivityBal.AddUptdateOrderActivity(currentOrderActivity);
+                //Update Operation of current OrderActivity
+                var result = _service.AddUptdateOrderActivity(currentOrderActivity);
 
-                    //return deleted ID of current OrderActivity as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current OrderActivity as Json Result to the Ajax Call.
+                return Json(result);
             }
-
-            //Return the Json result as Action Result back JSON Call Success
             return Json(null);
         }
 

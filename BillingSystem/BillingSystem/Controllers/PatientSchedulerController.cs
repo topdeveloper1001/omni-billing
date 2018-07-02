@@ -13,8 +13,7 @@ namespace BillingSystem.Controllers
     using System.Collections.Generic;
     using System.Linq;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Common.Common;
     using BillingSystem.Model;
@@ -26,6 +25,16 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class PatientSchedulerController : BaseController
     {
+        private readonly IFacilityRoleService _frService;
+        private readonly ISchedulingService _schService;
+
+        public PatientSchedulerController(IFacilityRoleService frService, ISchedulingService schService)
+        {
+            _frService = frService;
+            _schService = schService;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -38,27 +47,24 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult BindUsersType(string corporateId, string facilityId)
         {
-            using (var fRole = new FacilityRoleService())
+            var list = new List<DropdownListData>();
+            List<FacilityRoleCustomModel> roleList = _frService.GetUserTypeRoleDropDown(
+                Convert.ToInt32(corporateId),
+                Convert.ToInt32(facilityId),
+                true);
+            if (roleList.Count > 0)
             {
-                var list = new List<DropdownListData>();
-                List<FacilityRoleCustomModel> roleList = fRole.GetUserTypeRoleDropDown(
-                    Convert.ToInt32(corporateId), 
-                    Convert.ToInt32(facilityId), 
-                    true);
-                if (roleList.Count > 0)
-                {
-                    list.AddRange(
-                        roleList.Select(
-                            item =>
-                            new DropdownListData
-                                {
-                                    Text = string.Format("{0}", item.RoleName), 
-                                    Value = Convert.ToString(item.RoleId)
-                                }));
-                }
-
-                return this.Json(list, JsonRequestBehavior.AllowGet);
+                list.AddRange(
+                    roleList.Select(
+                        item =>
+                        new DropdownListData
+                        {
+                            Text = string.Format("{0}", item.RoleName),
+                            Value = Convert.ToString(item.RoleId)
+                        }));
             }
+
+            return this.Json(list, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -74,8 +80,8 @@ namespace BillingSystem.Controllers
             if (string.IsNullOrEmpty(pid) && !int.TryParse(pid, out patientId) && patientId == 0)
             {
                 return this.RedirectToAction(
-                    ActionResults.patientSearch, 
-                    ControllerNames.patientSearch, 
+                    ActionResults.patientSearch,
+                    ControllerNames.patientSearch,
                     new { messageId = Convert.ToInt32(MessageType.PatientSchedular) });
             }
 
@@ -108,19 +114,15 @@ namespace BillingSystem.Controllers
             if (model != null)
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
-                using (var oSchedulingBal = new SchedulingService())
+                foreach (Scheduling item in model)
                 {
-                    foreach (Scheduling item in model)
-                    {
-                        item.CorporateId = corporateId;
-                        item.CreatedBy = Helpers.GetLoggedInUserId();
-                        item.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                        item.WeekDay = Helpers.GetWeekOfYearISO8601(Convert.ToDateTime(item.ScheduleFrom)).ToString();
-                        item.IsActive = true;
-                    }
-
-                    //SchedulingCustomModelView updatedList = oSchedulingBal.SavePatientScheduling(model);
+                    item.CorporateId = corporateId;
+                    item.CreatedBy = Helpers.GetLoggedInUserId();
+                    item.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                    item.WeekDay = Helpers.GetWeekOfYearISO8601(Convert.ToDateTime(item.ScheduleFrom)).ToString();
+                    item.IsActive = true;
                 }
+
             }
 
             return this.Json(list, JsonRequestBehavior.AllowGet);

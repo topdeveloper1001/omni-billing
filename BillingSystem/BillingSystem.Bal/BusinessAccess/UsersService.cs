@@ -23,6 +23,7 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<Physician> _phRepository;
         private readonly IRepository<Facility> _fRepository;
         private readonly IRepository<Role> _rRepository;
+        private readonly IRepository<FacilityRole> _frRepository;
         private readonly IMapper _mapper;
         private readonly BillingEntities _context;
 
@@ -82,6 +83,14 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return m;
 
+        }
+        private int DeleteRoleWithUser(int userId)
+        {
+            var result = -1;
+            var lst = _urRepository.Where(x => x.UserID == userId).ToList();
+            if (lst.Count > 0)
+                _repository.Delete(lst);
+            return result;
         }
         public UsersViewModel GetUserByEmail(string email)
         {
@@ -192,8 +201,6 @@ namespace BillingSystem.Bal.BusinessAccess
         public int AddUpdateUser(Users m, int roleId)
         {
             int result;
-            var userRolebal = new UserRoleService();
-            var facilityRoleBal = new FacilityRoleService();
             using (var transScope = new TransactionScope())
             {
                 var encryptPassword = EncryptDecrypt.GetEncryptedData(m.Password, "");
@@ -224,7 +231,7 @@ namespace BillingSystem.Bal.BusinessAccess
                             _urRepository.UpdateEntity(currentRole, currentRole.UserRoleID);
 
                             //Update the roles in Physician Table too if schedulingApplied is set true to that current role in FacilityRole Table.
-                            var isSchedulingApplied = facilityRoleBal.IsSchedulingApplied(roleId);
+                            var isSchedulingApplied = IsSchedulingApplied(roleId);
                             if (isSchedulingApplied && clinician != null)
                             {
                                 clinician.UserType = roleId;
@@ -242,7 +249,7 @@ namespace BillingSystem.Bal.BusinessAccess
                     }
 
                     if (Convert.ToBoolean(m.IsDeleted))
-                        userRolebal.DeleteRoleWithUser(m.UserID);
+                        DeleteRoleWithUser(m.UserID);
                     transScope.Complete();
                 }
                 else
@@ -262,7 +269,7 @@ namespace BillingSystem.Bal.BusinessAccess
                             CreatedDate = m.CreatedDate,
                             UserRoleID = 0
                         };
-                        var newUserRoleId = userRolebal.SaveUserRole(userRoleModel);
+                        var newUserRoleId = SaveUserRole(userRoleModel);
                         if (newUserRoleId > 0)
                         {
                             var facilityRoleModel = new FacilityRole
@@ -276,7 +283,7 @@ namespace BillingSystem.Bal.BusinessAccess
                                 CreatedBy = m.CreatedBy,
                                 CreatedDate = m.CreatedDate
                             };
-                            var isAdded = facilityRoleBal.SaveFacilityRoleIfNotExists(facilityRoleModel);
+                            var isAdded = SaveFacilityRoleIfNotExists(facilityRoleModel);
                             if (isAdded)
                                 transScope.Complete();
                         }
@@ -291,7 +298,23 @@ namespace BillingSystem.Bal.BusinessAccess
 
             return result;
         }
-
+        private bool SaveFacilityRoleIfNotExists(FacilityRole model)
+        {
+            var currentModel = _frRepository.Where(f => f.FacilityId == model.FacilityId && f.RoleId == model.RoleId).FirstOrDefault();
+            if (currentModel != null)
+            {
+                currentModel.IsActive = true;
+                currentModel.IsDeleted = false;
+            }
+            else
+                _frRepository.Create(model);
+            return true;
+        }
+        private bool IsSchedulingApplied(int roleId)
+        {
+            var fr = _frRepository.Where(f => f.IsActive && !f.IsDeleted && f.RoleId == roleId).FirstOrDefault();
+            return fr != null && fr.SchedulingApplied;
+        }
         /// <summary>
         /// Method to To check Duplicate User on the basis of username or email
         /// </summary>
@@ -308,7 +331,20 @@ namespace BillingSystem.Bal.BusinessAccess
             return user != null;
 
         }
-
+        private int SaveUserRole(UserRole model)
+        {
+            var isExists = CheckIfExists(model.UserID, model.RoleID);
+            if (model.UserRoleID > 0 || isExists)
+                _urRepository.UpdateEntity(model, model.UserRoleID);
+            else
+                _urRepository.Create(model);
+            return model.UserRoleID;
+        }
+        private bool CheckIfExists(int userId, int roleId)
+        {
+            var role = _urRepository.Where(fr => fr.IsActive && fr.IsDeleted != true && fr.RoleID == roleId && fr.UserID == userId).FirstOrDefault();
+            return role != null;
+        }
         //Menu Manipulations
         /// <summary>
         /// Gets the name of the tabs by user.
@@ -443,20 +479,21 @@ namespace BillingSystem.Bal.BusinessAccess
                         if (ids.All(fac => fac != f.FacilityId))
                         {
                             ids.Add(f.FacilityId);
-                            using (var facBal = new FacilityService())
-                            {
-                                if (string.IsNullOrEmpty(facilityNames))
-                                    facilityNames = facBal.GetFacilityNameById(f.FacilityId);
-                                else
-                                    facilityNames += string.Format(", {0}", facBal.GetFacilityNameById(f.FacilityId));
-                            }
+                            if (string.IsNullOrEmpty(facilityNames))
+                                facilityNames = GetFacilityNameById(f.FacilityId);
+                            else
+                                facilityNames += string.Format(", {0}", GetFacilityNameById(f.FacilityId));
                         }
                     }
                 }
             }
             return facilityNames;
         }
-
+        private string GetFacilityNameById(int id)
+        {
+            var facility = _fRepository.Get(id);
+            return (facility != null) ? facility.FacilityName : string.Empty;
+        }
         /// <summary>
         /// Gets all users by facility identifier.
         /// </summary>

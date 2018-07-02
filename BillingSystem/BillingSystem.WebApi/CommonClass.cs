@@ -36,29 +36,7 @@ namespace BillingSystem.WebApi
 
             return VisitorsIPAddr;
         }
-
-        public static DateTime GetInvariantCultureDateTime(int facilityId)
-        {
-            TimeZoneInfo tzi;
-            var utcTime = DateTime.Now.ToUniversalTime();
-            using (var facilitybal = new FacilityBal())
-            {
-                var facilityObj = facilitybal.GetFacilityTimeZoneById(facilityId);
-                tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
-            }
-            var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
-            return convertedTime;
-        }
-
-        public static bool IsInRange(String startTime, String endTime, int facilityId)
-        {
-            var stringStartTime = Convert.ToString(Convert.ToDateTime(startTime).TimeOfDay);
-            var stringEndTime = Convert.ToString(Convert.ToDateTime(endTime).TimeOfDay);
-            var timeRange = TimeRange.Parse(stringStartTime + "-" + stringEndTime);
-
-            var isNowInTheRange = timeRange.IsIn(GetInvariantCultureDateTime(facilityId).TimeOfDay);
-            return isNowInTheRange;
-        }
+        
     }
 
     public class TimeRange

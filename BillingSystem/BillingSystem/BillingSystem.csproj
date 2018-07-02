@@ -367,7 +367,6 @@
     <Compile Include="Controllers\PatientCarePlanController.cs" />
     <Compile Include="Controllers\PatientPreSchedulingController.cs" />
     <Compile Include="Controllers\PatientSchedulerController.cs" />
-    <Compile Include="Controllers\FacultyTimeslotsController.cs" />
     <Compile Include="Controllers\DashboardBudgetController.cs" />
     <Compile Include="Controllers\DashboardDisplayOrderController.cs" />
     <Compile Include="Controllers\DashboardIndicatorDataController.cs" />
@@ -457,7 +456,6 @@
     <Compile Include="Controllers\RoomEquipmentController.cs" />
     <Compile Include="Controllers\RuleMasterController.cs" />
     <Compile Include="Controllers\RuleStepController.cs" />
-    <Compile Include="Controllers\SchedulingController.cs" />
     <Compile Include="Controllers\SchedulingParametersController.cs" />
     <Compile Include="Controllers\ScrubEditTrackController.cs" />
     <Compile Include="Controllers\ScrubReportController.cs" />
@@ -2606,9 +2604,6 @@
     <Content Include="Scripts\FacultyDept\Main.js" />
     <Content Include="Scripts\FacultyRooster\ClinicianRoster.js" />
     <Content Include="Scripts\FacultyRooster\FacultyRoosterScript.js" />
-    <Content Include="Scripts\FacultyTimeslots\kendo.web.min.js" />
-    <Content Include="Scripts\FacultyTimeslots\Scheduler.js" />
-    <Content Include="Scripts\FacultyTimeslots\FacultyTimeslots.js" />
     <Content Include="Scripts\FileUploader\OnlineHelp.js" />
     <Content Include="Scripts\FileUploader\FileUploader.js" />
     <Content Include="Scripts\FileUploader\RemittanceAdvice.js" />
@@ -4504,8 +4499,6 @@
     <Content Include="Scripts\Scheduler\data\imgs\undo.gif" />
     <Content Include="Scripts\Scheduler\data\imgs\undo_dis.gif" />
     <Content Include="Scripts\Scheduler\data\tree.xml" />
-    <Content Include="Scripts\Scheduling\Scheduling.js" />
-    <Content Include="Scripts\Scheduling\Scheduling1.js" />
     <Content Include="Scripts\ScrollableGridPlug.js" />
     <Content Include="Scripts\ScrubEditTrack\ScrubEditTrackScript.js" />
     <Content Include="Scripts\ScrubReport\BillEditWorkQueuesView.js" />
@@ -5194,8 +5187,6 @@
     <Content Include="Views\FacilityStructure\UserControls\_FacilityStructureDeptList.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_FacilityStructureRoomsList.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_FacilityStructureBedsList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacultyTimesSlotsAddEdit.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacultyCalenderView.cshtml" />
     <Content Include="Views\PatientScheduler\Index.cshtml" />
     <Content Include="Scripts\Scheduler\codebase\sources\dhtmlxscheduler.js.map" />
     <Content Include="Scripts\Scheduler\codebase\sources\ext\dhtmlxscheduler_active_links.js.map" />
@@ -5249,16 +5240,9 @@
     <Content Include="Views\Home\Temp.cshtml" />
     <Content Include="Views\PatientScheduler\UserControls\_PatientScheduleAddEdit.cshtml" />
     <Content Include="Views\PatientSchedulerPortal\UserControls\_PatientCalenderView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\Index2.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_PhysicianCheckBoxList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_StatusCheckBoxList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_LocationListView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_SchedularPopupView.cshtml" />
     <Content Include="Views\AppointmentTypes\AppointmentTypesMain.cshtml" />
     <Content Include="Views\AppointmentTypes\UserControls\_AppointmentTypesAddEdit.cshtml" />
     <Content Include="Views\AppointmentTypes\UserControls\_AppointmentTypesList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacilityDepartmentListView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_CalenderViewType.cshtml" />
     <Content Include="Views\PatientScheduler\Sample.cshtml">
       <SubType>Code</SubType>
     </Content>
@@ -5276,23 +5260,10 @@
     <Content Include="Views\CarePlan\Index.cshtml" />
     <Content Include="Views\CarePlan\UserControls\_CarePlanAddEdit.cshtml" />
     <Content Include="Views\CarePlan\UserControls\_CarePlanList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_PatientSearchPView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_PatientSearchResultPView.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_EquipmentOverrideList.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_AppointmentTypesOverrideList.cshtml" />
     <Content Include="Views\FacilityStructure\AppointmentRoomsView.cshtml" />
-    <Content Include="Views\Scheduling\Index.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_FacilityDepartmentListView.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_LocationListView.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_CalenderViewType.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_PhysicianCheckBoxList.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_StatusCheckBoxList.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_FacultyCalenderView.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_FacultyTimesSlotsAddEdit.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_SchedularPopupView.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_AssignedAppointmentsList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacilityRoomsList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_SchedularPopupOverView.cshtml" />
     <Content Include="Views\FacultyRooster\Index.cshtml">
       <SubType>Code</SubType>
     </Content>

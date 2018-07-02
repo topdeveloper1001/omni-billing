@@ -6,6 +6,7 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface IDeptTimmingService
     {
+        string GetTimingAddedById(int id);
         int DeleteDepartmentTiming(int facilityStructureId);
         List<DeptTimming> GetDepTimingsById(int departmenId);
         List<DeptTimmingCustomModel> GetDeptTimming();

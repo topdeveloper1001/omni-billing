@@ -2,7 +2,6 @@
 using System.Web.Mvc;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using BillingSystem.Common;
 using System.Linq;
@@ -13,6 +12,18 @@ namespace BillingSystem.Controllers
     public class GlobalCodeCategoryController : BaseController
     {
         private readonly ICPTCodesService _cptService;
+        private readonly IGlobalCodeCategoryService _service;
+        private readonly IGlobalCodeCategoryMasterService _gmService;
+        private readonly IFacilityService _fService;
+
+        public GlobalCodeCategoryController(ICPTCodesService cptService, IGlobalCodeCategoryService service, IGlobalCodeCategoryMasterService gmService, IFacilityService fService)
+        {
+            _cptService = cptService;
+            _service = service;
+            _gmService = gmService;
+            _fService = fService;
+        }
+
         //
         // GET: /GlobalCodeCategory/
         /// <summary>
@@ -21,15 +32,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index()
         {
-            // var globalCodeCommunicator = new GlobalCodeCommunicator();
-            var objGlobalCodeCategoryBal = new GlobalCodeCategoryService();
-            var globalCodeCategories = objGlobalCodeCategoryBal.GetGlobalCodeCategoriesWithFacilityName();
+            var globalCodeCategories = _service.GetGlobalCodeCategoriesWithFacilityName();
             List<Facility> facilities;
-            using (var facilityBal = new FacilityService())
-            {
-                var cId = Helpers.GetDefaultCorporateId();
-                facilities = facilityBal.GetFacilities(cId);
-            }
+            var cId = Helpers.GetDefaultCorporateId();
+            facilities = _fService.GetFacilities(cId);
             var gModel = new GlobalCodeCategoryView
             {
                 GlobalCodeCategoryList = globalCodeCategories,
@@ -52,14 +58,11 @@ namespace BillingSystem.Controllers
         {
             if (list != null)
             {
-                using (var gccBal = new GlobalCodeCategoryService())
+                foreach (var item in list)
                 {
-                    foreach (var item in list)
-                    {
-                        item.FacilityNumber = item.FacilityNumber;
-                        var newId = gccBal.AddUpdateGlobalCodeCategory(item);
-                        return Json(newId);
-                    }
+                    item.FacilityNumber = item.FacilityNumber;
+                    var newId = _service.AddUpdateGlobalCodeCategory(item);
+                    return Json(newId);
                 }
             }
             return Json(null);
@@ -71,8 +74,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodeCategories()
         {
-            var gccBal = new GlobalCodeCategoryService();
-            var globalCodeCategories = gccBal.GetGlobalCodeCategories();
+            var globalCodeCategories = _service.GetGlobalCodeCategories();
             return Json(globalCodeCategories);
         }
 
@@ -82,8 +84,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobalCodeCategoriesByNullFacility()
         {
-            var gccBal = new GlobalCodeCategoryService();
-            var globalCodeCategories = gccBal.GetGlobalCodeCategoriesByNullFacility();
+            var globalCodeCategories = _service.GetGlobalCodeCategoriesByNullFacility();
             return Json(globalCodeCategories);
         }
 
@@ -94,8 +95,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityGlobalCodeCategories(string FacilityNumber)
         {
-            var gccBal = new GlobalCodeCategoryService();
-            var globalCodeCategories = gccBal.GetFacilityGlobalCodeCategories(FacilityNumber);
+            var globalCodeCategories = _service.GetFacilityGlobalCodeCategories(FacilityNumber);
             return Json(globalCodeCategories);
         }
 
@@ -105,9 +105,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityGlobalCodeCategoriesByOrderType()
         {
-            var gccMasterBal = new GlobalCodeCategoryMasterService();
             string orderType = Common.Common.OrderType.CPT.ToString();
-            var globalCodeCategories = gccMasterBal.GetAllGlobalCodeCategoriesByOrderType(orderType);
+            var globalCodeCategories = _gmService.GetAllGlobalCodeCategoriesByOrderType(orderType);
             return Json(globalCodeCategories);
         }
 
@@ -121,8 +120,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                var bal = new GlobalCodeCategoryService();
-                var list = bal.GetListByCategoryValue(categoryValue);
+                var list = _service.GetListByCategoryValue(categoryValue);
                 var view = new LabTestOrderSetView
                 {
                     //CurrentGlobalCodeCategory = new GlobalCodeCategory { IsActive = true, IsDeleted = false },
@@ -147,27 +145,22 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetRecordById(int id)
         {
-            using (var bal = new GlobalCodeCategoryService())
+            var current = _service.GetCurrentCategoryById(id);
+            var jsonResult = new
             {
-                var current = bal.GetCurrentCategoryById(id);
-                var jsonResult = new
-                {
-                    current.GlobalCodeCategoryID,
-                    current.GlobalCodeCategoryName,
-                    current.GlobalCodeCategoryValue,
-                    current.ExternalValue1
-                };
-                return Json(jsonResult);
-            }
+                current.GlobalCodeCategoryID,
+                current.GlobalCodeCategoryName,
+                current.GlobalCodeCategoryValue,
+                current.ExternalValue1
+            };
+            return Json(jsonResult);
         }
+
 
         public JsonResult CheckDuplicateRecord(GlobalCodeCategory model)
         {
-            using (var bal = new GlobalCodeCategoryService())
-            {
-                var isExists = bal.CheckDuplicateCode(model);
-                return Json(isExists);
-            }
+            var isExists = _service.CheckDuplicateCode(model);
+            return Json(isExists);
         }
 
         /// <summary>
@@ -179,27 +172,25 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveRecord(GlobalCodeCategory model)
         {
-            using (var gccBal = new GlobalCodeCategoryService())
-            {
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var userId = Helpers.GetLoggedInUserId();
 
-                if (model.GlobalCodeCategoryID > 0)
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentDateTime;
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDateTime;
-                }
-                else
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentDateTime;
-                }
-                gccBal.AddUpdateGlobalCodeCategory(model);
-                var list = gccBal.GetListByCategoryValue(model.ExternalValue1);
-                return PartialView(PartialViews.LabTestOrderSetList, list);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
+
+            if (model.GlobalCodeCategoryID > 0)
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentDateTime;
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDateTime;
             }
+            else
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentDateTime;
+            }
+            _service.AddUpdateGlobalCodeCategory(model);
+            var list = _service.GetListByCategoryValue(model.ExternalValue1);
+            return PartialView(PartialViews.LabTestOrderSetList, list);
         }
 
         /// <summary>
@@ -211,22 +202,19 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteRecord(int gccId)
         {
-            using (var gccBal = new GlobalCodeCategoryService())
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var model = _service.GetCurrentCategoryById(gccId);
+            if (model.GlobalCodeCategoryID > 0)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var model = gccBal.GetCurrentCategoryById(gccId);
-                if (model.GlobalCodeCategoryID > 0)
-                {
-                    model.DeletedBy = userId;
-                    model.DeletedDate = currentDateTime;
-                    model.IsDeleted = true;
-                    gccBal.AddUpdateGlobalCodeCategory(model);
-                }
-
-                var list = gccBal.GetListByCategoryValue(model.ExternalValue1);
-                return PartialView(PartialViews.LabTestOrderSetList, list);
+                model.DeletedBy = userId;
+                model.DeletedDate = currentDateTime;
+                model.IsDeleted = true;
+                _service.AddUpdateGlobalCodeCategory(model);
             }
+
+            var list = _service.GetListByCategoryValue(model.ExternalValue1);
+            return PartialView(PartialViews.LabTestOrderSetList, list);
         }
 
         public ActionResult BindCptCodesForLabOrderSet()
@@ -263,27 +251,24 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveLabOrderSet(GlobalCodeCategory gccModel, List<GlobalCodes> gcList)
         {
-            using (var gccBal = new GlobalCodeCategoryService())
-            {
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
-                if (gccModel.GlobalCodeCategoryID > 0)
-                {
-                    gccModel.CreatedBy = userId;
-                    gccModel.CreatedDate = currentDateTime;
-                    gccModel.ModifiedBy = userId;
-                    gccModel.ModifiedDate = currentDateTime;
-                }
-                else
-                {
-                    gccModel.CreatedBy = userId;
-                    gccModel.CreatedDate = currentDateTime;
-                }
-                gccBal.AddUpdateGlobalCodeCategory(gccModel);
-                var list = gccBal.GetListByCategoryValue(gccModel.ExternalValue1);
-                return PartialView(PartialViews.LabTestOrderSetList, list);
+            if (gccModel.GlobalCodeCategoryID > 0)
+            {
+                gccModel.CreatedBy = userId;
+                gccModel.CreatedDate = currentDateTime;
+                gccModel.ModifiedBy = userId;
+                gccModel.ModifiedDate = currentDateTime;
             }
+            else
+            {
+                gccModel.CreatedBy = userId;
+                gccModel.CreatedDate = currentDateTime;
+            }
+            _service.AddUpdateGlobalCodeCategory(gccModel);
+            var list = _service.GetListByCategoryValue(gccModel.ExternalValue1);
+            return PartialView(PartialViews.LabTestOrderSetList, list);
         }
         #endregion
 
@@ -292,8 +277,7 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                var bal = new GlobalCodeCategoryService();
-                var list = bal.GetListByCategoryValue(categoryValue);
+                var list = _service.GetListByCategoryValue(categoryValue);
                 var view = new LabTestOrderSetView
                 {
                     CurrentGlobalCodeCategory1 = new GlobalCodeCategory { IsActive = true, IsDeleted = false },
@@ -317,27 +301,24 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult SaveRecord1(GlobalCodeCategory model)
         {
-            using (var gccBal = new GlobalCodeCategoryService())
-            {
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
-                if (model.GlobalCodeCategoryID > 0)
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentDateTime;
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDateTime;
-                }
-                else
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentDateTime;
-                }
-                gccBal.AddUpdateGlobalCodeCategory(model);
-                var list = gccBal.GetListByCategoryValue(model.ExternalValue1);
-                return PartialView(PartialViews.LabTestOrderSetList, list);
+            if (model.GlobalCodeCategoryID > 0)
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentDateTime;
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDateTime;
             }
+            else
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentDateTime;
+            }
+            _service.AddUpdateGlobalCodeCategory(model);
+            var list = _service.GetListByCategoryValue(model.ExternalValue1);
+            return PartialView(PartialViews.LabTestOrderSetList, list);
         }
 
         /// <summary>
@@ -349,22 +330,19 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteRecord1(int gccId)
         {
-            using (var gccBal = new GlobalCodeCategoryService())
+            var userId = Helpers.GetLoggedInUserId();
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var model = _service.GetCurrentCategoryById(gccId);
+            if (model.GlobalCodeCategoryID > 0)
             {
-                var userId = Helpers.GetLoggedInUserId();
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var model = gccBal.GetCurrentCategoryById(gccId);
-                if (model.GlobalCodeCategoryID > 0)
-                {
-                    model.DeletedBy = userId;
-                    model.DeletedDate = currentDateTime;
-                    model.IsDeleted = true;
-                    gccBal.AddUpdateGlobalCodeCategory(model);
-                }
-
-                var list = gccBal.GetListByCategoryValue(model.ExternalValue1);
-                return PartialView(PartialViews.LabTestOrderSetList, list);
+                model.DeletedBy = userId;
+                model.DeletedDate = currentDateTime;
+                model.IsDeleted = true;
+                _service.AddUpdateGlobalCodeCategory(model);
             }
+
+            var list = _service.GetListByCategoryValue(model.ExternalValue1);
+            return PartialView(PartialViews.LabTestOrderSetList, list);
         }
         #endregion
     }

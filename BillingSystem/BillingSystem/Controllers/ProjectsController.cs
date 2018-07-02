@@ -4,15 +4,30 @@ using BillingSystem.Models;
 using BillingSystem.Common;
 using System.Collections.Generic;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
 using BillingSystem.Common.Common;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ProjectsController : BaseController
     {
+        private readonly IProjectsService _service;
+        private readonly IProjectTargetsService _ptService;
+        private readonly IProjectTasksService _ptsService;
+        private readonly IProjectTaskTargetsService _pttsService;
+        private readonly IGlobalCodeService _gService;
+
+        public ProjectsController(IProjectsService service, IProjectTargetsService ptService, IProjectTasksService ptsService, IProjectTaskTargetsService pttsService, IGlobalCodeService gService)
+        {
+            _service = service;
+            _ptService = ptService;
+            _ptsService = ptsService;
+            _pttsService = pttsService;
+            _gService = gService;
+        }
+
         /// <summary>
         /// Get the details of the Projects View in the Model Projects such as ProjectsList, list of countries etc.
         /// </summary>
@@ -21,33 +36,28 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index(Int32? fId)
         {
-            //Initialize the Projects BAL object
-            using (var bal = new ProjectsService())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            Session[SessionNames.SelectedFacilityId.ToString()] = fId ?? 17;
+
+            var facilityid = Helpers.SetDropDownSelectedFacilityId() == 0 ? Helpers.GetDefaultFacilityId() : Helpers.SetDropDownSelectedFacilityId();
+            Session[SessionNames.SelectedFacilityId.ToString()] = facilityid;
+            //Get the Entity list
+            var list = _service.GetProjectsList(corporateid, facilityid);
+
+            //Intialize the View Model i.e. ProjectsView which is binded to Main View Index.cshtml under Projects
+            var viewModel = new ProjectsView
             {
-                var oProjectTargetsBal = new ProjectTargetsService();
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                Session[SessionNames.SelectedFacilityId.ToString()] = fId ?? 17;
+                ProjectsList = list,
+                CurrentProjects = new Projects { IsActive = true },
+                CurrentProjectTargets = new ProjectTargets { IsActive = true },
+                CurrentProjectTasks = new ProjectTasks { IsActive = true, ExternalValue1 = "1" },
+                CurrentProjectTaskTarget = new ProjectTaskTargets { IsActive = true },
+                ProjectTargetList = _ptService.GetProjectTargetsList(corporateid, facilityid),
+                FacilityId = facilityid
+            };
 
-                var facilityid = Helpers.SetDropDownSelectedFacilityId() == 0 ? Helpers.GetDefaultFacilityId() : Helpers.SetDropDownSelectedFacilityId();
-                Session[SessionNames.SelectedFacilityId.ToString()] = facilityid;
-                //Get the Entity list
-                var list = bal.GetProjectsList(corporateid, facilityid);
-
-                //Intialize the View Model i.e. ProjectsView which is binded to Main View Index.cshtml under Projects
-                var viewModel = new ProjectsView
-                {
-                    ProjectsList = list,
-                    CurrentProjects = new Projects { IsActive = true },
-                    CurrentProjectTargets = new ProjectTargets { IsActive = true },
-                    CurrentProjectTasks = new ProjectTasks { IsActive = true, ExternalValue1 = "1" },
-                    CurrentProjectTaskTarget = new ProjectTaskTargets { IsActive = true },
-                    ProjectTargetList = oProjectTargetsBal.GetProjectTargetsList(corporateid, facilityid),
-                    FacilityId = facilityid
-                };
-
-                //Pass the View Model in ActionResult to View Projects
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View Projects
+            return View(viewModel);
         }
 
         /// <summary>
@@ -69,23 +79,19 @@ namespace BillingSystem.Controllers
                 model.CorporateId = corporateid;
                 //model.FacilityId = facilityid;
 
-                using (var bal = new ProjectsService())
+                if (model.ProjectId > 0)
                 {
-                    if (model.ProjectId > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddProjects Method to Add / Update current Projects
-                    list = bal.SaveProjects(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
-                //Pass the ActionResult with List of ProjectsViewModel object to Partial View ProjectsList
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                //Call the AddProjects Method to Add / Update current Projects
+                list = _service.SaveProjects(model);
             }
             return PartialView(PartialViews.ProjectsList, list);
         }
@@ -97,30 +103,27 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetProjectsDetails(int id)
         {
-            using (var bal = new ProjectsService())
-            {
-                //Call the AddProjects Method to Add / Update current Projects
-                var current = bal.GetProjectsById(id);
+            //Call the AddProjects Method to Add / Update current Projects
+            var current = _service.GetProjectsById(id);
 
-                var jsonResult = new
-                {
-                    current.ProjectId,
-                    current.ProjectNumber,
-                    StartDate = current.StartDate.GetShortDateString3(),
-                    EstCompletionDate = current.EstCompletionDate.GetShortDateString3(),
-                    current.Name,
-                    current.ProjectDescription,
-                    current.UserResponsible,
-                    current.IsActive,
-                    current.ExternalValue1,
-                    current.ExternalValue2,
-                    current.ExternalValue3,
-                    current.ExternalValue4,
-                    current.ExternalValue5,
-                };
-                //Pass the ActionResult with the current ProjectsViewModel object as model to PartialView ProjectsAddEdit
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            var jsonResult = new
+            {
+                current.ProjectId,
+                current.ProjectNumber,
+                StartDate = current.StartDate.GetShortDateString3(),
+                EstCompletionDate = current.EstCompletionDate.GetShortDateString3(),
+                current.Name,
+                current.ProjectDescription,
+                current.UserResponsible,
+                current.IsActive,
+                current.ExternalValue1,
+                current.ExternalValue2,
+                current.ExternalValue3,
+                current.ExternalValue4,
+                current.ExternalValue5,
+            };
+            //Pass the ActionResult with the current ProjectsViewModel object as model to PartialView ProjectsAddEdit
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -129,12 +132,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjects(int id)
         {
-            using (var bal = new ProjectsService())
-            {
-                //var list = bal.DeleteProjects(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var list = bal.DeleteProjects(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
-                return PartialView(PartialViews.ProjectsList, list);
-            }
+            var list = _service.DeleteProjects(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
+            return PartialView(PartialViews.ProjectsList, list);
         }
 
         /// <summary>
@@ -143,12 +142,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public PartialViewResult ProjectTargetsList()
         {
-            using (var bal = new ProjectTargetsService())
-            {
-                //var list = bal.GetProjectTargetsList(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var list = bal.GetProjectTargetsList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
-                return PartialView(PartialViews.ProjectTargetsList, list);
-            }
+            var list = _ptService.GetProjectTargetsList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
+            return PartialView(PartialViews.ProjectTargetsList, list);
         }
 
         /// <summary>
@@ -157,12 +152,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ProjectTasksList(string userId)
         {
-            using (var bal = new ProjectTasksService())
-            {
-                //var list = bal.GetProjectTasksList(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var list = bal.GetProjectTasksList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId(), userId);
-                return PartialView(PartialViews.ProjectTasksList, list);
-            }
+            var list = _ptsService.GetProjectTasksList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId(), userId);
+            return PartialView(PartialViews.ProjectTasksList, list);
         }
 
         /// <summary>
@@ -171,12 +162,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ProjectTaskTargetsList()
         {
-            using (var bal = new ProjectTaskTargetsService())
-            {
-                //var list = bal.GetProjectTaskTargetsList(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var list = bal.GetProjectTaskTargetsList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
-                return PartialView(PartialViews.ProjectTaskTargetsList, list);
-            }
+            var list = _pttsService.GetProjectTaskTargetsList(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
+            return PartialView(PartialViews.ProjectTaskTargetsList, list);
         }
 
         /// <summary>
@@ -186,17 +173,13 @@ namespace BillingSystem.Controllers
         public JsonResult GetProjectNumbers()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ProjectsService())
-            {
-                //var projects = bal.GetProjectNumbers(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var projects = bal.GetProjectNumbers(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
-                if (projects.Count > 0)
-                    list.AddRange(projects.Select(item => new SelectListItem
-                    {
-                        Text = string.Format("{0} - {1}", item.ProjectNumber, item.Name),
-                        Value = item.ProjectNumber
-                    }));
-            }
+            var projects = _service.GetProjectNumbers(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
+            if (projects.Count > 0)
+                list.AddRange(projects.Select(item => new SelectListItem
+                {
+                    Text = string.Format("{0} - {1}", item.ProjectNumber, item.Name),
+                    Value = item.ProjectNumber
+                }));
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
@@ -222,25 +205,22 @@ namespace BillingSystem.Controllers
             var month = Convert.ToDateTime(model.ProjectDate).Month;
             model.ExternalValue2 = Convert.ToString(month);
 
-            using (var bal = new ProjectTargetsService())
+            if (model.Id > 0)
             {
-                if (model.Id > 0)
-                {
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDate;
-                }
-                else
-                {
-                    model.CreatedBy = userId;
-                    model.CreatedDate = currentDate;
-                }
-
-                //Call the AddProjectTargets Method to Add / Update current ProjectTargets
-                list = bal.SaveProjectTargets(model);
-                var val = bal.SaveMonthWiseValuesInProjectDashboard(model.ProjectNumber, Convert.ToString(month),
-                    Convert.ToString(model.CorporateId),
-                    Convert.ToString(model.FacilityId), "");
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDate;
             }
+            else
+            {
+                model.CreatedBy = userId;
+                model.CreatedDate = currentDate;
+            }
+
+            //Call the AddProjectTargets Method to Add / Update current ProjectTargets
+            list = _ptService.SaveProjectTargets(model);
+            var val = _ptService.SaveMonthWiseValuesInProjectDashboard(model.ProjectNumber, Convert.ToString(month),
+                Convert.ToString(model.CorporateId),
+                Convert.ToString(model.FacilityId), "");
 
             //Pass the ActionResult with List of ProjectTargetsViewModel object to Partial View ProjectTargetsList
             return PartialView(PartialViews.ProjectTargetsList, list);
@@ -253,12 +233,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjectTargets(int id)
         {
-            using (var bal = new ProjectTargetsService())
-            {
-                //var list = bal.DeleteProjectTarget(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var list = bal.DeleteProjectTarget(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
-                return PartialView(PartialViews.ProjectTargetsList, list);
-            }
+            var list = _ptService.DeleteProjectTarget(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
+            return PartialView(PartialViews.ProjectTargetsList, list);
         }
         #endregion
 
@@ -270,7 +246,6 @@ namespace BillingSystem.Controllers
         /// <returns>returns the newly added or updated ID of ProjectTasks row</returns>
         public ActionResult SaveProjectTasks(ProjectTasks model)
         {
-            var bal = new ProjectTasksService();
             var list = new List<ProjectTasksCustomModel>();
 
             if (model != null)
@@ -278,7 +253,7 @@ namespace BillingSystem.Controllers
                 /*
                  * Check duplicate Task Number under the selected Project Number
                 */
-                var isExists = bal.CheckDuplicateTaskNumber(model.ProjectNumber, model.TaskNumber,
+                var isExists = _ptsService.CheckDuplicateTaskNumber(model.ProjectNumber, model.TaskNumber,
                     Convert.ToInt32(model.ProjectTaskId));
 
                 if (!isExists)
@@ -301,7 +276,7 @@ namespace BillingSystem.Controllers
                     }
 
                     //Call the AddProjectTasks Method to Add / Update current ProjectTasks
-                    list = bal.SaveProjectTasks(model);
+                    list = _ptsService.SaveProjectTasks(model);
                 }
             }
             //Pass the ActionResult with List of ProjectTasksViewModel object to Partial View ProjectTasksList
@@ -316,13 +291,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjectTasks(int id, string userId)
         {
-            using (var bal = new ProjectTasksService())
-            {
-                //var list = bal.DeleteProjectTask(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var list = bal.DeleteProjectTask(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId(), userId);
-                //Pass the ActionResult with List of ProjectTasksViewModel object to Partial View ProjectTasksList
-                return PartialView(PartialViews.ProjectTasksList, list);
-            }
+            var list = _ptsService.DeleteProjectTask(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId(), userId);
+            //Pass the ActionResult with List of ProjectTasksViewModel object to Partial View ProjectTasksList
+            return PartialView(PartialViews.ProjectTasksList, list);
+
         }
         #endregion
 
@@ -335,8 +307,7 @@ namespace BillingSystem.Controllers
         [LoginAuthorize]
         public ActionResult BindTargetCompletionValueDropDown(string categoryId)
         {
-            var bal = new GlobalCodeService();
-            var list = bal.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder);
+            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder);
             return Json(list);
         }
 
@@ -361,26 +332,23 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new ProjectTaskTargetsService())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddProjectTaskTargets Method to Add / Update current ProjectTaskTargets
-                    list = bal.SaveProjectTaskTargets(model);
-                    var oProjectTargetsBal = new ProjectTargetsService();
-                    var val = oProjectTargetsBal.SaveMonthWiseValuesInProjectDashboard("", Convert.ToString(month),
-                   Convert.ToString(model.CorporateId),
-                   Convert.ToString(model.FacilityId), Convert.ToString(model.TaskNumber));
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                //Call the AddProjectTaskTargets Method to Add / Update current ProjectTaskTargets
+                list = _pttsService.SaveProjectTaskTargets(model);
+                var val = _ptService.SaveMonthWiseValuesInProjectDashboard("", Convert.ToString(month),
+               Convert.ToString(model.CorporateId),
+               Convert.ToString(model.FacilityId), Convert.ToString(model.TaskNumber));
+
             }
 
             //Pass the ActionResult with List of ProjectTaskTargetsViewModel object to Partial View ProjectTaskTargetsList
@@ -394,13 +362,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjectTaskTargets(int id)
         {
-            using (var bal = new ProjectTaskTargetsService())
-            {
-                //var list = bal.DeleteProjectTaskTargets(id, Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var list = bal.DeleteProjectTaskTargets(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
-                //Pass the ActionResult with List of ProjectTaskTargetsViewModel object to Partial View ProjectTaskTargetsList
-                return PartialView(PartialViews.ProjectTaskTargetsList, list);
-            }
+            var list = _pttsService.DeleteProjectTaskTargets(id, Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
+            return PartialView(PartialViews.ProjectTaskTargetsList, list);
         }
 
         /// <summary>
@@ -410,22 +373,17 @@ namespace BillingSystem.Controllers
         public JsonResult BindTaskNumbers()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ProjectTasksService())
-            {
-                //var tn = bal.GetTaskNumbers(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-                var tn = bal.GetTaskNumbers(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
-                if (tn.Count > 0)
-                    list.AddRange(tn.Select(item => new SelectListItem { Text = item, Value = item }));
-            }
+            //var tn = _service.GetTaskNumbers(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
+            var tn = _ptsService.GetTaskNumbers(Helpers.GetDefaultCorporateId(), Helpers.SetDropDownSelectedFacilityId());
+            if (tn.Count > 0)
+                list.AddRange(tn.Select(item => new SelectListItem { Text = item, Value = item }));
             return Json(list, JsonRequestBehavior.AllowGet);
         }
         #endregion
 
         public JsonResult CheckDuplicateProjectNumber(string projectNumber, int projectId)
         {
-            var isExists = true;
-            using (var bal = new ProjectsService())
-                isExists = bal.CheckDuplicateProjectNumber(projectNumber, projectId);
+            var isExists = _service.CheckDuplicateProjectNumber(projectNumber, projectId);
 
             return Json(isExists, JsonRequestBehavior.AllowGet);
         }
@@ -433,9 +391,7 @@ namespace BillingSystem.Controllers
 
         public JsonResult CheckDuplicateTaskNumber(string projectNumber, string taskNumber, int taskId)
         {
-            var isExists = true;
-            using (var bal = new ProjectTasksService())
-                isExists = bal.CheckDuplicateTaskNumber(projectNumber, taskNumber, taskId);
+            var isExists = _ptsService.CheckDuplicateTaskNumber(projectNumber, taskNumber, taskId);
 
             return Json(isExists, JsonRequestBehavior.AllowGet);
         }

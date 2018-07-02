@@ -10,20 +10,25 @@ using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
-{ 
+{
     /// <summary>
     /// The bed master controller.
     /// </summary>
     public class BedMasterController : BaseController
     {
         private readonly IBedMasterService _bedService;
+        private readonly IFacilityService _fService;
+        private readonly IServiceCodeService _scService;
         private readonly IFacilityStructureService _fsService;
 
-        public BedMasterController(IBedMasterService bedService, IFacilityStructureService fsService)
+        public BedMasterController(IBedMasterService bedService, IFacilityService fService, IServiceCodeService scService, IFacilityStructureService fsService)
         {
             _bedService = bedService;
+            _fService = fService;
+            _scService = scService;
             _fsService = fsService;
         }
+
 
         /// <summary>
         /// Indexes this instance.
@@ -60,8 +65,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var bal = new FacilityService();
-            var bedMasterList = bal.GetFacilitiesByRoles(facilityId, corporateid);
+            var bedMasterList = _fService.GetFacilitiesByRoles(facilityId, corporateid);
             return Json(bedMasterList);
         }
 
@@ -82,9 +86,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetServicesList()
         {
-            var serviceCodeBal = new ServiceCodeService(Helpers.DefaultServiceCodeTableNumber);
-            var serviceCodeList = serviceCodeBal.GetServiceCodes();
-            return Json(serviceCodeList);
+            var lst = _scService.GetServiceCodes(Helpers.DefaultServiceCodeTableNumber);
+            return Json(lst);
         }
 
         /// <summary>

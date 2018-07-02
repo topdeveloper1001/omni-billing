@@ -11,20 +11,28 @@ namespace BillingSystem.Controllers
 {
     using System.Collections.Generic;
     using System.Linq;
-    using System.Runtime.Remoting.Messaging;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
     using BillingSystem.Common;
     using BillingSystem.Model.CustomModel;
     using BillingSystem.Models;
     using BillingSystem.Model;
+    using BillingSystem.Bal.Interfaces;
 
     /// <summary>
     /// The room equipment controller.
     /// </summary>
     public class RoomEquipmentController : Controller
     {
+        private readonly IGlobalCodeService _gService;
+        private readonly IEquipmentService _eqService;
+
+        public RoomEquipmentController(IGlobalCodeService gService, IEquipmentService eqService)
+        {
+            _gService = gService;
+            _eqService = eqService;
+        }
+
+
         // GET: /RoomEquipment/
         #region Public Methods and Operators
 
@@ -36,13 +44,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            var gcBal = new GlobalCodeService();
-            var facilityEquipmentList = gcBal.GetRoomEquipmentALLList(Helpers.GetDefaultFacilityId().ToString());
+            var facilityEquipmentList = _gService.GetRoomEquipmentALLList(Helpers.GetDefaultFacilityId().ToString());
             var viewtoRetrun = new RoomEquipmentView()
-                                   {
-                                       GCCurrentDataView = new GlobalCodeCustomDModel(),
-                                       GClistView = facilityEquipmentList
-                                   };
+            {
+                GCCurrentDataView = new GlobalCodeCustomDModel(),
+                GClistView = facilityEquipmentList
+            };
             return this.View(viewtoRetrun);
         }
 
@@ -54,11 +61,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityEquipments(int coporateId, int facilityId)
         {
-            using (var equipmentBal = new EquipmentService())
-            {
-                var facilityEquipmentList = equipmentBal.GetEquipmentList(false, facilityId.ToString());
-                return PartialView(PartialViews.FacilityEquipmentListView, facilityEquipmentList);
-            }
+            var facilityEquipmentList = _eqService.GetEquipmentList(false, facilityId.ToString());
+            return PartialView(PartialViews.FacilityEquipmentListView, facilityEquipmentList);
         }
 
         /// <summary>
@@ -69,18 +73,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRoomEquipments(int facilityId, int roomId)
         {
-            using (var globalCodeBal = new GlobalCodeService())
+            var facilityEquipmentList = _gService.GetRoomEquipmentList(facilityId.ToString(), roomId.ToString());
+            var selectedObjects = facilityEquipmentList != null
+                                      ? facilityEquipmentList.Select(x => x.GlobalCodeValue).ToList()
+                                      : new List<string>() { "0" };
+            var list = new
             {
-                var facilityEquipmentList = globalCodeBal.GetRoomEquipmentList(facilityId.ToString(), roomId.ToString());
-                var selectedObjects = facilityEquipmentList != null
-                                          ? facilityEquipmentList.Select(x => x.GlobalCodeValue).ToList()
-                                          : new List<string>() { "0" };
-                var list = new
-                               {
-                                   equipments = selectedObjects
-                               };
-                return Json(list, JsonRequestBehavior.AllowGet);
-            }
+                equipments = selectedObjects
+            };
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -90,19 +91,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SaveRoomEquipments(List<GlobalCodes> globalCodeObj)
         {
-            using (var gcBal = new GlobalCodeService())
+            foreach (var item in globalCodeObj)
             {
-                foreach (var item in globalCodeObj)
-                {
-                    item.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    item.CreatedBy = Helpers.GetLoggedInUserId();
-                }
-
-                var result = gcBal.AddUpdateGlobalCodesList(globalCodeObj);
-                //return Json(result, JsonRequestBehavior.AllowGet);
-                var facilityEquipmentList = gcBal.GetRoomEquipmentALLList(globalCodeObj[0].FacilityNumber);
-                return PartialView(PartialViews.RoomEquipmentList, facilityEquipmentList);
+                item.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                item.CreatedBy = Helpers.GetLoggedInUserId();
             }
+
+            var result = _gService.AddUpdateGlobalCodesList(globalCodeObj);
+            //return Json(result, JsonRequestBehavior.AllowGet);
+            var facilityEquipmentList = _gService.GetRoomEquipmentALLList(globalCodeObj[0].FacilityNumber);
+            return PartialView(PartialViews.RoomEquipmentList, facilityEquipmentList);
         }
 
         /// <summary>
@@ -113,11 +111,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteEquipment(int globalCodeid, string facilityNumber)
         {
-            using (var gcBal = new GlobalCodeService())
-            {
-                var objToReturn = gcBal.DeleteGlobalCode(globalCodeid, facilityNumber);
-                return PartialView(PartialViews.RoomEquipmentList, objToReturn);
-            }
+            var objToReturn = _gService.DeleteGlobalCode(globalCodeid, facilityNumber);
+            return PartialView(PartialViews.RoomEquipmentList, objToReturn);
         }
 
         #endregion

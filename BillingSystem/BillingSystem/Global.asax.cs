@@ -10,9 +10,11 @@ using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
 using BillingSystem.Filters;
+using Unity;
 
 namespace BillingSystem
 {
+    using BillingSystem.Bal.Interfaces;
     using Model;
 
     public class Global : HttpApplication
@@ -61,8 +63,9 @@ namespace BillingSystem
             var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
             if (objSession != null)
             {
-                using (var bal = new LoginTrackingService())
-                    bal.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
+                var container = UnityConfig.RegisterComponents();
+                var service = container.Resolve<ILoginTrackingService>();
+                service.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
             }
             Session.RemoveAll();
         }

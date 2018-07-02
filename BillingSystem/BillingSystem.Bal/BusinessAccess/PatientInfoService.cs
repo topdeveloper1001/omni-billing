@@ -27,12 +27,36 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<DocumentsTemplates> _dtRepository;
         private readonly BillingEntities _context;
 
+        public PatientInfoService(IRepository<Authorization> aurepository, IRepository<Encounter> eRepository, IRepository<PatientInfo> repository, IRepository<Facility> fRepository, IRepository<MaxValues> mvRepository, IRepository<Corporate> cRepository, IRepository<PatientPhone> phRepository, IRepository<PatientLoginDetail> plRepository, IRepository<PatientInsurance> pinRepository, IRepository<DocumentsTemplates> dtRepository, BillingEntities context)
+        {
+            _aurepository = aurepository;
+            _eRepository = eRepository;
+            _repository = repository;
+            _fRepository = fRepository;
+            _mvRepository = mvRepository;
+            _cRepository = cRepository;
+            _phRepository = phRepository;
+            _plRepository = plRepository;
+            _pinRepository = pinRepository;
+            _dtRepository = dtRepository;
+            _context = context;
+        }
+
         private string GetCorporateNameFromId(int corpId)
         {
             var corpName = "";
             var obj = _cRepository.Where(f => f.CorporateID == corpId).FirstOrDefault();
             if (obj != null) corpName = obj.CorporateName;
             return corpName;
+        }
+        public PatientInfo GetPatientInfoByEncounterId(int encounterId)
+        {
+            var patientInfo = new PatientInfo();
+            var patientId = _eRepository.Where(e => e.EncounterID == encounterId).FirstOrDefault() != null ? _eRepository.Where(e => e.EncounterID == encounterId).FirstOrDefault().PatientID : 0;
+
+            if (patientId > 0) patientInfo = _repository.Where(p => p.PatientID == patientId && p.IsDeleted == false).FirstOrDefault();
+
+            return patientInfo;
         }
         private DateTime GetInvariantCultureDateTime(int facilityid)
         {

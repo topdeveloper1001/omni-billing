@@ -1,36 +1,29 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DRGCodesController.cs" company="SPadez">
-//   OmniHealthcare
-// </copyright>
-// <summary>
-//   The drg codes controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.SS.Util;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Web;
-    using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models;
-
-    using NPOI.HSSF.UserModel;
-    using NPOI.SS.UserModel;
-    using NPOI.SS.Util;
-
-    /// <summary>
-    /// The drg codes controller.
-    /// </summary>
     public class DRGCodesController : BaseController
     {
+        private readonly IDRGCodesService _service;
+
+        public DRGCodesController(IDRGCodesService service)
+        {
+            _service = service;
+        }
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -41,21 +34,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindDRGCodesList()
         {
-            // Initialize the DRGCodes Communicator object
-            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+            // Get the facilities list
+            List<DRGCodes> drgCodesList = _service.GetDrgCodes(Helpers.DefaultDrgTableNumber);
+            var drgCodesView = new DRGCodesView
             {
-                // Get the facilities list
-                List<DRGCodes> drgCodesList = drgCodesBal.GetDrgCodes();
-                var drgCodesView = new DRGCodesView
-                                       {
-                                           DRGCodesList = drgCodesList, 
-                                           CurrentDRGCodes = new DRGCodes(), 
-                                           UserId = Helpers.GetLoggedInUserId()
-                                       };
+                DRGCodesList = drgCodesList,
+                CurrentDRGCodes = new DRGCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
-                // Pass the ActionResult with List of DRGCodesViewModel object to Partial View DRGCodesList
-                return this.PartialView(PartialViews.DRGCodesList, drgCodesView);
-            }
+            // Pass the ActionResult with List of DRGCodesViewModel object to Partial View DRGCodesList
+            return this.PartialView(PartialViews.DRGCodesList, drgCodesView);
         }
 
         /// <summary>
@@ -71,24 +60,20 @@ namespace BillingSystem.Controllers
         {
             int takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
 
-            // Initialize the DRGCodes Communicator object
-            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+            // Get the facilities list
+            List<DRGCodes> drgCodesList =
+                //_service.GetDrgCodes().OrderByDescending(f => f.DRGCodesId ).Take(takeValue).ToList();
+                _service.GetActiveInactiveDrgCodes(showInActive, Helpers.DefaultDrgTableNumber).OrderByDescending(f => f.DRGCodesId).Take(takeValue).ToList();
+
+            var drgCodesView = new DRGCodesView
             {
-                // Get the facilities list
-                List<DRGCodes> drgCodesList =
-                    //drgCodesBal.GetDrgCodes().OrderByDescending(f => f.DRGCodesId ).Take(takeValue).ToList();
-                    drgCodesBal.GetActiveInactiveDrgCodes(showInActive).OrderByDescending(f => f.DRGCodesId).Take(takeValue).ToList();
+                DRGCodesList = drgCodesList,
+                CurrentDRGCodes = new DRGCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
-                var drgCodesView = new DRGCodesView
-                                       {
-                                           DRGCodesList = drgCodesList, 
-                                           CurrentDRGCodes = new DRGCodes(), 
-                                           UserId = Helpers.GetLoggedInUserId()
-                                       };
-
-                // Pass the ActionResult with List of DRGCodesViewModel object to Partial View DRGCodesList
-                return this.PartialView(PartialViews.DRGCodesList, drgCodesView);
-            }
+            // Pass the ActionResult with List of DRGCodesViewModel object to Partial View DRGCodesList
+            return this.PartialView(PartialViews.DRGCodesList, drgCodesView);
         }
 
         /// <summary>
@@ -99,20 +84,17 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DRGCodes()
         {
-            // Initialize the DRGCodes Communicator object
-            var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber);
-
             // Get the facilities list
-            // var drgCodesList = drgCodesBal.GetDrgCodes();
-            List<DRGCodes> drgCodesList = drgCodesBal.GetDrgCodesListOnDemand(1, Helpers.DefaultRecordCount);
+            // var drgCodesList = _service.GetDrgCodes();
+            List<DRGCodes> drgCodesList = _service.GetDrgCodesListOnDemand(1, Helpers.DefaultRecordCount, Helpers.DefaultDrgTableNumber);
 
             // Intialize the View Model i.e. DRGCodesView which is binded to Main View Index.cshtml under DRGCodes
             var drgCodesView = new DRGCodesView
-                                   {
-                                       DRGCodesList = drgCodesList, 
-                                       CurrentDRGCodes = new DRGCodes(), 
-                                       UserId = Helpers.GetLoggedInUserId()
-                                   };
+            {
+                DRGCodesList = drgCodesList,
+                CurrentDRGCodes = new DRGCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
             // Pass the View Model in ActionResult to View DRGCodes
             return View(drgCodesView);
@@ -129,24 +111,21 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteDRGCodes(CommonModel model)
         {
-            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+            // Get DRGCodes model object by current DRGCodes ID
+            DRGCodes currentDrgCodes = _service.GetDrgCodesById(Convert.ToInt32(model.Id));
+
+            // Check If DRGCodes model is not null
+            if (currentDrgCodes != null)
             {
-                // Get DRGCodes model object by current DRGCodes ID
-                DRGCodes currentDrgCodes = drgCodesBal.GetDrgCodesById(Convert.ToInt32(model.Id));
+                currentDrgCodes.IsDeleted = true;
+                currentDrgCodes.DeletedBy = Helpers.GetLoggedInUserId();
+                currentDrgCodes.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                // Check If DRGCodes model is not null
-                if (currentDrgCodes != null)
-                {
-                    currentDrgCodes.IsDeleted = true;
-                    currentDrgCodes.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentDrgCodes.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                // Update Operation of current DRGCodes
+                int result = _service.SaveDrgCode(currentDrgCodes, Helpers.DefaultDrgTableNumber);
 
-                    // Update Operation of current DRGCodes
-                    int result = drgCodesBal.SaveDrgCode(currentDrgCodes);
-
-                    // return deleted ID of current DRGCodes as Json Result to the Ajax Call.
-                    return this.Json(result);
-                }
+                // return deleted ID of current DRGCodes as Json Result to the Ajax Call.
+                return this.Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -188,42 +167,40 @@ namespace BillingSystem.Controllers
 
             rowIndex++;
 
-            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+            // Get the facilities list
+            List<DRGCodes> onjDrgCodesData = searchText != null
+                                                 ? _service.ExportDRGCodes(searchText, tableNumber)
+                                                 : _service.GetDrgCodes(Helpers.DefaultDrgTableNumber);
+
+            // Get the facilities list
+            ICellStyle cellStyle = workbook.CreateCellStyle();
+            cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+
+            foreach (DRGCodes item in onjDrgCodesData)
             {
-                // Get the facilities list
-                List<DRGCodes> onjDrgCodesData = searchText != null
-                                                     ? drgCodesBal.ExportDRGCodes(searchText, tableNumber)
-                                                     : drgCodesBal.GetDrgCodes();
+                row = sheet.CreateRow(rowIndex);
+                row.CreateCell(0).SetCellType(CellType.Numeric);
+                row.CreateCell(0).CellStyle = cellStyle;
+                row.CreateCell(0).SetCellValue(Convert.ToDouble(item.DRGCodesId));
+                row.CreateCell(1).SetCellValue(item.CodeTableNumber);
+                row.CreateCell(2).SetCellValue(item.CodeTableDescription);
+                row.CreateCell(3).SetCellValue(item.CodeNumbering);
 
-                // Get the facilities list
-                ICellStyle cellStyle = workbook.CreateCellStyle();
-                cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+                row.CreateCell(4).SetCellValue(item.CodeDescription);
 
-                foreach (DRGCodes item in onjDrgCodesData)
-                {
-                    row = sheet.CreateRow(rowIndex);
-                    row.CreateCell(0).SetCellType(CellType.Numeric);
-                    row.CreateCell(0).CellStyle = cellStyle;
-                    row.CreateCell(0).SetCellValue(Convert.ToDouble(item.DRGCodesId));
-                    row.CreateCell(1).SetCellValue(item.CodeTableNumber);
-                    row.CreateCell(2).SetCellValue(item.CodeTableDescription);
-                    row.CreateCell(3).SetCellValue(item.CodeNumbering);
+                row.CreateCell(5).CellStyle = cellStyle;
+                row.CreateCell(5).SetCellValue(item.CodePrice);
+                row.CreateCell(6).CellStyle = cellStyle;
+                row.CreateCell(6).SetCellValue(item.CodeDRGWeight);
+                row.CreateCell(7).SetCellValue(item.CodeEffectiveDate.ToString());
+                row.CreateCell(8).SetCellValue(item.CodeExpiryDate.ToString());
 
-                    row.CreateCell(4).SetCellValue(item.CodeDescription);
+                row.CreateCell(9).SetCellValue(item.Alos.ToString());
+                row.CreateCell(10).SetCellValue(item.ApplicationRule);
 
-                    row.CreateCell(5).CellStyle = cellStyle;
-                    row.CreateCell(5).SetCellValue(item.CodePrice);
-                    row.CreateCell(6).CellStyle = cellStyle;
-                    row.CreateCell(6).SetCellValue(item.CodeDRGWeight);
-                    row.CreateCell(7).SetCellValue(item.CodeEffectiveDate.ToString());
-                    row.CreateCell(8).SetCellValue(item.CodeExpiryDate.ToString());
-
-                    row.CreateCell(9).SetCellValue(item.Alos.ToString());
-                    row.CreateCell(10).SetCellValue(item.ApplicationRule);
-
-                    rowIndex++;
-                }
+                rowIndex++;
             }
+
 
             using (var exportData = new MemoryStream())
             {
@@ -246,15 +223,13 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetDRGCodes(DRGCodes model)
         {
-            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
-            {
-                // Call the AddDRGCodes Method to Add / Update current DRGCodes
-                DRGCodes currentDrgCodes = drgCodesBal.GetDrgCodesById(Convert.ToInt32(model.DRGCodesId));
+            // Call the AddDRGCodes Method to Add / Update current DRGCodes
+            DRGCodes currentDrgCodes = _service.GetDrgCodesById(Convert.ToInt32(model.DRGCodesId));
 
-                // Pass the ActionResult with the current DRGCodesViewModel object as model to PartialView DRGCodesAddEdit
-                return this.PartialView(PartialViews.DRGCodesAddEdit, currentDrgCodes);
-            }
+            // Pass the ActionResult with the current DRGCodesViewModel object as model to PartialView DRGCodesAddEdit
+            return this.PartialView(PartialViews.DRGCodesAddEdit, currentDrgCodes);
         }
+
 
         /// <summary>
         /// Exports the DRG codes to excel.
@@ -296,14 +271,13 @@ namespace BillingSystem.Controllers
         public JsonResult RebindBindDRGCodesList(int blockNumber, string tableNumber)
         {
             int recordCount = Helpers.DefaultRecordCount;
-            using (var drgCodesBal = new DRGCodesService(tableNumber))
-            {
-                List<DRGCodes> list = drgCodesBal.GetDrgCodesListOnDemand(blockNumber, recordCount);
-                var jsonResult =
-                    new { list, NoMoreData = list.Count < recordCount, UserId = Helpers.GetLoggedInUserId() };
-                return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+
+            List<DRGCodes> list = _service.GetDrgCodesListOnDemand(blockNumber, recordCount, Helpers.DefaultDrgTableNumber);
+            var jsonResult =
+                new { list, NoMoreData = list.Count < recordCount, UserId = Helpers.GetLoggedInUserId() };
+            return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
+
 
         /// <summary>
         /// Reset the DRGCodes View Model and pass it to DRGCodesAddEdit Partial View.
@@ -337,25 +311,23 @@ namespace BillingSystem.Controllers
             // Check if DRGCodesViewModel 
             if (drgCodesModel != null)
             {
-                using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+                //drgCodesModel.IsActive = true;
+                drgCodesModel.IsDeleted = false;
+                if (drgCodesModel.DRGCodesId > 0)
                 {
-                    //drgCodesModel.IsActive = true;
-                    drgCodesModel.IsDeleted = false;
-                    if (drgCodesModel.DRGCodesId > 0)
-                    {
-                        drgCodesModel.ModifiedBy = Helpers.GetLoggedInUserId();
-                        drgCodesModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        drgCodesModel.CreatedBy = Helpers.GetLoggedInUserId();
-                        drgCodesModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                        //drgCodesModel.IsActive = true;
-                    }
-
-                    // Call the AddDRGCodes Method to Add / Update current DRGCodes
-                    newId = drgCodesBal.SaveDrgCode(drgCodesModel);
+                    drgCodesModel.ModifiedBy = Helpers.GetLoggedInUserId();
+                    drgCodesModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    drgCodesModel.CreatedBy = Helpers.GetLoggedInUserId();
+                    drgCodesModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                    //drgCodesModel.IsActive = true;
+                }
+
+                // Call the AddDRGCodes Method to Add / Update current DRGCodes
+                newId = _service.SaveDrgCode(drgCodesModel, Helpers.DefaultDrgTableNumber);
+
             }
 
             return this.Json(newId);
@@ -368,22 +340,19 @@ namespace BillingSystem.Controllers
         {
             int takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
 
-            // Initialize the DRGCodes Communicator object
-            using (var drgCodesBal = new DRGCodesService(Helpers.DefaultDrgTableNumber))
+            // Get the facilities list
+            List<DRGCodes> drgCodesList =
+                _service.GetActiveInactiveDrgCodes(showInActive, Helpers.DefaultDrgTableNumber).OrderByDescending(f => f.DRGCodesId).Take(takeValue).ToList();
+            var drgCodesView = new DRGCodesView
             {
-                // Get the facilities list
-                List<DRGCodes> drgCodesList =
-                    drgCodesBal.GetActiveInactiveDrgCodes(showInActive).OrderByDescending(f => f.DRGCodesId).Take(takeValue).ToList();
-                var drgCodesView = new DRGCodesView
-                {
-                    DRGCodesList = drgCodesList,
-                    CurrentDRGCodes = new DRGCodes(),
-                    UserId = Helpers.GetLoggedInUserId()
-                };
+                DRGCodesList = drgCodesList,
+                CurrentDRGCodes = new DRGCodes(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
-                // Pass the ActionResult with List of DRGCodesViewModel object to Partial View DRGCodesList
-                return this.PartialView(PartialViews.DRGCodesList, drgCodesView);
-            }
+            // Pass the ActionResult with List of DRGCodesViewModel object to Partial View DRGCodesList
+            return this.PartialView(PartialViews.DRGCodesList, drgCodesView);
         }
     }
+
 }

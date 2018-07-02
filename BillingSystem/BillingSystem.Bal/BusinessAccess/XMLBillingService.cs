@@ -64,11 +64,8 @@ namespace BillingSystem.Bal.BusinessAccess
                 var vm = _mapper.Map<XFileHeaderCustomModel>(model);
                 if (vm != null)
                 {
-                    using (var basebal = new BaseBal())
-                    {
-                        vm.StatusBit = string.IsNullOrEmpty(vm.Status) && Convert.ToBoolean(vm.Status);
-                        vm.StatusStr = string.IsNullOrEmpty(vm.Status) ? Convert.ToString(vm.Status) : string.Empty;
-                    }
+                    vm.StatusBit = string.IsNullOrEmpty(vm.Status) && Convert.ToBoolean(vm.Status);
+                    vm.StatusStr = string.IsNullOrEmpty(vm.Status) ? Convert.ToString(vm.Status) : string.Empty;
                 }
                 list.Add(vm);
             }

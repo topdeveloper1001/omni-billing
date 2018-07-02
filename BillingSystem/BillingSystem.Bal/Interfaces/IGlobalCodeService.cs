@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 
@@ -6,6 +7,15 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface IGlobalCodeService
     {
+        List<GlobalCodes> GetGlobalCodesByCategoriesSp(string gccValues);
+        List<GlobalCodes> GetSubCategories2(string gcValue1);
+        GlobalCodes GetGlobalCodeByCategoryAndCodeValue(string gcCategoryValue, string gcvalue);
+        string GetKeyColmnNameByTableName(string tableName);
+        List<GlobalCodes> GetTableStruturebyTableId(string id);
+        GeneralCodesCustomModel GetSelectedCodeParent1(string orderCode, string codeType, long facilityId, string tableNumber);
+
+        string GetNameByGlobalCodeValue(string codeValue, string categoryValue, string fId = "");
+        Task<string> GetGlobalCodeNameAsync(string codeValue, string categoryValue);
         int AddUpdateGlobalCodes(GlobalCodes globalCodes);
         bool AddUpdateGlobalCodesList(List<GlobalCodes> globalCodes);
         bool CheckDuplicateGlobalCodeName(string name, int id, string categoryValue, string facilityNumber);

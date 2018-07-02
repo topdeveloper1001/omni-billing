@@ -22,20 +22,24 @@ namespace BillingSystem.Controllers
         private readonly IFacilityStructureService _fsService;
         private readonly IUsersService _uService;
         private readonly IDashboardBudgetService _dbService;
-        private readonly IEncounterService _eService;
+        private readonly IFacilityService _fService;
         private readonly IIndicatorDataCheckListService _iService;
         private readonly IDashboardRemarkService _drService;
+        private readonly IEncounterService _eService;
+        private readonly IGlobalCodeService _gService;
+        private readonly IProjectTasksService _ptService;
 
-
-        public ExternalDashboardController(IEncounterService eService, IFacilityStructureService fsService, IUsersService uService
-            , IDashboardBudgetService dbService, IIndicatorDataCheckListService iService, IDashboardRemarkService drService)
+        public ExternalDashboardController(IFacilityStructureService fsService, IUsersService uService, IDashboardBudgetService dbService, IFacilityService fService, IIndicatorDataCheckListService iService, IDashboardRemarkService drService, IEncounterService eService, IGlobalCodeService gService, IProjectTasksService ptService)
         {
-            _iService = iService;
-            _eService = eService;
             _fsService = fsService;
             _uService = uService;
             _dbService = dbService;
+            _fService = fService;
+            _iService = iService;
             _drService = drService;
+            _eService = eService;
+            _gService = gService;
+            _ptService = ptService;
         }
 
         private static List<ExternalDashboardModel> ExternalDashboardLocalList { get; set; }
@@ -68,29 +72,24 @@ namespace BillingSystem.Controllers
             //Get Departments data
             dList = _fsService.GetRevenueDepartments(corporateid,
                facilityId == 0 ? Convert.ToString(Helpers.GetDefaultFacilityId()) : Convert.ToString(facilityId));
-            var currentdt = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentdt = _fService.GetInvariantCultureDateTime(facilityId);
             var defaultYear = currentdt.Year;
             var defaultMonth = currentdt.Month;
 
             //Get Facility data
-            using (var bal = new FacilityService())
-                fList = bal.GetFacilitiesForDashboards(facilityId, corporateid, Helpers.GetLoggedInUserIsAdmin());
+            fList = _fService.GetFacilitiesForDashboards(facilityId, corporateid, Helpers.GetLoggedInUserIsAdmin());
 
-            //Get Region Type, Facility Types and Months data
-            using (var gBal = new GlobalCodeService())
+            var list = _gService.GetListByCategoriesRange(categories);
+            ftList = list.Where(f => f.ExternalValue1.Equals("4242")).ToList();
+            rList = list.Where(f => f.ExternalValue1.Equals("4141")).ToList();
+            mList = list.Where(f => f.ExternalValue1.Equals("903")).OrderBy(f => int.Parse(f.Value)).ToList();
+
+            var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId == 0 ? Helpers.GetDefaultFacilityId() : facilityId
+                , corporateid);
+            if (defaults.Count == 2)
             {
-                var list = gBal.GetListByCategoriesRange(categories);
-                ftList = list.Where(f => f.ExternalValue1.Equals("4242")).ToList();
-                rList = list.Where(f => f.ExternalValue1.Equals("4141")).ToList();
-                mList = list.Where(f => f.ExternalValue1.Equals("903")).OrderBy(f => int.Parse(f.Value)).ToList();
-
-                var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId == 0 ? Helpers.GetDefaultFacilityId() : facilityId
-                    , corporateid);
-                if (defaults.Count == 2)
-                {
-                    defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
-                    defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
-                }
+                defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
+                defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
             }
 
             var data = new DropdownDataClass
@@ -161,7 +160,7 @@ namespace BillingSystem.Controllers
             var facilityId = facilityID ?? 9999;
             facilityId = facilityId == 0 ? 9999 : facilityId;
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
 
@@ -262,7 +261,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExecutiveDashboardGraphList(int facilityId, int month, int facilityType, int segment, int department, string type)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             //var execDashboardData = "144,156,120,110,121,159,247,103,277,165,127,143,109,122";
@@ -361,7 +360,7 @@ namespace BillingSystem.Controllers
         {
             const string execDashboardData = "144,156,120,110,121,159,247,103,277,143,109,122,244,245,1316";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetManualDashBoardV1(facilityId, corporateId,
@@ -472,13 +471,12 @@ namespace BillingSystem.Controllers
             #endregion
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
                 ? loggedinfacilityId
                  : 0;
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
 
             #region Main Code 
             #region Stats Section List objects
@@ -608,7 +606,7 @@ namespace BillingSystem.Controllers
 
             var facilityId = facilityID ?? 9999;
             facilityId = facilityId == 0 ? 9999 : facilityId;
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentDateTime.Year).ToShortDateString();
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -724,12 +722,11 @@ namespace BillingSystem.Controllers
             #endregion
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                 ? loggedinfacilityId
                  : 0;
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
             var corporateid = Helpers.GetSysAdminCorporateID();
             #region Main Code
 
@@ -889,22 +886,19 @@ namespace BillingSystem.Controllers
 
         private List<ProjectsCustomModel> GetExecutiveKeyPerformanceList(int facilityId)
         {
-            using (var bal = new ProjectTasksService())
+            var list = _ptService.GetProjectsForExecKpiDashboard(Helpers.GetSysAdminCorporateID(), facilityId);
+            if (list.Count > 0)
             {
-                var list = bal.GetProjectsForExecKpiDashboard(Helpers.GetSysAdminCorporateID(), facilityId);
-                if (list.Count > 0)
+                foreach (var pr in list)
                 {
-                    foreach (var pr in list)
+                    if (pr.Milestones != null && pr.Milestones.Any())
                     {
-                        if (pr.Milestones != null && pr.Milestones.Any())
-                        {
-                            pr.Milestones.ForEach(cc =>
-                              cc.ColorImage = Url.Content(cc.ColorImage));
-                        }
+                        pr.Milestones.ForEach(cc =>
+                          cc.ColorImage = Url.Content(cc.ColorImage));
                     }
                 }
-                return list;
             }
+            return list;
         }
 
         public JsonResult BindKPIDropdownData()
@@ -941,8 +935,7 @@ namespace BillingSystem.Controllers
                 var section1RemarksList = new List<DashboardRemarkCustomModel>();
                 var section2RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityService();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -995,7 +988,7 @@ namespace BillingSystem.Controllers
             const string ClinicalComplianceGrpahsArray = "720,721,722,723";
 
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId, Convert.ToString(ClinicalComplianceGrpahsArray), currentYear, facilityType, segment, department);
@@ -1064,8 +1057,7 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityService();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -1108,7 +1100,7 @@ namespace BillingSystem.Controllers
         {
             const string clinicalGrpahsArray = "750,174,830,832,758,756,180,181,186,175,752,754,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
                 Convert.ToString(clinicalGrpahsArray),
@@ -1290,8 +1282,7 @@ namespace BillingSystem.Controllers
         public ActionResult CamFinancialMGTDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -1377,7 +1368,7 @@ namespace BillingSystem.Controllers
 
         public FinancialManagementData GetFinancialManagementGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var corporateid = Helpers.GetSysAdminCorporateID();
 
@@ -1501,8 +1492,7 @@ namespace BillingSystem.Controllers
             var section10RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -1554,7 +1544,7 @@ namespace BillingSystem.Controllers
         {
 
             var cId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
 
@@ -1638,7 +1628,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsData_New(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
@@ -1722,8 +1712,7 @@ namespace BillingSystem.Controllers
             //var section3RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -1732,41 +1721,6 @@ namespace BillingSystem.Controllers
             var dbView = GetKpiData(facilityId);
             return PartialView(PartialViews.ExecutiveKeyPerfomDashboardPview, dbView);
 
-            //using (var bal = new DashboardRemarkBal())
-            //{
-            //    var mainList = GetExecutiveKeyPerformanceList(facilityId);
-            //    var corporateid = Helpers.GetSysAdminCorporateID();
-            //    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityId,
-            //        Convert.ToInt32(10));
-
-            //    var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
-            //    var financialType = Convert.ToString((int)DashboardProjectType.Financial);
-            //    var indType = Convert.ToString((int)DashboardProjectType.Individual);
-
-            //    var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
-            //    var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
-            //    var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
-            //    if (allRemarksList != null && allRemarksList.Count > 0)
-            //    {
-            //        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-            //        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-            //        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-            //    }
-            //    var dashboardview = new ExecutiveKeyPerformanceView
-            //    {
-            //        FacilityId = facilityid,
-            //        DashboardType = 10,
-            //        StrategicKpiList = strategicExec,
-            //        FinancialKpiList = financialExec,
-            //        IndividualKpiList = individualExec,
-            //        Title = Helpers.ExternalDashboardTitleView("10"),
-            //        Section1RemarksList = section1RemarksList,
-            //        Section2RemarksList = section2RemarksList,
-            //        Section3RemarksList = section3RemarksList,
-            //    };
-            //    //return PartialView(ExecutiveKeyPerfomDashboardPview)
-            //    return PartialView(PartialViews.ExecutiveKeyPerfomDashboardPview, dashboardview);
-            //}
         }
 
         /// <summary>
@@ -1787,8 +1741,7 @@ namespace BillingSystem.Controllers
                 var section5RemarksList = new List<DashboardRemarkCustomModel>();
                 var section6RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityService();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -1844,13 +1797,12 @@ namespace BillingSystem.Controllers
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
 
             var customDate = currentDateTime.Year;
             patinetFallList = _dbService.GetPatientFallRate(facilityid, Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
@@ -1926,7 +1878,7 @@ namespace BillingSystem.Controllers
             var section12RemarksList = new List<DashboardRemarkCustomModel>();
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
             #endregion
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Convert.ToInt32(facilityID));
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Convert.ToInt32(facilityID));
             #region patinetFallList Data
             var customDate = currentDateTime.Year;
             patinetFallList = _dbService.GetPatientFallRate(Convert.ToInt32(facilityID),
@@ -1936,8 +1888,7 @@ namespace BillingSystem.Controllers
 
             #region KPI Dashboard Filtered Data Section
             var loggedinfacilityId = Convert.ToInt32(facilityID);
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                 ? loggedinfacilityId
                  : 17;
@@ -2006,8 +1957,7 @@ namespace BillingSystem.Controllers
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -2051,8 +2001,8 @@ namespace BillingSystem.Controllers
         public ActionResult FinancialMGTDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -2104,8 +2054,8 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -2150,8 +2100,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -2200,7 +2149,7 @@ namespace BillingSystem.Controllers
         {
             var manualDashboardData = new List<ManualDashboardCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "124")
             {
@@ -2257,7 +2206,7 @@ namespace BillingSystem.Controllers
         {
             var dashboardTypeid = Convert.ToInt32(type);
             var manualDashboardData = new List<ManualDashboardCustomModel>();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "1")
             {
@@ -2316,7 +2265,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var manualDashboardData = new List<ExternalDashboardModel>();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "1")
             {
@@ -2339,7 +2288,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetYearToDateData(int facilityID, int month, int facilityType, int segment,
             int Department, string type)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
 
             var customDate = month == 0
@@ -2387,7 +2336,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
 
@@ -2485,7 +2434,7 @@ namespace BillingSystem.Controllers
             var corporateid = Helpers.GetSysAdminCorporateID();
             var remarksList = viewAll
                     ? _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityID, type)
-                    : _drService.GetDashboardRemarkListByDashboardTypeAndMonth(corporateid, facilityID,type,month);
+                    : _drService.GetDashboardRemarkListByDashboardTypeAndMonth(corporateid, facilityID, type, month);
 
             if (sectionType == "2")
             {
@@ -2562,7 +2511,7 @@ namespace BillingSystem.Controllers
         {
             var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var curentYear = currentDateTime.Year;
 
             var corporateId = Helpers.GetSysAdminCorporateID();
@@ -2666,7 +2615,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult RCMGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             //const string rcmDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
@@ -2756,7 +2705,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -2804,7 +2753,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFinancialMGTGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var curentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
@@ -2868,7 +2817,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetHRGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var curentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
@@ -2920,7 +2869,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetKPIGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
@@ -3014,8 +2963,8 @@ namespace BillingSystem.Controllers
         public ActionResult ProjectsDashboardFilters(int? facilityID, int facilityType, int segment, string userId)
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3028,12 +2977,8 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetProjectTaskComments(int taskId)
         {
-
-            using (var bal = new ProjectTasksService())
-            {
-                var comments = bal.GetProjectTaskCommentById(taskId);
-                return Json(comments, JsonRequestBehavior.AllowGet);
-            }
+            var comments = _ptService.GetProjectTaskCommentById(taskId);
+            return Json(comments, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -3069,7 +3014,7 @@ namespace BillingSystem.Controllers
         {
             var manualDashboardData = new List<ManualDashboardCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             if (type == "124")
@@ -3143,8 +3088,8 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityService();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+                //var _fService = new FacilityService();
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3199,8 +3144,8 @@ namespace BillingSystem.Controllers
                 var section5RemarksList = new List<DashboardRemarkCustomModel>();
                 var section6RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityService();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+                //var _fService = new FacilityService();
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3256,13 +3201,13 @@ namespace BillingSystem.Controllers
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
+            //var _fService = new FacilityService();
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(loggedinfacilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(loggedinfacilityId);
             var currentYear = currentDateTime.Year;
 
 
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3325,8 +3270,8 @@ namespace BillingSystem.Controllers
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3371,8 +3316,8 @@ namespace BillingSystem.Controllers
         public ActionResult FinancialMGTDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3423,8 +3368,8 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3466,8 +3411,8 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -3515,7 +3460,7 @@ namespace BillingSystem.Controllers
         {
             var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
@@ -3621,7 +3566,7 @@ namespace BillingSystem.Controllers
         {
             var RCMDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var customDate = month == 0
@@ -3709,7 +3654,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3756,7 +3701,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFinancialMGTGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3818,7 +3763,7 @@ namespace BillingSystem.Controllers
             int department)
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var hrGraphsIndicators = "254,246,247,248,211,250,251,252,253,277";
@@ -3866,7 +3811,7 @@ namespace BillingSystem.Controllers
             int department)
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var hrGraphsIndicators = "254,246,172,174,247,248,255,236,237,233,234,1312,1313,1311,1314,1309,1310,227";
@@ -3928,7 +3873,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExportToExcel(int? type, int? month, int? facilityId)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Convert.ToInt32(facilityId));
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Convert.ToInt32(facilityId));
             var workbook = new HSSFWorkbook();
             #region Excel Creation and Formatting
             var sheet = workbook.CreateSheet("ExternalDashboardData");
@@ -4358,7 +4303,7 @@ namespace BillingSystem.Controllers
         {
             const string ClinicalComplianceGrpahsArray = "720,721,722,723";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
 
@@ -4397,7 +4342,7 @@ namespace BillingSystem.Controllers
             // var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             const string clinicalGrpahsArray = "750,174,830,832,758,756,180,181,186,175,752,754,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
                 Convert.ToString(clinicalGrpahsArray),
@@ -4483,7 +4428,7 @@ namespace BillingSystem.Controllers
             int department)
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             const string HrGraphsIndicators = "1320,800,802,132,133,134,135,136,137,818,250,820,251,860,862,252,253,822";
@@ -4571,7 +4516,7 @@ namespace BillingSystem.Controllers
         public ActionResult CamGetFinancialMGTGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
 
@@ -4648,7 +4593,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetSubCategoryCharts(
@@ -4744,7 +4689,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetSubCategoryChartsPayorMix(facilityID, corporateId,
@@ -4833,7 +4778,7 @@ namespace BillingSystem.Controllers
         private ExternalDashboardModel GetLocalYearToDateData(int facilityID, int month, int facilityType, int segment,
            int Department, string type)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             var customDate = month == 0
@@ -4974,7 +4919,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetPatientDaysAll(List<ManualDashboardCustomModel> patientDaysList)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
             var currentYear = currentDateTime.Year;
 
             var newPatientDays = new List<ManualDashboardCustomModel>();
@@ -5092,7 +5037,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetADCByServiceCodePerMonth(List<ManualDashboardCustomModel> patientDaysList)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
             var currentYear = currentDateTime.Year;
 
             var patientDaysForeachMonth = patientDaysList.Where(x => x.BudgetType == 2 && x.Year == currentYear).ToList();
@@ -5128,7 +5073,7 @@ namespace BillingSystem.Controllers
         {
             var manualDashboardData = new List<ManualDashboardCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             if (type == "124")
@@ -5203,22 +5148,19 @@ namespace BillingSystem.Controllers
 
         private List<ProjectsCustomModel> GetProjectsDashboardData(int facilityId, string responsibleUserId)
         {
-            using (var bal = new ProjectTasksService())
+            var list = _ptService.GetProjectsDashboardData(Helpers.GetSysAdminCorporateID(), facilityId, responsibleUserId);
+            if (list.Count > 0)
             {
-                var list = bal.GetProjectsDashboardData(Helpers.GetSysAdminCorporateID(), facilityId, responsibleUserId);
-                if (list.Count > 0)
+                foreach (var pr in list)
                 {
-                    foreach (var pr in list)
+                    if (pr.Milestones != null && pr.Milestones.Any())
                     {
-                        if (pr.Milestones != null && pr.Milestones.Any())
-                        {
-                            pr.Milestones.ForEach(cc =>
-                              cc.ColorImage = Url.Content(cc.ColorImage));
-                        }
+                        pr.Milestones.ForEach(cc =>
+                          cc.ColorImage = Url.Content(cc.ColorImage));
                     }
                 }
-                return list;
             }
+            return list;
         }
 
         #endregion
@@ -5231,8 +5173,8 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboard1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -5285,8 +5227,8 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityService();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+                //var _fService = new FacilityService();
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
                 var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
@@ -5333,8 +5275,8 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboard1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityService();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();

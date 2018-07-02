@@ -10,7 +10,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
@@ -23,6 +23,14 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class MedicalNecessityController : Controller
     {
+        private readonly IMedicalNecessityService _service;
+
+        public MedicalNecessityController(IMedicalNecessityService service)
+        {
+            _service = service;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -32,15 +40,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindMedicalNecessityList()
         {
-            // Initialize the MedicalNecessity BAL object
-            using (var medicalNecessityBal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
-            {
-                // Get the facilities list
-                List<MedicalNecessityCustomModel> medicalNecessityList = medicalNecessityBal.GetMedicalNecessity();
-
-                // Pass the ActionResult with List of MedicalNecessityViewModel object to Partial View MedicalNecessityList
-                return PartialView(PartialViews.MedicalNecessityList, medicalNecessityList);
-            }
+            List<MedicalNecessityCustomModel> medicalNecessityList = _service.GetMedicalNecessity(Helpers.DefaultDiagnosisTableNumber);
+            return PartialView(PartialViews.MedicalNecessityList, medicalNecessityList);
         }
 
         /// <summary>
@@ -54,24 +55,13 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteMedicalNecessity(int id)
         {
-            using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
+            var currentMedicalNecessity = _service.GetMedicalNecessityById(id);
+            if (currentMedicalNecessity != null)
             {
-                // Get MedicalNecessity model object by current MedicalNecessity ID
-                var currentMedicalNecessity = bal.GetMedicalNecessityById(id);
-                // Check If MedicalNecessity model is not null
-                if (currentMedicalNecessity != null)
-                {
-                    currentMedicalNecessity.IsActive = false;
+                currentMedicalNecessity.IsActive = false;
 
-                    // currentMedicalNecessity.ModifiedBy = userId;
-                    // currentMedicalNecessity.ModifiedDate = DateTime.Now;
-
-                    // Update Operation of current MedicalNecessity
-                    int result = bal.SaveMedicalNecessity(currentMedicalNecessity);
-
-                    // return deleted ID of current MedicalNecessity as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                int result = _service.SaveMedicalNecessity(currentMedicalNecessity);
+                return Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -89,14 +79,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetMedicalNecessity(int id)
         {
-            using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
-            {
-                // Call the AddMedicalNecessity Method to Add / Update current MedicalNecessity
-                MedicalNecessity currentMedicalNecessity = bal.GetMedicalNecessityById(id);
+            MedicalNecessity currentMedicalNecessity = _service.GetMedicalNecessityById(id);
 
-                // Pass the ActionResult with the current MedicalNecessityViewModel object as model to PartialView MedicalNecessityAddEdit
-                return PartialView(PartialViews.MedicalNecessityAddEdit, currentMedicalNecessity);
-            }
+            return PartialView(PartialViews.MedicalNecessityAddEdit, currentMedicalNecessity);
         }
 
         /// <summary>
@@ -109,11 +94,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult MedicalNecessityMain()
         {
-            // Initialize the MedicalNecessity BAL object
-            var medicalNecessityBal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber);
-
-            // Get the Entity list
-            List<MedicalNecessityCustomModel> medicalNecessityList = medicalNecessityBal.GetMedicalNecessity();
+            List<MedicalNecessityCustomModel> medicalNecessityList = _service.GetMedicalNecessity(Helpers.DefaultDiagnosisTableNumber);
 
             // Intialize the View Model i.e. MedicalNecessityView which is binded to Main View Index.cshtml under MedicalNecessity
             var medicalNecessityView = new MedicalNecessityView
@@ -160,17 +141,14 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-                    // Call the AddMedicalNecessity Method to Add / Update current MedicalNecessity
-                    newId = bal.SaveMedicalNecessity(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+
+                // Call the AddMedicalNecessity Method to Add / Update current MedicalNecessity
+                newId = _service.SaveMedicalNecessity(model);
             }
 
             return Json(newId);
@@ -179,8 +157,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetMedicalNecesstiyById(int id)
         {
-            var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber);
-            MedicalNecessity currentMedicalNecessity = bal.GetMedicalNecessityById(id);
+            var currentMedicalNecessity = _service.GetMedicalNecessityById(id);
             var jsonData = new
             {
                 currentMedicalNecessity.Id,
@@ -194,18 +171,14 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetSearchData(string text)
         {
-            using (var bal = new MedicalNecessityService(Helpers.DefaultDiagnosisTableNumber))
-            {
-                var list = bal.GetMedicalNecessity();
-                var newList = list.Where(x => x.Description.ToLower().Trim().Contains(text)).ToList();
-                return Json(newList, JsonRequestBehavior.AllowGet);
-            }
+            var list = _service.GetMedicalNecessity(Helpers.DefaultDiagnosisTableNumber);
+            var newList = list.Where(x => x.Description.ToLower().Trim().Contains(text)).ToList();
+            return Json(newList, JsonRequestBehavior.AllowGet);
         }
 
 
         public ActionResult Index()
         {
-            
             return View(new MedicalNecessityView());
         }
         #endregion

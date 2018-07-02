@@ -11,33 +11,37 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using RazorPDF;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class InsurancePlansController : BaseController
     {
+        private readonly IInsurancePlansService _service;
+        private readonly IInsurancePolicesService _ipService;
+        private readonly IInsuranceCompanyService _icService;
+
+        public InsurancePlansController(IInsurancePlansService service, IInsurancePolicesService ipService, IInsuranceCompanyService icService)
+        {
+            _service = service;
+            _ipService = ipService;
+            _icService = icService;
+        }
+
+
         /// <summary>
         /// Insurances the plans.
         /// </summary>
         /// <returns></returns>
         public ActionResult InsurancePlans()
         {
-            using (var bal = new InsurancePlansService())
+            var list = _service.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
+            var insurancePlansView = new InsurancePlansView
             {
-                //Get the facilities list
-                var list = bal.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
-
-                //Intialize the View Model i.e. InsurancePlansView which is binded to Main View Index.cshtml under InsurancePlans
-                var insurancePlansView = new InsurancePlansView
-                {
-                    InsurancePlansList = list,
-                    CurrentInsurancePlans = new InsurancePlans { IsActive = true }
-                };
-
-
-                //Pass the View Model in ActionResult to View InsurancePlans
-                return View(insurancePlansView);
-            }
+                InsurancePlansList = list,
+                CurrentInsurancePlans = new InsurancePlans { IsActive = true }
+            };
+            return View(insurancePlansView);
         }
 
         /// <summary>
@@ -53,25 +57,22 @@ namespace BillingSystem.Controllers
             //Check if InsurancePlansViewModel 
             if (m != null)
             {
-                using (var bal = new InsurancePlansService())
+                if (m.InsurancePlanId > 0)
                 {
-                    if (m.InsurancePlanId > 0)
-                    {
-                        m.ModifiedBy = Helpers.GetLoggedInUserId();
-                        m.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        m.CreatedBy = Helpers.GetLoggedInUserId();
-                        m.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-                    m.IsDeleted = false;
-                    m.IsActive = true;
-
-                    //Call the AddInsurancePlans Method to Add / Update current InsurancePlans
-                    newId = bal.AddUpdateInsurancePlans(m);
+                    m.ModifiedBy = Helpers.GetLoggedInUserId();
+                    m.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    m.CreatedBy = Helpers.GetLoggedInUserId();
+                    m.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+
+                m.IsDeleted = false;
+                m.IsActive = true;
+
+                //Call the AddInsurancePlans Method to Add / Update current InsurancePlans
+                newId = _service.AddUpdateInsurancePlans(m);
             }
             return Json(newId);
         }
@@ -85,15 +86,8 @@ namespace BillingSystem.Controllers
         //[HttpPost]
         public ActionResult BindInsurancePlansList(bool showIsActive)
         {
-            //Initialize the InsurancePlans Communicator object
-            using (var bal = new InsurancePlansService())
-            {
-                //Get the facilities list
-                var list = bal.GetInsurancePlanList(showIsActive, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
-
-                //Pass the ActionResult with List of InsurancePlansViewModel object to Partial View InsurancePlansList
-                return PartialView(PartialViews.PlansList, list);
-            }
+            var list = _service.GetInsurancePlanList(showIsActive, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
+            return PartialView(PartialViews.PlansList, list);
         }
 
         /// <summary>
@@ -103,11 +97,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetInsurancePlanById(string id)
         {
-            using (var bal = new InsurancePlansService())
-            {
-                var current = bal.GetInsurancePlanById(Convert.ToInt32(id));
-                return PartialView(PartialViews.insurancePlansAddEdit, current);
-            }
+            var current = _service.GetInsurancePlanById(Convert.ToInt32(id));
+            return PartialView(PartialViews.insurancePlansAddEdit, current);
         }
 
         /// <summary>
@@ -130,32 +121,26 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteInsurancePlans(CommonModel model)
         {
-            using (var insurancePlansBal = new InsurancePlansService())
+            var isExist = _ipService.CheckInsurancePolicyExist(Convert.ToInt32(model.Id));
+            if (isExist)
             {
-                using (var policeBal = new InsurancePolicesService())
-                {
-                    var isExist = policeBal.CheckInsurancePolicyExist(Convert.ToInt32(model.Id));
-                    if (isExist)
-                    {
-                        return Json("-1");
-                    }
-                }
-                //Get InsurancePlans model object by current InsurancePlans ID
-                var currentInsurancePlans = insurancePlansBal.GetInsurancePlanById(Convert.ToInt32(model.Id));
+                return Json("-1");
+            }
+            //Get InsurancePlans model object by current InsurancePlans ID
+            var currentInsurancePlans = _service.GetInsurancePlanById(Convert.ToInt32(model.Id));
 
-                //Check If InsurancePlans model is not null
-                if (currentInsurancePlans != null)
-                {
-                    currentInsurancePlans.IsDeleted = true;
-                    currentInsurancePlans.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentInsurancePlans.DeletedDate = Helpers.GetInvariantCultureDateTime();
+            //Check If InsurancePlans model is not null
+            if (currentInsurancePlans != null)
+            {
+                currentInsurancePlans.IsDeleted = true;
+                currentInsurancePlans.DeletedBy = Helpers.GetLoggedInUserId();
+                currentInsurancePlans.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                    //Update Operation of current InsurancePlans
-                    var result = insurancePlansBal.AddUpdateInsurancePlans(currentInsurancePlans);
+                //Update Operation of current InsurancePlans
+                var result = _service.AddUpdateInsurancePlans(currentInsurancePlans);
 
-                    //return deleted ID of current InsurancePlans as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current InsurancePlans as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             //Return the Json result as Action Result back JSON Call Success
@@ -169,11 +154,8 @@ namespace BillingSystem.Controllers
         [AcceptVerbs(HttpVerbs.Post)]
         public ActionResult GetInsuranceCompanies()
         {
-            using (var bal = new InsuranceCompanyService())
-            {
-                var list = bal.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
-                return Json(list);
-            }
+            var list = _icService.GetInsuranceCompanies(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId());
+            return Json(list);
         }
 
         /// <summary>
@@ -185,11 +167,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ValidatePlanNamePlanNumber(string planName, string planNumber, int id, int insuranceCompanyId)
         {
-            using (var bal = new InsurancePlansService())
-            {
-                var result = bal.CheckDuplicateInsurancePlan(planName, planNumber, id, insuranceCompanyId);
-                return Json(result);
-            }
+            var result = _service.CheckDuplicateInsurancePlan(planName, planNumber, id, insuranceCompanyId);
+            return Json(result);
         }
 
         /// <summary>
@@ -199,11 +178,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPlanNameById(int id)
         {
-            using (var bal = new InsurancePlansService())
-            {
-                var result = bal.GetInsurancePlanById(id);
-                return Json(result != null ? result.PlanName : string.Empty);
-            }
+            var result = _service.GetInsurancePlanById(id);
+            return Json(result != null ? result.PlanName : string.Empty);
         }
 
 
@@ -214,18 +190,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExportToPDF()
         {
-            using (var bal = new InsurancePlansService())
-            {
-                Response.AddHeader("Content-Type", "application/vnd.ms-excel");
-                var list = bal.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
+            Response.AddHeader("Content-Type", "application/vnd.ms-excel");
+            var list = _service.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
 
-                var pdf = new PdfResult(list, "ExportToPDF");
+            var pdf = new PdfResult(list, "ExportToPDF");
 
-                pdf.ViewBag.Title = "Insurance Plans List";
+            pdf.ViewBag.Title = "Insurance Plans List";
 
-                //Get the facilities list
-                return pdf;
-            }
+            //Get the facilities list
+            return pdf;
         }
 
         /// <summary>
@@ -234,7 +207,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         //public ActionResult ExportToExcel1()
         //{
-        //    using (var bal = new InsurancePlansBal())
+        //    using (var _service = new InsurancePlansBal())
         //    {
         //        //Response.AddHeader("Content-Type", "application/vnd.ms-excel");
 
@@ -244,7 +217,7 @@ namespace BillingSystem.Controllers
         //                           "attachment; InsurancePlan.xls");
 
         //        //Get the facilities list
-        //        var list = bal.GetInsurancePlanList(true);
+        //        var list = _service.GetInsurancePlanList(true);
 
         //        //Pass the ActionResult with List of InsuranceCompanyViewModel object to Partial View InsuranceCompanyList
         //        return PartialView(PartialViews.PlansListExportView, list);
@@ -271,27 +244,24 @@ namespace BillingSystem.Controllers
             row.CreateCell(4).SetCellValue("End Date");
             row.CreateCell(5).SetCellValue("Description");
             rowIndex++;
-            using (var iBal = new InsurancePlansService())
-            {
-                //Get the facilities list
-                var objCompanyPlan = iBal.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
-                //Get the facilities list
-                var cellStyle = workbook.CreateCellStyle();
-                cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+            //Get the facilities list
+            var objCompanyPlan = _service.GetInsurancePlanList(true, Helpers.GetDefaultFacilityId(), Helpers.GetDefaultCorporateId(), Helpers.GetLoggedInUserId());
+            //Get the facilities list
+            var cellStyle = workbook.CreateCellStyle();
+            cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
 
-                foreach (var item in objCompanyPlan)
-                {
-                    row = sheet.CreateRow(rowIndex);
-                    row.CreateCell(0).SetCellType(CellType.Numeric);
-                    row.CreateCell(0).CellStyle = cellStyle;
-                    row.CreateCell(0).SetCellValue(item.InsuranceCompanyName);
-                    row.CreateCell(1).SetCellValue(item.InsurancePlan.PlanName);
-                    row.CreateCell(2).SetCellValue(item.InsurancePlan.PlanNumber);
-                    row.CreateCell(3).SetCellValue(Convert.ToString(item.InsurancePlan.PlanBeginDate));
-                    row.CreateCell(4).SetCellValue(Convert.ToString(item.InsurancePlan.PlanEndDate));
-                    row.CreateCell(5).SetCellValue(item.InsurancePlan.PlanDescription);
-                    rowIndex++;
-                }
+            foreach (var item in objCompanyPlan)
+            {
+                row = sheet.CreateRow(rowIndex);
+                row.CreateCell(0).SetCellType(CellType.Numeric);
+                row.CreateCell(0).CellStyle = cellStyle;
+                row.CreateCell(0).SetCellValue(item.InsuranceCompanyName);
+                row.CreateCell(1).SetCellValue(item.InsurancePlan.PlanName);
+                row.CreateCell(2).SetCellValue(item.InsurancePlan.PlanNumber);
+                row.CreateCell(3).SetCellValue(Convert.ToString(item.InsurancePlan.PlanBeginDate));
+                row.CreateCell(4).SetCellValue(Convert.ToString(item.InsurancePlan.PlanEndDate));
+                row.CreateCell(5).SetCellValue(item.InsurancePlan.PlanDescription);
+                rowIndex++;
             }
             using (var exportData = new MemoryStream())
             {

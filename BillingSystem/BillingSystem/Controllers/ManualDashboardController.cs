@@ -25,17 +25,20 @@ namespace BillingSystem.Controllers
         private readonly IPatientInfoService _piService;
         private readonly IUsersService _uService;
         private readonly IManualDashboardService _service;
+        private readonly IFacilityService _fService;
         private readonly IIndicatorDataCheckListService _iService;
+        private readonly IGlobalCodeService _gService;
 
-        public ManualDashboardController(IManualDashboardService service, IDashboardIndicatorDataService diService, IFacilityStructureService fsService
-            , IPatientInfoService piService, IUsersService uService, IIndicatorDataCheckListService iService)
+        public ManualDashboardController(IFacilityStructureService fsService, IDashboardIndicatorDataService diService, IPatientInfoService piService, IUsersService uService, IManualDashboardService service, IFacilityService fService, IIndicatorDataCheckListService iService, IGlobalCodeService gService)
         {
             _fsService = fsService;
+            _diService = diService;
             _piService = piService;
             _uService = uService;
-            _diService = diService;
             _service = service;
+            _fService = fService;
             _iService = iService;
+            _gService = gService;
         }
 
         /// <summary>
@@ -48,8 +51,7 @@ namespace BillingSystem.Controllers
         {
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
                 ? loggedinfacilityId : Helpers.GetFacilityIdNextDefaultCororateFacility();
 
@@ -75,8 +77,7 @@ namespace BillingSystem.Controllers
         {
             var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                 ? loggedinfacilityId : Helpers.GetFacilityIdNextDefaultCororateFacility();
 
@@ -358,13 +359,10 @@ namespace BillingSystem.Controllers
             var serverPath = Server.MapPath(virtualPath);
             var corporateId = Helpers.GetSysAdminCorporateID();
             int expiryDays;
-            using (var gBal = new GlobalCodeBal())
-            {
-                var result = gBal.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
-                expiryDays = !string.IsNullOrEmpty(result.GlobalCodeName)
-                    ? Convert.ToInt32(result.GlobalCodeName)
-                    : 90;
-            }
+            var result = _gService.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
+            expiryDays = !string.IsNullOrEmpty(result.GlobalCodeName)
+                ? Convert.ToInt32(result.GlobalCodeName)
+                : 90;
 
             var cookie = new HttpCookie("Downloaded", "True");
             Response.Cookies.Add(cookie);
@@ -393,7 +391,7 @@ namespace BillingSystem.Controllers
 
             var currentDate = Helpers.GetInvariantCultureDateTime();
             userCm = _uService.GetUserById(loggedInUserId);
-            var facilityname = _piService.GetFacilityNameByFacilityId(facilityId);
+            var facilityname = _fService.GetFacilityNameById(facilityId);
             if (!string.IsNullOrEmpty(msgBody) && userCm != null)
             {
                 userCm.UserToken = usertoken;
@@ -584,8 +582,7 @@ namespace BillingSystem.Controllers
             var listYears = new List<DropdownListData>();
             List<DropdownListData> listFacilities;
 
-            using (var bal = new GlobalCodeBal())
-                list = bal.GetListByCategoriesRange(categories);
+            list = _gService.GetListByCategoriesRange(categories);
 
             /*-----------------Get Global Codes end here--------------------------*/
 
@@ -638,9 +635,8 @@ namespace BillingSystem.Controllers
 
             #region Get Facilities List
             /*-----------Get Facilities Data start here----------------------*/
-            using (var fBal = new FacilityBal())
-                listFacilities = fBal.GetFacilitiesForDashboards(Convert.ToInt32(facilityid), corporateid,
-                              Helpers.GetLoggedInUserIsAdmin());
+            listFacilities = _fService.GetFacilitiesForDashboards(Convert.ToInt32(facilityid), corporateid,
+                          Helpers.GetLoggedInUserIsAdmin());
             /*-----------Get Facilities Data end here----------------------*/
 
             #endregion

@@ -5,16 +5,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
-    using System.IO;
-
     public class XclaimController : BaseController
     {
+        private readonly IXclaimService _service;  
+        private readonly IXPaymentFileXMLService _pfService;
+
+        public XclaimController(IXclaimService service, IXPaymentFileXMLService pfService)
+        {
+            _service = service;
+            _pfService = pfService;
+        }
+
         /// <summary>
         /// Get the details of the Xclaim View in the Model Xclaim such as XclaimList, list of countries etc.
         /// </summary>
@@ -26,11 +33,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult XclaimMain(int? claimid, int? encid, int? Pid)
         {
-            //Initialize the Xclaim BAL object
-            var xclaimBal = new XclaimService();
             var facilityid = Helpers.GetDefaultFacilityId();
             //Get the Entity list
-            var xclaimList = xclaimBal.GetXclaim(facilityid.ToString());
+            var xclaimList = _service.GetXclaim(facilityid.ToString());
 
             //Intialize the View Model i.e. XclaimView which is binded to Main View Index.cshtml under Xclaim
             var xclaimView = new XclaimView
@@ -58,16 +63,12 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindXclaimList()
         {
-            //Initialize the Xclaim BAL object
-            using (var xclaimBal = new XclaimService())
-            {
-                var facilityid = Helpers.GetDefaultFacilityId();
-                //Get the facilities list
-                var xclaimList = xclaimBal.GetXclaim(facilityid.ToString());
+            var facilityid = Helpers.GetDefaultFacilityId();
+            //Get the facilities list
+            var xclaimList = _service.GetXclaim(facilityid.ToString());
 
-                //Pass the ActionResult with List of XclaimViewModel object to Partial View XclaimList
-                return PartialView(PartialViews.XclaimList, xclaimList);
-            }
+            //Pass the ActionResult with List of XclaimViewModel object to Partial View XclaimList
+            return PartialView(PartialViews.XclaimList, xclaimList);
         }
 
         /// <summary>
@@ -86,16 +87,13 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new XclaimService())
+                if (model.ClaimID > 0)
                 {
-                    if (model.ClaimID > 0)
-                    {
-                        model.ModifiedBy = userId.ToString();
-                        model.ModifiedDate = CurrentDateTime;
-                    }
-                    //Call the AddXclaim Method to Add / Update current Xclaim
-                    newId = bal.SaveXclaim(model);
+                    model.ModifiedBy = userId.ToString();
+                    model.ModifiedDate = CurrentDateTime;
                 }
+                //Call the AddXclaim Method to Add / Update current Xclaim
+                newId = _service.SaveXclaim(model);
             }
             return Json(newId);
         }
@@ -107,14 +105,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetXclaim(int id)
         {
-            using (var bal = new XclaimService())
-            {
-                //Call the AddXclaim Method to Add / Update current Xclaim
-                var currentXclaim = bal.GetXclaimByID(id);
+            //Call the AddXclaim Method to Add / Update current Xclaim
+            var currentXclaim = _service.GetXclaimByID(id);
 
-                //Pass the ActionResult with the current XclaimViewModel object as model to PartialView XclaimAddEdit
-                return PartialView(PartialViews.XclaimAddEdit, currentXclaim);
-            }
+            //Pass the ActionResult with the current XclaimViewModel object as model to PartialView XclaimAddEdit
+            return PartialView(PartialViews.XclaimAddEdit, currentXclaim);
         }
 
         /// <summary>
@@ -124,24 +119,21 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteXclaim(int id)
         {
-            using (var bal = new XclaimService())
+            //Get Xclaim model object by current Xclaim ID
+            var currentXclaim = _service.GetXclaimByID(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            //Check If Xclaim model is not null
+            if (currentXclaim != null)
             {
-                //Get Xclaim model object by current Xclaim ID
-                var currentXclaim = bal.GetXclaimByID(id);
-                var userId = Helpers.GetLoggedInUserId();
+                currentXclaim.ModifiedBy = userId.ToString();
+                currentXclaim.ModifiedDate = CurrentDateTime;
 
-                //Check If Xclaim model is not null
-                if (currentXclaim != null)
-                {
-                    currentXclaim.ModifiedBy = userId.ToString();
-                    currentXclaim.ModifiedDate = CurrentDateTime;
+                //Update Operation of current Xclaim
+                var result = _service.SaveXclaim(currentXclaim);
 
-                    //Update Operation of current Xclaim
-                    var result = bal.SaveXclaim(currentXclaim);
-
-                    //return deleted ID of current Xclaim as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current Xclaim as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             //Return the Json result as Action Result back JSON Call Success
@@ -170,16 +162,13 @@ namespace BillingSystem.Controllers
         public ActionResult GetXClaimList(string pid, Int64 eid, Int64 claimid)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            using (var bal = new XclaimService())
-            {
-                var facilityId = Helpers.GetDefaultFacilityId().ToString();
-                var claimlist = corporateId == 6
-                    ? bal.GetXclaimByParameters(pid, eid, claimid)
-                    : bal.GetXclaimByFacilityParameters(facilityId, pid, eid, claimid);
-                return PartialView(PartialViews.XclaimList, claimlist);
-            }
-
+            var facilityId = Helpers.GetDefaultFacilityId().ToString();
+            var claimlist = corporateId == 6
+                ? _service.GetXclaimByParameters(pid, eid, claimid)
+                : _service.GetXclaimByFacilityParameters(facilityId, pid, eid, claimid);
+            return PartialView(PartialViews.XclaimList, claimlist);
         }
+
 
         /// <summary>
         /// Gets the claims by encounter identifier.
@@ -188,21 +177,18 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetClaimsByEncounterId(Int64 encounterid)
         {
-            using (var bal = new XclaimService())
+            var list = new List<DropdownListData>();
+            //Call the AddXclaim Method to Add / Update current Xclaim
+            var xclaimList = _service.GetXclaimByEncounterId(encounterid);
+            if (xclaimList.Any())
             {
-                var list = new List<DropdownListData>();
-                //Call the AddXclaim Method to Add / Update current Xclaim
-                var xclaimList = bal.GetXclaimByEncounterId(encounterid);
-                if (xclaimList.Any())
+                list.AddRange(xclaimList.Select(item => new DropdownListData
                 {
-                    list.AddRange(xclaimList.Select(item => new DropdownListData
-                    {
-                        Text = item.ClaimID.ToString(),
-                        Value = Convert.ToString(item.ClaimID),
-                    }));
-                }
-                return Json(list);
+                    Text = item.ClaimID.ToString(),
+                    Value = Convert.ToString(item.ClaimID),
+                }));
             }
+            return Json(list);
         }
 
         /// <summary>
@@ -211,13 +197,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ApplyCharges()
         {
-            using (var bal = new XclaimService())
-            {
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
-                var xclaimList = bal.ApplyAdvicePayment(corporateid, facilityid);
+                var xclaimList = _service.ApplyAdvicePayment(corporateid, facilityid);
                 return Json(xclaimList);
-            }
         }
 
 
@@ -228,9 +211,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public string ViewFile(int id)
         {
-            var xPaymentFileXmlBal = new XPaymentFileXMLService();
-            // Get the Entity list
-            var xPaymentFileXmlfirstObj = xPaymentFileXmlBal.GetFirstXPaymentFileXML(id);
+            var xPaymentFileXmlfirstObj = _pfService.GetFirstXPaymentFileXML(id);
             return xPaymentFileXmlfirstObj;
         }
 
@@ -241,15 +222,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ApplyChargesonFile(int fileid)
         {
-            using (var bal = new XclaimService())
-            {
                 var corporateid = Helpers.GetSysAdminCorporateID();
                 var facilityid = Helpers.GetDefaultFacilityId();
-                //var xclaimList = bal.ApplyAdvicePayment(corporateid, facilityid);
-                var xclaimList = bal.ApplyAdvicePaymentInRemittanceAdvice(corporateid, facilityid, fileid);
+                //var xclaimList = _service.ApplyAdvicePayment(corporateid, facilityid);
+                var xclaimList = _service.ApplyAdvicePaymentInRemittanceAdvice(corporateid, facilityid, fileid);
                 return Json(xclaimList);
-            }
         }
-       
+
     }
 }

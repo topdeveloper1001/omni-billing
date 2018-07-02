@@ -8,12 +8,7 @@ using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
-{
-
-
-    /// <summary>
-    /// The physician tasks controller.
-    /// </summary>
+{ 
     public class PhysicianTasksController : Controller
     {
         private readonly IEncounterService _eService;

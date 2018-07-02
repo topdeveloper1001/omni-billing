@@ -3,49 +3,93 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BillingSystem.Model.EntityDto;
-using BillingSystem.Repository.UOW;
 using System.Data.Entity;
+using BillingSystem.Repository.Interfaces;
+using BillingSystem.Model;
+using BillingSystem.Repository.Common;
+using BillingSystem.Common.Common;
+using System.Data.SqlClient;
 
 namespace BillingSystem.Bal.Service
 {
     public class ClinicianService : IClinicianService, IService<SpecialityDto>
     {
-        private readonly UnitOfWork _uow;
+        private readonly IRepository<Scheduling> _scRepository;
+        private readonly IRepository<Physician> _phRepository;
+        private readonly IRepository<GlobalCodes> _gRepository;
+        private readonly BillingEntities _context;
 
-        public ClinicianService(UnitOfWork uow)
+        public ClinicianService(IRepository<Scheduling> scRepository, IRepository<Physician> phRepository, IRepository<GlobalCodes> gRepository, BillingEntities context)
         {
-            _uow = uow;
+            _scRepository = scRepository;
+            _phRepository = phRepository;
+            _gRepository = gRepository;
+            _context = context;
         }
 
         public async Task<WeeklyScheduleDto> GetAppointmentsWeeklyScheduledDataAsync(long userId = 0, long facilityId = 0)
         {
-            using (var rep = _uow.SchedulingRepository)
-                return await rep.GetAppointmentsWeeklyScheduledDataAsync(userId, facilityId);
+            var sqlParams = new SqlParameter[2];
+            sqlParams[0] = new SqlParameter("pUserId", userId);
+            sqlParams[1] = new SqlParameter("pFacilityId", facilityId);
+
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetAppointmentsWeeklyScheduledData.ToString(), isCompiled: false, parameters: sqlParams))
+            {
+                var result = (await ms.GetResultWithJsonAsync<WeeklyScheduleDto>(JsonResultsArray.AppointmentWeeklyScheduledData.ToString())).FirstOrDefault();
+                return result;
+            }
         }
 
         public async Task<ClinicianDetailDto> GetClinicianDetailsForBookingAnAppoinment(long clinicianId)
         {
-            using (var rep = _uow.SchedulingRepository)
-                return await rep.GetClinicianDetailsForBookingAnAppoinment(clinicianId);
+            var sqlParams = new SqlParameter[1];
+            sqlParams[0] = new SqlParameter("pClinicianId", clinicianId);
+
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetClinicianDetailsForRescheduling.ToString(), isCompiled: false, parameters: sqlParams))
+            {
+                var result = (await ms.GetResultWithJsonAsync<ClinicianDetailDto>(JsonResultsArray.ClinicanDetail.ToString())).FirstOrDefault();
+                return result;
+            }
         }
 
         public async Task<AppointmentDetailsDto> GetCliniciansAndSpecialitiesAsync(long appointmentTypeId, int cityId = 0, long facilityId = 0)
         {
-            using (var rep = _uow.SchedulingRepository)
-                return await rep.GetCliniciansAndSpecialitiesAsync(appointmentTypeId, cityId, facilityId);
+            var sqlParams = new SqlParameter[3];
+            sqlParams[0] = new SqlParameter("pAppointmentTypeId", appointmentTypeId);
+            sqlParams[1] = new SqlParameter("pCityId", cityId);
+            sqlParams[2] = new SqlParameter("pFacilityId", facilityId);
+
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetCliniciansAndSpecialtiesByAppType.ToString(), isCompiled: false, parameters: sqlParams))
+            {
+                var result = (await ms.GetResultWithJsonAsync<AppointmentDetailsDto>(JsonResultsArray.CliniciansData.ToString())).FirstOrDefault();
+                return result;
+            }
         }
 
         public async Task<string> GetCliniciansAndSpecialitiesAsync2(long appointmentTypeId, int cityId = 0, long facilityId = 0)
         {
-            using (var rep = _uow.SchedulingRepository)
-                return await rep.GetCliniciansAndSpecialitiesAsync2(appointmentTypeId, cityId, facilityId);
+            var sqlParams = new SqlParameter[3];
+            sqlParams[0] = new SqlParameter("pAppointmentTypeId", appointmentTypeId);
+            sqlParams[1] = new SqlParameter("pCityId", cityId);
+            sqlParams[2] = new SqlParameter("pfacilityId", facilityId);
+
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetCliniciansAndSpecialtiesByAppType.ToString(), isCompiled: false, parameters: sqlParams))
+            {
+                var result = await ms.GetJsonStringResult();
+                return result;
+            }
         }
 
         public async Task<List<ClinicianDto>> GetCliniciansBySpecialityAsync(int specialityId)
         {
-            using (var rep = _uow.AppointmentTypesRepository)
+            var sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter("sId", specialityId);
+
+            using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetCliniciansBySpecialty.ToString(), isCompiled: false, parameters: sqlParameters))
             {
-                return await rep.GetCliniciansBySpecialyAsync(specialityId);
+                var reader = await multiResultSet.GetReaderAsync();
+                var result = GenericHelper.GetJsonResponse<ClinicianDto>(reader, "Clinicians");
+                return result;
             }
         }
 
@@ -54,35 +98,37 @@ namespace BillingSystem.Bal.Service
             var list = await GetListByCategory("1121");
             if (clinicianId != 0)
             {
-                using (var rep1 = _uow.PhysicianRepository)
-                {
-                    var specialtyId = await rep1.Where(a => a.Id == clinicianId).Select(b => b.FacultySpeciality).FirstOrDefaultAsync();
-                    list = list.Where(a => a.Id == specialtyId).ToList();
-                }
+                var specialtyId = await _phRepository.Where(a => a.Id == clinicianId).Select(b => b.FacultySpeciality).FirstOrDefaultAsync();
+                list = list.Where(a => a.Id == specialtyId).ToList();
             }
             return list;
         }
 
         public async Task<List<SpecialityDto>> GetListByCategory(string category, List<string> exclusions = null)
         {
-            using (var rep = _uow.GlobalCodeRepository)
+            var result = _gRepository.Where(g => g.GlobalCodeCategoryValue.Equals(category)
+            && g.IsActive && g.IsDeleted != true).Select(m =>
+            new SpecialityDto
             {
-                var result = rep.Where(g => g.GlobalCodeCategoryValue.Equals(category)
-                && g.IsActive && g.IsDeleted != true).Select(m =>
-                new SpecialityDto
-                {
-                    Id = m.GlobalCodeValue,
-                    Name = m.GlobalCodeName
-                }).ToList();
+                Id = m.GlobalCodeValue,
+                Name = m.GlobalCodeName
+            }).ToList();
 
-                return await Task.FromResult(result);
-            }
+            return await Task.FromResult(result);
+
         }
 
         public async Task<List<LocationDto>> GetLocationsAsync(int clinicianId)
         {
-            using (var rep = _uow.AppointmentTypesRepository)
-                return await rep.GetLocationsByClinicianAsync(clinicianId);
+            var sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter("clinicianId", clinicianId);
+
+            using (var multiResultSet = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetLocationsByClinician.ToString(), isCompiled: false, parameters: sqlParameters))
+            {
+                var reader = await multiResultSet.GetReaderAsync();
+                var result = GenericHelper.GetJsonResponse<LocationDto>(reader, "Locations");
+                return result;
+            }
         }
     }
 }

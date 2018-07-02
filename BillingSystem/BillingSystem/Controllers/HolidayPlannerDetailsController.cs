@@ -9,21 +9,22 @@
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
     using BillingSystem.Models;
 
-    /// <summary>
-    /// The holiday planner details controller.
-    /// </summary>
     public class HolidayPlannerDetailsController : BaseController
     {
+        private readonly IHolidayPlannerDetailsService _service;
+
+        public HolidayPlannerDetailsController(IHolidayPlannerDetailsService service)
+        {
+            _service = service;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -33,16 +34,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindHolidayPlannerDetailsList()
         {
-            // Initialize the HolidayPlannerDetails BAL object
-            using (var holidayPlannerDetailsBal = new HolidayPlannerDetailsService())
-            {
-                // Get the facilities list
-                var holidayPlannerDetailsList =
-                    holidayPlannerDetailsBal.GetHolidayPlannerDetails();
-
-                // Pass the ActionResult with List of HolidayPlannerDetailsViewModel object to Partial View HolidayPlannerDetailsList
-                return this.PartialView(PartialViews.HolidayPlannerDetailsList, holidayPlannerDetailsList);
-            }
+            var lst = _service.GetHolidayPlannerDetails();
+            return this.PartialView(PartialViews.HolidayPlannerDetailsList, lst);
         }
 
         /// <summary>
@@ -57,25 +50,13 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteHolidayPlannerDetails(int id)
         {
-            using (var bal = new HolidayPlannerDetailsService())
+            var currentHolidayPlannerDetails = _service.GetHolidayPlannerDetailsByID(id);
+            int userId = Helpers.GetLoggedInUserId();
+
+            if (currentHolidayPlannerDetails != null)
             {
-                // Get HolidayPlannerDetails model object by current HolidayPlannerDetails ID
-                var currentHolidayPlannerDetails = bal.GetHolidayPlannerDetailsByID(id);
-                int userId = Helpers.GetLoggedInUserId();
-
-                // Check If HolidayPlannerDetails model is not null
-                if (currentHolidayPlannerDetails != null)
-                {
-                    // currentHolidayPlannerDetails.IsActive = false;
-                    // currentHolidayPlannerDetails.ModifiedBy = userId;
-                    // currentHolidayPlannerDetails.ModifiedDate = DateTime.Now;
-
-                    // Update Operation of current HolidayPlannerDetails
-                    var result = bal.SaveHolidayPlannerDetails(currentHolidayPlannerDetails);
-
-                    // return deleted ID of current HolidayPlannerDetails as Json Result to the Ajax Call.
-                    return this.Json(result);
-                }
+                var result = _service.SaveHolidayPlannerDetails(currentHolidayPlannerDetails);
+                return this.Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -93,14 +74,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetHolidayPlannerDetails(int id)
         {
-            using (var bal = new HolidayPlannerDetailsService())
-            {
-                // Call the AddHolidayPlannerDetails Method to Add / Update current HolidayPlannerDetails
-                HolidayPlannerDetails currentHolidayPlannerDetails = bal.GetHolidayPlannerDetailsByID(id);
-
-                // Pass the ActionResult with the current HolidayPlannerDetailsViewModel object as model to PartialView HolidayPlannerDetailsAddEdit
-                return this.PartialView(PartialViews.HolidayPlannerDetailsAddEdit, currentHolidayPlannerDetails);
-            }
+            var currentHolidayPlannerDetails = _service.GetHolidayPlannerDetailsByID(id);
+            return this.PartialView(PartialViews.HolidayPlannerDetailsAddEdit, currentHolidayPlannerDetails);
         }
 
         /// <summary>
@@ -113,21 +88,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult HolidayPlannerDetailsMain()
         {
-            // Initialize the HolidayPlannerDetails BAL object
-            var holidayPlannerDetailsBal = new HolidayPlannerDetailsService();
-
-            // Get the Entity list
-            var holidayPlannerDetailsList =
-                holidayPlannerDetailsBal.GetHolidayPlannerDetails();
-
-            // Intialize the View Model i.e. HolidayPlannerDetailsView which is binded to Main View Index.cshtml under HolidayPlannerDetails
+            var lst = _service.GetHolidayPlannerDetails();
             var holidayPlannerDetailsView = new HolidayPlannerDetailsView
-                                                {
-                                                    HolidayPlannerDetailsList =
-                                                        holidayPlannerDetailsList, 
-                                                    CurrentHolidayPlannerDetails =
-                                                        new HolidayPlannerDetails()
-                                                };
+            {
+                HolidayPlannerDetailsList = lst,
+                CurrentHolidayPlannerDetails = new HolidayPlannerDetails()
+            };
 
             // Pass the View Model in ActionResult to View HolidayPlannerDetails
             return View(holidayPlannerDetailsView);
@@ -167,17 +133,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new HolidayPlannerDetailsService())
-                {
-                    if (model.Id > 0)
-                    {
-                        // model.ModifiedBy = userId;
-                        // model.ModifiedDate = DateTime.Now;
-                    }
-
-                    // Call the AddHolidayPlannerDetails Method to Add / Update current HolidayPlannerDetails
-                    newId = bal.SaveHolidayPlannerDetails(model);
-                }
+                newId = _service.SaveHolidayPlannerDetails(model);
             }
 
             return this.Json(newId);
@@ -189,10 +145,7 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteHolidayPlannerEvent(int id)
         {
             bool isDeleted = false;
-            using (var bal = new HolidayPlannerDetailsService())
-            {
-                isDeleted = bal.DeleteHolidayEvent(id);
-            }
+            isDeleted = _service.DeleteHolidayEvent(id);
 
             return Json(isDeleted, JsonRequestBehavior.AllowGet);
         }

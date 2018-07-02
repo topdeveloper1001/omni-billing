@@ -17,11 +17,16 @@
     public class IndicatorDataCheckListController : BaseController
     {
         private readonly IIndicatorDataCheckListService _service;
+        private readonly IFacilityService _fService;
+        private readonly IGlobalCodeService _gService;
 
-        public IndicatorDataCheckListController(IIndicatorDataCheckListService service)
+        public IndicatorDataCheckListController(IIndicatorDataCheckListService service, IFacilityService fService, IGlobalCodeService gService)
         {
             _service = service;
+            _fService = fService;
+            _gService = gService;
         }
+
 
         #region Public Methods and Operators
 
@@ -81,35 +86,30 @@
             /* if (list.Count == 0)
             {*/
             int cId = Helpers.GetDefaultCorporateId();
-            using (var facBal = new FacilityBal())
+            var facilities = _fService.GetFacilities(cId);
+            if (facilities.Any())
             {
-                var facilities = facBal.GetFacilities(cId);
-                if (facilities.Any())
-                {
-                    var merged = new List<IndicatorDataCheckListCustomModel>(list);
-                    var list1 = new List<IndicatorDataCheckListCustomModel>();
-                    list1.AddRange(
-                        facilities.Select(
-                            item =>
-                            new IndicatorDataCheckListCustomModel
-                            {
-                                FacilityName = item.FacilityName,
-                                FacilityId = item.FacilityId,
-                            }));
-                    merged.AddRange(list1.Where(p2 => list.All(p1 => p1.FacilityId != p2.FacilityId)));
+                var merged = new List<IndicatorDataCheckListCustomModel>(list);
+                var list1 = new List<IndicatorDataCheckListCustomModel>();
+                list1.AddRange(
+                    facilities.Select(
+                        item =>
+                        new IndicatorDataCheckListCustomModel
+                        {
+                            FacilityName = item.FacilityName,
+                            FacilityId = item.FacilityId,
+                        }));
+                merged.AddRange(list1.Where(p2 => list.All(p1 => p1.FacilityId != p2.FacilityId)));
 
-                    var oGlobalCodeBal = new GlobalCodeBal();
-                    var yearDD = oGlobalCodeBal.GetGlobalCodesByCategoryValue("4602").OrderBy(x => x.GlobalCodeID).ToList();
-                    List<GlobalCodes> monthDD =
-                        oGlobalCodeBal.GetGlobalCodesByCategoryValue("903").OrderBy(x => x.GlobalCodeID).ToList();
-                    var obj = new IndicatorDataCheckListView
-                    {
-                        IndicatorDataCheckListList = merged,
-                        DdYearList = yearDD,
-                        DdMonthList = monthDD
-                    };
-                    return PartialView(PartialViews.IndicatorDataCheckListList, obj);
-                }
+                var yearDD = _gService.GetGlobalCodesByCategoryValue("4602").OrderBy(x => x.GlobalCodeID).ToList();
+                List<GlobalCodes> monthDD = _gService.GetGlobalCodesByCategoryValue("903").OrderBy(x => x.GlobalCodeID).ToList();
+                var obj = new IndicatorDataCheckListView
+                {
+                    IndicatorDataCheckListList = merged,
+                    DdYearList = yearDD,
+                    DdMonthList = monthDD
+                };
+                return PartialView(PartialViews.IndicatorDataCheckListList, obj);
             }
             return PartialView(PartialViews.IndicatorDataCheckListList, list);
         }
@@ -123,24 +123,21 @@
         public ActionResult GetFacilitiesList()
         {
             int cId = Helpers.GetDefaultCorporateId();
-            using (var facBal = new FacilityBal())
+            List<Facility> facilities = _fService.GetFacilities(cId);
+            if (facilities.Any())
             {
-                List<Facility> facilities = facBal.GetFacilities(cId);
-                if (facilities.Any())
-                {
-                    var list = new List<IndicatorDataCheckListCustomModel>();
-                    list.AddRange(
-                        facilities.Select(
-                            item =>
-                            new IndicatorDataCheckListCustomModel
-                            {
-                                FacilityName = item.FacilityName,
-                                FacilityId = item.FacilityId,
-                            }));
+                var list = new List<IndicatorDataCheckListCustomModel>();
+                list.AddRange(
+                    facilities.Select(
+                        item =>
+                        new IndicatorDataCheckListCustomModel
+                        {
+                            FacilityName = item.FacilityName,
+                            FacilityId = item.FacilityId,
+                        }));
 
-                    var obj = new IndicatorDataCheckListView { IndicatorDataCheckListList = list };
-                    return PartialView(PartialViews.IndicatorDataCheckListList, obj);
-                }
+                var obj = new IndicatorDataCheckListView { IndicatorDataCheckListList = list };
+                return PartialView(PartialViews.IndicatorDataCheckListList, obj);
             }
 
             return Json(null);

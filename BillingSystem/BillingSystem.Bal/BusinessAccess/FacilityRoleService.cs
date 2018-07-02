@@ -421,14 +421,11 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var list = new List<FacilityRoleCustomModel>();
             var facilityRoleList = _repository.Where(x => x.IsDeleted != true && x.CorporateId == corporateId && x.FacilityId == facilityId && x.SchedulingApplied == scheduledApplied).ToList();
-            using (var roleBal = new RoleService())
+            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
             {
-                list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-                {
-                    RoleId = item.RoleId,
-                    RoleName = roleBal.GetRoleNameById(item.RoleId)
-                }));
-            }
+                RoleId = item.RoleId,
+                RoleName = GetRoleNameById(item.RoleId)
+            }));
             return list;
         }
 
@@ -436,14 +433,11 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var list = new List<FacilityRoleCustomModel>();
             var facilityRoleList = _repository.Where(x => x.IsDeleted != true && x.CorporateId == corporateId && x.FacilityId == facilityId && x.CarePlanAccessible == carePlanAccessible).ToList();
-            using (var roleBal = new RoleService())
+            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
             {
-                list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-                {
-                    RoleId = item.RoleId,
-                    RoleName = roleBal.GetRoleNameById(item.RoleId)
-                }));
-            }
+                RoleId = item.RoleId,
+                RoleName = GetRoleNameById(item.RoleId)
+            }));
             return list;
         }
 

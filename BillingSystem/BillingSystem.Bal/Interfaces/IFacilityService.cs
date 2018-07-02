@@ -7,6 +7,7 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface IFacilityService
     {
+        string GetFacilityNameByNumber(string number);
         List<FacilityCustomModel> AddUpdateFacility(Facility facility, out int facilityId);
         int CheckDuplicateFacilityNoAndLicenseNo(string facilityNumber, string lic, int id, int corporateId);
         void CreateDefaultFacilityItems(int fId, string fName, int userId);
