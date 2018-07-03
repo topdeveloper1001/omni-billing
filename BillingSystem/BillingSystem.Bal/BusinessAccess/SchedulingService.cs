@@ -34,7 +34,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
 
         #region Constructors and Destructors
-         
+
         public SchedulingService(IRepository<Scheduling> repository, IRepository<FacilityStructure> fsRepository, IRepository<Facility> fRepository, IRepository<GlobalCodes> gRepository, IRepository<Role> roRepository, IRepository<Physician> phRepository, IRepository<Corporate> cRepository, IRepository<PatientLoginDetail> pldRepository, IRepository<AppointmentTypes> atRepository, IRepository<PatientInfo> piRepository, IRepository<DeptTimming> dptRepository, IMapper mapper, BillingEntities context)
         {
             _repository = repository;
@@ -177,46 +177,47 @@ namespace BillingSystem.Bal.BusinessAccess
         }
         private List<Scheduling> MapValuesVM(IEnumerable<SchedulingCustomModel> m)
         {
-            var lst = new List<Scheduling>();
-            foreach (var model in m)
-            {
-                var vm = _mapper.Map<SchedulingCustomModel>(model);
-                var physicianObj = !string.IsNullOrEmpty(model.PhysicianId) ?
-                    GetPhysicianCModelById(Convert.ToInt32(model.PhysicianId)) :
-                    null;
-                var patientObj = GetPatientCustomModelByPatientId(Convert.ToInt32(model.AssociatedId));
-                if (physicianObj != null)
-                {
-                    vm.PhysicianSPL = physicianObj.UserSpecialityStr;
-                    //vm.DepartmentName = physicianObj.UserDepartmentStr;
-                    vm.PhysicianName = physicianObj.Physician.PhysicianName;
-                    vm.PatientId = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PatientID : 0;
-                    vm.PatientName = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PersonFirstName + " " + patientObj.PatientInfo.PersonLastName : string.Empty;
-                    vm.PatientEmailId = GetPatientEmail(patientObj.PatientInfo.PatientID);
-                    vm.PatientEmirateIdNumber = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PersonEmiratesIDNumber : string.Empty;
-                    vm.PatientDOB = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PersonBirthDate : DateTime.Now;
-                    vm.MultipleProcedures = Convert.ToBoolean(vm.ExtValue3);
-                    var firstOrDefault = patientObj != null && patientObj.PatientInfo != null
-                        ? patientObj.PatientInfo.PatientPhone.FirstOrDefault(x => x.IsPrimary == true)
-                        : null;
+            return m.Select(x => _mapper.Map<Scheduling>(x)).ToList();
+            //var lst = new List<Scheduling>();
+            //foreach (var model in m)
+            //{
+            //    var vm = _mapper.Map<Scheduling>(model);
+            //    //var physicianObj = !string.IsNullOrEmpty(model.PhysicianId) ?
+            //    //    GetPhysicianCModelById(Convert.ToInt32(model.PhysicianId)) :
+            //    //    null;
+            //    //var patientObj = GetPatientCustomModelByPatientId(Convert.ToInt32(model.AssociatedId));
+            //    //if (physicianObj != null)
+            //    //{
+            //    //    vm.PhysicianSPL = physicianObj.UserSpecialityStr;
+            //    //    //vm.DepartmentName = physicianObj.UserDepartmentStr;
+            //    //    vm.PhysicianName = physicianObj.Physician.PhysicianName;
+            //    //    vm.PatientId = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PatientID : 0;
+            //    //    vm.PatientName = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PersonFirstName + " " + patientObj.PatientInfo.PersonLastName : string.Empty;
+            //    //    vm.PatientEmailId = GetPatientEmail(patientObj.PatientInfo.PatientID);
+            //    //    vm.PatientEmirateIdNumber = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PersonEmiratesIDNumber : string.Empty;
+            //    //    vm.PatientDOB = patientObj != null && patientObj.PatientInfo != null ? patientObj.PatientInfo.PersonBirthDate : DateTime.Now;
+            //    //    vm.MultipleProcedures = Convert.ToBoolean(vm.ExtValue3);
+            //    //    var firstOrDefault = patientObj != null && patientObj.PatientInfo != null
+            //    //        ? patientObj.PatientInfo.PatientPhone.FirstOrDefault(x => x.IsPrimary == true)
+            //    //        : null;
 
-                    if (firstOrDefault != null)
-                        vm.PatientPhoneNumber = patientObj.PatientInfo != null ? firstOrDefault.PhoneNo : string.Empty;
+            //    //    if (firstOrDefault != null)
+            //    //        vm.PatientPhoneNumber = patientObj.PatientInfo != null ? firstOrDefault.PhoneNo : string.Empty;
 
-                    vm.PhysicianId = model.PhysicianId;
-                    vm.DepartmentName = string.IsNullOrEmpty(model.ExtValue1)
-                                            ? string.Empty
-                                            : GetDepartmentNameById(Convert.ToInt32(model.ExtValue1));
-                    vm.AppointmentTypeStr = string.IsNullOrEmpty(model.TypeOfProcedure)
-                                                ? string.Empty
-                                                : GetAppointmentTypeById(
-                                                    Convert.ToInt32(model.TypeOfProcedure));
-                    vm.FacilityName = GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
-                    vm.CorporateName = GetCorporateNameFromId(Convert.ToInt32(model.CorporateId));
-                }
-                lst.Add(vm);
-            }
-            return lst;
+            //    //    vm.PhysicianId = model.PhysicianId;
+            //    //    vm.DepartmentName = string.IsNullOrEmpty(model.ExtValue1)
+            //    //                            ? string.Empty
+            //    //                            : GetDepartmentNameById(Convert.ToInt32(model.ExtValue1));
+            //    //    vm.AppointmentTypeStr = string.IsNullOrEmpty(model.TypeOfProcedure)
+            //    //                                ? string.Empty
+            //    //                                : GetAppointmentTypeById(
+            //    //                                    Convert.ToInt32(model.TypeOfProcedure));
+            //    //    vm.FacilityName = GetFacilityNameByFacilityId(Convert.ToInt32(model.FacilityId));
+            //    //    vm.CorporateName = GetCorporateNameFromId(Convert.ToInt32(model.CorporateId));
+            //    //}
+            //    lst.Add(vm);
+            //}
+            //return lst;
         }
         private NotAvialableTimeSlots MapValues(Scheduling model)
         {
