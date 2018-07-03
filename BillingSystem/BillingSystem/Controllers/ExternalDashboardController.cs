@@ -22,7 +22,25 @@ namespace BillingSystem.Controllers
         private readonly IFacilityStructureService _fsService;
         private readonly IUsersService _uService;
         private readonly IDashboardBudgetService _dbService;
+        private readonly IFacilityService _fService;
+        private readonly IIndicatorDataCheckListService _iService;
+        private readonly IDashboardRemarkService _drService;
         private readonly IEncounterService _eService;
+        private readonly IGlobalCodeService _gService;
+        private readonly IProjectTasksService _ptService;
+
+        public ExternalDashboardController(IFacilityStructureService fsService, IUsersService uService, IDashboardBudgetService dbService, IFacilityService fService, IIndicatorDataCheckListService iService, IDashboardRemarkService drService, IEncounterService eService, IGlobalCodeService gService, IProjectTasksService ptService)
+        {
+            _fsService = fsService;
+            _uService = uService;
+            _dbService = dbService;
+            _fService = fService;
+            _iService = iService;
+            _drService = drService;
+            _eService = eService;
+            _gService = gService;
+            _ptService = ptService;
+        }
 
         private static List<ExternalDashboardModel> ExternalDashboardLocalList { get; set; }
 
@@ -54,30 +72,24 @@ namespace BillingSystem.Controllers
             //Get Departments data
             dList = _fsService.GetRevenueDepartments(corporateid,
                facilityId == 0 ? Convert.ToString(Helpers.GetDefaultFacilityId()) : Convert.ToString(facilityId));
-            var currentdt = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentdt = _fService.GetInvariantCultureDateTime(facilityId);
             var defaultYear = currentdt.Year;
             var defaultMonth = currentdt.Month;
 
             //Get Facility data
-            using (var bal = new FacilityBal())
-                fList = bal.GetFacilitiesForDashboards(facilityId, corporateid, Helpers.GetLoggedInUserIsAdmin());
+            fList = _fService.GetFacilitiesForDashboards(facilityId, corporateid, Helpers.GetLoggedInUserIsAdmin());
 
-            //Get Region Type, Facility Types and Months data
-            using (var gBal = new GlobalCodeBal())
+            var list = _gService.GetListByCategoriesRange(categories);
+            ftList = list.Where(f => f.ExternalValue1.Equals("4242")).ToList();
+            rList = list.Where(f => f.ExternalValue1.Equals("4141")).ToList();
+            mList = list.Where(f => f.ExternalValue1.Equals("903")).OrderBy(f => int.Parse(f.Value)).ToList();
+
+            var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId == 0 ? Helpers.GetDefaultFacilityId() : facilityId
+                , corporateid);
+            if (defaults.Count == 2)
             {
-                var list = gBal.GetListByCategoriesRange(categories);
-                ftList = list.Where(f => f.ExternalValue1.Equals("4242")).ToList();
-                rList = list.Where(f => f.ExternalValue1.Equals("4141")).ToList();
-                mList = list.Where(f => f.ExternalValue1.Equals("903")).OrderBy(f => int.Parse(f.Value)).ToList();
-
-                var defaults =
-                    gBal.GetDefaultMonthAndYearByFacilityId(
-                        facilityId == 0 ? Helpers.GetDefaultFacilityId() : facilityId, corporateid);
-                if (defaults.Count == 2)
-                {
-                    defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
-                    defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
-                }
+                defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
+                defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
             }
 
             var data = new DropdownDataClass
@@ -148,7 +160,7 @@ namespace BillingSystem.Controllers
             var facilityId = facilityID ?? 9999;
             facilityId = facilityId == 0 ? 9999 : facilityId;
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentYear).ToShortDateString();
 
@@ -194,23 +206,20 @@ namespace BillingSystem.Controllers
             #endregion
 
             #region Remarks Section Listing
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
                     Convert.ToInt32(1));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                }
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
             }
             #endregion
             #region Dashboard View Initialization
@@ -252,7 +261,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExecutiveDashboardGraphList(int facilityId, int month, int facilityType, int segment, int department, string type)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             //var execDashboardData = "144,156,120,110,121,159,247,103,277,165,127,143,109,122";
@@ -351,7 +360,7 @@ namespace BillingSystem.Controllers
         {
             const string execDashboardData = "144,156,120,110,121,159,247,103,277,143,109,122,244,245,1316";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetManualDashBoardV1(facilityId, corporateId,
@@ -462,13 +471,12 @@ namespace BillingSystem.Controllers
             #endregion
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
             var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
                 ? loggedinfacilityId
                  : 0;
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
 
             #region Main Code 
             #region Stats Section List objects
@@ -518,50 +526,47 @@ namespace BillingSystem.Controllers
                : new List<ExternalDashboardModel>();
             #endregion
 
-            using (var bal = new DashboardRemarkBal())
+            #region Remarks Data
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                            Convert.ToInt32(1));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                #region Remarks Data
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                                Convert.ToInt32(1));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                }
-                #endregion
-
-                #region Executive Dashboard Assignment/ initialization
-                var dashboardview = new ExecutiveDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 1,
-                    Title = Helpers.ExternalDashboardTitleView("1"),
-                    Section1List = section1List,
-                    Section5List = section5List,
-                    Section10List = section10List,
-                    BalanceSheetList = balanceSheetSectionList,
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                    Section10RemarksList = section10RemarksList
-                };
-                #endregion
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
             }
+            #endregion
+
+            #region Executive Dashboard Assignment/ initialization
+            var dashboardview = new ExecutiveDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 1,
+                Title = Helpers.ExternalDashboardTitleView("1"),
+                Section1List = section1List,
+                Section5List = section5List,
+                Section10List = section10List,
+                BalanceSheetList = balanceSheetSectionList,
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+                Section10RemarksList = section10RemarksList
+            };
+            #endregion
+            return View(dashboardview);
 
             #endregion
         }
@@ -601,7 +606,7 @@ namespace BillingSystem.Controllers
 
             var facilityId = facilityID ?? 9999;
             facilityId = facilityId == 0 ? 9999 : facilityId;
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var customDate = Convert.ToDateTime(month + "/" + month + "/" + currentDateTime.Year).ToShortDateString();
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -647,23 +652,20 @@ namespace BillingSystem.Controllers
             #endregion
 
             #region Remarks Section Listing
-            using (var bal = new DashboardRemarkBal())
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
+                     Convert.ToInt32(1));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, Convert.ToInt32(facilityID),
-                    Convert.ToInt32(1));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                }
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
             }
             #endregion
 
@@ -720,12 +722,11 @@ namespace BillingSystem.Controllers
             #endregion
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                 ? loggedinfacilityId
                  : 0;
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
             var corporateid = Helpers.GetSysAdminCorporateID();
             #region Main Code
 
@@ -776,50 +777,47 @@ namespace BillingSystem.Controllers
                : new List<ExternalDashboardModel>();
             #endregion
 
-            using (var bal = new DashboardRemarkBal())
+            #region Remarks Data
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                            Convert.ToInt32(1));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                #region Remarks Data
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                                Convert.ToInt32(1));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                }
-                #endregion
-
-                #region Executive Dashboard Assignment/ initialization
-                var dashboardview = new ExecutiveDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 1,
-                    Title = Helpers.ExternalDashboardTitleView("1"),
-                    Section1List = section1List,
-                    Section5List = section5List,
-                    Section10List = section10List,
-                    BalanceSheetList = balanceSheetSectionList,
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                    Section10RemarksList = section10RemarksList
-                };
-                #endregion
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
             }
+            #endregion
+
+            #region Executive Dashboard Assignment/ initialization
+            var dashboardview = new ExecutiveDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 1,
+                Title = Helpers.ExternalDashboardTitleView("1"),
+                Section1List = section1List,
+                Section5List = section5List,
+                Section10List = section10List,
+                BalanceSheetList = balanceSheetSectionList,
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+                Section10RemarksList = section10RemarksList
+            };
+            #endregion
+            return View(dashboardview);
 
             #endregion
         }
@@ -847,66 +845,60 @@ namespace BillingSystem.Controllers
             var section2RemarksList = new List<DashboardRemarkCustomModel>();
             var section3RemarksList = new List<DashboardRemarkCustomModel>();
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
+            var mainList = GetExecutiveKeyPerformanceList(facilityId);
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityId,
+                Convert.ToInt32(10));
+
+            var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
+            var financialType = Convert.ToString((int)DashboardProjectType.Financial);
+            var opType = Convert.ToString((int)DashboardProjectType.Operational);
+            var indType = Convert.ToString((int)DashboardProjectType.Individual);
+
+            var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
+            var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
+            var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
+            var opExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(opType)).ToList();
+
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var mainList = GetExecutiveKeyPerformanceList(facilityId);
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityId,
-                    Convert.ToInt32(10));
-
-                var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
-                var financialType = Convert.ToString((int)DashboardProjectType.Financial);
-                var opType = Convert.ToString((int)DashboardProjectType.Operational);
-                var indType = Convert.ToString((int)DashboardProjectType.Individual);
-
-                var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
-                var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
-                var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
-                var opExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(opType)).ToList();
-
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(strategicType)).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(opType)).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(financialType)).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(indType)).ToList();
-                }
-                var dbView = new ExecutiveKeyPerformanceView
-                {
-                    FacilityId = facilityId,
-                    DashboardType = 10,
-                    StrategicKpiList = strategicExec,
-                    FinancialKpiList = financialExec,
-                    IndividualKpiList = individualExec,
-                    OperationalKpiList = opExec,
-                    Title = Helpers.ExternalDashboardTitleView("10"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                };
-                return dbView;
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(strategicType)).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(opType)).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(financialType)).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(indType)).ToList();
             }
+            var dbView = new ExecutiveKeyPerformanceView
+            {
+                FacilityId = facilityId,
+                DashboardType = 10,
+                StrategicKpiList = strategicExec,
+                FinancialKpiList = financialExec,
+                IndividualKpiList = individualExec,
+                OperationalKpiList = opExec,
+                Title = Helpers.ExternalDashboardTitleView("10"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+            };
+            return dbView;
         }
 
         private List<ProjectsCustomModel> GetExecutiveKeyPerformanceList(int facilityId)
         {
-            using (var bal = new ProjectTasksBal())
+            var list = _ptService.GetProjectsForExecKpiDashboard(Helpers.GetSysAdminCorporateID(), facilityId);
+            if (list.Count > 0)
             {
-                var list = bal.GetProjectsForExecKpiDashboard(Helpers.GetSysAdminCorporateID(), facilityId);
-                if (list.Count > 0)
+                foreach (var pr in list)
                 {
-                    foreach (var pr in list)
+                    if (pr.Milestones != null && pr.Milestones.Any())
                     {
-                        if (pr.Milestones != null && pr.Milestones.Any())
-                        {
-                            pr.Milestones.ForEach(cc =>
-                              cc.ColorImage = Url.Content(cc.ColorImage));
-                        }
+                        pr.Milestones.ForEach(cc =>
+                          cc.ColorImage = Url.Content(cc.ColorImage));
                     }
                 }
-                return list;
             }
+            return list;
         }
 
         public JsonResult BindKPIDropdownData()
@@ -943,31 +935,27 @@ namespace BillingSystem.Controllers
                 var section1RemarksList = new List<DashboardRemarkCustomModel>();
                 var section2RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
-                using (var bal = new DashboardRemarkBal())
+                var corporateid = Helpers.GetSysAdminCorporateID();
+                var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
+                if (allRemarksList != null && allRemarksList.Count > 0)
                 {
-                    var corporateid = Helpers.GetSysAdminCorporateID();
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    }
-
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 4,
-                        Title = Helpers.ExternalDashboardTitleView("10"),
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                    };
-                    return View(dashboardview);
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
                 }
+
+                var dashboardview = new ExecutiveDashboardView
+                {
+                    FacilityId = facilityid,
+                    DashboardType = 4,
+                    Title = Helpers.ExternalDashboardTitleView("10"),
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                };
+                return View(dashboardview);
             }
             return View("Index");
         }
@@ -1000,7 +988,7 @@ namespace BillingSystem.Controllers
             const string ClinicalComplianceGrpahsArray = "720,721,722,723";
 
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId, Convert.ToString(ClinicalComplianceGrpahsArray), currentYear, facilityType, segment, department);
@@ -1069,45 +1057,41 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
-                using (var bal = new DashboardRemarkBal())
+                var corporateid = Helpers.GetSysAdminCorporateID();
+                var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
+                if (allRemarksList != null && allRemarksList.Count > 0)
                 {
-                    var corporateid = Helpers.GetSysAdminCorporateID();
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                        section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                        section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                        section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    }
-
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 4,
-                        Title = Helpers.ExternalDashboardTitleView("3"),
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                        Section3RemarksList = section3RemarksList,
-                        Section4RemarksList = section4RemarksList,
-                        Section5RemarksList = section5RemarksList,
-                        Section6RemarksList = section6RemarksList,
-                        Section7RemarksList = section7RemarksList,
-                        Section8RemarksList = section8RemarksList,
-                        Section9RemarksList = section9RemarksList,
-                    };
-                    return View(dashboardview);
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
                 }
+
+                var dashboardview = new ExecutiveDashboardView
+                {
+                    FacilityId = facilityid,
+                    DashboardType = 4,
+                    Title = Helpers.ExternalDashboardTitleView("3"),
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                    Section3RemarksList = section3RemarksList,
+                    Section4RemarksList = section4RemarksList,
+                    Section5RemarksList = section5RemarksList,
+                    Section6RemarksList = section6RemarksList,
+                    Section7RemarksList = section7RemarksList,
+                    Section8RemarksList = section8RemarksList,
+                    Section9RemarksList = section9RemarksList,
+                };
+                return View(dashboardview);
             }
             return View("Index");
         }
@@ -1116,7 +1100,7 @@ namespace BillingSystem.Controllers
         {
             const string clinicalGrpahsArray = "750,174,830,832,758,756,180,181,186,175,752,754,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
                 Convert.ToString(clinicalGrpahsArray),
@@ -1298,9 +1282,8 @@ namespace BillingSystem.Controllers
         public ActionResult CamFinancialMGTDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -1313,39 +1296,36 @@ namespace BillingSystem.Controllers
             var section7RemarksList = new List<DashboardRemarkCustomModel>();
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(5));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                }
-                var dashboardview = new CamFinancialMGTDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 5,
-                    Title = Helpers.ExternalDashboardTitleView("4"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
             }
+            var dashboardview = new CamFinancialMGTDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 5,
+                Title = Helpers.ExternalDashboardTitleView("4"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+            };
+            return View(dashboardview);
         }
 
         public ActionResult BindAllFinancialManagementDataOnLoad(int facilityId)
@@ -1388,7 +1368,7 @@ namespace BillingSystem.Controllers
 
         public FinancialManagementData GetFinancialManagementGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var corporateid = Helpers.GetSysAdminCorporateID();
 
@@ -1512,47 +1492,43 @@ namespace BillingSystem.Controllers
             var section10RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
-            using (var bal = new DashboardRemarkBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                Convert.ToInt32(6));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                    Convert.ToInt32(6));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                }
-                var dashboardview = new RCMDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 6,
-                    Title = Helpers.ExternalDashboardTitleView("5"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                    Section10RemarksList = section10RemarksList,
-                };
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
             }
+            var dashboardview = new RCMDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 6,
+                Title = Helpers.ExternalDashboardTitleView("5"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+                Section10RemarksList = section10RemarksList,
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -1568,7 +1544,7 @@ namespace BillingSystem.Controllers
         {
 
             var cId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
 
@@ -1652,7 +1628,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsData_New(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
@@ -1736,9 +1712,8 @@ namespace BillingSystem.Controllers
             //var section3RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var facilityId = facilityID ?? facilityid;
@@ -1746,41 +1721,6 @@ namespace BillingSystem.Controllers
             var dbView = GetKpiData(facilityId);
             return PartialView(PartialViews.ExecutiveKeyPerfomDashboardPview, dbView);
 
-            //using (var bal = new DashboardRemarkBal())
-            //{
-            //    var mainList = GetExecutiveKeyPerformanceList(facilityId);
-            //    var corporateid = Helpers.GetSysAdminCorporateID();
-            //    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityId,
-            //        Convert.ToInt32(10));
-
-            //    var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
-            //    var financialType = Convert.ToString((int)DashboardProjectType.Financial);
-            //    var indType = Convert.ToString((int)DashboardProjectType.Individual);
-
-            //    var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
-            //    var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
-            //    var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
-            //    if (allRemarksList != null && allRemarksList.Count > 0)
-            //    {
-            //        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-            //        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-            //        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-            //    }
-            //    var dashboardview = new ExecutiveKeyPerformanceView
-            //    {
-            //        FacilityId = facilityid,
-            //        DashboardType = 10,
-            //        StrategicKpiList = strategicExec,
-            //        FinancialKpiList = financialExec,
-            //        IndividualKpiList = individualExec,
-            //        Title = Helpers.ExternalDashboardTitleView("10"),
-            //        Section1RemarksList = section1RemarksList,
-            //        Section2RemarksList = section2RemarksList,
-            //        Section3RemarksList = section3RemarksList,
-            //    };
-            //    //return PartialView(ExecutiveKeyPerfomDashboardPview)
-            //    return PartialView(PartialViews.ExecutiveKeyPerfomDashboardPview, dashboardview);
-            //}
         }
 
         /// <summary>
@@ -1801,39 +1741,36 @@ namespace BillingSystem.Controllers
                 var section5RemarksList = new List<DashboardRemarkCustomModel>();
                 var section6RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
-                using (var bal = new DashboardRemarkBal())
-                {
-                    var corporateid = Helpers.GetSysAdminCorporateID();
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    }
 
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 4,
-                        Title = Helpers.ExternalDashboardTitleView("10"),
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                        Section3RemarksList = section3RemarksList,
-                        Section4RemarksList = section4RemarksList,
-                        Section5RemarksList = section5RemarksList,
-                        Section6RemarksList = section6RemarksList,
-                    };
-                    return View(dashboardview);
+                var corporateid = Helpers.GetSysAdminCorporateID();
+                var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
+                if (allRemarksList != null && allRemarksList.Count > 0)
+                {
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
                 }
+
+                var dashboardview = new ExecutiveDashboardView
+                {
+                    FacilityId = facilityid,
+                    DashboardType = 4,
+                    Title = Helpers.ExternalDashboardTitleView("10"),
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                    Section3RemarksList = section3RemarksList,
+                    Section4RemarksList = section4RemarksList,
+                    Section5RemarksList = section5RemarksList,
+                    Section6RemarksList = section6RemarksList,
+                };
+                return View(dashboardview);
             }
             return View("Index");
         }
@@ -1860,60 +1797,56 @@ namespace BillingSystem.Controllers
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityid);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
 
             var customDate = currentDateTime.Year;
             patinetFallList = _dbService.GetPatientFallRate(facilityid, Helpers.GetSysAdminCorporateID(), "", customDate, 0, 0, 0);
 
-            using (var bal = new DashboardRemarkBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                Convert.ToInt32(2));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                    Convert.ToInt32(2));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                    section11RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("11")).ToList();
-                    section12RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("12")).ToList();
-                    section13RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("13")).ToList();
-                }
-                var dashboardview = new KPISummaryDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 2,
-                    Title = Helpers.ExternalDashboardTitleView("2"),
-                    PatinetFallList = patinetFallList,
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                    Section10RemarksList = section10RemarksList,
-                    Section11RemarksList = section11RemarksList,
-                    Section12RemarksList = section12RemarksList,
-                    Section13RemarksList = section13RemarksList
-                };
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
+                section11RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("11")).ToList();
+                section12RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("12")).ToList();
+                section13RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("13")).ToList();
             }
+            var dashboardview = new KPISummaryDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 2,
+                Title = Helpers.ExternalDashboardTitleView("2"),
+                PatinetFallList = patinetFallList,
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+                Section10RemarksList = section10RemarksList,
+                Section11RemarksList = section11RemarksList,
+                Section12RemarksList = section12RemarksList,
+                Section13RemarksList = section13RemarksList
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -1945,7 +1878,7 @@ namespace BillingSystem.Controllers
             var section12RemarksList = new List<DashboardRemarkCustomModel>();
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
             #endregion
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Convert.ToInt32(facilityID));
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Convert.ToInt32(facilityID));
             #region patinetFallList Data
             var customDate = currentDateTime.Year;
             patinetFallList = _dbService.GetPatientFallRate(Convert.ToInt32(facilityID),
@@ -1955,59 +1888,56 @@ namespace BillingSystem.Controllers
 
             #region KPI Dashboard Filtered Data Section
             var loggedinfacilityId = Convert.ToInt32(facilityID);
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                 ? loggedinfacilityId
                  : 17;
-            using (var bal = new DashboardRemarkBal())
-            {
-                #region Remarks Section
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                    Convert.ToInt32(2));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                    section11RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("11")).ToList();
-                    section12RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("12")).ToList();
-                    section13RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("13")).ToList();
-                }
-                #endregion
-                #region Dashboard Binding
+            #region Remarks Section
+            var corporateid = Helpers.GetSysAdminCorporateID();
 
-                var dashboardview = new KPISummaryDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 2,
-                    Title = Helpers.ExternalDashboardTitleView("2"),
-                    PatinetFallList = patinetFallList,
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                    Section10RemarksList = section10RemarksList,
-                    Section11RemarksList = section11RemarksList,
-                    Section12RemarksList = section12RemarksList,
-                    Section13RemarksList = section13RemarksList
-                };
-                #endregion
-                return PartialView(PartialViews.KPIDashboardPView, dashboardview);
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                Convert.ToInt32(2));
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
+                section11RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("11")).ToList();
+                section12RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("12")).ToList();
+                section13RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("13")).ToList();
             }
+            #endregion
+            #region Dashboard Binding
+
+            var dashboardview = new KPISummaryDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 2,
+                Title = Helpers.ExternalDashboardTitleView("2"),
+                PatinetFallList = patinetFallList,
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+                Section10RemarksList = section10RemarksList,
+                Section11RemarksList = section11RemarksList,
+                Section12RemarksList = section12RemarksList,
+                Section13RemarksList = section13RemarksList
+            };
+            #endregion
+            return PartialView(PartialViews.KPIDashboardPView, dashboardview);
             #endregion
         }
 
@@ -2027,45 +1957,41 @@ namespace BillingSystem.Controllers
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
-            using (var bal = new DashboardRemarkBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                Convert.ToInt32(6));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                    Convert.ToInt32(6));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                }
-                var dashboardview = new RCMDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 6,
-                    Title = Helpers.ExternalDashboardTitleView("5"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                };
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
             }
+            var dashboardview = new RCMDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 6,
+                Title = Helpers.ExternalDashboardTitleView("5"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -2075,11 +2001,12 @@ namespace BillingSystem.Controllers
         public ActionResult FinancialMGTDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
+
             var corporateid = Helpers.GetSysAdminCorporateID();
             var section1RemarksList = new List<DashboardRemarkCustomModel>();
             var section2RemarksList = new List<DashboardRemarkCustomModel>();
@@ -2089,37 +2016,35 @@ namespace BillingSystem.Controllers
             var section6RemarksList = new List<DashboardRemarkCustomModel>();
             var section7RemarksList = new List<DashboardRemarkCustomModel>();
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(5));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                }
-                var dashboardview = new FinancialMGTDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 5,
-                    Title = Helpers.ExternalDashboardTitleView("4"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
             }
+            var dashboardview = new FinancialMGTDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 5,
+                Title = Helpers.ExternalDashboardTitleView("4"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -2129,9 +2054,9 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -2141,33 +2066,31 @@ namespace BillingSystem.Controllers
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
             var section5RemarksList = new List<DashboardRemarkCustomModel>();
             var section6RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(8));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                }
-                var dashboardview = new HRDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 8,
-                    Title = Helpers.ExternalDashboardTitleView("7"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
             }
+            var dashboardview = new HRDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 8,
+                Title = Helpers.ExternalDashboardTitleView("7"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -2177,9 +2100,8 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboard()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -2188,31 +2110,29 @@ namespace BillingSystem.Controllers
             var section3RemarksList = new List<DashboardRemarkCustomModel>();
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
             var section5RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(7));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                }
-                var dashboardview = new CaseMgtDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 7,
-                    Title = Helpers.ExternalDashboardTitleView("6"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
             }
+            var dashboardview = new CaseMgtDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 7,
+                Title = Helpers.ExternalDashboardTitleView("6"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -2229,7 +2149,7 @@ namespace BillingSystem.Controllers
         {
             var manualDashboardData = new List<ManualDashboardCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "124")
             {
@@ -2286,7 +2206,7 @@ namespace BillingSystem.Controllers
         {
             var dashboardTypeid = Convert.ToInt32(type);
             var manualDashboardData = new List<ManualDashboardCustomModel>();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "1")
             {
@@ -2345,7 +2265,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var manualDashboardData = new List<ExternalDashboardModel>();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
             if (type == "1")
             {
@@ -2368,7 +2288,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetYearToDateData(int facilityID, int month, int facilityType, int segment,
             int Department, string type)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var curentYear = currentDateTime.Year;
 
             var customDate = month == 0
@@ -2416,7 +2336,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
 
@@ -2511,53 +2431,47 @@ namespace BillingSystem.Controllers
             int department, int type, bool viewAll, string sectionType)
         {
             var listtoReturn = new List<DashboardRemarkCustomModel>();
-            //var customDate = Convert.ToDateTime(month + "/" + month + "/" + curentYear).ToShortDateString();
             var corporateid = Helpers.GetSysAdminCorporateID();
-            using (var dashboardsectionremarks = new DashboardRemarkBal())
+            var remarksList = viewAll
+                    ? _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityID, type)
+                    : _drService.GetDashboardRemarkListByDashboardTypeAndMonth(corporateid, facilityID, type, month);
+
+            if (sectionType == "2")
             {
-                var remarksList = viewAll
-                    ? dashboardsectionremarks.GetDashboardRemarkListByDashboardType(corporateid, facilityID, type)
-                    : dashboardsectionremarks.GetDashboardRemarkListByDashboardTypeAndMonth(corporateid, facilityID,
-                        type,
-                        month);
+                var section2Enumlist = Enum.GetValues(typeof(Section2Narrations)).OfType<object>().ToList();
+                var section2 = section2Enumlist.Select(enumValue => new SelectListItem
+                {
+                    Text = enumValue.ToString(),
+                    Value = Convert.ToString((int)enumValue),
+                });
+                listtoReturn =
+                    remarksList.Where(
+                        x => section2.Any(r => r.Value == x.DashboardSection.Trim())).ToList();
+            }
+            if (sectionType == "6")
+            {
+                var section6Enumlist = Enum.GetValues(typeof(Section6Narrations)).OfType<object>().ToList();
 
-                if (sectionType == "2")
+                var section6 = section6Enumlist.Select(enumValue => new SelectListItem
                 {
-                    var section2Enumlist = Enum.GetValues(typeof(Section2Narrations)).OfType<object>().ToList();
-                    var section2 = section2Enumlist.Select(enumValue => new SelectListItem
-                    {
-                        Text = enumValue.ToString(),
-                        Value = Convert.ToString((int)enumValue),
-                    });
-                    listtoReturn =
-                        remarksList.Where(
-                            x => section2.Any(r => r.Value == x.DashboardSection.Trim())).ToList();
-                }
-                if (sectionType == "6")
+                    Text = enumValue.ToString(),
+                    Value = Convert.ToString((int)enumValue),
+                });
+                listtoReturn =
+                    remarksList.Where(
+                        x => section6.Any(r => r.Value == x.DashboardSection.Trim())).ToList();
+            }
+            if (sectionType == "6")
+            {
+                var section11Enumlist = Enum.GetValues(typeof(Section11Narrations)).OfType<object>().ToList();
+                var section11 = section11Enumlist.Select(enumValue => new SelectListItem
                 {
-                    var section6Enumlist = Enum.GetValues(typeof(Section6Narrations)).OfType<object>().ToList();
-
-                    var section6 = section6Enumlist.Select(enumValue => new SelectListItem
-                    {
-                        Text = enumValue.ToString(),
-                        Value = Convert.ToString((int)enumValue),
-                    });
-                    listtoReturn =
-                        remarksList.Where(
-                            x => section6.Any(r => r.Value == x.DashboardSection.Trim())).ToList();
-                }
-                if (sectionType == "6")
-                {
-                    var section11Enumlist = Enum.GetValues(typeof(Section11Narrations)).OfType<object>().ToList();
-                    var section11 = section11Enumlist.Select(enumValue => new SelectListItem
-                    {
-                        Text = enumValue.ToString(),
-                        Value = Convert.ToString((int)enumValue),
-                    });
-                    listtoReturn =
-                        remarksList.Where(
-                            x => section11.Any(r => r.Value == x.DashboardSection.Trim())).ToList();
-                }
+                    Text = enumValue.ToString(),
+                    Value = Convert.ToString((int)enumValue),
+                });
+                listtoReturn =
+                    remarksList.Where(
+                        x => section11.Any(r => r.Value == x.DashboardSection.Trim())).ToList();
             }
             return PartialView(PartialViews.RemarksList, listtoReturn);
         }
@@ -2574,17 +2488,14 @@ namespace BillingSystem.Controllers
         public ActionResult ViewRemarkdsListByDashboardSection(int facilityId, int month, int type, bool viewAll, string sectionType)
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
-            using (var bal = new DashboardRemarkBal())
+            var list = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityId, type);
+            if (list.Count > 0)
             {
-                var list = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityId, type);
-                if (list.Count > 0)
-                {
-                    list = viewAll
-                        ? list.Where(s => s.DashboardSection.Equals(sectionType)).ToList()
-                        : list.Where(s => s.DashboardSection.Equals(sectionType) && s.Month == month).ToList();
-                }
-                return PartialView(PartialViews.RemarksList, list);
+                list = viewAll
+                    ? list.Where(s => s.DashboardSection.Equals(sectionType)).ToList()
+                    : list.Where(s => s.DashboardSection.Equals(sectionType) && s.Month == month).ToList();
             }
+            return PartialView(PartialViews.RemarksList, list);
         }
 
         /// <summary>
@@ -2600,7 +2511,7 @@ namespace BillingSystem.Controllers
         {
             var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var curentYear = currentDateTime.Year;
 
             var corporateId = Helpers.GetSysAdminCorporateID();
@@ -2704,7 +2615,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult RCMGraphsData(int facilityId, int month, int facilityType, int segment, int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             //const string rcmDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
@@ -2794,7 +2705,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -2842,7 +2753,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFinancialMGTGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var curentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
@@ -2906,7 +2817,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetHRGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var curentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + curentYear)).ToShortDateString();
@@ -2958,7 +2869,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetKPIGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var customDate = (Convert.ToDateTime(month + "/" + month + "/" + currentYear)).ToShortDateString();
@@ -3052,9 +2963,9 @@ namespace BillingSystem.Controllers
         public ActionResult ProjectsDashboardFilters(int? facilityID, int facilityType, int segment, string userId)
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var facilityId = facilityID ?? facilityid;
@@ -3066,12 +2977,8 @@ namespace BillingSystem.Controllers
 
         public JsonResult GetProjectTaskComments(int taskId)
         {
-
-            using (var bal = new ProjectTasksBal())
-            {
-                var comments = bal.GetProjectTaskCommentById(taskId);
-                return Json(comments, JsonRequestBehavior.AllowGet);
-            }
+            var comments = _ptService.GetProjectTaskCommentById(taskId);
+            return Json(comments, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -3107,7 +3014,7 @@ namespace BillingSystem.Controllers
         {
             var manualDashboardData = new List<ManualDashboardCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             if (type == "124")
@@ -3181,45 +3088,43 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                //var _fService = new FacilityService();
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
-                using (var bal = new DashboardRemarkBal())
-                {
-                    var corporateid = Helpers.GetSysAdminCorporateID();
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                        section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                        section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                        section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    }
+                var corporateid = Helpers.GetSysAdminCorporateID();
 
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 4,
-                        Title = Helpers.ExternalDashboardTitleView("3"),
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                        Section3RemarksList = section3RemarksList,
-                        Section4RemarksList = section4RemarksList,
-                        Section5RemarksList = section5RemarksList,
-                        Section6RemarksList = section6RemarksList,
-                        Section7RemarksList = section7RemarksList,
-                        Section8RemarksList = section8RemarksList,
-                        Section9RemarksList = section9RemarksList,
-                    };
-                    return View(dashboardview);
+                var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
+                if (allRemarksList != null && allRemarksList.Count > 0)
+                {
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
                 }
+
+                var dashboardview = new ExecutiveDashboardView
+                {
+                    FacilityId = facilityid,
+                    DashboardType = 4,
+                    Title = Helpers.ExternalDashboardTitleView("3"),
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                    Section3RemarksList = section3RemarksList,
+                    Section4RemarksList = section4RemarksList,
+                    Section5RemarksList = section5RemarksList,
+                    Section6RemarksList = section6RemarksList,
+                    Section7RemarksList = section7RemarksList,
+                    Section8RemarksList = section8RemarksList,
+                    Section9RemarksList = section9RemarksList,
+                };
+                return View(dashboardview);
             }
             return View("Index");
         }
@@ -3239,39 +3144,37 @@ namespace BillingSystem.Controllers
                 var section5RemarksList = new List<DashboardRemarkCustomModel>();
                 var section6RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                //var _fService = new FacilityService();
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
-                using (var bal = new DashboardRemarkBal())
-                {
-                    var corporateid = Helpers.GetSysAdminCorporateID();
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    }
+                var corporateid = Helpers.GetSysAdminCorporateID();
 
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 4,
-                        Title = Helpers.ExternalDashboardTitleView("10"),
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                        Section3RemarksList = section3RemarksList,
-                        Section4RemarksList = section4RemarksList,
-                        Section5RemarksList = section5RemarksList,
-                        Section6RemarksList = section6RemarksList,
-                    };
-                    return View(dashboardview);
+                var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
+                if (allRemarksList != null && allRemarksList.Count > 0)
+                {
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
                 }
+
+                var dashboardview = new ExecutiveDashboardView
+                {
+                    FacilityId = facilityid,
+                    DashboardType = 4,
+                    Title = Helpers.ExternalDashboardTitleView("10"),
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                    Section3RemarksList = section3RemarksList,
+                    Section4RemarksList = section4RemarksList,
+                    Section5RemarksList = section5RemarksList,
+                    Section6RemarksList = section6RemarksList,
+                };
+                return View(dashboardview);
             }
             return View("Index");
         }
@@ -3298,60 +3201,57 @@ namespace BillingSystem.Controllers
             var section13RemarksList = new List<DashboardRemarkCustomModel>();
 
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
+            //var _fService = new FacilityService();
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(loggedinfacilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(loggedinfacilityId);
             var currentYear = currentDateTime.Year;
 
 
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
             patinetFallList = _dbService.GetPatientFallRateV1(facilityid, Helpers.GetSysAdminCorporateID(), "", currentYear, 0, 0, 0);
-            using (var bal = new DashboardRemarkBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                Convert.ToInt32(2));
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                    Convert.ToInt32(2));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
-                    section11RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("11")).ToList();
-                    section12RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("12")).ToList();
-                    section13RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("13")).ToList();
-                }
-                var dashboardview = new KPISummaryDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 2,
-                    Title = Helpers.ExternalDashboardTitleView("2"),
-                    PatinetFallList = patinetFallList,
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                    Section10RemarksList = section10RemarksList,
-                    Section11RemarksList = section11RemarksList,
-                    Section12RemarksList = section12RemarksList,
-                    Section13RemarksList = section13RemarksList
-                };
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
+                section10RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("10")).ToList();
+                section11RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("11")).ToList();
+                section12RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("12")).ToList();
+                section13RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("13")).ToList();
             }
+            var dashboardview = new KPISummaryDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 2,
+                Title = Helpers.ExternalDashboardTitleView("2"),
+                PatinetFallList = patinetFallList,
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+                Section10RemarksList = section10RemarksList,
+                Section11RemarksList = section11RemarksList,
+                Section12RemarksList = section12RemarksList,
+                Section13RemarksList = section13RemarksList
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -3370,45 +3270,43 @@ namespace BillingSystem.Controllers
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
             var section9RemarksList = new List<DashboardRemarkCustomModel>();
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
-            using (var bal = new DashboardRemarkBal())
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+                Convert.ToInt32(6));
+
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
-                    Convert.ToInt32(6));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                }
-                var dashboardview = new RCMDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 6,
-                    Title = Helpers.ExternalDashboardTitleView("5"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                    Section9RemarksList = section9RemarksList,
-                };
-                return View(dashboardview);
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
             }
+            var dashboardview = new RCMDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 6,
+                Title = Helpers.ExternalDashboardTitleView("5"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+                Section9RemarksList = section9RemarksList,
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -3418,9 +3316,9 @@ namespace BillingSystem.Controllers
         public ActionResult FinancialMGTDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3432,37 +3330,35 @@ namespace BillingSystem.Controllers
             var section6RemarksList = new List<DashboardRemarkCustomModel>();
             var section7RemarksList = new List<DashboardRemarkCustomModel>();
             var section8RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(5));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                }
-                var dashboardview = new FinancialMGTDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 5,
-                    Title = Helpers.ExternalDashboardTitleView("4"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList,
-                    Section7RemarksList = section7RemarksList,
-                    Section8RemarksList = section8RemarksList,
-                };
-                return View(dashboardview);
+
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
             }
+            var dashboardview = new FinancialMGTDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 5,
+                Title = Helpers.ExternalDashboardTitleView("4"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList,
+                Section7RemarksList = section7RemarksList,
+                Section8RemarksList = section8RemarksList,
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -3472,9 +3368,9 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3483,31 +3379,29 @@ namespace BillingSystem.Controllers
             var section3RemarksList = new List<DashboardRemarkCustomModel>();
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
             var section5RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(8));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                }
-                var dashboardview = new HRDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 8,
-                    Title = Helpers.ExternalDashboardTitleView("7"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
             }
+            var dashboardview = new HRDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 8,
+                Title = Helpers.ExternalDashboardTitleView("7"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -3517,9 +3411,9 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboardV1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3528,31 +3422,29 @@ namespace BillingSystem.Controllers
             var section3RemarksList = new List<DashboardRemarkCustomModel>();
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
             var section5RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(7));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                }
-                var dashboardview = new CaseMgtDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 7,
-                    Title = Helpers.ExternalDashboardTitleView("6"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
             }
+            var dashboardview = new CaseMgtDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 7,
+                Title = Helpers.ExternalDashboardTitleView("6"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -3568,7 +3460,7 @@ namespace BillingSystem.Controllers
         {
             var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
@@ -3674,7 +3566,7 @@ namespace BillingSystem.Controllers
         {
             var RCMDashboardData = "1308,221,222,224,144,101,102,225,226,227,228,161,242,229,230,231,232,159,270,131";
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var customDate = month == 0
@@ -3762,7 +3654,7 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3809,7 +3701,7 @@ namespace BillingSystem.Controllers
         public ActionResult GetFinancialMGTGraphsDataV1(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -3871,7 +3763,7 @@ namespace BillingSystem.Controllers
             int department)
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var hrGraphsIndicators = "254,246,247,248,211,250,251,252,253,277";
@@ -3919,7 +3811,7 @@ namespace BillingSystem.Controllers
             int department)
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             var hrGraphsIndicators = "254,246,172,174,247,248,255,236,237,233,234,1312,1313,1311,1314,1309,1310,227";
@@ -3981,7 +3873,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExportToExcel(int? type, int? month, int? facilityId)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Convert.ToInt32(facilityId));
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Convert.ToInt32(facilityId));
             var workbook = new HSSFWorkbook();
             #region Excel Creation and Formatting
             var sheet = workbook.CreateSheet("ExternalDashboardData");
@@ -4411,7 +4303,7 @@ namespace BillingSystem.Controllers
         {
             const string ClinicalComplianceGrpahsArray = "720,721,722,723";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
 
@@ -4450,7 +4342,7 @@ namespace BillingSystem.Controllers
             // var clinicalGrpahsArray = "172,177,176,166,166,167,168,169,170,171,174,175,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             const string clinicalGrpahsArray = "750,174,830,832,758,756,180,181,186,175,752,754,188,189,190,191,192,1312,1313,1314,1311,1309,1310";
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
             var manualDashboardData = _dbService.GetManualDashBoard(facilityId, corporateId,
                 Convert.ToString(clinicalGrpahsArray),
@@ -4536,7 +4428,7 @@ namespace BillingSystem.Controllers
             int department)
         {
             var corporateid = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             const string HrGraphsIndicators = "1320,800,802,132,133,134,135,136,137,818,250,820,251,860,862,252,253,822";
@@ -4624,7 +4516,7 @@ namespace BillingSystem.Controllers
         public ActionResult CamGetFinancialMGTGraphsData(int facilityId, int month, int facilityType, int segment,
             int department)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
 
@@ -4701,7 +4593,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetSubCategoryCharts(
@@ -4797,7 +4689,7 @@ namespace BillingSystem.Controllers
             int Department, string type)
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             var manualDashboardData = _dbService.GetSubCategoryChartsPayorMix(facilityID, corporateId,
@@ -4886,7 +4778,7 @@ namespace BillingSystem.Controllers
         private ExternalDashboardModel GetLocalYearToDateData(int facilityID, int month, int facilityType, int segment,
            int Department, string type)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityID);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityID);
             var currentYear = currentDateTime.Year;
 
             var customDate = month == 0
@@ -5027,7 +4919,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetPatientDaysAll(List<ManualDashboardCustomModel> patientDaysList)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
             var currentYear = currentDateTime.Year;
 
             var newPatientDays = new List<ManualDashboardCustomModel>();
@@ -5145,7 +5037,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetADCByServiceCodePerMonth(List<ManualDashboardCustomModel> patientDaysList)
         {
-            var currentDateTime = _eService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
             var currentYear = currentDateTime.Year;
 
             var patientDaysForeachMonth = patientDaysList.Where(x => x.BudgetType == 2 && x.Year == currentYear).ToList();
@@ -5181,7 +5073,7 @@ namespace BillingSystem.Controllers
         {
             var manualDashboardData = new List<ManualDashboardCustomModel>();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = currentDateTime.Year;
 
             if (type == "124")
@@ -5256,22 +5148,19 @@ namespace BillingSystem.Controllers
 
         private List<ProjectsCustomModel> GetProjectsDashboardData(int facilityId, string responsibleUserId)
         {
-            using (var bal = new ProjectTasksBal())
+            var list = _ptService.GetProjectsDashboardData(Helpers.GetSysAdminCorporateID(), facilityId, responsibleUserId);
+            if (list.Count > 0)
             {
-                var list = bal.GetProjectsDashboardData(Helpers.GetSysAdminCorporateID(), facilityId, responsibleUserId);
-                if (list.Count > 0)
+                foreach (var pr in list)
                 {
-                    foreach (var pr in list)
+                    if (pr.Milestones != null && pr.Milestones.Any())
                     {
-                        if (pr.Milestones != null && pr.Milestones.Any())
-                        {
-                            pr.Milestones.ForEach(cc =>
-                              cc.ColorImage = Url.Content(cc.ColorImage));
-                        }
+                        pr.Milestones.ForEach(cc =>
+                          cc.ColorImage = Url.Content(cc.ColorImage));
                     }
                 }
-                return list;
             }
+            return list;
         }
 
         #endregion
@@ -5284,9 +5173,9 @@ namespace BillingSystem.Controllers
         public ActionResult CaseManagementDashboard1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -5295,31 +5184,28 @@ namespace BillingSystem.Controllers
             var section3RemarksList = new List<DashboardRemarkCustomModel>();
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
             var section5RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(7));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                }
-                var dashboardview = new CaseMgtDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 7,
-                    Title = Helpers.ExternalDashboardTitleView("6"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
             }
+            var dashboardview = new CaseMgtDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 7,
+                Title = Helpers.ExternalDashboardTitleView("6"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList
+            };
+            return View(dashboardview);
         }
 
         /// <summary>
@@ -5341,45 +5227,43 @@ namespace BillingSystem.Controllers
                 var section8RemarksList = new List<DashboardRemarkCustomModel>();
                 var section9RemarksList = new List<DashboardRemarkCustomModel>();
                 var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+                //var _fService = new FacilityService();
+                var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                     ? loggedinfacilityId
                      : Helpers.GetFacilityIdNextDefaultCororateFacility();
-                using (var bal = new DashboardRemarkBal())
-                {
-                    var corporateid = Helpers.GetSysAdminCorporateID();
-                    var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
-                    if (allRemarksList != null && allRemarksList.Count > 0)
-                    {
-                        section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                        section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                        section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                        section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                        section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                        section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                        section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
-                        section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
-                        section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
-                    }
+                var corporateid = Helpers.GetSysAdminCorporateID();
 
-                    var dashboardview = new ExecutiveDashboardView
-                    {
-                        FacilityId = facilityid,
-                        DashboardType = 4,
-                        Title = Helpers.ExternalDashboardTitleView("3"),
-                        Section1RemarksList = section1RemarksList,
-                        Section2RemarksList = section2RemarksList,
-                        Section3RemarksList = section3RemarksList,
-                        Section4RemarksList = section4RemarksList,
-                        Section5RemarksList = section5RemarksList,
-                        Section6RemarksList = section6RemarksList,
-                        Section7RemarksList = section7RemarksList,
-                        Section8RemarksList = section8RemarksList,
-                        Section9RemarksList = section9RemarksList,
-                    };
-                    return View(dashboardview);
+                var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid, Convert.ToInt32(type));
+                if (allRemarksList != null && allRemarksList.Count > 0)
+                {
+                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
+                    section7RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("7")).ToList();
+                    section8RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("8")).ToList();
+                    section9RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("9")).ToList();
                 }
+
+                var dashboardview = new ExecutiveDashboardView
+                {
+                    FacilityId = facilityid,
+                    DashboardType = 4,
+                    Title = Helpers.ExternalDashboardTitleView("3"),
+                    Section1RemarksList = section1RemarksList,
+                    Section2RemarksList = section2RemarksList,
+                    Section3RemarksList = section3RemarksList,
+                    Section4RemarksList = section4RemarksList,
+                    Section5RemarksList = section5RemarksList,
+                    Section6RemarksList = section6RemarksList,
+                    Section7RemarksList = section7RemarksList,
+                    Section8RemarksList = section8RemarksList,
+                    Section9RemarksList = section9RemarksList,
+                };
+                return View(dashboardview);
             }
             return View("Index");
         }
@@ -5391,9 +5275,9 @@ namespace BillingSystem.Controllers
         public ActionResult HRDashboard1()
         {
             var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == null
+            //var _fService = new FacilityService();
+            var corporateFacilitydetail = _fService.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID == 0
                    ? loggedinfacilityId
                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
             var corporateid = Helpers.GetSysAdminCorporateID();
@@ -5403,33 +5287,31 @@ namespace BillingSystem.Controllers
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
             var section5RemarksList = new List<DashboardRemarkCustomModel>();
             var section6RemarksList = new List<DashboardRemarkCustomModel>();
-            using (var bal = new DashboardRemarkBal())
-            {
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
+
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityid,
                     Convert.ToInt32(8));
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
-                    section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
-                    section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
-                }
-                var dashboardview = new HRDashboardView
-                {
-                    FacilityId = facilityid,
-                    DashboardType = 8,
-                    Title = Helpers.ExternalDashboardTitleView("7"),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    Section5RemarksList = section5RemarksList,
-                    Section6RemarksList = section6RemarksList
-                };
-                return View(dashboardview);
+            if (allRemarksList != null && allRemarksList.Count > 0)
+            {
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("1")).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("2")).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("3")).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("4")).ToList();
+                section5RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("5")).ToList();
+                section6RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals("6")).ToList();
             }
+            var dashboardview = new HRDashboardView
+            {
+                FacilityId = facilityid,
+                DashboardType = 8,
+                Title = Helpers.ExternalDashboardTitleView("7"),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                Section5RemarksList = section5RemarksList,
+                Section6RemarksList = section6RemarksList
+            };
+            return View(dashboardview);
         }
 
         private ProjectsDashboardView GetProjectsData(int facilityId, int userId)
@@ -5440,45 +5322,42 @@ namespace BillingSystem.Controllers
             var section3RemarksList = new List<DashboardRemarkCustomModel>();
             var section4RemarksList = new List<DashboardRemarkCustomModel>();
             var corporateid = Helpers.GetSysAdminCorporateID();
-            using (var bal = new DashboardRemarkBal())
+            var mainList = GetProjectsDashboardData(facilityId, userId == 0 ? string.Empty : Convert.ToString(userId));
+            var allRemarksList = _drService.GetDashboardRemarkListByDashboardType(corporateid, facilityId, dashboardType);
+
+            var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
+            var financialType = Convert.ToString((int)DashboardProjectType.Financial);
+            var indType = Convert.ToString((int)DashboardProjectType.Individual);
+            var opType = Convert.ToString((int)DashboardProjectType.Operational);
+
+            var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
+            var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
+            var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
+            var opExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(opType)).ToList();
+
+            if (allRemarksList != null && allRemarksList.Count > 0)
             {
-                var mainList = GetProjectsDashboardData(facilityId, userId == 0 ? string.Empty : Convert.ToString(userId));
-                var allRemarksList = bal.GetDashboardRemarkListByDashboardType(corporateid, facilityId, dashboardType);
-
-                var strategicType = Convert.ToString((int)DashboardProjectType.Strategic);
-                var financialType = Convert.ToString((int)DashboardProjectType.Financial);
-                var indType = Convert.ToString((int)DashboardProjectType.Individual);
-                var opType = Convert.ToString((int)DashboardProjectType.Operational);
-
-                var strategicExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(strategicType)).ToList();
-                var financialExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(financialType)).ToList();
-                var individualExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(indType)).ToList();
-                var opExec = mainList.Where(g => g.ExternalValue2.Trim().Equals(opType)).ToList();
-
-                if (allRemarksList != null && allRemarksList.Count > 0)
-                {
-                    section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(strategicType)).ToList();
-                    section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(opType)).ToList();
-                    section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(financialType)).ToList();
-                    section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(indType)).ToList();
-                }
-                var dashboardview = new ProjectsDashboardView
-                {
-                    FacilityId = facilityId,
-                    DashboardType = dashboardType,
-                    StrategicKpiList = strategicExec,
-                    FinancialKpiList = financialExec,
-                    IndividualKpiList = individualExec,
-                    OperationalKpiList = opExec,
-                    Title = Helpers.ExternalDashboardTitleView(Convert.ToString(dashboardType)),
-                    Section1RemarksList = section1RemarksList,
-                    Section2RemarksList = section2RemarksList,
-                    Section3RemarksList = section3RemarksList,
-                    Section4RemarksList = section4RemarksList,
-                    ResponsibleUserId = userId
-                };
-                return dashboardview;
+                section1RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(strategicType)).ToList();
+                section2RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(opType)).ToList();
+                section3RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(financialType)).ToList();
+                section4RemarksList = allRemarksList.Where(s => s.DashboardSection.Equals(indType)).ToList();
             }
+            var dashboardview = new ProjectsDashboardView
+            {
+                FacilityId = facilityId,
+                DashboardType = dashboardType,
+                StrategicKpiList = strategicExec,
+                FinancialKpiList = financialExec,
+                IndividualKpiList = individualExec,
+                OperationalKpiList = opExec,
+                Title = Helpers.ExternalDashboardTitleView(Convert.ToString(dashboardType)),
+                Section1RemarksList = section1RemarksList,
+                Section2RemarksList = section2RemarksList,
+                Section3RemarksList = section3RemarksList,
+                Section4RemarksList = section4RemarksList,
+                ResponsibleUserId = userId
+            };
+            return dashboardview;
         }
     }
 }

@@ -13,7 +13,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BillingSystem</RootNamespace>
     <AssemblyName>BillingSystem</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort />
@@ -33,6 +33,8 @@
     <UseGlobalApplicationHostFile />
     <TargetFrameworkProfile />
     <Use64BitIISExpress />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,19 +56,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Antlr3.Runtime, Version=3.4.1.9004, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Antlr.3.4.1.9004\lib\Antlr3.Runtime.dll</HintPath>
+    <Reference Include="Antlr3.Runtime, Version=3.5.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="AutoMapper, Version=6.2.2.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoMapper.6.2.2\lib\net45\AutoMapper.dll</HintPath>
+    <Reference Include="AutoMapper, Version=7.0.1.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoMapper.7.0.1\lib\net45\AutoMapper.dll</HintPath>
     </Reference>
     <Reference Include="CaptchaMvc, Version=2.5.0.0, Culture=neutral, PublicKeyToken=fe46ad421dd3b0e6, processorArchitecture=MSIL">
       <HintPath>..\packages\CaptchaMvc.Mvc5.1.5.0\lib\net45-full\CaptchaMvc.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="CommonServiceLocator, Version=2.0.3.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\CommonServiceLocator.dll</HintPath>
+      <HintPath>..\packages\CommonServiceLocator.2.0.3\lib\net47\CommonServiceLocator.dll</HintPath>
     </Reference>
     <Reference Include="Elmah, Version=1.2.14706.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\elmah.corelibrary.1.2.2\lib\Elmah.dll</HintPath>
@@ -75,12 +75,10 @@
       <HintPath>..\packages\Elmah.Mvc.2.1.2\lib\net40\Elmah.Mvc.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.dll</HintPath>
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="Excel, Version=2.1.2.3, Culture=neutral, PublicKeyToken=93517dbe6a4012fa, processorArchitecture=MSIL">
       <HintPath>..\packages\ExcelDataReader.2.1.2.3\lib\net45\Excel.dll</HintPath>
@@ -89,82 +87,70 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\GenCode128.dll</HintPath>
     </Reference>
-    <Reference Include="Glimpse.Ado">
+    <Reference Include="Glimpse.Ado, Version=1.7.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Glimpse.Ado.1.7.3\lib\net45\Glimpse.Ado.dll</HintPath>
-      <Private>True</Private>
     </Reference>
-    <Reference Include="Glimpse.AspNet, Version=1.8.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Glimpse.AspNet.1.8.0\lib\net45\Glimpse.AspNet.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Glimpse.AspNet, Version=1.9.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Glimpse.AspNet.1.9.2\lib\net45\Glimpse.AspNet.dll</HintPath>
     </Reference>
-    <Reference Include="Glimpse.Core">
+    <Reference Include="Glimpse.Core, Version=1.8.6.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Glimpse.1.8.6\lib\net45\Glimpse.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Glimpse.EF6">
+    <Reference Include="Glimpse.EF6, Version=1.6.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Glimpse.EF6.1.6.5\lib\net45\Glimpse.EF6.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="Glimpse.Mvc5, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Glimpse.Mvc5.1.5.3\lib\net45\Glimpse.Mvc5.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="Gma.QrCodeNet.Encoding, Version=0.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\Gma.QrCodeNet.Encoding.dll</HintPath>
     </Reference>
-    <Reference Include="Hangfire.Core, Version=1.5.6.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Hangfire.Core.1.5.6\lib\net45\Hangfire.Core.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Hangfire.Core, Version=1.6.19.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Hangfire.Core.1.6.19\lib\net45\Hangfire.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Hangfire.SqlServer, Version=1.5.6.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Hangfire.SqlServer.1.5.6\lib\net45\Hangfire.SqlServer.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Hangfire.SqlServer, Version=1.6.19.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Hangfire.SqlServer.1.6.19\lib\net45\Hangfire.SqlServer.dll</HintPath>
     </Reference>
-    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.5.0, Culture=neutral, PublicKeyToken=9dea7c6e17aa31ff, processorArchitecture=MSIL">
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\ICSharpCode.SharpZipLib.Patched.0.86.5\lib\net20\ICSharpCode.SharpZipLib.dll</HintPath>
+      <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="itextsharp">
-      <HintPath>..\packages\iTextSharp.4.1.2\lib\itextsharp.dll</HintPath>
+    <Reference Include="itextsharp, Version=5.5.13.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.13\lib\itextsharp.dll</HintPath>
     </Reference>
     <Reference Include="Kendo.Mvc, Version=2014.2.903.545, Culture=neutral, PublicKeyToken=121fae78165ba3d4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Plugins\Kendo.Mvc.dll</HintPath>
     </Reference>
-    <Reference Include="log4net, Version=1.2.13.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Data.Edm, Version=5.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Data.Edm.5.2.0\lib\net40\Microsoft.Data.Edm.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Microsoft.Data.Edm, Version=5.8.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Data.Edm.5.8.3\lib\net40\Microsoft.Data.Edm.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Data.OData, Version=5.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Data.OData.5.2.0\lib\net40\Microsoft.Data.OData.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Microsoft.Data.OData, Version=5.8.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Data.OData.5.8.3\lib\net40\Microsoft.Data.OData.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Owin, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Owin.3.0.0\lib\net45\Microsoft.Owin.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Microsoft.Owin, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.4.0.0\lib\net451\Microsoft.Owin.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Owin.Host.SystemWeb, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Owin.Host.SystemWeb.3.0.0\lib\net45\Microsoft.Owin.Host.SystemWeb.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Practices.ServiceLocation, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\CommonServiceLocator.1.3\lib\portable-net4+sl5+netcore45+wpa81+wp8\Microsoft.Practices.ServiceLocation.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Microsoft.Owin.Host.SystemWeb, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Host.SystemWeb.4.0.0\lib\net451\Microsoft.Owin.Host.SystemWeb.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.ReportViewer.WebForms, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\MicosoftReportViewerWebForms_v11.1.0.1\lib\Microsoft.ReportViewer.WebForms.DLL</HintPath>
     </Reference>
-    <Reference Include="MvcCheckBoxList">
-      <HintPath>..\packages\MvcCheckBoxList.1.4.4.5\lib\net45\MvcCheckBoxList.dll</HintPath>
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="MvcCheckBoxList, Version=1.4.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MvcCheckBoxList.1.4.5\lib\net45\MvcCheckBoxList.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NPOI, Version=2.3.0.0, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
       <HintPath>..\packages\NPOI.2.3.0\lib\net40\NPOI.dll</HintPath>
@@ -180,9 +166,8 @@
     </Reference>
     <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
-      <Private>True</Private>
     </Reference>
-    <Reference Include="RazorPDF">
+    <Reference Include="RazorPDF, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RazorPDF.1.0.0\lib\net45\RazorPDF.dll</HintPath>
     </Reference>
     <Reference Include="SendGrid, Version=9.8.0.0, Culture=neutral, PublicKeyToken=4f047e93159395ca, processorArchitecture=MSIL">
@@ -194,96 +179,124 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Spatial, Version=5.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Spatial.5.2.0\lib\net40\System.Spatial.dll</HintPath>
+    <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Net.Http, Version=4.1.1.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.3\lib\net46\System.Net.Http.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.Extensions, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.6\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.1\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.2\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Spatial, Version=5.8.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Spatial.5.8.3\lib\net40\System.Spatial.dll</HintPath>
+    </Reference>
     <Reference Include="System.Transactions" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.Helpers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Http, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.3\lib\net45\System.Web.Http.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Http.WebHost, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.3\lib\net45\System.Web.Http.WebHost.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Mvc, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.3\lib\net45\System.Web.Mvc.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Optimization, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.Web.Optimization.1.0.0\lib\net40\System.Web.Optimization.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.6\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.6\lib\net45\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.6\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.6\lib\net45\System.Web.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Optimization, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Web.Optimization.1.1.3\lib\net40\System.Web.Optimization.dll</HintPath>
+    </Reference>
     <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.Razor.3.2.3\lib\net45\System.Web.Razor.dll</HintPath>
+      <HintPath>..\packages\Microsoft.AspNet.Razor.3.2.6\lib\net45\System.Web.Razor.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.Routing" />
     <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.dll</HintPath>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.6\lib\net45\System.Web.WebPages.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.6\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.6\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.EnterpriseServices" />
-    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Net.Http">
-    </Reference>
     <Reference Include="System.Net.Http.WebRequest">
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Unity.Abstractions, Version=3.3.0.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\Unity.Abstractions.dll</HintPath>
+      <HintPath>..\packages\Unity.5.8.6\lib\net47\Unity.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Configuration, Version=5.2.1.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\Unity.Configuration.dll</HintPath>
+      <HintPath>..\packages\Unity.5.8.6\lib\net47\Unity.Configuration.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Container, Version=5.8.6.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\Unity.Container.dll</HintPath>
+      <HintPath>..\packages\Unity.5.8.6\lib\net47\Unity.Container.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Interception, Version=5.5.1.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\Unity.Interception.dll</HintPath>
+      <HintPath>..\packages\Unity.5.8.6\lib\net47\Unity.Interception.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Interception.Configuration, Version=5.1.4.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\Unity.Interception.Configuration.dll</HintPath>
+      <HintPath>..\packages\Unity.5.8.6\lib\net47\Unity.Interception.Configuration.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mvc5, Version=1.3.0.0, Culture=neutral, PublicKeyToken=43da31bc42a85347, processorArchitecture=MSIL">
       <HintPath>..\packages\Unity.Mvc5.1.3.0\lib\net45\Unity.Mvc5.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RegistrationByConvention, Version=2.1.5.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\Unity.RegistrationByConvention.dll</HintPath>
+      <HintPath>..\packages\Unity.5.8.6\lib\net47\Unity.RegistrationByConvention.dll</HintPath>
     </Reference>
     <Reference Include="Unity.ServiceLocation, Version=2.1.2.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unity.5.8.6\lib\net45\Unity.ServiceLocation.dll</HintPath>
+      <HintPath>..\packages\Unity.5.8.6\lib\net47\Unity.ServiceLocation.dll</HintPath>
     </Reference>
     <Reference Include="WebActivatorEx, Version=2.0.0.0, Culture=neutral, PublicKeyToken=7b26dc2a43f6a0d4, processorArchitecture=MSIL">
       <HintPath>..\packages\WebActivatorEx.2.2.0\lib\net40\WebActivatorEx.dll</HintPath>
     </Reference>
     <Reference Include="WebGrease, Version=1.6.5135.21930, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -356,7 +369,6 @@
     <Compile Include="Controllers\DeptTimmingController.cs" />
     <Compile Include="Controllers\FacultyDeptController.cs" />
     <Compile Include="Controllers\FacultyRoosterController.cs" />
-    <Compile Include="Controllers\HighChartsEditorController.cs" />
     <Compile Include="Controllers\PlaceOfServiceController.cs" />
     <Compile Include="Controllers\SchedulerController.cs" />
     <Compile Include="Controllers\FindClaimController.cs" />
@@ -368,8 +380,6 @@
     <Compile Include="Controllers\PatientCarePlanController.cs" />
     <Compile Include="Controllers\PatientPreSchedulingController.cs" />
     <Compile Include="Controllers\PatientSchedulerController.cs" />
-    <Compile Include="Controllers\FacultyTimeslotsController.cs" />
-    <Compile Include="Controllers\ManualDashboardV1Controller.cs" />
     <Compile Include="Controllers\DashboardBudgetController.cs" />
     <Compile Include="Controllers\DashboardDisplayOrderController.cs" />
     <Compile Include="Controllers\DashboardIndicatorDataController.cs" />
@@ -459,7 +469,6 @@
     <Compile Include="Controllers\RoomEquipmentController.cs" />
     <Compile Include="Controllers\RuleMasterController.cs" />
     <Compile Include="Controllers\RuleStepController.cs" />
-    <Compile Include="Controllers\SchedulingController.cs" />
     <Compile Include="Controllers\SchedulingParametersController.cs" />
     <Compile Include="Controllers\ScrubEditTrackController.cs" />
     <Compile Include="Controllers\ScrubReportController.cs" />
@@ -503,6 +512,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>GetUtilizationDataSet.xsd</DependentUpon>
     </Compile>
+    <Compile Include="GlimpseSecurityPolicy.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -649,6 +659,7 @@
     <Compile Include="Models\OpenOrderActivityScheduleView.cs" />
     <Compile Include="Models\RoleSelectionView.cs" />
     <Compile Include="Models\RoleTabsView.cs" />
+    <Compile Include="Models\SessionClass.cs" />
     <Compile Include="Models\TabsViews.cs" />
     <Compile Include="Models\TabView.cs" />
     <Compile Include="Models\InsurancePlansView.cs" />
@@ -2236,7 +2247,6 @@
     <Content Include="Libs\Omu.ValueInjecter.dll" />
     <Content Include="Libs\SautinSoft.PdfFocus.dll" />
     <Content Include="MvcDiagnostics.aspx" />
-    <Content Include="Plugins\Kendo.Mvc.dll" />
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-cz.js" />
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-da.js" />
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-de.js" />
@@ -2357,6 +2367,7 @@
     <Content Include="Scripts\DataTables\dataTables.semanticui.min.js" />
     <Content Include="Scripts\DataTables\dataTables.uikit.js" />
     <Content Include="Scripts\DataTables\dataTables.uikit.min.js" />
+    <Content Include="Scripts\DataTables\jquery.dataTables.js" />
     <Content Include="Scripts\DataTables\jquery.dataTables.min.js" />
     <Content Include="Scripts\DataTables\responsive.bootstrap.js" />
     <Content Include="Scripts\DataTables\responsive.bootstrap.min.js" />
@@ -2608,9 +2619,6 @@
     <Content Include="Scripts\FacultyDept\Main.js" />
     <Content Include="Scripts\FacultyRooster\ClinicianRoster.js" />
     <Content Include="Scripts\FacultyRooster\FacultyRoosterScript.js" />
-    <Content Include="Scripts\FacultyTimeslots\kendo.web.min.js" />
-    <Content Include="Scripts\FacultyTimeslots\Scheduler.js" />
-    <Content Include="Scripts\FacultyTimeslots\FacultyTimeslots.js" />
     <Content Include="Scripts\FileUploader\OnlineHelp.js" />
     <Content Include="Scripts\FileUploader\FileUploader.js" />
     <Content Include="Scripts\FileUploader\RemittanceAdvice.js" />
@@ -2748,10 +2756,6 @@
     <Content Include="Content\shared\fonts\widgets-v1.woff" />
     <Content Include="Content\shared\kendoui.ttf" />
     <Content Include="Content\shared\kendoui.woff" />
-    <Content Include="Content\web\16x16\Thumbs.db" />
-    <Content Include="Content\web\24x24\Thumbs.db" />
-    <Content Include="Content\web\32x32\Thumbs.db" />
-    <Content Include="Content\web\48x48\Thumbs.db" />
     <Content Include="Content\web\datasource\internet-users.json" />
     <Content Include="Content\web\datasource\top250movies.json" />
     <Content Include="Content\web\images\kendoui.ttf" />
@@ -2780,6 +2784,19 @@
     <Content Include="BillFormatDataDataSet.xsc">
       <DependentUpon>BillFormatDataDataSet.xsd</DependentUpon>
     </Content>
+    <Content Include="Content\DataTables\css\semanticui.scss" />
+    <Content Include="Content\DataTables\css\mixins.scss" />
+    <Content Include="Content\DataTables\css\common.scss" />
+    <None Include="Scripts\jquery-1.7.2.intellisense.js" />
+    <Content Include="Scripts\jquery-1.7.2.js" />
+    <Content Include="Scripts\jquery-1.7.2.min.js" />
+    <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
+    <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />
+    <None Include="Scripts\jquery.validate-vsdoc.js" />
+    <Content Include="Scripts\jquery.validate.js" />
+    <Content Include="Scripts\jquery.validate.min.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\Physician\ClinicianAppointmentTypes.js" />
     <Content Include="Scripts\Scheduler\codebase\imgs_custom\arrive.png" />
     <Content Include="Scripts\Scheduler\codebase\imgs_custom\arrivefill.png" />
@@ -3015,7 +3032,16 @@
     <Content Include="SQL Scripts\Release 5.1\5 - Update PROC SprocGetPatientSummaryTabData 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.1\6 - Update PROC SprocGetPatientInfoView 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\1 - Update PROC SprocGetDashboardDisplayOrders 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\10 - New PROC SprocDashboardTargets 28 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\11 - New PROC SprocAuthenticateUser 02 July 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\2 - new PROC SprocGetDashboardIndicatorData 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\3 - New PROC SprocGetDashboardIndicators 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\4 - New PROC SprocGetDashboardIndicatorsByIndicatorNumber 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\5 - New PROC SprocGetDashboardParameters 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\6 - New PROC SprocGetManualDashboardData 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\7 - New PROC SprocGetManualDashboardDataByIndicator 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\8 - New PROC SprocGetIndicatorDataChecklist 28 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\9 - New PROC SprocDashboardRemarks 28 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\1 - Update PROC iSprocGetBookedAppointments 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\10 - Update PROC SPROC_GetPaitentFutureOrder 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\2 - Update PROC SprocOrdersViewData 28 March 2018.sql" />
@@ -3221,9 +3247,7 @@
     <Content Include="Views\Physician\UserControls\_FacilityListView.cshtml" />
     <Content Include="Views\Physician\ClinicianAppTypes.cshtml" />
     <Content Include="Views\Physician\UserControls\_AssignedAppointmentsList.cshtml" />
-    <Content Include="Content\DataTables\css\semanticui.scss" />
-    <Content Include="Content\DataTables\css\mixins.scss" />
-    <Content Include="Content\DataTables\css\common.scss" />
+    <None Include="packages.config" />
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Include="Properties\PublishProfiles\FolderProfile1.pubxml" />
     <Content Include="Views\Setup\GenericView.cshtml" />
@@ -3496,7 +3520,6 @@
     <Content Include="Scripts\Dashboard\Content\bootstrap\css\less\tables.less" />
     <Content Include="Scripts\Dashboard\Content\bootstrap\css\less\type.less" />
     <Content Include="Scripts\Dashboard\Content\bootstrap\css\less\variables.less" />
-    <Content Include="Scripts\DataTables\jquery.dataTables.js" />
     <Content Include="ReconcilationARPayorWiseDataSet.xsc">
       <DependentUpon>ReconcilationARPayorWiseDataSet.xsd</DependentUpon>
     </Content>
@@ -3552,11 +3575,8 @@
     <Content Include="ReconcilationARPayorWise_Weekly1DataSet.xss">
       <DependentUpon>ReconcilationARPayorWise_Weekly1DataSet.xsd</DependentUpon>
     </Content>
-    <None Include="Scripts\jquery-1.7.2.intellisense.js" />
     <Content Include="Scripts\jLinq-2.2.1.js" />
     <Content Include="Scripts\jqsimplemenu.js" />
-    <Content Include="Scripts\jquery-1.7.2.js" />
-    <Content Include="Scripts\jquery-1.7.2.min.js" />
     <Content Include="Scripts\jquery-ui-timepicker-addon.css" />
     <Content Include="Scripts\jquery.blockUI.js" />
     <Content Include="Scripts\jquery.datetimepicker.js" />
@@ -3567,14 +3587,7 @@
     <Content Include="Scripts\jquery.showPassword.js" />
     <Content Include="Scripts\jquery.showPassword.min.js" />
     <Content Include="Scripts\jquery.ui.timepicker.js" />
-    <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
-    <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />
     <Content Include="Scripts\Jquery-DateFormat.js" />
-    <None Include="Scripts\jquery.validate-vsdoc.js" />
-    <Content Include="Scripts\jquery.validate.js" />
-    <Content Include="Scripts\jquery.validate.min.js" />
-    <Content Include="Scripts\jquery.validate.unobtrusive.js" />
-    <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\jquery_form.js" />
     <Content Include="Scripts\json2.js" />
     <Content Include="Scripts\Kendo\angular.min.js" />
@@ -4506,8 +4519,6 @@
     <Content Include="Scripts\Scheduler\data\imgs\undo.gif" />
     <Content Include="Scripts\Scheduler\data\imgs\undo_dis.gif" />
     <Content Include="Scripts\Scheduler\data\tree.xml" />
-    <Content Include="Scripts\Scheduling\Scheduling.js" />
-    <Content Include="Scripts\Scheduling\Scheduling1.js" />
     <Content Include="Scripts\ScrollableGridPlug.js" />
     <Content Include="Scripts\ScrubEditTrack\ScrubEditTrackScript.js" />
     <Content Include="Scripts\ScrubReport\BillEditWorkQueuesView.js" />
@@ -5196,8 +5207,6 @@
     <Content Include="Views\FacilityStructure\UserControls\_FacilityStructureDeptList.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_FacilityStructureRoomsList.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_FacilityStructureBedsList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacultyTimesSlotsAddEdit.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacultyCalenderView.cshtml" />
     <Content Include="Views\PatientScheduler\Index.cshtml" />
     <Content Include="Scripts\Scheduler\codebase\sources\dhtmlxscheduler.js.map" />
     <Content Include="Scripts\Scheduler\codebase\sources\ext\dhtmlxscheduler_active_links.js.map" />
@@ -5251,16 +5260,9 @@
     <Content Include="Views\Home\Temp.cshtml" />
     <Content Include="Views\PatientScheduler\UserControls\_PatientScheduleAddEdit.cshtml" />
     <Content Include="Views\PatientSchedulerPortal\UserControls\_PatientCalenderView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\Index2.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_PhysicianCheckBoxList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_StatusCheckBoxList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_LocationListView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_SchedularPopupView.cshtml" />
     <Content Include="Views\AppointmentTypes\AppointmentTypesMain.cshtml" />
     <Content Include="Views\AppointmentTypes\UserControls\_AppointmentTypesAddEdit.cshtml" />
     <Content Include="Views\AppointmentTypes\UserControls\_AppointmentTypesList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacilityDepartmentListView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_CalenderViewType.cshtml" />
     <Content Include="Views\PatientScheduler\Sample.cshtml">
       <SubType>Code</SubType>
     </Content>
@@ -5278,23 +5280,10 @@
     <Content Include="Views\CarePlan\Index.cshtml" />
     <Content Include="Views\CarePlan\UserControls\_CarePlanAddEdit.cshtml" />
     <Content Include="Views\CarePlan\UserControls\_CarePlanList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_PatientSearchPView.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_PatientSearchResultPView.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_EquipmentOverrideList.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_AppointmentTypesOverrideList.cshtml" />
     <Content Include="Views\FacilityStructure\AppointmentRoomsView.cshtml" />
-    <Content Include="Views\Scheduling\Index.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_FacilityDepartmentListView.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_LocationListView.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_CalenderViewType.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_PhysicianCheckBoxList.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_StatusCheckBoxList.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_FacultyCalenderView.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_FacultyTimesSlotsAddEdit.cshtml" />
-    <Content Include="Views\Scheduling\UserControls\_SchedularPopupView.cshtml" />
     <Content Include="Views\FacilityStructure\UserControls\_AssignedAppointmentsList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_FacilityRoomsList.cshtml" />
-    <Content Include="Views\FacultyTimeslots\UserControls\_SchedularPopupOverView.cshtml" />
     <Content Include="Views\FacultyRooster\Index.cshtml">
       <SubType>Code</SubType>
     </Content>
@@ -5479,11 +5468,6 @@
     <Folder Include="Views\ImagePreview\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="packages.config">
-      <SubType>Designer</SubType>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\BillingSystem.Bal\BillingSystem.Bal.csproj">
       <Project>{9b238813-3f79-47e2-8975-cef73834812c}</Project>
       <Name>BillingSystem.Bal</Name>
@@ -5495,10 +5479,6 @@
     <ProjectReference Include="..\BillingSystem.Model\BillingSystem.Model.csproj">
       <Project>{df38e31d-b8d4-437c-9f9b-bda62427defd}</Project>
       <Name>BillingSystem.Model</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\BillingSystem.Repository\BillingSystem.Repository.csproj">
-      <Project>{2537dbca-a818-40d5-8b4e-d13d5e0d6f36}</Project>
-      <Name>BillingSystem.Repository</Name>
     </ProjectReference>
     <ProjectReference Include="..\BillingSystem.Resource\BillingSystem.Resource.csproj">
       <Project>{1e07d2e7-645b-4b42-945d-2a191d849582}</Project>
@@ -5638,6 +5618,13 @@
     </VisualStudio>
   </ProjectExtensions>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -8,8 +8,8 @@ using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Common;
-using BillingSystem.Repository.Interfaces;
+
+
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -242,10 +242,9 @@ namespace BillingSystem.Bal.BusinessAccess
         public string GetFacilityStructureBreadCrumbs(int facilityStructureId, string facilityid, string ParentId)
         {
             var _facilityStructureId = string.Empty;
-            using (var facilityBal = new FacilityBal())
-            {
-                _facilityStructureId = facilityBal.GetFacilityNameById(Convert.ToInt32(facilityid));
-            }
+
+            _facilityStructureId = _fRepository.Get(Convert.ToInt32(facilityid)).FacilityName;
+
 
             switch (facilityStructureId)
             {

@@ -4,14 +4,23 @@ using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
 using BillingSystem.Common;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using System.Linq;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class McContractController : BaseController
     {
+        private readonly IMcContractService _service;
+        private readonly IMCRulesTableService _mrService;
+
+        public McContractController(IMcContractService service, IMCRulesTableService mrService)
+        {
+            _service = service;
+            _mrService = mrService;
+        }
+
         /// <summary>
         /// Indexes this instance.
         /// </summary>
@@ -20,8 +29,7 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetDefaultCorporateId();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new McContractBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-            var list = bal.GetManagedCareByFacility(corporateId, facilityId, Helpers.GetLoggedInUserId());
+            var list = _service.GetManagedCareByFacility(corporateId, facilityId, Helpers.GetLoggedInUserId());
             var mcContractView = new McContractView
             {
                 ContractList = list.ToList(),
@@ -49,25 +57,22 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult SaveMcContract(MCContract model)
         {
-            using (var bal = new McContractBal())
+            if (model.MCContractID > 0)
             {
-                if (model.MCContractID > 0)
-                {
-                    model.BCModifiedBy = Helpers.GetLoggedInUserId();
-                    model.BCModifiedDate = Helpers.GetInvariantCultureDateTime();
-                }
-                else
-                {
-                    model.BCCreatedBy = Helpers.GetLoggedInUserId();
-                    model.BCCreatedDate = Helpers.GetInvariantCultureDateTime();
-                }
-
-                model.CorporateId = Helpers.GetDefaultCorporateId();
-                model.FacilityId = Helpers.GetDefaultFacilityId();
-
-                var list = bal.SaveContract(model);
-                return PartialView(PartialViews.McContractListView, list);
+                model.BCModifiedBy = Helpers.GetLoggedInUserId();
+                model.BCModifiedDate = Helpers.GetInvariantCultureDateTime();
             }
+            else
+            {
+                model.BCCreatedBy = Helpers.GetLoggedInUserId();
+                model.BCCreatedDate = Helpers.GetInvariantCultureDateTime();
+            }
+
+            model.CorporateId = Helpers.GetDefaultCorporateId();
+            model.FacilityId = Helpers.GetDefaultFacilityId();
+
+            var list = _service.SaveContract(model);
+            return PartialView(PartialViews.McContractListView, list);
         }
 
         /// <summary>
@@ -77,11 +82,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMcContractDetail(int id)
         {
-            using (var bal = new McContractBal())
-            {
-                var model = bal.GetMcContractDetail(id);
-                return Json(model, JsonRequestBehavior.AllowGet);
-            }
+            var model = _service.GetMcContractDetail(id);
+            return Json(model, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -91,13 +93,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMcContract(int id)
         {
-            using (var bal = new McContractBal())
-            {
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var result = bal.DeleteContract(id, corporateId, facilityId, Helpers.GetLoggedInUserId());
-                return PartialView(PartialViews.McContractListView, result);
-            }
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var result = _service.DeleteContract(id, corporateId, facilityId, Helpers.GetLoggedInUserId());
+            return PartialView(PartialViews.McContractListView, result);
         }
 
         /// <summary>
@@ -107,20 +106,14 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult MCRuleStepView(int? McContractID)
         {
-            //Initialize the RuleStep BAL object
-            var mcruleStepBal = new MCRulesTableBal();
+            var mcruleStepList = _mrService.GetMcRulesListByRuleSetId(Convert.ToInt32(McContractID));
 
-            //Get the Entity list
-            var mcruleStepList = mcruleStepBal.GetMcRulesListByRuleSetId(Convert.ToInt32(McContractID));
-
-            //Intialize the View Model i.e. RuleStepView which is binded to Main View Index.cshtml under RuleStep
             var mcruleStepView = new MCRulesTableView
             {
                 MCRulesTableList = mcruleStepList,
                 CurrentMCRulesTable = new MCRulesTable() { IsActive = true, RuleSetNumber = McContractID }
             };
 
-            //Pass the View Model in ActionResult to View RuleStep
             return View(mcruleStepView);
         }
 
@@ -131,14 +124,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRuleMasterById(int rmId)
         {
-            using (var ruleMasterBal = new McContractBal())
-            {
-                //Call the AddRuleMaster Method to Add / Update current RuleMaster
-                var currentRuleMaster = ruleMasterBal.GetMcContractDetail(rmId);
+            //Call the AddRuleMaster Method to Add / Update current RuleMaster
+            var currentRuleMaster = _service.GetMcContractDetail(rmId);
+            return Json(currentRuleMaster, JsonRequestBehavior.AllowGet);
 
-                //Pass the ActionResult with the current RuleMasterViewModel object as model to PartialView RuleMasterAddEdit
-                return Json(currentRuleMaster, JsonRequestBehavior.AllowGet);
-            }
         }
 
         /// <summary>
@@ -148,9 +137,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMcOverviewString(int mcCode)
         {
-            var mcruleStepBal = new McContractBal();
-            //Get the Entity list
-            var mcruleStepList = mcruleStepBal.GetMCOverview(Convert.ToInt32(mcCode));
+            var mcruleStepList = _service.GetMCOverview(Convert.ToInt32(mcCode));
             return Json(mcruleStepList);
         }
 
@@ -162,8 +149,7 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetDefaultCorporateId();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var bal = new McContractBal();
-            var list = bal.GetManagedCareByFacility(corporateId, facilityId, Helpers.GetLoggedInUserId());
+            var list = _service.GetManagedCareByFacility(corporateId, facilityId, Helpers.GetLoggedInUserId());
             return Json(list, JsonRequestBehavior.AllowGet);
         }
     }

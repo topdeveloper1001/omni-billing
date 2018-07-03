@@ -21,14 +21,17 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class AuthorizationController : BaseController
     {
+        private readonly IDocumentsTemplatesService _dService;
         private readonly IAuthorizationService _service;
         private readonly IEncounterService _eService;
 
-        public AuthorizationController(IAuthorizationService service, IEncounterService eService)
+        public AuthorizationController(IDocumentsTemplatesService dService, IAuthorizationService service, IEncounterService eService)
         {
+            _dService = dService;
             _service = service;
             _eService = eService;
         }
+
 
         /// <summary>
         /// Get the details of the Authorization View in the Model Authorization such as AuthorizationList, list of countries etc.
@@ -194,13 +197,10 @@ namespace BillingSystem.Controllers
                 var result = await Upload(patientId, "1");
                 if (result.Any())
                 {
-                    using (var bal = new DocumentsTemplatesBal())
+                    docs = await _dService.SaveDocumentsAsync(null, true, "");
+                    if (docs.Any())
                     {
-                        docs = await bal.SaveDocumentsAsync(null, true, "");
-                        if (docs.Any())
-                        {
-                            docs = docs.Where(a => a.DocumentName.Equals("Authorization File")).ToList();
-                        }
+                        docs = docs.Where(a => a.DocumentName.Equals("Authorization File")).ToList();
                     }
                 }
             }

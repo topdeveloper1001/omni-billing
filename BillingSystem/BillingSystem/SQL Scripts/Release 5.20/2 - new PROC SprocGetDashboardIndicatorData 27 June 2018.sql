@@ -16,7 +16,7 @@ Begin
 
 	Select D.ID,D.IndicatorId,D.IndicatorNumber,D.SubCategory1,D.SubCategory2,D.StatisticData,D.[Month],D.[Year],D.FacilityId,D.CorporateId,D.CreatedBy
 	,D.CreatedDate,D.ExternalValue1,D.ExternalValue2,D.ExternalValue3,D.IsActive,D.DepartmentNumber
-	,FacilityNameStr = @FName
+	,FacilityNameStr=@FName
 	,MonthStr=DATENAME(month, DATEADD(month, D.[Month]-1, CAST('2001-01-01' AS datetime)))
 	,IndicatorStr=(Select TOP 1 I.[Description] From DashboardIndicators I Where I.IndicatorNumber=D.IndicatorNumber And I.CorporateId=@pCId)
 	,BudgetType =
@@ -31,8 +31,7 @@ Begin
 		Case When ISNULL(D.SubCategory1,'') !='' AND ISNULL(D.SubCategory1,'0') !='0'
 		THEN (Select TOP 1 G.GlobalCodeName From GlobalCodes G Where G.GlobalCodeValue=D.SubCategory1 And G.GlobalCodeCategoryValue=@KpiSubCategories1) 
 		ELSE '' END
-	)
-	
+	)	
 	,SubCategory2Str =
 	(
 		Case When ISNULL(D.SubCategory1,'') !='' AND IsNumeric(ISNULL(D.SubCategory1,'a'))=1 AND ISNULL(D.SubCategory2,'') !=''

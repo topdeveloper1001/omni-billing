@@ -5,9 +5,9 @@ using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using System.Transactions;
 using BillingSystem.Common.Common;
-using BillingSystem.Repository.Interfaces;
+
 using System.Data.SqlClient;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
@@ -27,10 +27,11 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<Encounter> _eRepository;
         private readonly IRepository<PatientInfo> _piRepository;
         private readonly IRepository<InsuranceCompany> _icRepository;
+        private readonly IRepository<ErrorMaster> _erRepository;
 
         private readonly BillingEntities _context;
 
-        public BillHeaderService(IRepository<BillHeader> repository, IRepository<GlobalCodes> gRepository, IRepository<CPTCodes> cptRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<Corporate> cRepository, IRepository<Facility> fRepository, IRepository<Encounter> eRepository, IRepository<PatientInfo> piRepository, IRepository<InsuranceCompany> icRepository, BillingEntities context)
+        public BillHeaderService(IRepository<BillHeader> repository, IRepository<GlobalCodes> gRepository, IRepository<CPTCodes> cptRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<Corporate> cRepository, IRepository<Facility> fRepository, IRepository<Encounter> eRepository, IRepository<PatientInfo> piRepository, IRepository<InsuranceCompany> icRepository, IRepository<ErrorMaster> erRepository, BillingEntities context)
         {
             _repository = repository;
             _gRepository = gRepository;
@@ -45,6 +46,7 @@ namespace BillingSystem.Bal.BusinessAccess
             _eRepository = eRepository;
             _piRepository = piRepository;
             _icRepository = icRepository;
+            _erRepository = erRepository;
             _context = context;
         }
 
@@ -330,67 +332,94 @@ namespace BillingSystem.Bal.BusinessAccess
         public BillHeaderCustomModel GetBillHeaderById(int billHeaderId)
         {
             var customModel = new BillHeaderCustomModel();
-            using (var bal = new ErrorMasterBal())
+            var m = _repository.Where(x => x.BillHeaderID == billHeaderId).FirstOrDefault();
+            if (m != null)
             {
-                var m = _repository.Where(x => x.BillHeaderID == billHeaderId).FirstOrDefault();
-                if (m != null)
+                customModel = new BillHeaderCustomModel
                 {
-                    customModel = new BillHeaderCustomModel
-                    {
-                        BillHeaderID = m.BillHeaderID,
-                        BillNumber = m.BillNumber,
-                        BillDate = m.BillDate,
-                        CorporateID = m.CorporateID,
-                        FacilityID = m.FacilityID,
-                        PatientID = m.PatientID,
-                        EncounterID = m.EncounterID,
-                        PayerID = m.PayerID,
-                        MemberID = m.MemberID,
-                        Gross = m.Gross,
-                        PatientShare = m.PatientShare,
-                        PayerShareNet = m.PayerShareNet,
-                        Status = GetNameByGlobalCodeValue(m.Status, Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString()),
-                        DenialCode = m.DenialCode,
-                        PaymentReference = m.PaymentReference,
-                        DateSettlement = m.DateSettlement,
-                        PaymentAmount = m.PaymentAmount,
-                        PatientPayReference = m.PatientPayReference,
-                        PatientDateSettlement = m.PatientDateSettlement,
-                        PatientPayAmount = m.PatientPayAmount,
-                        ClaimID = m.ClaimID,
-                        FileID = m.FileID,
-                        ARFileID = m.ARFileID,
-                        CreatedBy = m.CreatedBy,
-                        CreatedDate = m.CreatedDate,
-                        ModifiedBy = m.ModifiedBy,
-                        ModifiedDate = m.ModifiedDate,
-                        IsDeleted = m.IsDeleted,
-                        DeletedBy = m.DeletedBy,
-                        DeletedDate = m.DeletedDate,
-                        AuthID = m.AuthID,
-                        AuthCode = m.AuthCode,
-                        MCID = m.MCID,
-                        MCPatientShare = m.MCPatientShare,
-                        MCMultiplier = m.MCMultiplier,
-                        CorporateName = GetNameByCorporateId(Convert.ToInt32(m.CorporateID)),
-                        FacilityName = GetFacilityNameByFacilityId(Convert.ToInt32(m.FacilityID)),
-                        EncounterNumber = GetEncounterNumberById(Convert.ToInt32(m.EncounterID)),
-                        MCDiscount = m.MCDiscount,
-                        DueDate = m.DueDate,
-                        GrossChargesSum = m.PatientShare + m.PayerShareNet,
-                        EncounterStatus = GetEncounterStatusById(Convert.ToInt32(m.EncounterID)),
-                        InsuranceCompany = string.IsNullOrEmpty(m.PayerID) ? "-" : GetInsuranceCompanyNameByPayerId(Convert.ToInt32(m.PayerID)),
-                        ActivityCost = m.ActivityCost
-                    };
-                    var denialcodedesc = bal.GetSearchedDenialsList(m.DenialCode).FirstOrDefault();
-                    if (denialcodedesc != null)
-                    {
-                        customModel.DenialCodeDescritption = string.Format("{0} - {1}", denialcodedesc.ErrorCode,
-                            denialcodedesc.ErrorDescription);
-                    }
+                    BillHeaderID = m.BillHeaderID,
+                    BillNumber = m.BillNumber,
+                    BillDate = m.BillDate,
+                    CorporateID = m.CorporateID,
+                    FacilityID = m.FacilityID,
+                    PatientID = m.PatientID,
+                    EncounterID = m.EncounterID,
+                    PayerID = m.PayerID,
+                    MemberID = m.MemberID,
+                    Gross = m.Gross,
+                    PatientShare = m.PatientShare,
+                    PayerShareNet = m.PayerShareNet,
+                    Status = GetNameByGlobalCodeValue(m.Status, Convert.ToInt32(GlobalCodeCategoryValue.BillHeaderStatus).ToString()),
+                    DenialCode = m.DenialCode,
+                    PaymentReference = m.PaymentReference,
+                    DateSettlement = m.DateSettlement,
+                    PaymentAmount = m.PaymentAmount,
+                    PatientPayReference = m.PatientPayReference,
+                    PatientDateSettlement = m.PatientDateSettlement,
+                    PatientPayAmount = m.PatientPayAmount,
+                    ClaimID = m.ClaimID,
+                    FileID = m.FileID,
+                    ARFileID = m.ARFileID,
+                    CreatedBy = m.CreatedBy,
+                    CreatedDate = m.CreatedDate,
+                    ModifiedBy = m.ModifiedBy,
+                    ModifiedDate = m.ModifiedDate,
+                    IsDeleted = m.IsDeleted,
+                    DeletedBy = m.DeletedBy,
+                    DeletedDate = m.DeletedDate,
+                    AuthID = m.AuthID,
+                    AuthCode = m.AuthCode,
+                    MCID = m.MCID,
+                    MCPatientShare = m.MCPatientShare,
+                    MCMultiplier = m.MCMultiplier,
+                    CorporateName = GetNameByCorporateId(Convert.ToInt32(m.CorporateID)),
+                    FacilityName = GetFacilityNameByFacilityId(Convert.ToInt32(m.FacilityID)),
+                    EncounterNumber = GetEncounterNumberById(Convert.ToInt32(m.EncounterID)),
+                    MCDiscount = m.MCDiscount,
+                    DueDate = m.DueDate,
+                    GrossChargesSum = m.PatientShare + m.PayerShareNet,
+                    EncounterStatus = GetEncounterStatusById(Convert.ToInt32(m.EncounterID)),
+                    InsuranceCompany = string.IsNullOrEmpty(m.PayerID) ? "-" : GetInsuranceCompanyNameByPayerId(Convert.ToInt32(m.PayerID)),
+                    ActivityCost = m.ActivityCost
+                };
+                var denialcodedesc = GetSearchedDenialsList(m.DenialCode).FirstOrDefault();
+                if (denialcodedesc != null)
+                {
+                    customModel.DenialCodeDescritption = string.Format("{0} - {1}", denialcodedesc.ErrorCode,
+                        denialcodedesc.ErrorDescription);
                 }
             }
             return customModel;
+        }
+        private IEnumerable<ErrorMasterCustomModel> GetSearchedDenialsList(string text)
+        {
+            var list = new List<ErrorMasterCustomModel>();
+            text = string.IsNullOrEmpty(text) ? string.Empty : text.ToLower().Trim();
+            var lstErrorMaster = _erRepository.Where(a => a.IsActive != null && (bool)a.IsActive && (a.ErrorDescription.ToLower().Contains(text) || a.ErrorCode.ToLower().Contains(text))).ToList();
+            if (lstErrorMaster.Count > 0)
+            {
+                list.AddRange(lstErrorMaster.Select(item => new ErrorMasterCustomModel
+                {
+                    ErrorCode = item.ErrorCode,
+                    ErrorDescription = item.ErrorDescription,
+                    ErrorMasterID = item.ErrorMasterID,
+                    CreatedBy = item.CreatedBy,
+                    CreatedDate = item.CreatedDate,
+                    ErrorResolution = item.ErrorResolution,
+                    ErrorType = item.ErrorType,
+                    ExtValue1 = item.ExtValue1,
+                    ExtValue2 = item.ExtValue2,
+                    ExtValue3 = item.ExtValue3,
+                    ExtValue4 = item.ExtValue4,
+                    FacilityID = item.FacilityID,
+                    IsActive = item.IsActive,
+                    ModifiedBy = item.ModifiedBy,
+                    ModifiedDate = item.ModifiedDate
+                }));
+
+
+            }
+            return list;
         }
 
         /// <summary>

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model.CustomModel;
@@ -18,12 +17,22 @@ namespace BillingSystem.Controllers
         private readonly IBillingSystemParametersService _bspService;
         private readonly IUsersService _uService;
         private readonly ICorporateService _cService;
+        private readonly IRoleTabsService _rtService;
+        private readonly IUserRoleService _urService;
+        private readonly IRoleService _rService;
+        private readonly IFacilityRoleService _frService;
+        private readonly IFacilityService _fService;
 
-        public RoleSelectionController(IBillingSystemParametersService bspService, IUsersService uService, ICorporateService cService)
+        public RoleSelectionController(IBillingSystemParametersService bspService, IUsersService uService, ICorporateService cService, IRoleTabsService rtService, IUserRoleService urService, IRoleService rService, IFacilityRoleService frService, IFacilityService fService)
         {
             _bspService = bspService;
             _uService = uService;
             _cService = cService;
+            _rtService = rtService;
+            _urService = urService;
+            _rService = rService;
+            _frService = frService;
+            _fService = fService;
         }
 
         //
@@ -48,19 +57,15 @@ namespace BillingSystem.Controllers
         private List<RoleSelectionCustomModel> GetUserRoles(int userid)
         {
             var userroleList = new List<RoleSelectionCustomModel>();
-            var userroleBal = new UserRoleBal();
-            var roleBal = new RoleBal();
-            var facilityRole = new FacilityRoleBal();
-            var facility = new FacilityBal();
-            var roles = userroleBal.GetUserRolesByUserId(userid);
+            var roles = _urService.GetUserRolesByUserId(userid);
             foreach (var role in roles)
             {
-                var roleFacilityIds = facilityRole.GetFacilityRolesByRoleId(role.RoleID);
+                var roleFacilityIds = _frService.GetFacilityRolesByRoleId(role.RoleID);
                 userroleList.AddRange(roleFacilityIds.Select(rolefacility => new RoleSelectionCustomModel
                 {
                     RoleId = role.RoleID,
-                    RoleName = roleBal.GetRoleNameById(role.RoleID),
-                    FacilityName = facility.GetFacilityNameById(rolefacility.FacilityId),
+                    RoleName = _rService.GetRoleNameById(role.RoleID),
+                    FacilityName = _fService.GetFacilityNameById(rolefacility.FacilityId),
                     FacilityId = rolefacility.FacilityId,
                     CorporateId = rolefacility.CorporateId
                 }));
@@ -72,7 +77,7 @@ namespace BillingSystem.Controllers
         /// Sets the user role.
         /// </summary>
         /// <param name="roleId">The role identifier.</param>
-        /// <param name="facilityId">The facility identifier.</param>
+        /// <param name="facilityId">The _fService identifier.</param>
         /// <param name="corporateId">The corporate identifier.</param>
         /// <returns></returns>
         public ActionResult SetUserRole(int roleId, int facilityId, int corporateId)
@@ -95,33 +100,30 @@ namespace BillingSystem.Controllers
 
                 objSession.MenuSessionList = _uService.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
 
-                using (var rtBal = new RoleTabsBal())
-                {
-                    objSession.IsPatientSearchAccessible = rtBal.CheckIfTabNameAccessibleToGivenRole("Patient Lookup",
-                        ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
+                objSession.IsPatientSearchAccessible = _rtService.CheckIfTabNameAccessibleToGivenRole("Patient Lookup",
+                    ControllerAccess.PatientSearch.ToString(), ActionNameAccess.PatientSearch.ToString(),
+                    Convert.ToInt32(roleId));
+                objSession.IsAuthorizationAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization",
+                        ControllerAccess.Authorization.ToString(),
+                        ActionNameAccess.AuthorizationMain.ToString(), Convert.ToInt32(roleId));
+                objSession.IsActiveEncountersAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("Active Encounters",
+                        ControllerAccess.ActiveEncounter.ToString(),
+                        ActionNameAccess.ActiveEncounter.ToString(),
                         Convert.ToInt32(roleId));
-                    objSession.IsAuthorizationAccessible =
-                        rtBal.CheckIfTabNameAccessibleToGivenRole("Obtain Insurance Authorization",
-                            ControllerAccess.Authorization.ToString(),
-                            ActionNameAccess.AuthorizationMain.ToString(), Convert.ToInt32(roleId));
-                    objSession.IsActiveEncountersAccessible =
-                        rtBal.CheckIfTabNameAccessibleToGivenRole("Active Encounters",
-                            ControllerAccess.ActiveEncounter.ToString(),
-                            ActionNameAccess.ActiveEncounter.ToString(),
-                            Convert.ToInt32(roleId));
-                    objSession.IsBillHeaderViewAccessible =
-                        rtBal.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
-                            ControllerAccess.BillHeader.ToString(),
-                            ActionNameAccess.Index.ToString(), Convert.ToInt32(roleId));
-                    objSession.IsEhrAccessible =
-                        rtBal.CheckIfTabNameAccessibleToGivenRole("EHR",
-                            ControllerAccess.Summary.ToString(),
-                            ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
+                objSession.IsBillHeaderViewAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("Generate Preliminary Bill",
+                        ControllerAccess.BillHeader.ToString(),
+                        ActionNameAccess.Index.ToString(), Convert.ToInt32(roleId));
+                objSession.IsEhrAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("EHR",
+                        ControllerAccess.Summary.ToString(),
+                        ActionNameAccess.PatientSummary.ToString(), Convert.ToInt32(roleId));
 
-                    objSession.SchedularAccessible =
-                        rtBal.CheckIfTabNameAccessibleToGivenRole("Scheduling", string.Empty, string.Empty,
-                            Convert.ToInt32(roleId));
-                }
+                objSession.SchedularAccessible =
+                    _rtService.CheckIfTabNameAccessibleToGivenRole("Scheduling", string.Empty, string.Empty,
+                        Convert.ToInt32(roleId));
             }
             else
             {
@@ -147,19 +149,16 @@ namespace BillingSystem.Controllers
                 // Changed by Shashank ON : 5th May 2015 : To add the Module access level Security when user log in via Facility and Corporate 
                 objSession.MenuSessionList = _uService.GetTabsByUserIdRoleId(objSession.UserId, objSession.RoleId, objSession.FacilityId, objSession.CorporateId, isDeleted: false, isActive: true);
             }
-            using (var facilitybal = new FacilityBal())
+            var facilityObj = _fService.GetFacilityById(facilityId);
+            var timezoneValue = facilityObj.FacilityTimeZone;
+            if (!string.IsNullOrEmpty(timezoneValue))
             {
-                var facilityObj = facilitybal.GetFacilityByFacilityId(facilityId);
-                var timezoneValue = facilityObj.FacilityTimeZone;
-                if (!string.IsNullOrEmpty(timezoneValue))
-                {
-                    var timezoneobj = TimeZoneInfo.FindSystemTimeZoneById(timezoneValue);
-                    objSession.TimeZone = timezoneobj.BaseUtcOffset.TotalHours.ToString();
-                }
-                else
-                {
-                    objSession.TimeZone = "0.0";
-                }
+                var timezoneobj = TimeZoneInfo.FindSystemTimeZoneById(timezoneValue);
+                objSession.TimeZone = timezoneobj.BaseUtcOffset.TotalHours.ToString();
+            }
+            else
+            {
+                objSession.TimeZone = "0.0";
             }
 
 

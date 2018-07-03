@@ -3,14 +3,24 @@ using BillingSystem.Common;
 using System;
 using System.Collections.Generic;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class RuleMasterController : BaseController
     {
+        private readonly IRuleMasterService _service;
+        private readonly IRuleStepService _rsService;
+
+        public RuleMasterController(IRuleMasterService service, IRuleStepService rsService)
+        {
+            _service = service;
+            _rsService = rsService;
+        }
+
+
         /// <summary>
         /// Get the details of the RuleMaster View in the Model RuleMaster such as RuleMasterList, list of countries etc.
         /// </summary>
@@ -19,9 +29,7 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the RuleMaster BAL object
-            var ruleMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber);
-            var ruleMasterList = ruleMasterBal.GetRuleMasterList();
+            var ruleMasterList = _service.GetRuleMasterList(Helpers.DefaultBillEditRuleTableNumber);
 
             //Intialize the View Model i.e. RuleMasterView which is binded to Main View Index.cshtml under RuleMaster
             var ruleMasterView = new RuleMasterView
@@ -59,10 +67,10 @@ namespace BillingSystem.Controllers
         //public ActionResult BindRuleMasterList(string tn, bool notActive =  false)
         //{
         //    //Initialize the RuleMaster BAL object
-        //    using (var ruleMasterBal = new RuleMasterBal(!string.IsNullOrEmpty(tn) ? tn : Helpers.DefaultBillEditRuleTableNumber))
+        //    using (var _service = new RuleMasterBal(!string.IsNullOrEmpty(tn) ? tn : Helpers.DefaultBillEditRuleTableNumber))
         //    {
         //        //Get the Rule Master list
-        //        var ruleMasterList = ruleMasterBal.GetRuleMasterList(notActive);
+        //        var ruleMasterList = _service.GetRuleMasterList(notActive);
 
         //        //Pass the ActionResult with List of RuleMasterViewModel object to Partial View RuleMasterList
         //        return PartialView(PartialViews.RuleMasterList, ruleMasterList);
@@ -70,19 +78,15 @@ namespace BillingSystem.Controllers
         //}
         [HttpPost]
         public ActionResult BindRuleMasterList(string tn, bool notActive = false)
-        {
-            //Initialize the RuleMaster BAL object
-            using (var ruleMasterBal = new RuleMasterBal(!string.IsNullOrEmpty(tn) ? tn : Helpers.DefaultBillEditRuleTableNumber))
-            {
-                //Get the Rule Master list
-                var ruleMasterList = ruleMasterBal.GetRuleMasterList(notActive);
+        {   //Get the Rule Master list
+            var ruleMasterList = _service.GetRuleMasterList(Helpers.DefaultBillEditRuleTableNumber, notActive);
 
-                //Pass the ActionResult with List of RuleMasterViewModel object to Partial View RuleMasterList
-                return PartialView(PartialViews.RuleMasterList, ruleMasterList);
-            }
+            //Pass the ActionResult with List of RuleMasterViewModel object to Partial View RuleMasterList
+            return PartialView(PartialViews.RuleMasterList, ruleMasterList);
+
         }
 
-     
+
         /// <summary>
         /// Add New or Update the RuleMaster based on if we pass the RuleMaster ID in the RuleMasterViewModel object.
         /// </summary>
@@ -99,9 +103,7 @@ namespace BillingSystem.Controllers
 
             //Check if RuleMasterViewModel 
             if (model != null)
-            {
-                using (var ruleMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
-                {
+            { 
                     if (model.RuleMasterID > 0)
                     {
                         model.ModifiedBy = userId;
@@ -113,8 +115,8 @@ namespace BillingSystem.Controllers
                         model.CreatedDate = currentDateTime;
                     }
                     //Call the AddRuleMaster Method to Add / Update current RuleMaster
-                    newId = ruleMasterBal.AddUptdateRuleMaster(model);
-                }
+                    newId = _service.AddUptdateRuleMaster(model, Helpers.DefaultBillEditRuleTableNumber);
+                 
             }
             return Json(newId);
         }
@@ -125,15 +127,13 @@ namespace BillingSystem.Controllers
         /// <param name="rmId">The rm identifier.</param>
         /// <returns></returns>
         public ActionResult GetRuleMaster(int rmId)
-        {
-            using (var ruleMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
-            {
+        { 
                 //Call the AddRuleMaster Method to Add / Update current RuleMaster
-                var currentRuleMaster = ruleMasterBal.GetRuleMasterById(rmId);
+                var currentRuleMaster = _service.GetRuleMasterById(rmId, Helpers.DefaultBillEditRuleTableNumber);
 
                 //Pass the ActionResult with the current RuleMasterViewModel object as model to PartialView RuleMasterAddEdit
                 return PartialView(PartialViews.RuleMasterAddEdit, currentRuleMaster);
-            }
+             
         }
 
         /// <summary>
@@ -142,16 +142,14 @@ namespace BillingSystem.Controllers
         /// <param name="RuleMasterID">The rule master identifier.</param>
         /// <returns></returns>
         public ActionResult DeleteRuleMaster(int RuleMasterID)
-        {
-            using (var ruleMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
-            {
+        { 
                 //Get RuleMaster model object by current RuleMaster ID
-                var currentRuleMaster = ruleMasterBal.GetRuleMasterById(RuleMasterID);
+                var currentRuleMaster = _service.GetRuleMasterById(RuleMasterID, Helpers.DefaultBillEditRuleTableNumber);
 
-                var result = ruleMasterBal.DeleteRuleMaster(currentRuleMaster);
+                var result = _service.DeleteRuleMaster(currentRuleMaster);
                 //return deleted ID of current DashboardBudget as Json Result to the Ajax Call.
                 return Json(result);
-            }
+             
         }
 
         /// <summary>
@@ -176,11 +174,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult RuleStepView(int? ruleMasterId)
         {
-            //Initialize the RuleStep BAL object
-            var ruleStepBal = new RuleStepBal();
-
             //Get the Entity list
-            var ruleStepList = ruleStepBal.GetRuleStepsList(Convert.ToInt32(ruleMasterId));
+            var ruleStepList = _rsService.GetRuleStepsList(Convert.ToInt32(ruleMasterId));
 
             //Intialize the View Model i.e. RuleStepView which is binded to Main View Index.cshtml under RuleStep
             var ruleStepView = new RuleStepView

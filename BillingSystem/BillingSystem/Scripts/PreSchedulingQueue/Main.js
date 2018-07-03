@@ -9,6 +9,7 @@ var monthFirstDay = new Date(y, m, 1);
 var monthLastDay = new Date(y, m + 1, 0);
 var html = function (id) { return document.getElementById(id); }; //just a helper
 
+var schedulerUrl = "/Scheduler/";
 
 $(function () {
     BindAppointmentAvailability();
@@ -189,14 +190,14 @@ function BindFacility(selector) {
     });
 }
 
-var GetSchedulingData = function(id) {
+var GetSchedulingData = function (id) {
     var jsonData = JSON.stringify({
         id: id,
     });
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/FacultyTimeslots/GetSchedulingById",
+        url: schedulerUrl + "GetSchedulingById",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -222,7 +223,7 @@ var BindLightBox = function (obj) {
             $("#divRecurrenceEventPopup").show();
             if (obj.IsRecurrance) {
                 $("#btnEditRecurrenceSeries").click(function (e) {
-                    
+
                     $('#divSchedularPopUp').show();
                     $("#divRecurrenceEventPopup").hide();
                     var procObj = obj.TypeOfProcedureCustomModel;
@@ -231,7 +232,7 @@ var BindLightBox = function (obj) {
                     }
                 });
                 $("#btnEditRecurrenceOccurrence").click(function (e) {
-                    
+
                     $("#rbMultiple").prop("checked", false);
                     $("#rbSingle").prop("checked", true);
                     $("#rbMultiple").prop("disabled", true);
@@ -360,7 +361,7 @@ var BindLightBox = function (obj) {
                     interval: parseInt($("#hfProdTimeSlot" + loop[u]).val()),
                     format: "HH:mm",
                     change: function (e) {
-                        
+
                         startChange("#" + e.sender.element[0].id, "#" + e.sender.element[0].id.replace("f", "t"), parseInt(e.sender.options.interval));//fromtimeId, totimeId, timeinterval
                     }
                 }).data("kendoTimePicker").readonly();
@@ -385,7 +386,7 @@ var BindLightBox = function (obj) {
                 /*for multiple, first we need to show edit multiple series popup and then on its input show real popup*/
                 $("#divMultipleEventPopup").show();
                 $("#btnEditSeries").click(function (e) {
-                    
+
                     $('#divSchedularPopUp').show();
                     $("#hidEventParentId").val(obj.EventParentId);
                     $("#hfSchedulingId").val(obj.TimeSlotId);
@@ -398,7 +399,7 @@ var BindLightBox = function (obj) {
                     $('#hidEventToDate').val(obj.Rec_end_date);
                 });
                 $("#btnEditOccurrence").click(function (e) {
-                    
+
                     $('#divSchedularPopUp').show();
                     $("#hidEventParentId").val(obj.EventParentId);
                     $("#hfSchedulingId").val(obj.TimeSlotId);
@@ -474,7 +475,7 @@ var BindLightBox = function (obj) {
 }
 
 function BindFacilityDepartmentspopup(facilityDDId) {
-    
+
     $("#ddSpeciality").val("0");
     $.ajax({
         type: "POST",
@@ -486,7 +487,7 @@ function BindFacilityDepartmentspopup(facilityDDId) {
             facilityId: $(facilityDDId).val()
         }),
         success: function (data) {
-            
+
             if (data) {
                 var items = '<option value="0">--Select--</option>';
                 $.each(data.phyList, function (i, physician) {
@@ -582,7 +583,7 @@ var SetDepartmentAndSpeciality = function (e) {
 };
 
 function AddAppointmentTypesTimeSlot() {
-    
+
     var isMultipleChecked = $("#rbMultiple").prop("checked");
     var isSingleChecked = $("#rbSingle").prop("checked");
     var ctrl = $("#tbApptTypesList");
@@ -620,7 +621,7 @@ function AddAppointmentTypesTimeSlot() {
     html += "<td><img src='/images/delete.png' width='15px' onclick='RemoveAppointmentProcedures(" + apptTypeValue + ")'/></td>";
     html += "</tr>";
     ctrl.append(html);
-    
+
     $("#date" + apptTypeValue).datetimepicker({
         format: 'm/d/Y',
         minDate: 0,
@@ -667,13 +668,13 @@ function RemoveAppointmentProcedures(apptId) {
     //var tt = apptRecArray;
     $.each(apptRecArray, function (i, val) {
         $.each(val, function (key, name) {
-            
+
             if (name == apptId) {
                 apptRecArray.splice(i, 1);
             }
         });
     });
-    
+
     //var index = selectedTypesArray.indexOf(apptId.toString());
     selectedTypesArray.remove(apptId.toString());
     var removeAppTypes = $("#hfRemovedAppTypes").val();
@@ -689,7 +690,7 @@ Array.prototype.remove = function (val) {
 };
 
 var OnChangeIsReccurrenceChk = function (e, appTypeId) {
-    
+
     var ctrl = $(e);
     if (!ctrl[0].checked && ctrl.attr("type") == "checkbox") {
         $("#btnEditRecurrence" + appTypeId).hide();
@@ -810,13 +811,13 @@ var OnChangeAppointmentDate = function (obj, apptTypeId) {
     var jsonData = { facilityId: facilityId, physicianId: physicianId, dateselected: selectedDate, typeofproc: typeOfProcedure };
     $.ajax({
         type: "POST",
-        url: '/FacultyTimeslots/GetAvailableTimeSlots',
+        url: schedulerUrl + "GetAvailableTimeSlots",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         data: JSON.stringify(jsonData),
         success: function (data) {
-            
+
             var _ctrl;
             if (data.avialableTimeslotListing[0].TimeSlot == 0) {
                 _ctrl = $("#ulTimeSlots");
@@ -840,7 +841,7 @@ var OnChangeAppointmentDate = function (obj, apptTypeId) {
 }
 
 var SelectTimeSlot = function (e, aTypeId, pName) {
-    
+
     if (pName == 2) {
         var facilityId = $(e).attr("attr-fid");
         var physicianId = $(e).attr("attr-pid");
@@ -881,7 +882,7 @@ var SelectTimeSlot = function (e, aTypeId, pName) {
 }
 
 var OnClickRecurrenceTypeBtn = function (e) {
-    
+
     var ctrl = $(e)[0];
     var aptDate = $("#date" + $("#hfRecAppTypeId").val()).val();
     var recEndDate = new Date(aptDate);
@@ -945,11 +946,11 @@ var DoneApppointTypeReccurrence = function () {
             return false;
         }
     }
-    
+
     $.each(apptRecArray, function (i, val) {
-        
+
         $.each(val, function (key, name) {
-            
+
             if (name == $("#hfRecAppTypeId").val()) {
                 apptRecArray.splice(i, 1);
             }
@@ -990,7 +991,7 @@ var DoneApppointTypeReccurrence = function () {
             var weeklyDayChk = $("input[name='week_day']");
             var selectedWeekDays = "";
             if (weeklyDayChk.length > 0) {
-                for (var i = 0; i < weeklyDayChk.length ; i++) {
+                for (var i = 0; i < weeklyDayChk.length; i++) {
                     if (weeklyDayChk[i].checked) {
                         selectedWeekDays += weeklyDayChk[i].value + ",";
                     }
@@ -1074,7 +1075,7 @@ var CancelApppointTypeReccurrence = function (from) {
 }
 
 var OnchangeRecurrenceCtrl = function (e) {
-    
+
     var ctrl = e;
     var aptDate = $("#date" + $("#hfRecAppTypeId").val()).val();
     var recEndDate = new Date(aptDate);
@@ -1180,7 +1181,7 @@ var ClearSchedulingPopup = function () {
 }
 
 var SaveCustomSchedular = function () {
-    
+
     var apptRecArray1 = apptRecArray;
     var btnSelection = $('input[name=rdbtnSelection]:checked').val();
     var jsonData = [];
@@ -1299,7 +1300,7 @@ var SaveCustomSchedular = function () {
         var jsonD = JSON.stringify(jsonData);
         $.ajax({
             type: "POST",
-            url: '/FacultyTimeslots/SavePatientScheduling',
+            url: schedulerUrl + "SavePatientScheduling",
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -1353,7 +1354,7 @@ function OnChangeOVAppointTypes(e) {
 }
 
 function OnClickGetData(e, physicianId, sTime, eTime) {
-    
+
     $(".selected_column").hide();
     $(e).find(".selected_column").show();
     var day = $(e).attr("attr-Day");
@@ -1371,7 +1372,7 @@ function OnClickGetData(e, physicianId, sTime, eTime) {
     var endTime = $(e).attr("attr-EndTime");
     var room = $(e).attr("attr-RoomId");
     $("#hfRoomId").val(room);
-    var searchUrl = '/FacultyTimeslots/GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
+    var searchUrl = schedulerUrl + 'GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
         "&TimeSlotFrequency=" + timeSlotFrequency + "&AppointmentType=" + appointmentType + "&FacilityId=" + facilityId +
         "&DepartmentId=" + departmentId + "&Physician=" + physician + "&Patient=" + patient + "&Room=" + room;
     $.ajax({
@@ -1382,7 +1383,7 @@ function OnClickGetData(e, physicianId, sTime, eTime) {
         dataType: "json",
         //data: JSON.stringify(searchUrl),
         success: function (data) {
-            
+
             $(".newrowadded").remove();
             var clickedRowId = $(e).parent().parent()[0].id;
 
@@ -1417,217 +1418,217 @@ function GetFilteredResult(day, data) {
     switch (day) {
         case "1":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D1).html().substring(0, $(record.D1).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "2":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D2).html().substring(0, $(record.D2).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "3":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D3).html().substring(0, $(record.D3).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "4":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D4).html().substring(0, $(record.D4).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "5":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D5).html().substring(0, $(record.D5).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "6":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D6).html().substring(0, $(record.D6).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "7":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D7).html().substring(0, $(record.D7).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "8":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D8).html().substring(0, $(record.D8).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "9":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D9).html().substring(0, $(record.D9).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "10":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D10).html().substring(0, $(record.D10).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "11":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D11).html().substring(0, $(record.D11).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "12":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D12).html().substring(0, $(record.D12).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "13":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D13).html().substring(0, $(record.D13).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "14":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D14).html().substring(0, $(record.D14).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "15":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D15).html().substring(0, $(record.D15).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "16":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D16).html().substring(0, $(record.D16).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "17":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D17).html().substring(0, $(record.D17).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "18":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D18).html().substring(0, $(record.D18).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "19":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D19).html().substring(0, $(record.D19).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "20":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D20).html().substring(0, $(record.D20).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "21":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D21).html().substring(0, $(record.D21).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "22":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D22).html().substring(0, $(record.D22).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "23":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D23).html().substring(0, $(record.D23).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "24":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D24).html().substring(0, $(record.D24).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "25":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D25).html().substring(0, $(record.D25).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "26":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D26).html().substring(0, $(record.D26).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "27":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D27).html().substring(0, $(record.D27).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "28":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D28).html().substring(0, $(record.D28).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "29":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D29).html().substring(0, $(record.D29).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "30":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D30).html().substring(0, $(record.D30).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
             break;
         case "31":
             d = jLinq.from(data.aaData).where(function (record) {
-                
+
                 if ($(record.D31).html().substring(0, $(record.D31).html().lastIndexOf("\n")) == "0")
                     return record;
             }).select();
@@ -1718,7 +1719,7 @@ function ShowOverViewData() {
         var endTime = $("#txtOVTimeTo").val();
 
 
-        var searchUrl = '/FacultyTimeslots/GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
+        var searchUrl = schedulerUrl + 'GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
             "&TimeSlotFrequency=" + timeSlotFrequency + "&AppointmentType=" + appointmentType + "&FacilityId=" + facilityId +
             "&DepartmentId=" + departmentId + "&Physician=" + physician + "&Patient=" + patient + "&Room=0&ViewType=0";
 
@@ -2119,7 +2120,7 @@ function BindPatient(selector) {
             facilityId: $("#selOVFacility").val()
         }),
         success: function (data) {
-            
+
             if (data) {
                 var items = '<option value="0">--Select--</option>';
                 $.each(data, function (i, facility) {

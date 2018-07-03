@@ -6,12 +6,13 @@ using BillingSystem.Common;
 using System.Data.Entity;
 using BillingSystem.Model.CustomModel;
 using System.Transactions;
-using BillingSystem.Repository.Interfaces;
 using AutoMapper;
 using System.Data.SqlClient;
 using BillingSystem.Common.Common;
-using BillingSystem.Repository.Common;
 using BillingSystem.Bal.Interfaces;
+using System.Threading.Tasks;
+using BillingSystem.Model.EntityDto;
+using System.Text.RegularExpressions;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -23,10 +24,15 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<Physician> _phRepository;
         private readonly IRepository<Facility> _fRepository;
         private readonly IRepository<Role> _rRepository;
+        private readonly IRepository<FacilityRole> _frRepository;
         private readonly IMapper _mapper;
         private readonly BillingEntities _context;
+        private readonly IRepository<PatientLoginDetail> _pdRepository;
 
-        public UsersService(IRepository<Users> repository, IRepository<Corporate> cRepository, IRepository<UserRole> urRepository, IRepository<Physician> phRepository, IRepository<Facility> fRepository, IRepository<Role> rRepository, IMapper mapper, BillingEntities context)
+        public UsersService(IRepository<Users> repository, IRepository<Corporate> cRepository, IRepository<UserRole> urRepository
+            , IRepository<Physician> phRepository, IRepository<Facility> fRepository, IRepository<Role> rRepository
+            , IRepository<PatientLoginDetail> pdRepository, IRepository<FacilityRole> frRepository
+            , IMapper mapper, BillingEntities context)
         {
             _repository = repository;
             _cRepository = cRepository;
@@ -34,9 +40,13 @@ namespace BillingSystem.Bal.BusinessAccess
             _phRepository = phRepository;
             _fRepository = fRepository;
             _rRepository = rRepository;
+            _frRepository = frRepository;
+            _pdRepository = pdRepository;
+
             _mapper = mapper;
             _context = context;
         }
+
         public Physician GetPhysicianById(int id)
         {
             var phys = _phRepository.Where(p => p.Id == id).FirstOrDefault();
@@ -82,6 +92,14 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return m;
 
+        }
+        private int DeleteRoleWithUser(int userId)
+        {
+            var result = -1;
+            var lst = _urRepository.Where(x => x.UserID == userId).ToList();
+            if (lst.Count > 0)
+                _repository.Delete(lst);
+            return result;
         }
         public UsersViewModel GetUserByEmail(string email)
         {
@@ -192,8 +210,6 @@ namespace BillingSystem.Bal.BusinessAccess
         public int AddUpdateUser(Users m, int roleId)
         {
             int result;
-            var userRolebal = new UserRoleBal();
-            var facilityRoleBal = new FacilityRoleBal();
             using (var transScope = new TransactionScope())
             {
                 var encryptPassword = EncryptDecrypt.GetEncryptedData(m.Password, "");
@@ -224,7 +240,7 @@ namespace BillingSystem.Bal.BusinessAccess
                             _urRepository.UpdateEntity(currentRole, currentRole.UserRoleID);
 
                             //Update the roles in Physician Table too if schedulingApplied is set true to that current role in FacilityRole Table.
-                            var isSchedulingApplied = facilityRoleBal.IsSchedulingApplied(roleId);
+                            var isSchedulingApplied = IsSchedulingApplied(roleId);
                             if (isSchedulingApplied && clinician != null)
                             {
                                 clinician.UserType = roleId;
@@ -242,7 +258,7 @@ namespace BillingSystem.Bal.BusinessAccess
                     }
 
                     if (Convert.ToBoolean(m.IsDeleted))
-                        userRolebal.DeleteRoleWithUser(m.UserID);
+                        DeleteRoleWithUser(m.UserID);
                     transScope.Complete();
                 }
                 else
@@ -262,7 +278,7 @@ namespace BillingSystem.Bal.BusinessAccess
                             CreatedDate = m.CreatedDate,
                             UserRoleID = 0
                         };
-                        var newUserRoleId = userRolebal.SaveUserRole(userRoleModel);
+                        var newUserRoleId = SaveUserRole(userRoleModel);
                         if (newUserRoleId > 0)
                         {
                             var facilityRoleModel = new FacilityRole
@@ -276,7 +292,7 @@ namespace BillingSystem.Bal.BusinessAccess
                                 CreatedBy = m.CreatedBy,
                                 CreatedDate = m.CreatedDate
                             };
-                            var isAdded = facilityRoleBal.SaveFacilityRoleIfNotExists(facilityRoleModel);
+                            var isAdded = SaveFacilityRoleIfNotExists(facilityRoleModel);
                             if (isAdded)
                                 transScope.Complete();
                         }
@@ -291,7 +307,23 @@ namespace BillingSystem.Bal.BusinessAccess
 
             return result;
         }
-
+        private bool SaveFacilityRoleIfNotExists(FacilityRole model)
+        {
+            var currentModel = _frRepository.Where(f => f.FacilityId == model.FacilityId && f.RoleId == model.RoleId).FirstOrDefault();
+            if (currentModel != null)
+            {
+                currentModel.IsActive = true;
+                currentModel.IsDeleted = false;
+            }
+            else
+                _frRepository.Create(model);
+            return true;
+        }
+        private bool IsSchedulingApplied(int roleId)
+        {
+            var fr = _frRepository.Where(f => f.IsActive && !f.IsDeleted && f.RoleId == roleId).FirstOrDefault();
+            return fr != null && fr.SchedulingApplied;
+        }
         /// <summary>
         /// Method to To check Duplicate User on the basis of username or email
         /// </summary>
@@ -308,7 +340,20 @@ namespace BillingSystem.Bal.BusinessAccess
             return user != null;
 
         }
-
+        private int SaveUserRole(UserRole model)
+        {
+            var isExists = CheckIfExists(model.UserID, model.RoleID);
+            if (model.UserRoleID > 0 || isExists)
+                _urRepository.UpdateEntity(model, model.UserRoleID);
+            else
+                _urRepository.Create(model);
+            return model.UserRoleID;
+        }
+        private bool CheckIfExists(int userId, int roleId)
+        {
+            var role = _urRepository.Where(fr => fr.IsActive && fr.IsDeleted != true && fr.RoleID == roleId && fr.UserID == userId).FirstOrDefault();
+            return role != null;
+        }
         //Menu Manipulations
         /// <summary>
         /// Gets the name of the tabs by user.
@@ -443,20 +488,21 @@ namespace BillingSystem.Bal.BusinessAccess
                         if (ids.All(fac => fac != f.FacilityId))
                         {
                             ids.Add(f.FacilityId);
-                            using (var facBal = new FacilityBal())
-                            {
-                                if (string.IsNullOrEmpty(facilityNames))
-                                    facilityNames = facBal.GetFacilityNameById(f.FacilityId);
-                                else
-                                    facilityNames += string.Format(", {0}", facBal.GetFacilityNameById(f.FacilityId));
-                            }
+                            if (string.IsNullOrEmpty(facilityNames))
+                                facilityNames = GetFacilityNameById(f.FacilityId);
+                            else
+                                facilityNames += string.Format(", {0}", GetFacilityNameById(f.FacilityId));
                         }
                     }
                 }
             }
             return facilityNames;
         }
-
+        private string GetFacilityNameById(int id)
+        {
+            var facility = _fRepository.Get(id);
+            return (facility != null) ? facility.FacilityName : string.Empty;
+        }
         /// <summary>
         /// Gets all users by facility identifier.
         /// </summary>
@@ -582,6 +628,138 @@ namespace BillingSystem.Bal.BusinessAccess
             sqlParameters[1] = new SqlParameter("pFID", facilityId);
             IEnumerable<BillEditorUsersCustomModel> result = _context.Database.SqlQuery<BillEditorUsersCustomModel>(spName, sqlParameters);
             return result.ToList();
+        }
+
+
+        public string GetNameByUserId(int id)
+        {
+            var m = _repository.Where(x => x.UserID == id).FirstOrDefault();
+            return m != null ? $"{m.FirstName} {m.LastName}" : string.Empty;
+        }
+
+
+        public async Task<UserDto> AuthenticateAsync(string username, string password, string deviceToken, string platform, bool isPatient = false)
+        {
+            username = username.ToLower().Trim();
+
+            var isEmail = Regex.IsMatch(username, @"\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\Z", RegexOptions.IgnoreCase);
+            var sqlParameters = new SqlParameter[7];
+            sqlParameters[0] = new SqlParameter("pUsername", username);
+            sqlParameters[1] = new SqlParameter("pPassword", password);
+            sqlParameters[2] = new SqlParameter("pDeviceToken", deviceToken);
+            sqlParameters[3] = new SqlParameter("pPlatform", platform);
+            sqlParameters[4] = new SqlParameter("pIsEmail", isEmail);
+            sqlParameters[5] = new SqlParameter("pUserId", 0);
+            sqlParameters[6] = new SqlParameter("pIsPatient", isPatient);
+
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocAuthenticateUser.ToString(), parameters: sqlParameters, isCompiled: false))
+            {
+                var r = ms.ResultSetFor<bool>();
+                var isAuthenticated = r != null && r.Any() ? r.FirstOrDefault() : false;
+                if (isAuthenticated)
+                {
+                    var result = await ms.GetResultWithJsonAsync<UserDto>(JsonResultsArray.UserDto.ToString());
+                    return result != null && result.Count > 0 ? result.FirstOrDefault() : null;
+                }
+            }
+            return Enumerable.Empty<UserDto>().FirstOrDefault();
+        }
+
+        public async Task<UserDto> AuthenticateAsync(string username, string password, string deviceToken, string platform, bool isEmail, long userId = 0, bool isPatient = false)
+        {
+            var sqlParameters = new SqlParameter[7];
+            sqlParameters[0] = new SqlParameter("pUsername", username);
+            sqlParameters[1] = new SqlParameter("pPassword", password);
+            sqlParameters[2] = new SqlParameter("pDeviceToken", deviceToken);
+            sqlParameters[3] = new SqlParameter("pPlatform", platform);
+            sqlParameters[4] = new SqlParameter("pIsEmail", isEmail);
+            sqlParameters[5] = new SqlParameter("pUserId", userId);
+            sqlParameters[6] = new SqlParameter("pIsPatient", isPatient);
+
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocAuthenticateUser.ToString(), parameters: sqlParameters, isCompiled: false))
+            {
+                var r = ms.ResultSetFor<bool>();
+                var isAuthenticated = r != null && r.Any() ? r.FirstOrDefault() : false;
+                if (isAuthenticated)
+                {
+                    var result = await ms.GetResultWithJsonAsync<UserDto>(JsonResultsArray.UserDto.ToString());
+                    return result != null && result.Count > 0 ? result.FirstOrDefault() : null;
+                }
+            }
+            return Enumerable.Empty<UserDto>().FirstOrDefault();
+        }
+
+        public async Task<UserDto> GetUserAsync(long userId, bool isPatient = true, string deviceToken = "", string platform = "")
+        {
+            var vm = await AuthenticateAsync(string.Empty, string.Empty, deviceToken, platform, false, userId, isPatient);
+
+            if (vm != null && !string.IsNullOrEmpty(vm.Password))
+                vm.Password = EncryptDecrypt.GetDecryptedData(vm.Password, string.Empty);
+
+            return vm;
+        }
+
+        public async Task<bool> SaveUserLocationAsync(string lat, string lng, long userId, bool isPatient = true)
+        {
+            if (isPatient)
+            {
+                var m = await _pdRepository.Where(p => p.PatientId == userId && p.IsDeleted != true).FirstOrDefaultAsync();
+                if (m != null)
+                {
+                    m.Latitude = lat;
+                    m.Longitude = lng;
+                    m.ModifiedBy = Convert.ToInt32(userId);
+                    m.ModifiedDate = DateTime.Now;
+                    var result = _pdRepository.Updatei(m, m.Id);
+                    return result > 0;
+                }
+            }
+
+            return false;
+        }
+
+        public async Task<List<PatientDto>> GetPatientsByUserIdAsync(long userId = 0)
+        {
+            var sqlParams = new SqlParameter[1];
+            sqlParams[0] = new SqlParameter("pUserId", userId);
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcsiOS.iSprocGetPatientsByUserId.ToString(), isCompiled: false, parameters: sqlParams))
+            {
+                var result = await ms.GetResultWithJsonAsync<PatientDto>(JsonResultsArray.PatientSearchResults.ToString());
+                return result;
+            }
+        }
+
+        public UsersViewModel AuthenticateUser(string userName, string password, DateTime currentDatetime, string ipAddress, string loginTypeId, out int statusId)
+        {
+            password = !string.IsNullOrEmpty(password) ? EncryptDecrypt.GetEncryptedData(password, string.Empty)
+                : string.Empty;
+
+            List<UsersViewModel> vm = null;
+            var isEmail = Regex.IsMatch(userName, @"\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\Z", RegexOptions.IgnoreCase);
+
+            var sqlParams = new SqlParameter[6]
+            {
+                new SqlParameter("pUsername",userName),
+                new SqlParameter("pPassword",password),
+                new SqlParameter("pCurrentDateTime",currentDatetime),
+                new SqlParameter("pIPAddress",ipAddress),
+                new SqlParameter("pLoginTypeId",loginTypeId),
+                new SqlParameter("pIsEmail",isEmail),
+            };
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocAuthenticateUser.ToString(), false, sqlParams))
+            {
+                try
+                {
+                    statusId = ms.ResultSetFor<int>().FirstOrDefault();
+                    if (statusId == 0)
+                        vm = ms.GetResultWithJson<UsersViewModel>(JsonResultsArray.UserDto.ToString());
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+            return vm != null && vm.Any() ? vm.FirstOrDefault() : null;
         }
     }
 }

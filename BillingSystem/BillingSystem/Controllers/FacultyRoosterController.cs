@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Linq;
 using BillingSystem.Common.Common;
 using BillingSystem.Bal.Interfaces;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Common;
 using BillingSystem.Models;
 using BillingSystem.Model;
@@ -14,21 +13,27 @@ using BillingSystem.Model.CustomModel;
 
 namespace BillingSystem.Controllers
 {
-    /// <summary>
-    /// FacultyRooster controller.
-    /// </summary>
     public class FacultyRoosterController : BaseController
     {
+        private readonly IFacultyRoosterService _service;
         private readonly IFacilityStructureService _fsService;
         private readonly IClinicianRosterService _crService;
         private readonly ICorporateService _cService;
+        private readonly IFacilityService _fService;
+        private readonly IPhysicianService _phService;
+        private readonly IGlobalCodeService _gService;
 
-        public FacultyRoosterController(IFacilityStructureService fsService, IClinicianRosterService crService, ICorporateService cService)
+        public FacultyRoosterController(IFacultyRoosterService service, IFacilityStructureService fsService, IClinicianRosterService crService, ICorporateService cService, IFacilityService fService, IPhysicianService phService, IGlobalCodeService gService)
         {
+            _service = service;
             _fsService = fsService;
             _crService = crService;
             _cService = cService;
+            _fService = fService;
+            _phService = phService;
+            _gService = gService;
         }
+
 
         #region Public Methods and Operators
 
@@ -39,15 +44,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindFacultyRoosterList()
         {
-            // Initialize the FacultyRooster BAL object
-            using (var facultyRoosterBal = new FacultyRoosterBal())
-            {
-                // Get the facilities list
-                var facultyRoosterList = facultyRoosterBal.GetFacultyRoosterByFacility(Helpers.GetDefaultFacilityId());
-
-                // Pass the ActionResult with List of FacultyRoosterViewModel object to Partial View FacultyRoosterList
-                return PartialView(PartialViews.FacultyRoosterList, facultyRoosterList);
-            }
+            var facultyRoosterList = _service.GetFacultyRoosterByFacility(Helpers.GetDefaultFacilityId());
+            return PartialView(PartialViews.FacultyRoosterList, facultyRoosterList);
         }
 
         /// <summary>
@@ -62,13 +60,9 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteFacultyRooster(int id)
         {
             var returnobj = -1;
-            using (var bal = new FacultyRoosterBal())
-            {
-                // Get FacultyRooster model object by current FacultyRooster ID
-                var currentFacultyRooster = bal.GetFacultyRoosterById(id);
-                var userId = Helpers.GetLoggedInUserId();
-                returnobj = bal.DeleteFacultyRooster(id);
-            }
+            var currentFacultyRooster = _service.GetFacultyRoosterById(id);
+            var userId = Helpers.GetLoggedInUserId();
+            returnobj = _service.DeleteFacultyRooster(id);
 
             // Return the Json result as Action Result back JSON Call Success
             return Json(returnobj, JsonRequestBehavior.AllowGet);
@@ -85,15 +79,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetFacultyRooster(int id)
         {
-            using (var bal = new FacultyRoosterBal())
-            {
-                // Call the AddFacultyRooster Method to Add / Update current FacultyRooster
-                var currentFacultyRooster = bal.GetFacultyRoosterCById(id);
-                return Json(currentFacultyRooster, JsonRequestBehavior.AllowGet);
-
-                // Pass the ActionResult with the current FacultyRoosterViewModel object as model to PartialView FacultyRoosterAddEdit
-                // return this.PartialView(PartialViews.FacultyRoosterAddEdit, currentFacultyRooster);
-            }
+            var currentFacultyRooster = _service.GetFacultyRoosterCById(id);
+            return Json(currentFacultyRooster, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -106,20 +93,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            // Initialize the FacultyRooster BAL object
-            var facultyRoosterBal = new FacultyRoosterBal();
-
-            // Get the Entity list
-            var facultyRoosterList = facultyRoosterBal.GetFacultyRoosterByFacility(Helpers.GetDefaultFacilityId());
-
-            // Intialize the View Model i.e. FacultyRoosterView which is binded to Main View Index.cshtml under FacultyRooster
+            var facultyRoosterList = _service.GetFacultyRoosterByFacility(Helpers.GetDefaultFacilityId());
             var facultyRoosterView = new FacultyRoosterView
             {
                 FacultyRoosterList = facultyRoosterList,
                 CurrentFacultyRooster = new FacultyRooster()
             };
-
-            // Pass the View Model in ActionResult to View FacultyRooster
             return View(facultyRoosterView);
         }
 
@@ -157,11 +136,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new FacultyRoosterBal())
-                {
-                    // Call the AddFacultyRooster Method to Add / Update current FacultyRooster
-                    newId = bal.SaveFacultyRooster(model);
-                }
+                newId = _service.SaveFacultyRooster(model);
             }
 
             return Json(newId);
@@ -197,39 +172,36 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new FacultyRoosterBal())
+                for (var index = 0; index < model.Count; index++)
                 {
-                    for (var index = 0; index < model.Count; index++)
+                    var facultyRooster = model[index];
+                    facultyRooster.CreatedBy = userId;
+                    facultyRooster.CreatedDate = createdDate;
+                    facultyRooster.WeekNumber = Helpers.GetWeekOfYearISO8601(Convert.ToDateTime(facultyRooster.FromDate));
+                    facultyRooster.IsActive = true;
+                    facultyRooster.WorkingDay = Helpers.GetDayOfTheWeek(Convert.ToDateTime(facultyRooster.FromDate));
+                    var isDuplicateEntry = _service.CheckForDuplicateEntry(facultyRooster);
+                    if (isDuplicateEntry != 0)
                     {
-                        var facultyRooster = model[index];
-                        facultyRooster.CreatedBy = userId;
-                        facultyRooster.CreatedDate = createdDate;
-                        facultyRooster.WeekNumber = Helpers.GetWeekOfYearISO8601(Convert.ToDateTime(facultyRooster.FromDate));
-                        facultyRooster.IsActive = true;
-                        facultyRooster.WorkingDay = Helpers.GetDayOfTheWeek(Convert.ToDateTime(facultyRooster.FromDate));
-                        var isDuplicateEntry = bal.CheckForDuplicateEntry(facultyRooster);
-                        if (isDuplicateEntry != 0)
-                        {
-                            duplicateEntryLog.Add(bal.DuplicateEntryLog(facultyRooster, isDuplicateEntry));
-                            errorLog = 1;
-                            model.RemoveAt(index);
-                        }
+                        duplicateEntryLog.Add(_service.DuplicateEntryLog(facultyRooster, isDuplicateEntry));
+                        errorLog = 1;
+                        model.RemoveAt(index);
                     }
+                }
 
-                    // Call the AddFacultyRooster Method to Add / Update current FacultyRooster
-                    if (model.Count > 0)
-                        bal.SaveFacultyRoosterList(model);
+                // Call the AddFacultyRooster Method to Add / Update current FacultyRooster
+                if (model.Count > 0)
+                    _service.SaveFacultyRoosterList(model);
 
-                    if (errorLog == 1)
-                    {
-                        var listToreturn = new { errorLog = 1, duplicateEntryLog, };
-                        return Json(listToreturn, JsonRequestBehavior.AllowGet);
-                    }
-                    else
-                    {
-                        var listToreturn = new { errorLog = 0, duplicateEntryLog };
-                        return Json(listToreturn, JsonRequestBehavior.AllowGet);
-                    }
+                if (errorLog == 1)
+                {
+                    var listToreturn = new { errorLog = 1, duplicateEntryLog, };
+                    return Json(listToreturn, JsonRequestBehavior.AllowGet);
+                }
+                else
+                {
+                    var listToreturn = new { errorLog = 0, duplicateEntryLog };
+                    return Json(listToreturn, JsonRequestBehavior.AllowGet);
                 }
             }
 
@@ -243,15 +215,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindFacultyRoosterListByFacility(int facilityId)
         {
-            // Initialize the FacultyRooster BAL object
-            using (var facultyRoosterBal = new FacultyRoosterBal())
-            {
-                // Get the facilities list
-                var facultyRoosterList = facultyRoosterBal.GetFacultyRoosterByFacility(facilityId);
-
-                // Pass the ActionResult with List of FacultyRoosterViewModel object to Partial View FacultyRoosterList
-                return PartialView(PartialViews.FacultyRoosterList, facultyRoosterList);
-            }
+            var facultyRoosterList = _service.GetFacultyRoosterByFacility(facilityId);
+            return PartialView(PartialViews.FacultyRoosterList, facultyRoosterList);
         }
         #endregion
 
@@ -271,20 +236,12 @@ namespace BillingSystem.Controllers
             //Bind Corporates 
             cList = _cService.GetCorporateDropdownData(Helpers.GetDefaultCorporateId());
 
-            //Bind Facilities
-            using (var fBal = new FacilityBal())
-                flist = fBal.GetFacilitiesForDashboards(fId, cId, Helpers.GetLoggedInUserIsAdmin());
+            flist = _fService.GetFacilitiesForDashboards(fId, cId, Helpers.GetLoggedInUserIsAdmin());
 
-            //Bind Specialties
-            using (var sBal = new GlobalCodeBal())
-            {
-                var category = Convert.ToString((int)GlobalCodeCategoryValue.PhysicianSpecialties);
-                specialties = sBal.GetListByCategoriesRange(new[] { category });
-            }
+            var category = Convert.ToString((int)GlobalCodeCategoryValue.PhysicianSpecialties);
+            specialties = _gService.GetListByCategoriesRange(new[] { category });
 
-            //Bind Physicians
-            using (var pBal = new PhysicianBal())
-                pList = pBal.GetPhysicians(cId, Helpers.GetLoggedInUserIsAdmin(), Helpers.GetLoggedInUserId(), fId);
+            pList = _phService.GetPhysicians(cId, Helpers.GetLoggedInUserIsAdmin(), Helpers.GetLoggedInUserId(), fId);
 
 
             /*-----------Get Departments Data Start here----------------------*/
@@ -304,7 +261,7 @@ namespace BillingSystem.Controllers
             /*-----------Get Departments Data End here----------------------*/
 
             var categories = new List<string> { "1121", "901", "80441" };
-            var gc = new GlobalCodeBal().GetListByCategoriesRange(categories);
+            var gc = _gService.GetListByCategoriesRange(categories);
             mWeekDays = gc.Where(f => f.ExternalValue1.Equals("901")).OrderBy(f => f.Value).ToList();
             reasons = gc.Where(f => f.ExternalValue1.Equals("80441")).OrderBy(f => f.Text).ToList();
             var jsonData = new
@@ -386,12 +343,8 @@ namespace BillingSystem.Controllers
 
         public async Task<JsonResult> GetPhysiciansByFacility(int fId)
         {
-            //Bind Physicians
-            using (var pBal = new PhysicianBal())
-            {
-                var pList = await pBal.GetFacultyList(fId, Helpers.GetLoggedInUserId());
-                return Json(pList, JsonRequestBehavior.AllowGet);
-            }
+            var pList = await _phService.GetFacultyList(fId, Helpers.GetLoggedInUserId());
+            return Json(pList, JsonRequestBehavior.AllowGet);
         }
 
         public async Task<JsonResult> BindDataOnPageLoadInCR()
@@ -410,20 +363,11 @@ namespace BillingSystem.Controllers
             //Bind Corporates 
             cList = _cService.GetCorporateDropdownData(Helpers.GetDefaultCorporateId());
 
-            //Bind Facilities
-            using (var fBal = new FacilityBal())
-                flist = fBal.GetFacilitiesForDashboards(fId, cId, Helpers.GetLoggedInUserIsAdmin());
+            flist = _fService.GetFacilitiesForDashboards(fId, cId, Helpers.GetLoggedInUserIsAdmin());
 
-            //Bind Specialties
-            using (var sBal = new GlobalCodeBal())
-            {
-                var category = Convert.ToString((int)GlobalCodeCategoryValue.PhysicianSpecialties);
-                specialties = sBal.GetListByCategoriesRange(new[] { category });
-            }
-
-            //Bind Physicians
-            using (var pBal = new PhysicianBal())
-                pList = await pBal.GetFacultyList(fId, Helpers.GetLoggedInUserId());
+            var category = Convert.ToString((int)GlobalCodeCategoryValue.PhysicianSpecialties);
+            specialties = _gService.GetListByCategoriesRange(new[] { category });
+            pList = await _phService.GetFacultyList(fId, Helpers.GetLoggedInUserId());
 
 
             /*-----------Get Departments Data Start here----------------------*/
@@ -443,7 +387,7 @@ namespace BillingSystem.Controllers
             /*-----------Get Departments Data End here----------------------*/
 
             var categories = new List<string> { "1121", "901", "80441" };
-            var gc = new GlobalCodeBal().GetListByCategoriesRange(categories);
+            var gc = _gService.GetListByCategoriesRange(categories);
             mWeekDays = gc.Where(f => f.ExternalValue1.Equals("901")).OrderBy(f => f.Value).ToList();
             reasons = gc.Where(f => f.ExternalValue1.Equals("80441")).OrderBy(f => f.Text).ToList();
             var jsonData = new

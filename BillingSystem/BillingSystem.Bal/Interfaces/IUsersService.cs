@@ -1,11 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
+using BillingSystem.Model.EntityDto;
 
 namespace BillingSystem.Bal.Interfaces
 {
     public interface IUsersService
     {
+        UsersViewModel AuthenticateUser(string userName, string password, DateTime currentDatetime, string ipAddress, string loginTypeId, out int statusId);
+
         Physician GetPhysicianById(int id);
         List<BillEditorUsersCustomModel> GetBillEditorUsers(int corporateId, int facilityId);
         int AddUpdateUser(Users m, int roleId);
@@ -34,5 +39,11 @@ namespace BillingSystem.Bal.Interfaces
         int UpdateUser(Users user);
         string UserFacilities(IEnumerable<UserRole> userRoles);
         string UserRoles(IEnumerable<UserRole> roles);
+        string GetNameByUserId(int id);
+
+        Task<UserDto> AuthenticateAsync(string username, string password, string deviceToken, string platform, bool isPatient = false);
+        Task<UserDto> GetUserAsync(long userId, bool isPatient = true, string deviceToken = "", string platform = "");
+        Task<bool> SaveUserLocationAsync(string lat, string lng, long userId, bool isPatient = true);
+        Task<List<PatientDto>> GetPatientsByUserIdAsync(long userId = 0);
     }
 }

@@ -2,18 +2,27 @@
 using BillingSystem.Common;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
-using WebGrease;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class MCRulesTableController : BaseController
     {
+        private readonly IMCRulesTableService _service;
+        private readonly IFacilityService _fService;
+        private readonly IMcContractService _mcService;
+
+        public MCRulesTableController(IMCRulesTableService service, IFacilityService fService, IMcContractService mcService)
+        {
+            _service = service;
+            _fService = fService;
+            _mcService = mcService;
+        }
+
+
         /// <summary>
         /// Get the details of the MCRulesTable View in the Model MCRulesTable such as MCRulesTableList, list of countries etc.
         /// </summary>
@@ -22,22 +31,14 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult MCRulesTableMain()
         {
-            //Initialize the MCRulesTable BAL object
-            using (var bal = new MCRulesTableBal())
+            var list = _service.GetMCRulesTableList();
+            var viewModel = new MCRulesTableView
             {
-                //Get the Entity list
-                var list = bal.GetMCRulesTableList();
+                MCRulesTableList = list,
+                CurrentMCRulesTable = new MCRulesTable()
+            };
 
-                //Intialize the View Model i.e. MCRulesTableView which is binded to Main View Index.cshtml under MCRulesTable
-                var viewModel = new MCRulesTableView
-                {
-                    MCRulesTableList = list,
-                    CurrentMCRulesTable = new MCRulesTable()
-                };
-
-                //Pass the View Model in ActionResult to View MCRulesTable
-                return View(viewModel);
-            }
+            return View(viewModel);
         }
 
         /// <summary>
@@ -51,29 +52,25 @@ namespace BillingSystem.Controllers
         {
             //Initialize the newId variable 
             var userId = Helpers.GetLoggedInUserId();
-            var currentDate = Helpers.GetInvariantCultureDateTime();
+            var currentDate = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
             var list = new List<MCRulesTableCustomModel>();
 
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new MCRulesTableBal())
+                if (model.ManagedCareRuleId > 0)
                 {
-                    if (model.ManagedCareRuleId > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-                    
-                    //Call the AddMCRulesTable Method to Add / Update current MCRulesTable
-                    list = bal.SaveMCRulesTable(model);
-                    //list = bal.GetMCRulesTableList();
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                //Call the AddMCRulesTable Method to Add / Update current MCRulesTable
+                list = _service.SaveMCRulesTable(model);
             }
 
             //Pass the ActionResult with List of MCRulesTableViewModel object to Partial View MCRulesTableList
@@ -87,13 +84,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetMCRulesTableDetails(int id)
         {
-            using (var bal = new MCRulesTableBal())
-            {
-                //Call the AddMCRulesTable Method to Add / Update current MCRulesTable
-                var current = bal.GetMCRulesTableByID(id);
-                //Pass the ActionResult with the current MCRulesTableViewModel object as model to PartialView MCRulesTableAddEdit
-                return Json(current, JsonRequestBehavior.AllowGet);
-            }
+            var current = _service.GetMCRulesTableByID(id);
+            return Json(current, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -103,13 +95,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMCRulesTable(int id)
         {
-            using (var bal = new MCRulesTableBal())
-            {
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var result = bal.DeleteMCRulesTable(id, corporateId, facilityId);
-                return Json(true);
-            }
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var result = _service.DeleteMCRulesTable(id, corporateId, facilityId);
+            return Json(true);
         }
 
         /// <summary>
@@ -119,11 +108,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult MaxRuleStepNumber(int RuleSetNumber)
         {
-            using (var mcruleStepBal = new MCRulesTableBal())
-            {
-                var mcrulestepMaxNumber = mcruleStepBal.GetMaxRuleStepNumber(RuleSetNumber);
-                return Json(mcrulestepMaxNumber, JsonRequestBehavior.AllowGet);
-            }   
+            var mcrulestepMaxNumber = _service.GetMaxRuleStepNumber(RuleSetNumber);
+            return Json(mcrulestepMaxNumber, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -136,21 +122,16 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindRuleStepList(int McContractID)
         {
-            var mcruleStepBal = new MCRulesTableBal();
-            var mcContractBal = new McContractBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber);
-            var mcContractobj = mcContractBal.GetMcContractDetail(McContractID);
+            var mcContractobj = _mcService.GetMcContractDetail(McContractID);
             //Get the Entity list
-            var mcruleStepList = mcruleStepBal.GetMcRulesListByRuleSetId(Convert.ToInt32(mcContractobj.MCCode));
+            var mcruleStepList = _service.GetMcRulesListByRuleSetId(Convert.ToInt32(mcContractobj.MCCode));
             //Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList
             return PartialView(PartialViews.MCRulesTableList, mcruleStepList);
         }
 
         public ActionResult BindRuleStepListObj(int McContractID)
         {
-            var mcruleStepBal = new MCRulesTableBal();
-            //Get the Entity list
-            var mcruleStepList = mcruleStepBal.GetMcRulesListByRuleSetId(McContractID);
-            //Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList
+            var mcruleStepList = _service.GetMcRulesListByRuleSetId(McContractID);
             return PartialView(PartialViews.MCRulesTableList, mcruleStepList);
         }
     }

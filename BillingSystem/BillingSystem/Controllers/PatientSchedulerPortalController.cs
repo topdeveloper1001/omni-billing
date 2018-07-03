@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Model;
@@ -20,14 +19,25 @@ namespace BillingSystem.Controllers
     {
         private readonly IEncounterService _eService;
         private readonly IPatientInfoService _piService;
-        private readonly IAppointmentTypesService _atSerice;
+        private readonly ISchedulingService _schService;
+        private readonly IPatientPhoneService _ppService;
+        private readonly IPhysicianService _phService;
+        private readonly IAppointmentTypesService _atService;
+        private readonly IPatientLoginDetailService _pldSevrice;
+        private readonly IUsersService _uService;
 
-        public PatientSchedulerPortalController(IEncounterService eService, IPatientInfoService piService, IAppointmentTypesService atSerice)
+        public PatientSchedulerPortalController(IEncounterService eService, IPatientInfoService piService, ISchedulingService schService, IPatientPhoneService ppService, IPhysicianService phService, IAppointmentTypesService atService, IPatientLoginDetailService pldSevrice, IUsersService uService)
         {
             _eService = eService;
             _piService = piService;
-            _atSerice = atSerice;
+            _schService = schService;
+            _ppService = ppService;
+            _phService = phService;
+            _atService = atService;
+            _pldSevrice = pldSevrice;
+            _uService = uService;
         }
+
 
         // GET: /PatientSchedulerPortal/
         #region Public Methods and Operators
@@ -85,22 +95,19 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPatientSchedular(List<SchedularTypeCustomModel> filters)
         {
-            using (var schedularbal = new SchedulingBal())
+            var listtoReturn = new List<SchedulingCustomModel>();
+            //var selectedStatusList = filters[0].StatusType;
+            var selectedDate = filters[0].SelectedDate;
+            //var facilityid = filters[0].Facility;
+            var viewtype = filters[0].ViewType;
+            var patientId = filters[0].PatientId;
+            if (patientId > 0)
             {
-                var listtoReturn = new List<SchedulingCustomModel>();
-                //var selectedStatusList = filters[0].StatusType;
-                var selectedDate = filters[0].SelectedDate;
-                //var facilityid = filters[0].Facility;
-                var viewtype = filters[0].ViewType;
-                var patientId = filters[0].PatientId;
-                if (patientId > 0)
-                {
-                    listtoReturn.AddRange(schedularbal.GetPatientScheduling(patientId, selectedDate, viewtype));
-                }
-
-                var textlist = GetPatientSchedularCustomModel(listtoReturn);
-                return Json(textlist, JsonRequestBehavior.AllowGet);
+                listtoReturn.AddRange(_schService.GetPatientScheduling(patientId, selectedDate, viewtype));
             }
+
+            var textlist = GetPatientSchedularCustomModel(listtoReturn);
+            return Json(textlist, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -111,16 +118,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult LoadPatientSchedulngData(string selectedDate, int patientId)
         {
-            using (var schedularbal = new SchedulingBal())
+            var listtoReturn = new List<SchedulingCustomModel>();
+            if (patientId > 0)
             {
-                var listtoReturn = new List<SchedulingCustomModel>();
-                if (patientId > 0)
-                {
-                    listtoReturn.AddRange(schedularbal.GetPatientScheduling(patientId, Convert.ToDateTime(selectedDate), "1"));
-                }
-                var textlist = GetPatientSchedularCustomModel(listtoReturn);
-                return Json(textlist, JsonRequestBehavior.AllowGet);
+                listtoReturn.AddRange(_schService.GetPatientScheduling(patientId, Convert.ToDateTime(selectedDate), "1"));
             }
+            var textlist = GetPatientSchedularCustomModel(listtoReturn);
+            return Json(textlist, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -160,133 +164,110 @@ namespace BillingSystem.Controllers
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
 
-                using (var oSchedulingBal = new SchedulingBal())
+                var token = CommonConfig.GenerateLoginCode(8, false);
+                string physicianDeptid;
+                if (!string.IsNullOrEmpty(model[0].PhysicianId))
                 {
-                    var token = CommonConfig.GenerateLoginCode(8, false);
-                    string physicianDeptid;
-                    if (!string.IsNullOrEmpty(model[0].PhysicianId))
-                    {
-                        var physicianBal = new PhysicianBal().GetPhysicianById(Convert.ToInt32(model[0].PhysicianId));
-                        physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
-                    }
-                    else
-                    {
-                        var physicianBal = new PhysicianBal().GetPhysicianById(Convert.ToInt32(model[0].AssociatedId));
-                        physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
-                    }
+                    var physicianBal = _uService.GetPhysicianById(Convert.ToInt32(model[0].PhysicianId));
+                    physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
+                }
+                else
+                {
+                    var physicianBal = _uService.GetPhysicianById(Convert.ToInt32(model[0].AssociatedId));
+                    physicianDeptid = physicianBal != null ? physicianBal.FacultyDepartment : string.Empty;
+                }
 
-                    var patientinfo = model[0].AssociatedId != 0 ? _piService.GetPatientInfoById(model[0].AssociatedId) :
-                            new PatientInfo
-                            {
-                                CorporateId = corporateId,
-                                CreatedBy = Helpers.GetLoggedInUserId(),
-                                CreatedDate = Helpers.GetInvariantCultureDateTime(),
-                                FacilityId = model[0].FacilityId,
-                                PatientID = model[0].AssociatedId != 0 ? Convert.ToInt32(model[0].AssociatedId) : Convert.ToInt32(patientid),
-                                PersonFirstName = model[0].PatientName.Split(' ')[0],
-                                PersonLastName = model[0].PatientName.Replace(model[0].PatientName.Split(' ')[0], string.Empty).TrimStart(),
-                                IsDeleted = false,
-                            };
-                    patientinfo.PersonBirthDate = model[0].PatientDOB;
-                    patientinfo.PersonEmailAddress = model[0].PatientEmailId;
-                    patientinfo.PersonEmiratesIDNumber = model[0].PatientEmirateIdNumber;
-
-                    patientid = _piService.AddUpdatePatientInfo(patientinfo);
-
-                    // Add the patient phone number
-                    if (patientid > 0)
-                    {
-                        var patientPhone = new PatientPhoneBal().GetPatientPersonalPhoneByPateintId(patientid);
-                        var patientPhonenumber = patientPhone ?? new PatientPhone
+                var patientinfo = model[0].AssociatedId != 0 ? _piService.GetPatientInfoById(model[0].AssociatedId) :
+                        new PatientInfo
                         {
+                            CorporateId = corporateId,
                             CreatedBy = Helpers.GetLoggedInUserId(),
-                            CreatedDate =
-                                Helpers.GetInvariantCultureDateTime(),
-                            PatientID = patientid,
-                            IsPrimary = true,
-                            PhoneType = 2,
-                            IsDeleted = false
+                            CreatedDate = Helpers.GetInvariantCultureDateTime(),
+                            FacilityId = model[0].FacilityId,
+                            PatientID = model[0].AssociatedId != 0 ? Convert.ToInt32(model[0].AssociatedId) : Convert.ToInt32(patientid),
+                            PersonFirstName = model[0].PatientName.Split(' ')[0],
+                            PersonLastName = model[0].PatientName.Replace(model[0].PatientName.Split(' ')[0], string.Empty).TrimStart(),
+                            IsDeleted = false,
                         };
-                        patientPhonenumber.PhoneNo = model[0].PatientPhoneNumber;
-                        new PatientPhoneBal().SavePatientPhone(patientPhonenumber);
-                    }
+                patientinfo.PersonBirthDate = model[0].PatientDOB;
+                patientinfo.PersonEmailAddress = model[0].PatientEmailId;
+                patientinfo.PersonEmiratesIDNumber = model[0].PatientEmirateIdNumber;
 
-                    // }
-                    new PatientLoginDetailBal().UpdatePatientEmailId(
-                        model[0].AssociatedId != 0 ? Convert.ToInt32(model[0].AssociatedId) : Convert.ToInt32(patientid),
-                        model[0].PatientEmailId);
+                patientid = _piService.AddUpdatePatientInfo(patientinfo);
 
-                    // ..... Remove the Old Data for the user in case of Edit
-                    //oSchedulingBal.DeleteHolidayPlannerData(model[0].EventParentId, 0);
-                    model[0].PatientId = model[0].PatientId != null && model[0].PatientId != 0
-                                             ? model[0].PatientId
-                                             : patientid;
-                    for (var index = 0; index < model.Count; index++)
+                // Add the patient phone number
+                if (patientid > 0)
+                {
+                    var patientPhone = _ppService.GetPatientPersonalPhoneByPateintId(patientid);
+                    var patientPhonenumber = patientPhone ?? new PatientPhone
                     {
-                        var randomnumber = Helpers.GenerateCustomRandomNumber();
-                        var item = model[index];
+                        CreatedBy = Helpers.GetLoggedInUserId(),
+                        CreatedDate =
+                            Helpers.GetInvariantCultureDateTime(),
+                        PatientID = patientid,
+                        IsPrimary = true,
+                        PhoneType = 2,
+                        IsDeleted = false
+                    };
+                    patientPhonenumber.PhoneNo = model[0].PatientPhoneNumber;
+                    _ppService.SavePatientPhone(patientPhonenumber);
+                }
+                _pldSevrice.UpdatePatientEmailId(
+                    model[0].AssociatedId != 0 ? Convert.ToInt32(model[0].AssociatedId) : Convert.ToInt32(patientid),
+                    model[0].PatientEmailId);
 
-                        item.AssociatedId = item.AssociatedId != 0 ? item.AssociatedId : patientid;
-                        item.CorporateId = corporateId;
-                        item.ExtValue1 = physicianDeptid;
-                        item.SchedulingId = item.SchedulingId != 0 ? item.SchedulingId : 0;
-                        item.CreatedBy = Helpers.GetLoggedInUserId();
-                        item.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                        item.EventId = Helpers.GenerateCustomRandomNumber();
-                        item.ExtValue4 = token;
-                        var app = _atSerice.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
-                        var appointmentType = app != null ? app.Name : string.Empty;
-                        item.AppointmentType = appointmentType;
+                // ..... Remove the Old Data for the user in case of Edit
+                //_schService.DeleteHolidayPlannerData(model[0].EventParentId, 0);
+                model[0].PatientId = model[0].PatientId != null && model[0].PatientId != 0
+                                         ? model[0].PatientId
+                                         : patientid;
+                for (var index = 0; index < model.Count; index++)
+                {
+                    var randomnumber = Helpers.GenerateCustomRandomNumber();
+                    var item = model[index];
 
-                        // item.PhysicianName = phName;
-                        item.WeekDay = Convert.ToString(Helpers.GetWeekOfYearISO8601(Convert.ToDateTime(item.ScheduleFrom)));
-                        item.IsActive = true;
+                    item.AssociatedId = item.AssociatedId != 0 ? item.AssociatedId : patientid;
+                    item.CorporateId = corporateId;
+                    item.ExtValue1 = physicianDeptid;
+                    item.SchedulingId = item.SchedulingId != 0 ? item.SchedulingId : 0;
+                    item.CreatedBy = Helpers.GetLoggedInUserId();
+                    item.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                    item.EventId = Helpers.GenerateCustomRandomNumber();
+                    item.ExtValue4 = token;
+                    var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                    var appointmentType = app != null ? app.Name : string.Empty;
+                    item.AppointmentType = appointmentType;
 
-                        item.EventParentId = item.IsRecurring == false || string.IsNullOrEmpty(item.EventParentId)
-                                                 ? randomnumber
-                                                 : item.EventParentId;
+                    // item.PhysicianName = phName;
+                    item.WeekDay = Convert.ToString(Helpers.GetWeekOfYearISO8601(Convert.ToDateTime(item.ScheduleFrom)));
+                    item.IsActive = true;
 
-                        item.RecEventPId = item.IsRecurring == false || string.IsNullOrEmpty(item.EventParentId)
-                                                ? Convert.ToInt32(randomnumber)
-                                                : Convert.ToInt32(item.EventParentId);
+                    item.EventParentId = item.IsRecurring == false || string.IsNullOrEmpty(item.EventParentId)
+                                             ? randomnumber
+                                             : item.EventParentId;
 
-                    }
-                    foreach (var item in model.Where(item => !string.IsNullOrEmpty(item.RemovedAppointmentTypes)))
-                    {
-                        oSchedulingBal.DeleteHolidayPlannerData(string.Empty, Convert.ToInt32(item.RemovedAppointmentTypes), Convert.ToInt32(item.SchedulingType), "");
-                    }
+                    item.RecEventPId = item.IsRecurring == false || string.IsNullOrEmpty(item.EventParentId)
+                                            ? Convert.ToInt32(randomnumber)
+                                            : Convert.ToInt32(item.EventParentId);
 
-                    oSchedulingBal.SavePatientPreSchedulingList(model);
-                    if (model.Count > 0 && model[0].Status == "1")//In Initial Booking mail will be sent to Patient
-                    {
-                        Helpers.SendAppointmentNotification(
-                            model,
-                            model[0].PatientEmailId,
-                            Convert.ToString(model[0].EmailTemplateId),
-                            Convert.ToInt32(model[0].PatientId),
-                            Convert.ToInt32(model[0].PhysicianId),
-                            2);
-                    }
-                    if (model.Count > 0 && model[0].Status == "3")// After Confirmation of the Appointmnet by Physician( from physician Login Screen) mail will be sent to patient.
-                    {
-                        Helpers.SendAppointmentNotification(
-                            model,
-                            model[0].PatientEmailId,
-                            Convert.ToString(model[0].EmailTemplateId),
-                            Convert.ToInt32(model[0].PatientId),
-                            Convert.ToInt32(model[0].PhysicianId),
-                            4);
-                    }
-                    if (model.Count > 0 && model[0].Status == "4")// After Cancel of the Appointmnet by Physician(from physician Login Screen) mail will be sent to patient.
-                    {
-                        Helpers.SendAppointmentNotification(
-                            model,
-                            model[0].PatientEmailId,
-                            Convert.ToString(model[0].EmailTemplateId),
-                           Convert.ToInt32(model[0].PatientId),
-                            Convert.ToInt32(model[0].PhysicianId),
-                            5);
-                    }
+                }
+                foreach (var item in model.Where(item => !string.IsNullOrEmpty(item.RemovedAppointmentTypes)))
+                {
+                    _schService.DeleteHolidayPlannerData(string.Empty, Convert.ToInt32(item.RemovedAppointmentTypes), Convert.ToInt32(item.SchedulingType), "");
+                }
+
+                _schService.SavePatientPreSchedulingList(model);
+                if (model.Count > 0 && model[0].Status == "1")//In Initial Booking mail will be sent to Patient
+                {
+                    Helpers.SendAppointmentNotification(model, model[0].PatientEmailId, Convert.ToString(model[0].EmailTemplateId), Convert.ToInt32(model[0].PatientId), Convert.ToInt32(model[0].PhysicianId), 2);
+                }
+                if (model.Count > 0 && model[0].Status == "3")// After Confirmation of the Appointmnet by Physician( from physician Login Screen) mail will be sent to patient.
+                {
+                    Helpers.SendAppointmentNotification(model, model[0].PatientEmailId, Convert.ToString(model[0].EmailTemplateId), Convert.ToInt32(model[0].PatientId), Convert.ToInt32(model[0].PhysicianId), 4);
+                }
+                if (model.Count > 0 && model[0].Status == "4")// After Cancel of the Appointmnet by Physician(from physician Login Screen) mail will be sent to patient.
+                {
+                    Helpers.SendAppointmentNotification(model, model[0].PatientEmailId, Convert.ToString(model[0].EmailTemplateId), Convert.ToInt32(model[0].PatientId), Convert.ToInt32(model[0].PhysicianId), 5);
                 }
             }
 
@@ -395,11 +376,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<TypeOfProcedureCustomModel> GetOtherProceduresByEventParentId(string eventparentId, DateTime scheduleFrom)
         {
-            using (var schedulingBal = new SchedulingBal())
-            {
-                var schdulingList = schedulingBal.GetOtherProceduresByEventParentId(eventparentId, scheduleFrom);
-                return schdulingList;
-            }
+            var schdulingList = _schService.GetOtherProceduresByEventParentId(eventparentId, scheduleFrom);
+            return schdulingList;
         }
         #endregion
     }

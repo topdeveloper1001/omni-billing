@@ -3514,24 +3514,8 @@ var EditScheduling = function (e) {
     var schedulingEventId = ctrl.attr("schId");
     HidepopupObject("divSearchPatient");
     OpenPatientLightBox(schedulingEventId);
-    /*var jsonData = JSON.stringify({
-        id: schedulingEventId
-    });
-    $.ajax({
-        type: "POST",
-        url: '/FacultyTimeslots/GetSchedulingById',
-        async: false,
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        data: jsonData,
-        success: function (data) {
-            HidepopupObject('divSearchPatient');
-            OpenPatientLightBox(data);
-        },
-        error: function (msg) {
-        }
-    });*/
 };
+
 var HidepopupObject = function (divid) {
     $("#" + divid).hide();
     $.validationEngine.closePrompt(".formError", true);

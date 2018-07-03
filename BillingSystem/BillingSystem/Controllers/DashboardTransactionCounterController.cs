@@ -2,18 +2,27 @@
 using BillingSystem.Common;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DashboardTransactionCounterController : BaseController
     {
+        private readonly IDashboardTransactionCounterService _service;
+        private readonly IFacilityService _fService;
+
+
         const string cacheKey = "GetCounterData";
+
+        public DashboardTransactionCounterController(IDashboardTransactionCounterService service, IFacilityService fService)
+        {
+            _service = service;
+            _fService = fService;
+        }
 
 
         /// <summary>
@@ -22,13 +31,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DashboardTransactionCounterMain()
         {
-            //Initialize the DashboardTransactionCounter BAL object
-            var dashboardTransactionCounterBal = new DashboardTransactionCounterBal();
+            //Initialize the DashboardTransactionCounter _service object
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var currentDateTime = Helpers.GetInvariantCultureDateTime(facilityid);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
             //Get the Entity list
-            var dashboardTransactionCounterList = dashboardTransactionCounterBal.GetDashboardTrancationData(corporateid, facilityid);
+            var dashboardTransactionCounterList = _service.GetDashboardTrancationData(corporateid, facilityid);
             var result = HttpRuntime.Cache[cacheKey] as List<DashboardTransactionCounterCustomModel>;
             if (result == null)
             {
@@ -37,12 +45,12 @@ namespace BillingSystem.Controllers
                                null, currentDateTime.AddHours(1), TimeSpan.Zero);
             }
 
-            
+
             //Intialize the View Model i.e. DashboardTransactionCounterView which is binded to Main View Index.cshtml under DashboardTransactionCounter
             var dashboardTransactionCounterView = new DashboardTransactionCounterView
             {
-               DashboardTransactionCounterList = dashboardTransactionCounterList,
-               CurrentDashboardTransactionCounter = new Model.DashboardTransactionCounter()
+                DashboardTransactionCounterList = dashboardTransactionCounterList,
+                CurrentDashboardTransactionCounter = new Model.DashboardTransactionCounter()
             };
 
             //Pass the View Model in ActionResult to View DashboardTransactionCounter
@@ -57,24 +65,20 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindDashboardTransactionCounterList()
         {
-           
-            //Initialize the DashboardTransactionCounter BAL object
-            using (var dashboardTransactionCounterBal = new DashboardTransactionCounterBal())
-            {
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var facilityid = Helpers.GetDefaultFacilityId();
-                //Get the Entity list
-                var dashboardTransactionCounterList = dashboardTransactionCounterBal.GetDashboardTrancationData(corporateid, facilityid);
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var facilityid = Helpers.GetDefaultFacilityId();
+            //Get the Entity list
+            var dashboardTransactionCounterList = _service.GetDashboardTrancationData(corporateid, facilityid);
 
-                var result = HttpRuntime.Cache[cacheKey] as List<DashboardTransactionCounterCustomModel>;
-                result = dashboardTransactionCounterList;
-                var currentDateTime = Helpers.GetInvariantCultureDateTime(facilityid);
+            var result = HttpRuntime.Cache[cacheKey] as List<DashboardTransactionCounterCustomModel>;
+            result = dashboardTransactionCounterList;
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityid);
 
-                HttpRuntime.Cache.Insert(cacheKey, result,
-                               null, currentDateTime.AddHours(1), TimeSpan.Zero);
-                //Pass the ActionResult with List of DashboardTransactionCounterViewModel object to Partial View DashboardTransactionCounterList
-                return PartialView(PartialViews.DashboardTransactionCounterList, dashboardTransactionCounterList);
-            }
+            HttpRuntime.Cache.Insert(cacheKey, result,
+                           null, currentDateTime.AddHours(1), TimeSpan.Zero);
+            //Pass the ActionResult with List of DashboardTransactionCounterViewModel object to Partial View DashboardTransactionCounterList
+            return PartialView(PartialViews.DashboardTransactionCounterList, dashboardTransactionCounterList);
+
         }
 
 
@@ -90,27 +94,24 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var corporateid = Helpers.GetSysAdminCorporateID();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var currentDatetime = Helpers.GetInvariantCultureDateTime();
+            var currentDatetime = _fService.GetInvariantCultureDateTime(facilityid);
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DashboardTransactionCounterBal())
+                if (model.CounterId > 0)
                 {
-                    if (model.CounterId > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDatetime;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDatetime;
-                    }
-                    model.CorporateId = corporateid;
-                    model.FacilityId = facilityid;
-                    //Call the AddDashboardTransactionCounter Method to Add / Update current DashboardTransactionCounter
-                    newId = bal.SaveDashboardTransactionCounter(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDatetime;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDatetime;
+                }
+                model.CorporateId = corporateid;
+                model.FacilityId = facilityid;
+                //Call the AddDashboardTransactionCounter Method to Add / Update current DashboardTransactionCounter
+                newId = _service.SaveDashboardTransactionCounter(model);
             }
             return Json(newId);
         }
@@ -122,14 +123,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDashboardTransactionCounter(int id)
         {
-            using (var bal = new DashboardTransactionCounterBal())
-            {
-                //Call the AddDashboardTransactionCounter Method to Add / Update current DashboardTransactionCounter
-                var currentDashboardTransactionCounter = bal.GetDashboardTransactionCounterById(id);
+            //Call the AddDashboardTransactionCounter Method to Add / Update current DashboardTransactionCounter
+            var m = _service.GetDashboardTransactionCounterById(id);
 
-                //Pass the ActionResult with the current DashboardTransactionCounterViewModel object as model to PartialView DashboardTransactionCounterAddEdit
-                return PartialView(PartialViews.DashboardTransactionCounterAddEdit, currentDashboardTransactionCounter);
-            }
+            //Pass the ActionResult with the current DashboardTransactionCounterViewModel object as model to PartialView DashboardTransactionCounterAddEdit
+            return PartialView(PartialViews.DashboardTransactionCounterAddEdit, m);
         }
 
         /// <summary>
@@ -139,19 +137,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDashboardTransactionCounter(int id)
         {
-            using (var bal = new DashboardTransactionCounterBal())
-            {
-                //Get DashboardTransactionCounter model object by current DashboardTransactionCounter ID
-                var currentDashboardTransactionCounter = bal.GetDashboardTransactionCounterById(id);
-                var result = bal.DeleteDashboardTransactionCounter(currentDashboardTransactionCounter);
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                HttpRuntime.Cache.Insert(cacheKey, result,
-                               null, currentDateTime.AddHours(1), TimeSpan.Zero);
-                //return deleted ID of current DashboardTransactionCounter as Json Result to the Ajax Call.
-                return Json(result);
-                //Check If DashboardTransactionCounter model is not null
-            }
-            //Return the Json result as Action Result back JSON Call Success
+            //Get DashboardTransactionCounter model object by current DashboardTransactionCounter ID
+            var m = _service.GetDashboardTransactionCounterById(id);
+            var result = _service.DeleteDashboardTransactionCounter(m);
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
+            HttpRuntime.Cache.Insert(cacheKey, result,
+                           null, currentDateTime.AddHours(1), TimeSpan.Zero);
+            //return deleted ID of current DashboardTransactionCounter as Json Result to the Ajax Call.
+            return Json(result);
+            //Check If DashboardTransactionCounter model is not null
         }
 
         /// <summary>
@@ -177,21 +172,18 @@ namespace BillingSystem.Controllers
 
         public ActionResult BindDashboardData(int id)
         {
-            using (var bal=new DashboardTransactionCounterBal())
+            var current = _service.GetDashboardTransactionCounterById(id);
+            var jsonData = new
             {
-                var current = bal.GetDashboardTransactionCounterById(id);
-                var jsonData = new
-                {
-                    ActivityDay  = current.ActivityDay.GetShortDateString3(),
-                    current.ActivityTotal,
-                    current.CounterId,
-                    current.DepartmentNumber,
-                    current.StatisticDescription,
-                    current.IsActive
-                };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-            }
+                ActivityDay = current.ActivityDay.GetShortDateString3(),
+                current.ActivityTotal,
+                current.CounterId,
+                current.DepartmentNumber,
+                current.StatisticDescription,
+                current.IsActive
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
-
     }
+
 }

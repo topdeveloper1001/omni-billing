@@ -2,18 +2,25 @@
 using BillingSystem.Common;
 using System;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using BillingSystem.Common.Common;
 using System.Linq;
 using System.Collections.Generic;
 using BillingSystem.Model.CustomModel;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class TabsController : BaseController
     {
+        private readonly ITabsService _service;
+
         const string partialViewPath = "../Tabs/";
+
+        public TabsController(ITabsService service)
+        {
+            _service = service;
+        }
 
         /// <summary>
         /// Get the details of the Tabs View in the Model Tabs such as TabsList, list of countries etc.
@@ -22,11 +29,9 @@ namespace BillingSystem.Controllers
         [CheckRolesAuthorize("1")]
         public ActionResult Index()
         {
-            //Initialize the Tabs BAL object
-            var tabsBal = new TabsBal();
 
             //Get the Entity list
-            var list = tabsBal.GetAllTabList(true, Helpers.GetLoggedInUserId());
+            var list = _service.GetAllTabList(true, Helpers.GetLoggedInUserId());
 
             //Intialize the View Model i.e. TabsView which is binded to Main View Index.cshtml under Tabs
             var tabsView = new TabsView
@@ -45,24 +50,17 @@ namespace BillingSystem.Controllers
         /// <returns>action result with the partial view containing the Tabs list object</returns>
         public ActionResult BindTabsList(bool showIsActive)
         {
-            //Initialize the Tabs BAL object
-            using (var tabsBal = new TabsBal())
-            {
-                //Get the facilities list
-                var tabsList = new List<TabsCustomModel>(); //tabsBal.GetAllTabList(showIsActive, Helpers.GetLoggedInUserId());
+            //Get the facilities list
+            var tabsList = new List<TabsCustomModel>(); //_service.GetAllTabList(showIsActive, Helpers.GetLoggedInUserId());
 
-                //Pass the ActionResult with List of TabsViewModel object to Partial View TabsList
-                return PartialView(PartialViews.TabsList, tabsList);
-            }
+            //Pass the ActionResult with List of TabsViewModel object to Partial View TabsList
+            return PartialView(PartialViews.TabsList, tabsList);
         }
 
         public JsonResult GetTListJson()
         {
-            //Initialize the Tabs BAL object
-            var tabsBal = new TabsBal();
-
             //Get the Entity list
-            var list = tabsBal.GetAllTabList(true,Helpers.GetLoggedInUserId());
+            var list = _service.GetAllTabList(true, Helpers.GetLoggedInUserId());
             var jsonResult = new
             {
                 aaData = list.Select(t => new[] {
@@ -81,63 +79,23 @@ namespace BillingSystem.Controllers
         {
             var pView = string.Empty;
             var rId = Helpers.GetDefaultRoleId();
-            using (var b = new TabsBal())
+            var result = _service.SaveTab(model, Convert.ToInt64(rId), Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
+
+            if (result.ExecutionStatus > 0)
             {
-                var result = b.SaveTab(model, Convert.ToInt64(rId), Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
+                var vn = $"{partialViewPath}{PartialViews.TabsList}";
+                pView = RenderPartialViewToStringBase(vn, result.AllTabs);
 
-                if (result.ExecutionStatus > 0)
+                if (Session[SessionNames.SessionClass.ToString()] != null && result.TabsByRole.Any())
                 {
-                    var vn = $"{partialViewPath}{PartialViews.TabsList}";
-                    pView = RenderPartialViewToStringBase(vn, result.AllTabs);
-
-                    if (Session[SessionNames.SessionClass.ToString()] != null && result.TabsByRole.Any())
-                    {
-                        var s = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                        using (var bal = new TabsBal())
-                            s.MenuSessionList = result.TabsByRole;
-                    }
+                    var s = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+                    s.MenuSessionList = result.TabsByRole;
                 }
-
-                return Json(new { pView, status = result.ExecutionStatus }, JsonRequestBehavior.AllowGet);
-
             }
 
-            ////Initialize the newId variable 
-            //var newId = -1;
+            return Json(new { pView, status = result.ExecutionStatus }, JsonRequestBehavior.AllowGet);
 
-            ////Check if Tabs Model is not null
-            //if (model != null)
-            //{
-            //    using (var bal = new TabsBal())
-            //    {
-            //        var isExists = bal.CheckIfDuplicateRecordExists(model.TabName, model.TabId, model.ParentTabId);
-            //        if (isExists)
-            //            return Json("-1");
 
-            //        if (model.TabId > 0)
-            //        {
-            //            model.CreatedBy = Helpers.GetLoggedInUserId();
-            //            model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-            //            model.ModifiedBy = Helpers.GetLoggedInUserId();
-            //            model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-            //        }
-            //        else
-            //        {
-            //            model.CreatedBy = Helpers.GetLoggedInUserId();
-            //            model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-            //        }
-
-            //        //Call the AddTabs Method to Add / Update current Tabs
-            //        newId = bal.AddUpdateTab(model);
-
-            //        if (!bal.IsExistInRoleTabs(newId))
-            //            bal.AddToRoleTab(newId);
-
-            //        //Rebind the Session of Menu Tabs List
-            //        ReBindTabsMenu();
-            //    }
-            //}
-            //return Json(newId);
         }
 
         /// <summary>
@@ -147,14 +105,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabById(string tabId)
         {
-            using (var tabsBal = new TabsBal())
-            {
-                //Call the AddTabs Method to Add / Update current Tabs
-                var currentTabs = tabsBal.GetTabByTabId(Convert.ToInt32(tabId));
-
-                //Pass the ActionResult with the current TabsViewModel object as model to PartialView TabsAddEdit
-                return PartialView(PartialViews.TabsAddEdit, currentTabs);
-            }
+            var currentTabs = _service.GetTabByTabId(Convert.ToInt32(tabId));
+            return PartialView(PartialViews.TabsAddEdit, currentTabs);
         }
 
         /// <summary>
@@ -164,27 +116,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteTabs(string tabId)
         {
-            using (var tabsBal = new TabsBal())
+            var model = _service.GetTabByTabId(Convert.ToInt32(tabId));
+
+            //Check If Tabs model is not null
+            if (model != null)
             {
-                //Get Tabs model object by current Tabs ID
-                var model = tabsBal.GetTabByTabId(Convert.ToInt32(tabId));
+                model.IsDeleted = true;
+                model.DeletedBy = Helpers.GetLoggedInUserId();
+                model.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If Tabs model is not null
-                if (model != null)
-                {
-                    model.IsDeleted = true;
-                    model.DeletedBy = Helpers.GetLoggedInUserId();
-                    model.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                //Update Operation of current Tabs
+                var result = _service.AddUpdateTab(model);
 
-                    //Update Operation of current Tabs
-                    var result = tabsBal.AddUpdateTab(model);
+                //Rebind the Session of Menu Tabs List
+                ReBindTabsMenu();
 
-                    //Rebind the Session of Menu Tabs List
-                    ReBindTabsMenu();
-
-                    //return deleted ID of current Tabs as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current Tabs as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             //Return the Json result as Action Result back JSON Call Success
@@ -210,15 +158,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetParentTabs()
         {
-            //Initialize the Tabs BAL object
-            using (var tabsBal = new TabsBal())
-            {
-                //Get the facilities list
-                var list = tabsBal.GetAllTabs();
-
-                //Pass the ActionResult with List of TabsViewModel object to Partial View TabsList
-                return Json(list);
-            }
+            var list = _service.GetAllTabs();
+            return Json(list);
         }
 
         /// <summary>
@@ -230,11 +171,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckIfDuplicateRecordExists(string name, string tabId, string parentTabId)
         {
-            using (var bal = new TabsBal())
-            {
-                var result = bal.CheckIfDuplicateRecordExists(name, string.IsNullOrEmpty(tabId) ? 0 : Convert.ToInt32(tabId), string.IsNullOrEmpty(parentTabId) ? 0 : Convert.ToInt32(parentTabId));
-                return Json(result);
-            }
+            var result = _service.CheckIfDuplicateRecordExists(name, string.IsNullOrEmpty(tabId) ? 0 : Convert.ToInt32(tabId), string.IsNullOrEmpty(parentTabId) ? 0 : Convert.ToInt32(parentTabId));
+            return Json(result);
         }
 
         /// <summary>
@@ -246,11 +184,8 @@ namespace BillingSystem.Controllers
         {
             if (tabId > 0)
             {
-                using (var bal = new TabsBal())
-                {
-                    var maxTabOrder = bal.GetMaxTabOrderByParentTabId(tabId);
-                    return Json(maxTabOrder);
-                }
+                var maxTabOrder = _service.GetMaxTabOrderByParentTabId(tabId);
+                return Json(maxTabOrder);
             }
             return Json(1);
         }
@@ -260,24 +195,10 @@ namespace BillingSystem.Controllers
         /// </summary>
         private void ReBindTabsMenu()
         {
-            //using (var usersBal = new UsersBal())
-            //{
-            //    if (Session[SessionNames.SessionClass.ToString()] != null)
-            //    {
-            //        var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-            //        if (objSession != null)
-            //        {
-            //            var tabsList = usersBal.GetTabsByUserName(objSession.UserName);
-            //            objSession.MenuSessionList = tabsList;
-            //        }
-            //    }
-            //}
-
             if (Session[SessionNames.SessionClass.ToString()] != null)
             {
                 var s = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                using (var bal = new TabsBal())
-                    s.MenuSessionList = bal.GetTabsByRole(s.UserName, s.RoleId);
+                s.MenuSessionList = _service.GetTabsByRole(s.UserName, s.RoleId);
 
             }
         }

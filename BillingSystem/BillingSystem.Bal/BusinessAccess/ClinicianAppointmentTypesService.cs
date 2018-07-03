@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
-using BillingSystem.Repository.Interfaces;
+
 using System.Data.SqlClient;
 using BillingSystem.Common.Common;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

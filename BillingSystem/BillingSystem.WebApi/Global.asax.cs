@@ -14,6 +14,8 @@ namespace BillingSystem.WebApi
             //AreaRegistration.RegisterAllAreas();
             GlobalConfiguration.Configure(WebApiConfig.Register);
 
+            UnityConfig.RegisterComponents();
+
             var formatters = GlobalConfiguration.Configuration.Formatters;
             var jsonFormatter = formatters.JsonFormatter;
             var settings = jsonFormatter.SerializerSettings;

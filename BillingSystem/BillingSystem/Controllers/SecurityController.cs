@@ -8,7 +8,6 @@ using BillingSystem.Models;
 using BillingSystem.Common.Common;
 using BillingSystem.Common;
 using BillingSystem.Model;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
@@ -20,12 +19,31 @@ namespace BillingSystem.Controllers
     {
         private readonly IAuditLogService _adService;
         private readonly IUsersService _uService;
+        private readonly IUserRoleService _urService;
+        private readonly IRoleService _rService;
+        private readonly IScreenService _sService;
+        private readonly ITabsService _tService;
+        private readonly IRolePermissionService _rpService;
+        private readonly IFacilityRoleService _frService;
+        private readonly IRoleTabsService _rtService;
+        private readonly IFacilityService _fService;
+        private readonly IModuleAccessService _maService;
 
-        public SecurityController(IAuditLogService adService, IUsersService uService)
+        public SecurityController(IAuditLogService adService, IUsersService uService, IUserRoleService urService, IRoleService rService, IScreenService sService, ITabsService tService, IRolePermissionService rpService, IFacilityRoleService frService, IRoleTabsService rtService, IFacilityService fService, IModuleAccessService maService)
         {
             _adService = adService;
             _uService = uService;
+            _urService = urService;
+            _rService = rService;
+            _sService = sService;
+            _tService = tService;
+            _rpService = rpService;
+            _frService = frService;
+            _rtService = rtService;
+            _fService = fService;
+            _maService = maService;
         }
+
 
 
         //
@@ -60,36 +78,7 @@ namespace BillingSystem.Controllers
         }
 
 
-        //private List<UsersCustomModel> GetUserCustom(List<Users> users)
-        //{
-        //    List<UsersCustomModel> lstUsers = new List<UsersCustomModel>();
-        //    lstUsers = (from y in users
-        //                select new UsersCustomModel
-        //                {
-        //                    CurrentUser = y,
-        //                    UserID = y.UserID,
-        //                    CountryID = y.CountryID,
-        //                    StateID = y.StateID,
-        //                    CityID = y.CityID,
-        //                    UserGroup = y.UserGroup,
-        //                    UserName = y.UserName,
-        //                    FirstName = y.FirstName,
-        //                    LastName = y.LastName,
-        //                    Answer = y.Answer,
-        //                    Password = y.Password,
-        //                    Address = y.Address,
-        //                    Email = y.Email,
-        //                    Phone = y.Phone,
-        //                    HomePhone = y.HomePhone,
-        //                    AdminUser = y.AdminUser,
-        //                    IsActive = y.IsActive,
-        //                    FailedLoginAttempts = y.FailedLoginAttempts,
-        //                    IsDeleted = y.IsDeleted,
-        //                    RoleName = GetRoleName(y.UserID),
-        //                }).ToList();
-        //    return lstUsers;
 
-        //}
 
         /// <summary>
         /// Gets the name of the role.
@@ -99,13 +88,11 @@ namespace BillingSystem.Controllers
         private string GetRoleName(int userID)
         {
             string RoleName = string.Empty;
-            UserRoleBal objUserRoleBal = new UserRoleBal();
-            RoleBal objRolBal = new RoleBal();
-            var userRoles = objUserRoleBal.GetUserRolesByUserId(userID);
+            var userRoles = _urService.GetUserRolesByUserId(userID);
             if (userRoles.Count > 0)
             {
                 var firstUserRole = userRoles.FirstOrDefault();
-                RoleName = objRolBal.GetRoleById(firstUserRole.RoleID).RoleName;
+                RoleName = _rService.GetRoleById(firstUserRole.RoleID).RoleName;
 
             }
             return RoleName;
@@ -119,13 +106,11 @@ namespace BillingSystem.Controllers
         private int GetRoleId(int userID)
         {
             int RoleId = 0;
-            UserRoleBal objUserRoleBal = new UserRoleBal();
-            RoleBal objRolBal = new RoleBal();
-            var userRoles = objUserRoleBal.GetUserRolesByUserId(userID);
+            var userRoles = _urService.GetUserRolesByUserId(userID);
             if (userRoles.Count > 0)
             {
                 var firstUserRole = userRoles.FirstOrDefault();
-                RoleId = objRolBal.GetRoleById(firstUserRole.RoleID).RoleID;
+                RoleId = _rService.GetRoleById(firstUserRole.RoleID).RoleID;
 
             }
             return RoleId;
@@ -137,10 +122,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRolesUsers()
         {
-            var objRoleBal = new RoleBal();
             var corporateId = Helpers.GetDefaultCorporateId();
             var facilityId = Helpers.GetDefaultFacilityId();
-            var rolesList = objRoleBal.GetAllRolesByCorporateFacility(corporateId, facilityId);
+            var rolesList = _rService.GetAllRolesByCorporateFacility(corporateId, facilityId);
             return Json(rolesList);
         }
 
@@ -239,8 +223,8 @@ namespace BillingSystem.Controllers
 
         //public ActionResult AddRoleWithUser(int userID, int roleID)
         //{
-        //    var objUserRoleBal = new UserRoleBal();
-        //    var isExist = objUserRoleBal.CheckIfExists(userID, roleID);
+        //    var _urService = new UserRoleBal();
+        //    var isExist = _urService.CheckIfExists(userID, roleID);
         //    if (!isExist)
         //    {
         //        var lstUserRoles = new List<UserRole>
@@ -255,7 +239,7 @@ namespace BillingSystem.Controllers
         //                CreatedDate = Helpers.GetInvariantCultureDateTime()
         //            }
         //        };
-        //        return Json(objUserRoleBal.AddUpdateUserRole(lstUserRoles));
+        //        return Json(_urService.AddUpdateUserRole(lstUserRoles));
         //    }
         //    return Json(0);
         //}
@@ -351,18 +335,17 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Role()
         {
-            RoleBal objRoleBal = new RoleBal();
             var corporateId = Helpers.GetDefaultCorporateId();
             RoleView objRoleView = new RoleView
             {
                 CurrentRole = new Role(),
-                RolesList = objRoleBal.GetAllRoles(corporateId)
+                RolesList = _rService.GetAllRoles(corporateId)
             };
 
-            //ScreenBal objScreenBal = new ScreenBal();
+            //ScreenBal _sService = new ScreenBal();
             //ScreenView screenview = new ScreenView
             //{
-            //    AvailableScreens = objScreenBal.GetAllScreensList()
+            //    AvailableScreens = _sService.GetAllScreensList()
             //};
             //objRoleView.screenView = screenview;
             return View(objRoleView);
@@ -374,9 +357,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRoles()
         {
-            RoleBal objRoleBal = new RoleBal();
             var corporateId = Helpers.GetDefaultCorporateId();
-            List<Role> RolesList = objRoleBal.GetAllRoles(corporateId);
+            List<Role> RolesList = _rService.GetAllRoles(corporateId);
             return PartialView(PartialViews.RoleList, RolesList);
         }
 
@@ -387,8 +369,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EditRole(int RoleID)
         {
-            RoleBal objRoleBal = new RoleBal();
-            Role CurrentRole = objRoleBal.GetRoleById(RoleID);
+            Role CurrentRole = _rService.GetRoleById(RoleID);
             return PartialView(PartialViews.AddUpdateRole, CurrentRole);
         }
 
@@ -410,7 +391,6 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddRole(Role objRole)
         {
-            RoleBal objRoleBal = new RoleBal();
             if (objRole.RoleID > 0)
             {
                 objRole.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -423,9 +403,9 @@ namespace BillingSystem.Controllers
                 objRole.CreatedBy = Helpers.GetLoggedInUserId();
                 objRole.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            var i = objRoleBal.AddUpdateRole(objRole);
+            var i = _rService.AddUpdateRole(objRole);
             return Json(i);
-            // List<Role> RolesList = objRoleBal.GetAllRoles();
+            // List<Role> RolesList = _rService.GetAllRoles();
             // return PartialView(PartialViews.RoleList, RolesList);
 
         }
@@ -437,14 +417,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteRole(int RoleId)
         {
-            RoleBal objRoleBal = new RoleBal();
-            Role objRole = objRoleBal.GetRoleById(RoleId);
+            Role objRole = _rService.GetRoleById(RoleId);
             objRole.IsDeleted = true;
             objRole.DeletedBy = Helpers.GetLoggedInUserId();
             objRole.DeletedDate = Helpers.GetInvariantCultureDateTime(); //To Do change it to server datetime
-            var i = objRoleBal.AddUpdateRole(objRole);
+            var i = _rService.AddUpdateRole(objRole);
             var corporateId = Helpers.GetDefaultCorporateId();
-            List<Role> RolesList = objRoleBal.GetAllRoles(corporateId);
+            List<Role> RolesList = _rService.GetAllRoles(corporateId);
             return PartialView(PartialViews.RoleList, RolesList);
 
         }
@@ -458,10 +437,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public bool CheckDuplicateRole(int RoleId, string RoleName)
         {
-            using (var objRoleBal = new RoleBal())
-            {
-                return objRoleBal.CheckDuplicateRole(RoleId, RoleName);
-            }
+            return _rService.CheckDuplicateRole(RoleId, RoleName);
         }
 
         // Function to chek role exist on the 
@@ -472,13 +448,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckRoleExist(int Id)
         {
-            using (var objUserRoleBal = new UserRoleBal())
-            {
-                var result = objUserRoleBal.CheckRoleExist(Id);
-                return Json(result);
-            }
-
-
+            var result = _urService.CheckRoleExist(Id);
+            return Json(result);
         }
 
         #endregion
@@ -491,13 +462,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Screen()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
             ScreenView objScreenView = new ScreenView
             {
                 CurrentScreen = new Screen(),
-                TabsList = objTabsBal.GetAllTabs(),
-                ScreensList = objScreenBal.GetAllScreensList()
+                TabsList = _tService.GetAllTabs(),
+                ScreensList = _sService.GetAllScreensList()
             };
             return View(objScreenView);
         }
@@ -508,8 +477,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetScreens()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            List<Screen> ScreensList = objScreenBal.GetAllScreensList();
+            List<Screen> ScreensList = _sService.GetAllScreensList();
             return PartialView(PartialViews.ScreenList, ScreensList);
         }
 
@@ -520,12 +488,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EditScreen(int ScreenID)
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
             ScreenView objScreenView = new ScreenView
             {
-                CurrentScreen = objScreenBal.GetScreenDetailById(ScreenID),
-                TabsList = objTabsBal.GetAllTabs()
+                CurrentScreen = _sService.GetScreenDetailById(ScreenID),
+                TabsList = _tService.GetAllTabs()
             };
             return PartialView(PartialViews.AddUpdateScreen, objScreenView);
         }
@@ -536,9 +502,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAddUpdateScreen()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
-            ScreenView objScreenView = new ScreenView { CurrentScreen = new Screen(), TabsList = objTabsBal.GetAllTabs() };
+            ScreenView objScreenView = new ScreenView { CurrentScreen = new Screen(), TabsList = _tService.GetAllTabs() };
             return PartialView(PartialViews.AddUpdateScreen, objScreenView);
         }
 
@@ -550,7 +514,6 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddScreen(Screen objScreen)
         {
-            ScreenBal objScreenBal = new ScreenBal();
             if (objScreen.ScreenId > 0)
             {
                 objScreen.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -563,8 +526,8 @@ namespace BillingSystem.Controllers
                 objScreen.CreatedBy = Helpers.GetLoggedInUserId();
                 objScreen.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            var i = objScreenBal.AddUpdateScreen(objScreen);
-            List<Screen> ScreensList = objScreenBal.GetAllScreensList();
+            var i = _sService.AddUpdateScreen(objScreen);
+            List<Screen> ScreensList = _sService.GetAllScreensList();
             return PartialView(PartialViews.ScreenList, ScreensList);
 
         }
@@ -576,13 +539,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteScreen(int screenID)
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            Screen objScreen = objScreenBal.GetScreenDetailById(screenID);
+            Screen objScreen = _sService.GetScreenDetailById(screenID);
             objScreen.IsDeleted = true;
             objScreen.DeletedBy = Helpers.GetLoggedInUserId();
             objScreen.DeletedDate = Helpers.GetInvariantCultureDateTime(); //To Do change it to server datetime
-            var i = objScreenBal.AddUpdateScreen(objScreen);
-            List<Screen> ScreensList = objScreenBal.GetAllScreensList();
+            var i = _sService.AddUpdateScreen(objScreen);
+            List<Screen> ScreensList = _sService.GetAllScreensList();
             return PartialView(PartialViews.ScreenList, ScreensList);
 
         }
@@ -597,13 +559,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Tab()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
             TabView objTabView = new TabView
             {
                 CurrentTab = new Tabs(),
-                TabsList = objTabsBal.GetAllTabs(),
-                ScreenList = objScreenBal.GetAllScreensList()
+                TabsList = _tService.GetAllTabs(),
+                ScreenList = _sService.GetAllScreensList()
             };
             return View(objTabView);
         }
@@ -615,8 +575,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabs()
         {
-            TabsBal objTabsBal = new TabsBal();
-            List<Tabs> tabsList = objTabsBal.GetAllTabs();
+            List<Tabs> tabsList = _tService.GetAllTabs();
             return PartialView(PartialViews.TabsList, tabsList);
         }
 
@@ -627,13 +586,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult EditTab(int TabID)
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
             TabView objTabView = new TabView
             {
-                CurrentTab = objTabsBal.GetTabByTabId(TabID),
-                TabsList = objTabsBal.GetAllTabs(),
-                ScreenList = objScreenBal.GetAllScreensList()
+                CurrentTab = _tService.GetTabByTabId(TabID),
+                TabsList = _tService.GetAllTabs(),
+                ScreenList = _sService.GetAllScreensList()
             };
 
             return PartialView(PartialViews.AddUpdateTabs, objTabView);
@@ -645,13 +602,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAddUpdateTab()
         {
-            ScreenBal objScreenBal = new ScreenBal();
-            TabsBal objTabsBal = new TabsBal();
             TabView objTabView = new TabView
             {
                 CurrentTab = new Tabs(),
-                TabsList = objTabsBal.GetAllTabs(),
-                ScreenList = objScreenBal.GetAllScreensList()
+                TabsList = _tService.GetAllTabs(),
+                ScreenList = _sService.GetAllScreensList()
             };
             return PartialView(PartialViews.AddUpdateTabs, objTabView);
         }
@@ -664,7 +619,6 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddTab(Tabs objTab)
         {
-            TabsBal objTabsBal = new TabsBal();
             if (objTab.TabId > 0)
             {
                 objTab.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -678,8 +632,8 @@ namespace BillingSystem.Controllers
                 objTab.CreatedDate = Helpers.GetInvariantCultureDateTime();
 
             }
-            var i = objTabsBal.AddUpdateTab(objTab);
-            List<Tabs> tabsList = objTabsBal.GetAllTabs();
+            var i = _tService.AddUpdateTab(objTab);
+            List<Tabs> tabsList = _tService.GetAllTabs();
             return PartialView(PartialViews.TabsList, tabsList);
         }
 
@@ -690,13 +644,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteTab(int TabID)
         {
-            TabsBal objTabsBal = new TabsBal();
-            Tabs objTab = objTabsBal.GetTabByTabId(TabID);
+            Tabs objTab = _tService.GetTabByTabId(TabID);
             objTab.IsDeleted = true;
             objTab.DeletedBy = Helpers.GetLoggedInUserId();
             objTab.DeletedDate = Helpers.GetInvariantCultureDateTime(); //To Do change it to server datetime
-            var i = objTabsBal.AddUpdateTab(objTab);
-            List<Tabs> tabsList = objTabsBal.GetAllTabs();
+            var i = _tService.AddUpdateTab(objTab);
+            List<Tabs> tabsList = _tService.GetAllTabs();
             return PartialView(PartialViews.TabsList, tabsList);
         }
 
@@ -728,20 +681,15 @@ namespace BillingSystem.Controllers
                     objListRolePermission.Add(objRolePermission);
 
                 }
-                RolePermissionBal objRolePermissionBal = new RolePermissionBal();
-                objRolePermissionBal.AddUpdateRolePermission(objListRolePermission);
-
-
-                RoleBal objRoleBal = new RoleBal();
-                ScreenBal objScreenBal = new ScreenBal();
+                _rpService.AddUpdateRolePermission(objListRolePermission);
 
                 RoleView objRoleView = new RoleView();
 
                 ScreenView screenview = new ScreenView
                 {
-                    AvailableScreens = objScreenBal.GetAllScreensList()
+                    AvailableScreens = _sService.GetAllScreensList()
                 };
-                objRoleView.RolesList = objRoleBal.GetAllRoles(corporateId);
+                objRoleView.RolesList = _rService.GetAllRoles(corporateId);
                 objRoleView.screenView = screenview;
                 return PartialView(PartialViews.PartialScreensPermission, objRoleView);
             }
@@ -759,9 +707,8 @@ namespace BillingSystem.Controllers
         public ActionResult GetPermisssionsByRoleID(int RoleId)
         {
             RoleView objRoleView = new RoleView();
-            RolePermissionBal objRolePermissionBal = new RolePermissionBal();
             List<RolePermissionInfo> objlstRolePermissionInfo = new List<RolePermissionInfo>();
-            List<RolePermission> SelectedScreens = objRolePermissionBal.GetRolePermissionByRoleId(RoleId);
+            List<RolePermission> SelectedScreens = _rpService.GetRolePermissionByRoleId(RoleId);
             objlstRolePermissionInfo = (from y in SelectedScreens
                                         select new RolePermissionInfo { RolePermissionID = y.RolePermissionID, PermissionID = y.PermissionID })
                 .ToList();
@@ -780,7 +727,7 @@ namespace BillingSystem.Controllers
         {
             var objUserRoleView = new UserRoleView
             {
-                RolesList = new List<Role>(), //objRoleBal.GetAllRolesByCorporateFacility(corporateId, facilityId),
+                RolesList = new List<Role>(), //_rService.GetAllRolesByCorporateFacility(corporateId, facilityId),
                 //UsersList = new List<Users>(), //objUsersBal.GetAllUsersByCorporateIdFacilityId(corporateId, facilityId),
                 UserID = 0
             };
@@ -804,8 +751,7 @@ namespace BillingSystem.Controllers
                     CreatedDate = Helpers.GetInvariantCultureDateTime(),
                     IsActive = true
                 }).ToList();
-                var objUserRoleBal = new UserRoleBal();
-                var updatedId = objUserRoleBal.AddUpdateUserRole(objListUserRole);
+                var updatedId = _urService.AddUpdateUserRole(objListUserRole);
                 return Json(updatedId);
             }
             catch (Exception ex)
@@ -823,10 +769,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetUserRolesByUserId(int userId, int corporateId, int facilityId)
         {
-            var objUserRoleBal = new UserRoleBal();
             var objlstUserRole = new List<UserRole>();
-            //objlstUserRole = objUserRoleBal.GetUserRolesByUserID(UserID);
-            objlstUserRole = objUserRoleBal.GetUserRolesByCorporateFacilityAndUserId(userId, corporateId, facilityId);
+            //objlstUserRole = _urService.GetUserRolesByUserID(UserID);
+            objlstUserRole = _urService.GetUserRolesByCorporateFacilityAndUserId(userId, corporateId, facilityId);
             return Json(objlstUserRole);
         }
 
@@ -838,11 +783,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetAllRolesByCorporateAndFacility(int corporateId, int facilityId)
         {
-            using (var bal = new RoleBal())
-            {
-                var list = bal.GetAllRolesByCorporateFacility(corporateId, facilityId);
-                return Json(list, JsonRequestBehavior.AllowGet);
-            }
+            var list = _rService.GetAllRolesByCorporateFacility(corporateId, facilityId);
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         #endregion
@@ -856,7 +798,7 @@ namespace BillingSystem.Controllers
         //public ActionResult FacilityRole()
         //{
         //    var facilityRoleView = new FacilityRoleView { CurrentFacilityRole = new FacilityRoleCustomModel { IsActive = true }, };
-        //    using (var bal = new FacilityRoleBal())
+        //    using (var _frService = new FacilityRoleBal())
         //    {
         //        var facilityId = 0;
         //        var corporateId = 0;
@@ -869,7 +811,7 @@ namespace BillingSystem.Controllers
         //            roleId = session.RoleId;
         //        }
 
-        //        var list = bal.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
+        //        var list = _frService.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
         //        facilityRoleView.FacilityRolesList = list;
         //    }
         //    return View(facilityRoleView);
@@ -883,25 +825,22 @@ namespace BillingSystem.Controllers
             {
                 CurrentFacilityRole = new FacilityRoleCustomModel { IsActive = true },
             };
-            using (var bal = new FacilityRoleBal())
+
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var roleId = Convert.ToInt32(Helpers.GetDefaultRoleId());
+            facilityRoleView.CurrentFacilityRole.CorporateId = corporateId;
+            var admin = Helpers.GetLoggedInUserIsAdmin();
+            if (admin == true)
             {
+                var list = _frService.GetFacilityRoleListByAdminUser(corporateId, facilityId, roleId);
+                facilityRoleView.FacilityRolesList = list;
 
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var roleId = Convert.ToInt32(Helpers.GetDefaultRoleId());
-                facilityRoleView.CurrentFacilityRole.CorporateId = corporateId;
-                var admin = Helpers.GetLoggedInUserIsAdmin();
-                if (admin == true)
-                {
-                    var list = bal.GetFacilityRoleListByAdminUser(corporateId, facilityId, roleId);
-                    facilityRoleView.FacilityRolesList = list;
-
-                }
-                else
-                {
-                    var list = bal.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
-                    facilityRoleView.FacilityRolesList = list;
-                }
+            }
+            else
+            {
+                var list = _frService.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
+                facilityRoleView.FacilityRolesList = list;
 
             }
             return View(facilityRoleView);
@@ -914,29 +853,27 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddUpdateFacilityRole(FacilityRole model)
         {
-            using (var bal = new FacilityRoleBal())
+            var newId = 0;
+            var isExist = _frService.CheckIfExists(model.RoleId, model.FacilityId, model.CorporateId, model.FacilityRoleId);
+            if (!isExist)
             {
-                var newId = 0;
-                var isExist = bal.CheckIfExists(model.RoleId, model.FacilityId, model.CorporateId, model.FacilityRoleId);
-                if (!isExist)
-                {
 
-                    if (model.FacilityRoleId > 0)
-                    {
-                        model.ModifiedBy = Helpers.GetLoggedInUserId();
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                        model.CreatedBy = Helpers.GetLoggedInUserId();
-                        model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        model.CreatedBy = Helpers.GetLoggedInUserId();
-                        model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    newId = bal.AddUpdateFacilityRole(model);
+                if (model.FacilityRoleId > 0)
+                {
+                    model.ModifiedBy = Helpers.GetLoggedInUserId();
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                    model.CreatedBy = Helpers.GetLoggedInUserId();
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
                 }
-                return Json(newId);
+                else
+                {
+                    model.CreatedBy = Helpers.GetLoggedInUserId();
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+                newId = _frService.AddUpdateFacilityRole(model);
             }
+            return Json(newId);
+
         }
 
         /// <summary>
@@ -946,14 +883,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddUpdateFacilityRoleCustomModel(FacilityRoleCustomModel model)
         {
-            using (var bal = new FacilityRoleBal())
-            {
-                var newId = 0;
-                var isExist = bal.CheckIfExists(model.RoleId, model.FacilityId, model.CorporateId, model.FacilityRoleId);
-                if (!isExist)
-                    newId = bal.SaveFacilityRole(model, Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
-                return Json(newId);
-            }
+            var newId = 0;
+            var isExist = _frService.CheckIfExists(model.RoleId, model.FacilityId, model.CorporateId, model.FacilityRoleId);
+            if (!isExist)
+                newId = _frService.SaveFacilityRole(model, Helpers.GetLoggedInUserId(), Helpers.GetInvariantCultureDateTime());
+            return Json(newId);
         }
 
 
@@ -964,21 +898,18 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRoleById(string facilityRoleId)
         {
-            using (var bal = new FacilityRoleBal())
-            {
-                // var current = bal.GetFacilityRoleById(Convert.ToInt32(facilityRoleId));
-                var current = bal.GetFacilityRoleModelById(Convert.ToInt32(facilityRoleId));
-                return PartialView(PartialViews.FacilityRoleAddEdit, current);
-            }
+            // var current = _frService.GetFacilityRoleById(Convert.ToInt32(facilityRoleId));
+            var current = _frService.GetFacilityRoleModelById(Convert.ToInt32(facilityRoleId));
+            return PartialView(PartialViews.FacilityRoleAddEdit, current);
         }
 
 
         //public ActionResult GetFacilityRole(string facilityRoleId)
         //{
-        //    using (var bal = new FacilityRoleBal())
+        //    using (var _frService = new FacilityRoleBal())
         //    {
-        //        // var current = bal.GetFacilityRoleById(Convert.ToInt32(facilityRoleId));
-        //        var current = bal.GetFacilityRoleModelById(Convert.ToInt32(facilityRoleId));
+        //        // var current = _frService.GetFacilityRoleById(Convert.ToInt32(facilityRoleId));
+        //        var current = _frService.GetFacilityRoleModelById(Convert.ToInt32(facilityRoleId));
         //        var jsonResult = new
         //        {
         //            current.CorporateId,
@@ -998,15 +929,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRolesList()
         {
-            using (var bal = new FacilityRoleBal())
-            {
-                var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var roleId = Convert.ToInt32(Helpers.GetDefaultRoleId());
+            var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var roleId = Convert.ToInt32(Helpers.GetDefaultRoleId());
 
-                var list = bal.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
-                return PartialView(PartialViews.FacilityRoleList, list);
-            }
+            var list = _frService.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
+            return PartialView(PartialViews.FacilityRoleList, list);
         }
 
         /// <summary>
@@ -1016,19 +944,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFacilityRole(string id)
         {
-            using (var bal = new FacilityRoleBal())
+            var current = _frService.GetFacilityRoleById(Convert.ToInt32(id));
+            if (current != null)
             {
-                var current = bal.GetFacilityRoleById(Convert.ToInt32(id));
-                if (current != null)
-                {
-                    current.IsDeleted = true;
-                    current.DeletedBy = Helpers.GetLoggedInUserId();
-                    current.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    var deletedId = bal.AddUpdateFacilityRole(current);
-                    return PartialView(PartialViews.FacilityRoleList, null);
-                }
-                return Json(null);
+                current.IsDeleted = true;
+                current.DeletedBy = Helpers.GetLoggedInUserId();
+                current.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                var deletedId = _frService.AddUpdateFacilityRole(current);
+                return PartialView(PartialViews.FacilityRoleList, null);
             }
+            return Json(null);
         }
 
         /// <summary>
@@ -1038,26 +963,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityListByCorporateId(string corpId)
         {
-            using (var bal = new FacilityBal())
+            var facilities = _fService.GetFacilitiesByCorporateId(Convert.ToInt32(corpId));
+            if (facilities.Count > 0)
             {
-                var facilities = bal.GetFacilitiesByCorporateId(Convert.ToInt32(corpId));
-                if (facilities.Count > 0)
+                var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+                var list = new List<SelectListItem>();
+
+                if (facilityId > 0 && Convert.ToInt32(corpId) > 0)
+                    facilities = facilities.Where(f => f.FacilityId == facilityId).ToList();
+
+                list.AddRange(facilities.Select(item => new SelectListItem
                 {
-                    var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-                    var list = new List<SelectListItem>();
-
-                    if (facilityId > 0 && Convert.ToInt32(corpId) > 0)
-                        facilities = facilities.Where(f => f.FacilityId == facilityId).ToList();
-
-                    list.AddRange(facilities.Select(item => new SelectListItem
-                    {
-                        Text = item.FacilityName,
-                        Value = item.FacilityId.ToString()
-                    }));
-                    return Json(list);
-                }
-                return Json(null);
+                    Text = item.FacilityName,
+                    Value = item.FacilityId.ToString()
+                }));
+                return Json(list);
             }
+            return Json(null);
         }
 
         /// <summary>
@@ -1072,22 +994,19 @@ namespace BillingSystem.Controllers
         public ActionResult CheckIfFacilityRoleExists(string corpId, string facilityId, string roleId,
             string facilityRoleId, bool schedulingApplied)
         {
-            using (var bal = new FacilityRoleBal())
+            if (!schedulingApplied)
             {
-                if (!schedulingApplied)
+                var isRoleAssined = _frService.CheckRoleIsAssignOrNot(Convert.ToInt32(roleId), Convert.ToInt32(facilityId), Convert.ToInt32(corpId));
+                if (isRoleAssined)
                 {
-                    var isRoleAssined = bal.CheckRoleIsAssignOrNot(Convert.ToInt32(roleId), Convert.ToInt32(facilityId), Convert.ToInt32(corpId));
-                    if (isRoleAssined)
-                    {
-                        return Json("-1");
-                    }
+                    return Json("-1");
                 }
-
-
-                var isExists = bal.CheckIfExists(Convert.ToInt32(roleId), Convert.ToInt32(facilityId),
-                    Convert.ToInt32(corpId), Convert.ToInt32(facilityRoleId));
-                return Json(isExists);
             }
+
+
+            var isExists = _frService.CheckIfExists(Convert.ToInt32(roleId), Convert.ToInt32(facilityId),
+                Convert.ToInt32(corpId), Convert.ToInt32(facilityRoleId));
+            return Json(isExists);
         }
 
         /// <summary>
@@ -1099,42 +1018,36 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetFacilityRolesCustomList(string corpId, string facilityId, string roleId)
         {
-            using (var bal = new FacilityRoleBal())
-            {
-                var selectedFacilitid = facilityId;
-                facilityId =
-                    //Helpers.GetLoggedInUserIsAdmin()? "0":
-                    ((string.IsNullOrEmpty(facilityId) || facilityId.Equals("0"))
-                        ? Convert.ToString(Helpers.GetDefaultFacilityId())
-                        : facilityId);
+            var selectedFacilitid = facilityId;
+            facilityId =
+                //Helpers.GetLoggedInUserIsAdmin()? "0":
+                ((string.IsNullOrEmpty(facilityId) || facilityId.Equals("0"))
+                    ? Convert.ToString(Helpers.GetDefaultFacilityId())
+                    : facilityId);
 
-                //var list = bal.GetFacilityRoleListCustom(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
-                //    Convert.ToInt32(roleId));
-                var list = bal.GetFacilityRoleListByFacility(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
-                  Convert.ToInt32(roleId));
-                list = list.OrderBy(x => x.RoleName).ToList();
-                return PartialView(PartialViews.FacilityRoleList, list);
-            }
+            //var list = _frService.GetFacilityRoleListCustom(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
+            //    Convert.ToInt32(roleId));
+            var list = _frService.GetFacilityRoleListByFacility(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
+              Convert.ToInt32(roleId));
+            list = list.OrderBy(x => x.RoleName).ToList();
+            return PartialView(PartialViews.FacilityRoleList, list);
         }
 
 
         public ActionResult GetFacilityRolesCustomList1(string corpId, string facilityId, string roleId)
         {
-            using (var bal = new FacilityRoleBal())
-            {
-                var selectedFacilitid = facilityId;
-                facilityId =
-                    //Helpers.GetLoggedInUserIsAdmin()? "0":
-                    ((string.IsNullOrEmpty(facilityId) || facilityId.Equals("0"))
-                        ? Convert.ToString(Helpers.GetDefaultFacilityId())
-                        : facilityId);
+            var selectedFacilitid = facilityId;
+            facilityId =
+                //Helpers.GetLoggedInUserIsAdmin()? "0":
+                ((string.IsNullOrEmpty(facilityId) || facilityId.Equals("0"))
+                    ? Convert.ToString(Helpers.GetDefaultFacilityId())
+                    : facilityId);
 
-                var list = bal.GetFacilityRoleListCustom(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
-                    Convert.ToInt32(roleId));
+            var list = _frService.GetFacilityRoleListCustom(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
+                Convert.ToInt32(roleId));
 
-                list = list.OrderBy(x => x.RoleName).ToList();
-                return PartialView(PartialViews.FacilityRoleList, list);
-            }
+            list = list.OrderBy(x => x.RoleName).ToList();
+            return PartialView(PartialViews.FacilityRoleList, list);
         }
 
         /// <summary>
@@ -1158,37 +1071,30 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult CheckIfFacilityRoleAssigned(string roleId, string facilityRoleId)
         {
-            using (var bal = new FacilityRoleBal())
-            {
-                var isExists = bal.CheckIfRoleAssigned(Convert.ToInt32(roleId), Convert.ToInt32(facilityRoleId));
-                return Json(isExists);
-            }
+            var isExists = _frService.CheckIfRoleAssigned(Convert.ToInt32(roleId), Convert.ToInt32(facilityRoleId));
+            return Json(isExists);
         }
 
 
         public ActionResult GetActiveInActiveFacilityRoleList(bool showInActive, string facilityId, string corporateId)
         {
-            //var corpId = Helpers.GetSysAdminCorporateID();
-            using (var bal = new FacilityRoleBal())
-            {
-                var selectedFacilitid = facilityId;
-                facilityId =
-                    //Helpers.GetLoggedInUserIsAdmin()? "0":
-                    ((string.IsNullOrEmpty(facilityId) || facilityId.Equals("0"))
-                        ? Convert.ToString(Helpers.GetDefaultFacilityId())
-                        : facilityId);
+            var selectedFacilitid = facilityId;
+            facilityId =
+                //Helpers.GetLoggedInUserIsAdmin()? "0":
+                ((string.IsNullOrEmpty(facilityId) || facilityId.Equals("0"))
+                    ? Convert.ToString(Helpers.GetDefaultFacilityId())
+                    : facilityId);
 
 
 
-                corporateId = ((string.IsNullOrEmpty(corporateId) || corporateId.Equals("0"))
-                        ? Convert.ToString(Helpers.GetSysAdminCorporateID())
-                        : corporateId);
-                //var list = bal.GetFacilityRoleListCustom(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
-                //    Convert.ToInt32(roleId));
-                var list = bal.GetActiveInActiveRecords(showInActive, Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
-                list = list.OrderBy(x => x.RoleName).ToList();
-                return PartialView(PartialViews.FacilityRoleList, list);
-            }
+            corporateId = ((string.IsNullOrEmpty(corporateId) || corporateId.Equals("0"))
+                    ? Convert.ToString(Helpers.GetSysAdminCorporateID())
+                    : corporateId);
+            //var list = _frService.GetFacilityRoleListCustom(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
+            //    Convert.ToInt32(roleId));
+            var list = _frService.GetActiveInActiveRecords(showInActive, Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
+            list = list.OrderBy(x => x.RoleName).ToList();
+            return PartialView(PartialViews.FacilityRoleList, list);
         }
 
         #endregion
@@ -1224,12 +1130,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AddTabRolePermissions(List<RoleTabsCustomModel> objRoleTabsPermissionList)
         {
-            using (var bal = new RoleTabsBal())
-            {
-                var dt = Helpers.ToDataTable(objRoleTabsPermissionList);
-                bal.AddUpdateRolePermissionSP(dt, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
-                return Json(true);
-            }
+            var dt = Helpers.ToDataTable(objRoleTabsPermissionList);
+            _rtService.AddUpdateRolePermissionSP(dt, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+            return Json(true);
         }
 
         /// <summary>
@@ -1239,11 +1142,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabsPermisssionsByRoleId(int roleId)
         {
-            using (var bal = new RoleTabsBal())
-            {
-                var list = bal.GetRoleTabsByRoleId(roleId);
-                return Json(list);
-            }
+            var list = _rtService.GetRoleTabsByRoleId(roleId);
+            return Json(list);
         }
 
         /// <summary>
@@ -1253,27 +1153,19 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabsAssignedToFacility(int roleid)
         {
-            using (var facilityRole = new FacilityRoleBal())
+            var facilityrole = _frService.GetFacilityRolesByRoleId(roleid).FirstOrDefault();
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityid = Helpers.GetDefaultFacilityId();
+            var loggedinuserid = Helpers.GetLoggedInUserId();
+            if (facilityrole != null)
             {
-                var facilityrole = facilityRole.GetFacilityRolesByRoleId(roleid).FirstOrDefault();
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var facilityid = Helpers.GetDefaultFacilityId();
-                var loggedinuserid = Helpers.GetLoggedInUserId();
-                if (facilityrole != null)
-                {
-                    corporateId = facilityrole.CorporateId;
-                    facilityid = facilityrole.FacilityId;
-                }
-                var objTabsBal = new TabsBal();
-                var tabList = objTabsBal.GetCorporateFacilityTabList(corporateId, facilityid, roleid).Where(t => t.CurrentTab.IsActive && !t.CurrentTab.IsDeleted)
-                        .ToList();
-                //IEnumerable<TabsCustomModel> tabList;
-                //using (var mBal = new TabsBal())
-                //{
-                //    tabList = mBal.GetTabsOnModuleAccessLoad(loggedinuserid, roleid, facilityid, corporateId, false, true);
-                //}
-                return PartialView(PartialViews.TabsTreeView, tabList);
+                corporateId = facilityrole.CorporateId;
+                facilityid = facilityrole.FacilityId;
             }
+            var tabList = _tService.GetCorporateFacilityTabList(corporateId, facilityid, roleid).Where(t => t.CurrentTab.IsActive && !t.CurrentTab.IsDeleted)
+                   .ToList();
+            return PartialView(PartialViews.TabsTreeView, tabList);
+
         }
 
         /// <summary>
@@ -1284,13 +1176,8 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetDefaultCorporateId();
             var facilityid = Helpers.GetDefaultFacilityId();
-            var objTabsBal = new TabsBal();
-            //var tabList =
-            //    objTabsBal.GetCorporateFacilityTabList(corporateId, facilityid, null)
-            //        .Where(t => t.CurrentTab.IsActive && !t.CurrentTab.IsDeleted)
-            //        .ToList();
 
-            var tabList = objTabsBal.GetTabsListInRoleTabsView(Helpers.GetLoggedInUserId(), facilityId: facilityid, corporateId: corporateId, isDeleted: false, isActive: true);
+            var tabList = _tService.GetTabsListInRoleTabsView(Helpers.GetLoggedInUserId(), facilityId: facilityid, corporateId: corporateId, isDeleted: false, isActive: true);
             return PartialView(PartialViews.TabsTreeView, tabList);
         }
 
@@ -1302,11 +1189,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetTabsByCorporateAndFacility(int corporateId, int facilityId)
         {
-            using (var bal = new TabsBal())
-            {
-                var tabList = bal.GetTabsByCorporateAndFacilityId(facilityId, corporateId);
-                return PartialView(PartialViews.TabsTreeView, tabList);
-            }
+            var tabList = _tService.GetTabsByCorporateAndFacilityId(facilityId, corporateId);
+            return PartialView(PartialViews.TabsTreeView, tabList);
+
         }
 
         /// <summary>
@@ -1317,26 +1202,21 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetModulesAssignedToFacility(int corporateId, int facilityId)
         {
-            using (var moduleRoleBal = new ModuleAccessBal())
-            {
-                //var moduleAccessList =
-                //    moduleRoleBal.GetModulesAccessList(corporateId, facilityId)
-                //        .ToList();
+            //var moduleAccessList =
+            //    _maService.GetModulesAccessList(corporateId, facilityId)
+            //        .ToList();
 
-                //var objTabsBal = new TabsBal();
-                //var tabList =
-                //    objTabsBal.GetCorporateFacilityTabList(corporateId, facilityId, null)
-                //        .Where(t => t.CurrentTab.IsActive && !t.CurrentTab.IsDeleted)
-                //        .ToList();
-                //var newlist = tabList.Where(
-                //    t => (moduleAccessList.Any(z => z.TabID == t.CurrentTab.TabId))).ToList();
-                IEnumerable<TabsCustomModel> newlist = new List<TabsCustomModel>();
-                using (var tBal = new TabsBal())
-                {
-                    newlist = tBal.GetTabsListInRoleTabsView(Helpers.GetLoggedInUserId(), facilityId: facilityId, corporateId: corporateId, isDeleted: false, isActive: true);
-                }
-                return PartialView(PartialViews.TabsTreeView, newlist);
-            }
+            //var _tService = new TabsBal();
+            //var tabList =
+            //    _tService.GetCorporateFacilityTabList(corporateId, facilityId, null)
+            //        .Where(t => t.CurrentTab.IsActive && !t.CurrentTab.IsDeleted)
+            //        .ToList();
+            //var newlist = tabList.Where(
+            //    t => (moduleAccessList.Any(z => z.TabID == t.CurrentTab.TabId))).ToList();
+            //IEnumerable<TabsCustomModel> newlist = new List<TabsCustomModel>();
+            var newlist = _tService.GetTabsListInRoleTabsView(Helpers.GetLoggedInUserId(), facilityId: facilityId, corporateId: corporateId, isDeleted: false, isActive: true);
+            return PartialView(PartialViews.TabsTreeView, newlist);
+
         }
 
         #endregion

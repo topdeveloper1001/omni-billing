@@ -10,18 +10,16 @@
 namespace BillingSystem.Controllers
 {
     using System;
-    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Transactions;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
     using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Common.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
+    using BillingSystem.Models;
 
     /// <summary>
     /// PatientPreScheduling controller.
@@ -29,13 +27,27 @@ namespace BillingSystem.Controllers
     [AllowAnonymous]
     public class PatientPreSchedulingController : Controller
     {
+        private readonly IPatientPreSchedulingService _service;
         private readonly IPatientInfoService _piService;
         private readonly ICountryService _cService;
+        private readonly IPreSchedulingLinkService _pslService;
+        private readonly IPatientLoginDetailService _pldService;
+        private readonly ILoginTrackingService _ltService;
+        private readonly ITabsService _tService;
+        private readonly IModuleAccessService _maService;
+        private readonly IPatientPhoneService _ppService;
 
-        public PatientPreSchedulingController(IPatientInfoService piService, ICountryService cService)
+        public PatientPreSchedulingController(IPatientPreSchedulingService service, IPatientInfoService piService, ICountryService cService, IPreSchedulingLinkService pslService, IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, IPatientPhoneService ppService)
         {
+            _service = service;
             _piService = piService;
             _cService = cService;
+            _pslService = pslService;
+            _pldService = pldService;
+            _ltService = ltService;
+            _tService = tService;
+            _maService = maService;
+            _ppService = ppService;
         }
 
         #region Public Methods and Operators
@@ -47,15 +59,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindPatientPreSchedulingList()
         {
-            // Initialize the PatientPreScheduling BAL object
-            using (var patientPreSchedulingBal = new PatientPreSchedulingBal())
-            {
-                // Get the facilities list
-                var patientPreSchedulingList = patientPreSchedulingBal.GetPatientPreScheduling();
-
-                // Pass the ActionResult with List of PatientPreSchedulingViewModel object to Partial View PatientPreSchedulingList
-                return this.PartialView(PartialViews.PatientPreSchedulingList, patientPreSchedulingList);
-            }
+            var patientPreSchedulingList = _service.GetPatientPreScheduling();
+            return this.PartialView(PartialViews.PatientPreSchedulingList, patientPreSchedulingList);
         }
 
         /// <summary>
@@ -69,26 +74,23 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePatientPreScheduling(int id)
         {
-            using (var bal = new PatientPreSchedulingBal())
+            // Get PatientPreScheduling model object by current PatientPreScheduling ID
+            var currentPatientPreScheduling = _service.GetPatientPreSchedulingById(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            // Check If PatientPreScheduling model is not null
+            if (currentPatientPreScheduling != null)
             {
-                // Get PatientPreScheduling model object by current PatientPreScheduling ID
-                var currentPatientPreScheduling = bal.GetPatientPreSchedulingById(id);
-                var userId = Helpers.GetLoggedInUserId();
+                currentPatientPreScheduling.IsActive = false;
 
-                // Check If PatientPreScheduling model is not null
-                if (currentPatientPreScheduling != null)
-                {
-                    currentPatientPreScheduling.IsActive = false;
+                // currentPatientPreScheduling.ModifiedBy = userId;
+                // currentPatientPreScheduling.ModifiedDate = DateTime.Now;
 
-                    // currentPatientPreScheduling.ModifiedBy = userId;
-                    // currentPatientPreScheduling.ModifiedDate = DateTime.Now;
+                // Update Operation of current PatientPreScheduling
+                int result = _service.SavePatientPreScheduling(currentPatientPreScheduling);
 
-                    // Update Operation of current PatientPreScheduling
-                    int result = bal.SavePatientPreScheduling(currentPatientPreScheduling);
-
-                    // return deleted ID of current PatientPreScheduling as Json Result to the Ajax Call.
-                    return this.Json(result);
-                }
+                // return deleted ID of current PatientPreScheduling as Json Result to the Ajax Call.
+                return this.Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -106,14 +108,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPatientPreScheduling(int id)
         {
-            using (var bal = new PatientPreSchedulingBal())
-            {
-                // Call the AddPatientPreScheduling Method to Add / Update current PatientPreScheduling
-                var currentPatientPreScheduling = bal.GetPatientPreSchedulingById(id);
+            // Call the AddPatientPreScheduling Method to Add / Update current PatientPreScheduling
+            var currentPatientPreScheduling = _service.GetPatientPreSchedulingById(id);
 
-                // Pass the ActionResult with the current PatientPreSchedulingViewModel object as model to PartialView PatientPreSchedulingAddEdit
-                return this.PartialView(PartialViews.PatientPreSchedulingAddEdit, currentPatientPreScheduling);
-            }
+            // Pass the ActionResult with the current PatientPreSchedulingViewModel object as model to PartialView PatientPreSchedulingAddEdit
+            return PartialView(PartialViews.PatientPreSchedulingAddEdit, currentPatientPreScheduling);
         }
 
         /// <summary>
@@ -129,8 +128,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index(int? CId, int? FId, int? msg)
         {
             // Pass the View Model in ActionResult to View PatientPreScheduling
-            var patientSchedularlinkBal = new PreSchedulingLinkBal();
-            var patientSchedulingObj = patientSchedularlinkBal.GetPreSchedulingLink(
+            var patientSchedulingObj = _pslService.GetPreSchedulingLink(
                 Convert.ToInt32(CId),
                 Convert.ToInt32(FId));
             if (patientSchedulingObj.Any())
@@ -157,19 +155,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index_2(int? CId, int? FId)
         {
-            // Initialize the PatientPreScheduling BAL object
-            List<PatientPreSchedulingCustomModel> patientPreSchedulingList;
-            using (var patientPreSchedulingBal = new PatientPreSchedulingBal())
-            {
-                patientPreSchedulingList = patientPreSchedulingBal.GetPatientPreScheduling();
-            }
-
-            // Intialize the View Model i.e. PatientPreSchedulingView which is binded to Main View Index.cshtml under PatientPreScheduling
-            //var patientPreSchedulingView = new PatientPreSchedulingView
-            //{
-            //    PatientPreSchedulingList = patientPreSchedulingList,
-            //    CurrentPatientPreScheduling = new PatientPreScheduling()
-            //};
+            var patientPreSchedulingList = _service.GetPatientPreScheduling();
 
             // Pass the View Model in ActionResult to View PatientPreScheduling
             return View();
@@ -209,17 +195,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PatientPreSchedulingBal())
-                {
-                    if (model.PatientPreSchedulingId > 0)
-                    {
-                        // model.ModifiedBy = userId;
-                        // model.ModifiedDate = DateTime.Now;
-                    }
-
-                    // Call the AddPatientPreScheduling Method to Add / Update current PatientPreScheduling
-                    newId = bal.SavePatientPreScheduling(model);
-                }
+                newId = _service.SavePatientPreScheduling(model);
             }
 
             return this.Json(newId);
@@ -236,143 +212,130 @@ namespace BillingSystem.Controllers
             if (model != null && !string.IsNullOrEmpty(model.Password) && !string.IsNullOrEmpty(model.Email))
             {
                 var flag = true;
-                using (var pbal = new PatientLoginDetailBal())
+                var currentPatient = _pldService.GetPatientLoginDetailsByEmail(model.Email);
+                if (currentPatient != null)
                 {
-                    var currentPatient = pbal.GetPatientLoginDetailsByEmail(model.Email);
-                    if (currentPatient != null)
+                    var patientId = currentPatient.PatientId.HasValue ? currentPatient.PatientId.Value : 0;
+                    var enPwd = EncryptDecrypt.Encrypt(model.Password).ToLower().Trim();
+                    if (string.IsNullOrEmpty(currentPatient.Password))
                     {
-                        var patientId = currentPatient.PatientId.HasValue ? currentPatient.PatientId.Value : 0;
-                        var enPwd = EncryptDecrypt.Encrypt(model.Password).ToLower().Trim();
-                        if (string.IsNullOrEmpty(currentPatient.Password))
+                        ViewBag.check = (int)LoginResponseTypes.AccountNotActivated;
+                        return RedirectToAction("Index", new { CId = model.CorporateId, FId = model.FacilityId, msg = (int)LoginResponseTypes.UserNotFoundInCorporate });
+                    }
+
+                    if (currentPatient.Password.ToLower().Trim().Equals(enPwd))
+                    {
+                        if (currentPatient.FailedLoginAttempts.HasValue
+                            && currentPatient.FailedLoginAttempts.Value == 3)
                         {
-                            ViewBag.check = (int)LoginResponseTypes.AccountNotActivated;
+                            var failedlogin = Convert.ToDateTime(currentPatient.LastInvalidLogin);
+                            var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
+                            if (timespan.TotalMinutes < 30)
+                            {
+                                flag = false;
+                                ViewBag.check = (int)LoginResponseTypes.FailedAttemptsOver;
+                            }
+                        }
+
+                        if (currentPatient.CorporateId != model.CorporateId)
+                        {
+                            ViewBag.check = (int)LoginResponseTypes.UserNotFoundInCorporate;
                             return RedirectToAction("Index", new { CId = model.CorporateId, FId = model.FacilityId, msg = (int)LoginResponseTypes.UserNotFoundInCorporate });
                         }
 
-                        if (currentPatient.Password.ToLower().Trim().Equals(enPwd))
+                        if (flag)
                         {
-                            if (currentPatient.FailedLoginAttempts.HasValue
-                                && currentPatient.FailedLoginAttempts.Value == 3)
+                            var loginTrackingVm = new LoginTracking
                             {
-                                var failedlogin = Convert.ToDateTime(currentPatient.LastInvalidLogin);
-                                var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
-                                if (timespan.TotalMinutes < 30)
-                                {
-                                    flag = false;
-                                    ViewBag.check = (int)LoginResponseTypes.FailedAttemptsOver;
-                                }
-                            }
+                                ID = patientId,
+                                LoginTime =
+                                                              Helpers.GetInvariantCultureDateTime(),
+                                LoginUserType =
+                                                              (int)LoginTrackingTypes.UserLogin,
+                                FacilityId = currentPatient.FacilityId,
+                                CorporateId = currentPatient.CorporateId,
+                                IsDeleted = false,
+                                IPAddress = Helpers.GetUser_IP(),
+                                CreatedBy = patientId,
+                                CreatedDate =
+                                                              Helpers.GetInvariantCultureDateTime()
+                            };
 
-                            if (currentPatient.CorporateId != model.CorporateId)
-                            {
-                                ViewBag.check = (int)LoginResponseTypes.UserNotFoundInCorporate;
-                                return RedirectToAction("Index", new { CId = model.CorporateId, FId = model.FacilityId, msg = (int)LoginResponseTypes.UserNotFoundInCorporate });
-                            }
-
-                            if (flag)
-                            {
-                                using (var bal = new LoginTrackingBal())
-                                {
-                                    var loginTrackingVm = new LoginTracking
-                                    {
-                                        ID = patientId,
-                                        LoginTime =
-                                                                      Helpers.GetInvariantCultureDateTime(),
-                                        LoginUserType =
-                                                                      (int)LoginTrackingTypes.UserLogin,
-                                        FacilityId = currentPatient.FacilityId,
-                                        CorporateId = currentPatient.CorporateId,
-                                        IsDeleted = false,
-                                        IPAddress = Helpers.GetUser_IP(),
-                                        CreatedBy = patientId,
-                                        CreatedDate =
-                                                                      Helpers.GetInvariantCultureDateTime()
-                                    };
-
-                                    bal.AddUpdateLoginTrackingData(loginTrackingVm);
-                                    pbal.UpdatePatientLoginFailedLog(
-                                        patientId,
-                                        0,
-                                        Helpers.GetInvariantCultureDateTime());
+                            _ltService.AddUpdateLoginTrackingData(loginTrackingVm);
+                            _pldService.UpdatePatientLoginFailedLog(
+                                patientId,
+                                0,
+                                Helpers.GetInvariantCultureDateTime());
 
 
-                                    var objSession = Session[SessionNames.SessionClass.ToString()] != null
-                                                         ? Session[SessionNames.SessionClass.ToString()] as SessionClass
-                                                         : new SessionClass();
+                            var objSession = Session[SessionNames.SessionClass.ToString()] != null
+                                                 ? Session[SessionNames.SessionClass.ToString()] as SessionClass
+                                                 : new SessionClass();
 
-                                    objSession.FirstTimeLogin = bal.IsFirstTimeLoggedIn(
-                                        patientId,
-                                        (int)LoginTrackingTypes.PatientLogin);
+                            objSession.FirstTimeLogin = _ltService.IsFirstTimeLoggedIn(
+                                patientId,
+                                (int)LoginTrackingTypes.PatientLogin);
 
-                                    objSession.FacilityNumber = currentPatient.FacilityNumber;
-                                    objSession.UserName = currentPatient.PatientName;
-                                    objSession.UserId = patientId;
-                                    objSession.SelectedCulture = CultureInfo.CurrentCulture.Name;
-                                    objSession.LoginUserType = (int)LoginTrackingTypes.PatientLogin;
-                                    objSession.UserIsAdmin = false;
-                                    objSession.RoleId = 0;
-                                    objSession.RoleName = "Patient Scheduler";
+                            objSession.FacilityNumber = currentPatient.FacilityNumber;
+                            objSession.UserName = currentPatient.PatientName;
+                            objSession.UserId = patientId;
+                            objSession.SelectedCulture = CultureInfo.CurrentCulture.Name;
+                            objSession.LoginUserType = (int)LoginTrackingTypes.PatientLogin;
+                            objSession.UserIsAdmin = false;
+                            objSession.RoleId = 0;
+                            objSession.RoleName = "Patient Scheduler";
 
-                                    using (var tBal = new TabsBal()) objSession.MenuSessionList = tBal.GetPatientTabsList();
+                            objSession.MenuSessionList = _tService.GetPatientTabsList();
 
-                                    using (var mBal = new ModuleAccessBal())
-                                    {
-                                        Session[SessionNames.SessoionModuleAccess.ToString()] =
-                                            mBal.GetModulesAccessList(
-                                                currentPatient.CorporateId,
-                                                currentPatient.FacilityId);
-                                    }
+                            Session[SessionNames.SessoionModuleAccess.ToString()] = _maService.GetModulesAccessList(
+                                    currentPatient.CorporateId,
+                                    currentPatient.FacilityId);
 
-                                    Session[SessionNames.SessionClass.ToString()] = objSession;
-                                    return RedirectToAction("Index", "PatientSchedulerPortal", new { pId = patientId, fId = currentPatient.FacilityId, cId = currentPatient.CorporateId });
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (currentPatient.Password == null
-                                || !currentPatient.Password.Equals(EncryptDecrypt.Encrypt(currentPatient.Password))) ViewBag.check = (int)LoginResponseTypes.Failed;
-                            else if (currentPatient.IsDeleted != false) ViewBag.check = (int)LoginResponseTypes.IsDeleted;
-
-                            else if (!string.IsNullOrEmpty(currentPatient.PatientName)
-                                     && ViewBag.check == (int)LoginResponseTypes.Failed)
-                            {
-                                if (currentPatient.FailedLoginAttempts < 3
-                                    || currentPatient.FailedLoginAttempts == null)
-                                {
-                                    var failedlogin = currentPatient.LastInvalidLogin.HasValue
-                                                          ? currentPatient.LastInvalidLogin.Value
-                                                          : Helpers.GetInvariantCultureDateTime();
-                                    var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
-                                    var failedattempts = timespan.TotalMinutes < 30
-                                                             ? Convert.ToInt32(
-                                                                 currentPatient.FailedLoginAttempts) + 1
-                                                             : 1;
-                                    using (var bal = new PatientLoginDetailBal())
-                                    {
-                                        bal.UpdatePatientLoginFailedLog(
-                                            patientId,
-                                            failedattempts,
-                                            Helpers.GetInvariantCultureDateTime());
-                                    }
-                                }
-                                else if (currentPatient.FailedLoginAttempts == 3)
-                                {
-                                    var failedlogin = currentPatient.LastInvalidLogin.HasValue
-                                                          ? currentPatient.LastInvalidLogin.Value
-                                                          : Helpers.GetInvariantCultureDateTime();
-                                    var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
-                                    if (timespan.TotalMinutes < 30) flag = false;
-                                }
-                            }
-
-                            if (flag == false) ViewBag.check = (int)LoginResponseTypes.Failed;
+                            Session[SessionNames.SessionClass.ToString()] = objSession;
+                            return RedirectToAction("Index", "PatientSchedulerPortal", new { pId = patientId, fId = currentPatient.FacilityId, cId = currentPatient.CorporateId });
                         }
                     }
                     else
                     {
-                        ViewBag.check = (int)LoginResponseTypes.Failed;
+                        if (currentPatient.Password == null
+                            || !currentPatient.Password.Equals(EncryptDecrypt.Encrypt(currentPatient.Password))) ViewBag.check = (int)LoginResponseTypes.Failed;
+                        else if (currentPatient.IsDeleted != false) ViewBag.check = (int)LoginResponseTypes.IsDeleted;
+
+                        else if (!string.IsNullOrEmpty(currentPatient.PatientName)
+                                 && ViewBag.check == (int)LoginResponseTypes.Failed)
+                        {
+                            if (currentPatient.FailedLoginAttempts < 3
+                                || currentPatient.FailedLoginAttempts == null)
+                            {
+                                var failedlogin = currentPatient.LastInvalidLogin.HasValue
+                                                      ? currentPatient.LastInvalidLogin.Value
+                                                      : Helpers.GetInvariantCultureDateTime();
+                                var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
+                                var failedattempts = timespan.TotalMinutes < 30
+                                                         ? Convert.ToInt32(
+                                                             currentPatient.FailedLoginAttempts) + 1
+                                                         : 1;
+                                _pldService.UpdatePatientLoginFailedLog(
+                                    patientId,
+                                    failedattempts,
+                                    Helpers.GetInvariantCultureDateTime());
+                            }
+                            else if (currentPatient.FailedLoginAttempts == 3)
+                            {
+                                var failedlogin = currentPatient.LastInvalidLogin.HasValue
+                                                      ? currentPatient.LastInvalidLogin.Value
+                                                      : Helpers.GetInvariantCultureDateTime();
+                                var timespan = Helpers.GetInvariantCultureDateTime().Subtract(failedlogin);
+                                if (timespan.TotalMinutes < 30) flag = false;
+                            }
+                        }
+
+                        if (flag == false) ViewBag.check = (int)LoginResponseTypes.Failed;
                     }
+                }
+                else
+                {
+                    ViewBag.check = (int)LoginResponseTypes.Failed;
                 }
             }
             else
@@ -387,10 +350,10 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <returns></returns>
         public ActionResult GetCountriesWithCode()
-        { 
-                var list = _cService.GetCountryWithCode();
-                return Json(list);
-           
+        {
+            var list = _cService.GetCountryWithCode();
+            return Json(list);
+
         }
 
         /// <summary>
@@ -515,11 +478,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private int SavePatientPhoneData(PatientPhone model)
         {
-            using (var patientPhoneBal = new PatientPhoneBal())
-            {
-                var newId = patientPhoneBal.SavePatientPhone(model);
-                return newId;
-            }
+            var newId = _ppService.SavePatientPhone(model);
+            return newId;
         }
 
         /// <summary>
@@ -531,34 +491,31 @@ namespace BillingSystem.Controllers
         {
             if (vm != null)
             {
-                using (var bal = new PatientLoginDetailBal())
+                vm.TokenId = vm.DeleteVerificationToken
+                    ? string.Empty
+                    : CommonConfig.GeneratePasswordResetToken(14, false);
+
+                var isEmailSentBefore = !string.IsNullOrEmpty(vm.ExternalValue1) &&
+                                        Convert.ToInt32(vm.ExternalValue1) == 1;
+
+                if (vm.PatientPortalAccess && !isEmailSentBefore)
                 {
-                    vm.TokenId = vm.DeleteVerificationToken
-                        ? string.Empty
-                        : CommonConfig.GeneratePasswordResetToken(14, false);
+                    // Generate the 8-Digit Code
+                    vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
+                    vm.CodeValue = CommonConfig.GenerateLoginCode(8, false);
 
-                    var isEmailSentBefore = !string.IsNullOrEmpty(vm.ExternalValue1) &&
-                                            Convert.ToInt32(vm.ExternalValue1) == 1;
+                    var emailSentStatus = SendVerificationLinkForPatientLoginPortal(
+                        Convert.ToInt32(vm.PatientId),
+                        vm.Email,
+                        vm.TokenId,
+                        vm.CodeValue);
 
-                    if (vm.PatientPortalAccess && !isEmailSentBefore)
-                    {
-                        // Generate the 8-Digit Code
-                        vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
-                        vm.CodeValue = CommonConfig.GenerateLoginCode(8, false);
-
-                        var emailSentStatus = SendVerificationLinkForPatientLoginPortal(
-                            Convert.ToInt32(vm.PatientId),
-                            vm.Email,
-                            vm.TokenId,
-                            vm.CodeValue);
-
-                        // Is Email Sent Now
-                        vm.ExternalValue1 = emailSentStatus ? "1" : "0";
-                    }
-
-                    var updatedId = bal.SavePatientLoginDetails(vm);
-                    return updatedId;
+                    // Is Email Sent Now
+                    vm.ExternalValue1 = emailSentStatus ? "1" : "0";
                 }
+
+                var updatedId = _pldService.SavePatientLoginDetails(vm);
+                return updatedId;
             }
             return 0;
         }
@@ -575,10 +532,7 @@ namespace BillingSystem.Controllers
         {
             var msgBody = ResourceKeyValues.GetFileText("patientportalemailVerification");
             PatientInfoCustomModel patientVm;
-            using (var bal = new PatientLoginDetailBal())
-            {
-                patientVm = bal.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
-            }
+            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
 
             if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
             {

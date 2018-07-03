@@ -9,6 +9,9 @@ var monthFirstDay = new Date(y, m, 1);
 var monthLastDay = new Date(y, m + 1, 0);
 var html = function (id) { return document.getElementById(id); }; //just a helper
 
+
+var schedulerUrl = "/Scheduler/";
+
 $(function () {
     $("#divDatetimePicker").datepicker({
         //showWeek: true,
@@ -1247,7 +1250,7 @@ var OnChangeAppointmentDate = function (obj, apptTypeId) {
     var jsonData = { facilityId: facilityId, physicianId: physicianId, dateselected: selectedDate, typeofproc: typeOfProcedure };
     $.ajax({
         type: "POST",
-        url: '/FacultyTimeslots/GetAvailableTimeSlots',
+        url: schedulerUrl + 'GetAvailableTimeSlots',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1947,7 +1950,7 @@ function OnClickGetData(e, physicianId, sTime, eTime) {
     var endTime = $(e).attr("attr-EndTime");
     var room = $(e).attr("attr-RoomId");
     $("#hfRoomId").val(room);
-    var searchUrl = '/FacultyTimeslots/GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
+    var searchUrl = schedulerUrl + 'GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
         "&TimeSlotFrequency=" + timeSlotFrequency + "&AppointmentType=" + appointmentType + "&FacilityId=" + facilityId +
         "&DepartmentId=" + departmentId + "&Physician=" + physician + "&Patient=" + patient + "&Room=" + room;
     $.ajax({
@@ -2341,7 +2344,7 @@ function ShowOverViewData() {
         var endTime = $("#txtOVTimeTo").val();
 
 
-        var searchUrl = '/FacultyTimeslots/GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
+        var searchUrl = schedulerUrl + 'GetOverView?FromDate=' + fromDate + "&ToDate=" + endDate + "&FromTime=" + fromTime + "&ToTime=" + endTime +
             "&TimeSlotFrequency=" + timeSlotFrequency + "&AppointmentType=" + appointmentType + "&FacilityId=" + facilityId +
             "&DepartmentId=" + departmentId + "&Physician=" + physician + "&Patient=" + patient + "&Room=0&ViewType=0";
 

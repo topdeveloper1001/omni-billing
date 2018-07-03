@@ -4,13 +4,20 @@ using BillingSystem.Common;
 using System;
 using System.Collections.Generic;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class MedicalNotesController : BaseController
     {
+        private readonly IMedicalNotesService _service;
+
+        public MedicalNotesController(IMedicalNotesService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the MedicalNotes View in the Model MedicalNotes such as MedicalNotesList, list of countries etc.
         /// </summary>
@@ -20,10 +27,10 @@ namespace BillingSystem.Controllers
         public ActionResult MedicalNotesMain()
         {
             //Initialize the MedicalNotes BAL object
-            //var medicalNotesBal = new MedicalNotesBal();
+            //var _service = new MedicalNotesBal();
 
             ////Get the Entity list
-            //var medicalNotesList = medicalNotesBal.GetMedicalNotes();
+            //var medicalNotesList = _service.GetMedicalNotes();
 
             //Intialize the View Model i.e. MedicalNotesView which is binded to Main View Index.cshtml under MedicalNotes
             var medicalNotesView = new MedicalNotesView
@@ -46,16 +53,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindMedicalNotesList(int patientId, int notesUserTypeId)
         {
-            //Initialize the MedicalNotes BAL object
-            using (var medicalNotesBal = new MedicalNotesBal())
-            {
-                //Get the facilities list
-                //var medicalNotesList = medicalNotesBal.GetMedicalNotes();
-                var medicalNotesList = medicalNotesBal.GetCustomMedicalNotes(patientId, notesUserTypeId);
-
-                //Pass the ActionResult with List of MedicalNotesViewModel object to Partial View MedicalNotesList
-                return PartialView(PartialViews.MedicalNotesList, medicalNotesList);
-            }
+            var medicalNotesList = _service.GetCustomMedicalNotes(patientId, notesUserTypeId);
+            return PartialView(PartialViews.MedicalNotesList, medicalNotesList);
         }
 
         /// <summary>
@@ -82,21 +81,18 @@ namespace BillingSystem.Controllers
                 medicalNotesModel.CorporateID = corporateId;
                 medicalNotesModel.NotesBy = userId;
                 medicalNotesModel.NotesDate = currentdateTime;
-                using (var medicalNotesBal = new MedicalNotesBal())
+                if (medicalNotesModel.MedicalNotesID > 0)
                 {
-                    if (medicalNotesModel.MedicalNotesID > 0)
-                    {
-                        medicalNotesModel.ModifiedBy = userId;
-                        medicalNotesModel.ModifiedDate = currentdateTime;
-                    }
-                    else
-                    {
-                        medicalNotesModel.NotesBy = userId;
-                        medicalNotesModel.NotesDate = currentdateTime;
-                    }
-                    //Call the AddMedicalNotes Method to Add / Update current MedicalNotes
-                    newId = medicalNotesBal.AddUptdateMedicalNotes(medicalNotesModel);
+                    medicalNotesModel.ModifiedBy = userId;
+                    medicalNotesModel.ModifiedDate = currentdateTime;
                 }
+                else
+                {
+                    medicalNotesModel.NotesBy = userId;
+                    medicalNotesModel.NotesDate = currentdateTime;
+                }
+                //Call the AddMedicalNotes Method to Add / Update current MedicalNotes
+                newId = _service.AddUptdateMedicalNotes(medicalNotesModel);
             }
             return Json(newId);
         }
@@ -108,17 +104,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMedicalNotes(int medicalNotesId)
         {
-            using (var medicalNotesBal = new MedicalNotesBal())
-            {
-                //Call the AddMedicalNotes Method to Add / Update current MedicalNotes
-                var currentMedicalNotes = medicalNotesBal.GetMedicalNotesById(Convert.ToInt32(medicalNotesId));
-
-                //If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
-                //ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
-
-                //Pass the ActionResult with the current MedicalNotesViewModel object as model to PartialView MedicalNotesAddEdit
-                return PartialView(PartialViews.MedicalNotesAddEdit, currentMedicalNotes);
-            }
+            var currentMedicalNotes = _service.GetMedicalNotesById(Convert.ToInt32(medicalNotesId));
+            return PartialView(PartialViews.MedicalNotesAddEdit, currentMedicalNotes);
         }
 
         /// <summary>
@@ -128,24 +115,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMedicalNotes(int medicalNotesId)
         {
-            using (var medicalNotesBal = new MedicalNotesBal())
+            var currentMedicalNotes = _service.GetMedicalNotesById(Convert.ToInt32(medicalNotesId));
+            if (currentMedicalNotes != null)
             {
-                //Get MedicalNotes model object by current MedicalNotes ID
-                var currentMedicalNotes = medicalNotesBal.GetMedicalNotesById(Convert.ToInt32(medicalNotesId));
+                currentMedicalNotes.IsDeleted = true;
+                currentMedicalNotes.DeletedBy = Helpers.GetLoggedInUserId();
+                currentMedicalNotes.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If MedicalNotes model is not null
-                if (currentMedicalNotes != null)
-                {
-                    currentMedicalNotes.IsDeleted = true;
-                    currentMedicalNotes.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentMedicalNotes.DeletedDate = Helpers.GetInvariantCultureDateTime();
-
-                    //Update Operation of current MedicalNotes
-                    var result = medicalNotesBal.AddUptdateMedicalNotes(currentMedicalNotes);
-
-                    //return deleted ID of current MedicalNotes as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                var result = _service.AddUptdateMedicalNotes(currentMedicalNotes);
+                return Json(result);
             }
 
             //Return the Json result as Action Result back JSON Call Success

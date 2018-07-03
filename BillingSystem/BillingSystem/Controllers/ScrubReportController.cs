@@ -1,20 +1,11 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ScrubReportController.cs" company="Spadez">
-//   OMNI
-// </copyright>
-// <summary>
-//   The scrub report controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿
 namespace BillingSystem.Controllers
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Common.Common;
     using BillingSystem.Model.CustomModel;
@@ -25,6 +16,19 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class ScrubReportController : BaseController
     {
+        private readonly IScrubReportService _service;
+        private readonly IUsersService _uService;
+        private readonly IRuleStepService _rsService;
+        private readonly IGlobalCodeService _gService;
+
+        public ScrubReportController(IScrubReportService service, IUsersService uService, IRuleStepService rsService, IGlobalCodeService gService)
+        {
+            _service = service;
+            _uService = uService;
+            _rsService = rsService;
+            _gService = gService;
+        }
+
         /// <summary>
         /// Get the details of the ScrubReport View in the Model ScrubReport such as ScrubReportList, list of countries etc.
         /// </summary>
@@ -40,8 +44,6 @@ namespace BillingSystem.Controllers
                 billHeaderId = 0;
             }
 
-            // Initialize the ScrubReport BAL object
-            var scrubReportBal = new ScrubReportBal();
 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
@@ -49,7 +51,7 @@ namespace BillingSystem.Controllers
             var generateScrubStatus = generateScrub != null && (bool)generateScrub;
 
             // Get the Entity list
-            var headerList = scrubReportBal.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
+            var headerList = _service.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
 
             // Intialize the View Model i.e. ScrubReportView which is binded to Main View Index.cshtml under ScrubReport
             var scrubReportView = new ScrubReportView
@@ -71,12 +73,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetScrubReport(int scrubHeaderId, int reportType)
         {
-            using (var bal = new ScrubReportBal())
-            {
-                var list = bal.GetScrubReport(scrubHeaderId, reportType);
-                ViewBag.BillHeaderID = scrubHeaderId;
-                return PartialView(PartialViews.ScrubReportList, list);
-            }
+            var list = _service.GetScrubReport(scrubHeaderId, reportType);
+            ViewBag.BillHeaderID = scrubHeaderId;
+            return PartialView(PartialViews.ScrubReportList, list);
         }
 
         /// <summary>
@@ -87,7 +86,6 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GenerateScrubReport(int billheaderid, bool isAllShown)
         {
-            var scrubReportBal = new ScrubReportBal();
 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
@@ -97,7 +95,7 @@ namespace BillingSystem.Controllers
                 billheaderid = 0;
 
             //Get the Entity list
-            var headerList = scrubReportBal.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billheaderid), userId, true);
+            var headerList = _service.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billheaderid), userId, true);
             //return RedirectToAction("Index", new { billHeaderId = billheaderid });
             return PartialView(PartialViews.ScrubHeaderList, headerList);
         }
@@ -109,11 +107,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetScrubReportDetail(int scrubReportId)
         {
-            using (var bal = new ScrubReportBal(Helpers.DefaultBillEditRuleTableNumber))
-            {
-                var result = bal.GetScrubReportDetailById(scrubReportId);
-                return PartialView(PartialViews.BillCorrectionView, result);
-            }
+            var result = _service.GetScrubReportDetailById(scrubReportId, Helpers.DefaultBillEditRuleTableNumber);
+            return PartialView(PartialViews.BillCorrectionView, result);
         }
 
         /// <summary>
@@ -128,54 +123,51 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BillEditCorrections(int scrubReportId, string lhsValue, string rhsValue, string correctionCodeId, int patientId, int encounterId)
         {
-            using (var bal = new ScrubReportBal(Helpers.DefaultBillEditRuleTableNumber))
+            var loggedinUser = Helpers.GetLoggedInUserId();
+            var result = _service.GetScrubReportDetailById(scrubReportId, Helpers.DefaultBillEditRuleTableNumber);
+            var scrubHeaderId = Convert.ToInt32(result.ScrubHeaderID);
+            var corporateid = Helpers.GetSysAdminCorporateID();
+            var facilityid = Helpers.GetDefaultFacilityId();
+
+            // ..... Toupdate the diagnosis for correction in bill edits
+            var returnStatus = 100;
+            var ruleStepId = Convert.ToInt32(result.RuleStepID);
+
+            // var scrubHeaderbal = new ScrubHeader()
+            var ruleStepObj = _rsService.GetRuleStepByID(ruleStepId);
+            var scrubHeaderobj = _service.GetScrubHeaderById(scrubHeaderId);
+            if (ruleStepObj != null)
             {
-                var loggedinUser = Helpers.GetLoggedInUserId();
-                var result = bal.GetScrubReportDetailById(scrubReportId);
-                var scrubHeaderId = Convert.ToInt32(result.ScrubHeaderID);
-                var corporateid = Helpers.GetSysAdminCorporateID();
-                var facilityid = Helpers.GetDefaultFacilityId();
-
-                // ..... Toupdate the diagnosis for correction in bill edits
-                var returnStatus = 100;
-                var ruleStepId = Convert.ToInt32(result.RuleStepID);
-                var ruleStepBal = new RuleStepBal();
-
-                // var scrubHeaderbal = new ScrubHeader()
-                var ruleStepObj = ruleStepBal.GetRuleStepByID(ruleStepId);
-                var scrubHeaderobj = bal.GetScrubHeaderById(scrubHeaderId);
-                if (ruleStepObj != null)
+                var ruleStepLhst = ruleStepObj.LHST;
+                if (ruleStepLhst.Contains("Diagnosis"))
                 {
-                    var ruleStepLhst = ruleStepObj.LHST;
-                    if (ruleStepLhst.Contains("Diagnosis"))
-                    {
-                        returnStatus = bal.SetCorrectedDiagnosis(
-                            corporateid,
-                            facilityid,
-                            Convert.ToInt32(scrubHeaderobj.PatientID),
-                            Convert.ToInt32(scrubHeaderobj.EncounterID),
-                            loggedinUser,
-                            lhsValue);
-                    }
+                    returnStatus = _service.SetCorrectedDiagnosis(
+                        corporateid,
+                        facilityid,
+                        Convert.ToInt32(scrubHeaderobj.PatientID),
+                        Convert.ToInt32(scrubHeaderobj.EncounterID),
+                        loggedinUser,
+                        lhsValue);
                 }
-
-                // Update Query
-                if (returnStatus == 100)
-                {
-                    var updatedStatus = bal.UpdateScrubReportDetailWithCorrection(scrubReportId, scrubHeaderId, lhsValue, rhsValue, Helpers.GetLoggedInUserId(), corporateid, facilityid, correctionCodeId);
-                    returnStatus = updatedStatus ? 101 : returnStatus;
-                }
-                var scrubreportObj = bal.GetScrubReportById(scrubReportId);
-                scrubreportObj.ExtValue4 = correctionCodeId;
-                bal.AddUpdateScrubReport(scrubreportObj);
-
-                // var list = bal.GetScrubReport(scrubHeaderId, 999);
-                ViewBag.BillHeaderID = scrubHeaderId;
-
-                // return PartialView(PartialViews.ScrubReportList, list);
-                return Json(returnStatus.ToString());
             }
+
+            // Update Query
+            if (returnStatus == 100)
+            {
+                var updatedStatus = _service.UpdateScrubReportDetailWithCorrection(scrubReportId, scrubHeaderId, lhsValue, rhsValue, Helpers.GetLoggedInUserId(), corporateid, facilityid, correctionCodeId);
+                returnStatus = updatedStatus ? 101 : returnStatus;
+            }
+            var scrubreportObj = _service.GetScrubReportById(scrubReportId);
+            scrubreportObj.ExtValue4 = correctionCodeId;
+            _service.AddUpdateScrubReport(scrubreportObj);
+
+            // var list = _service.GetScrubReport(scrubHeaderId, 999);
+            ViewBag.BillHeaderID = scrubHeaderId;
+
+            // return PartialView(PartialViews.ScrubReportList, list);
+            return Json(returnStatus.ToString());
         }
+
 
         /// <summary>
         /// Assigns the user to scrub header.
@@ -185,13 +177,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult AssignUserToScrubHeader(int assignedTo, int scrubHeaderId)
         {
-            using (var bal = new ScrubReportBal())
-            {
-                var loggedinUserId = Helpers.GetLoggedInUserId();
-                var res = bal.AssignUserToScrubHeaderForBillEdit(assignedTo, scrubHeaderId, loggedinUserId, Helpers.GetInvariantCultureDateTime());
-                var jsonResult = new { AssignedToUser = res, AssignedByUser = bal.GetNameByUserId(loggedinUserId), AssignedBy = loggedinUserId };
-                return Json(jsonResult);
-            }
+            var loggedinUserId = Helpers.GetLoggedInUserId();
+            var res = _service.AssignUserToScrubHeaderForBillEdit(assignedTo, scrubHeaderId, loggedinUserId, Helpers.GetInvariantCultureDateTime());
+            var jsonResult = new { AssignedToUser = res, AssignedByUser = _uService.GetNameByUserId(loggedinUserId), AssignedBy = loggedinUserId };
+            return Json(jsonResult);
         }
 
         /// <summary>
@@ -202,18 +191,15 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult RescrubAfterBillEdit(int billHeaderId, bool allShown)
         {
-            using (var bal = new ScrubReportBal())
-            {
-                var userId = Helpers.GetLoggedInUserId();
+            var userId = Helpers.GetLoggedInUserId();
 
-                //Apply Scrub
-                bal.ApplyScrubBillToSpecificBillHeaderId(Convert.ToInt32(billHeaderId), userId);
+            //Apply Scrub
+            _service.ApplyScrubBillToSpecificBillHeaderId(Convert.ToInt32(billHeaderId), userId);
 
-                if (allShown)
-                    billHeaderId = 0;
+            if (allShown)
+                billHeaderId = 0;
 
-                return RedirectToAction("Index", new { billHeaderId, generateScrub = false });
-            }
+            return RedirectToAction("Index", new { billHeaderId, generateScrub = false });
         }
 
         #region Work Queues
@@ -223,8 +209,6 @@ namespace BillingSystem.Controllers
             if (billHeaderId == null)
                 billHeaderId = 0;
 
-            //Initialize the ScrubReport BAL object
-            var scrubReportBal = new ScrubReportBal();
 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
@@ -232,10 +216,10 @@ namespace BillingSystem.Controllers
             var generateScrubStatus = generateScrub != null && (bool)generateScrub;
 
             //Get the Entity list
-            var headerList = scrubReportBal.GetScrubHeaderListWorkQueues(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
-           
+            var headerList = _service.GetScrubHeaderListWorkQueues(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
 
-            
+
+
             //Intialize the View Model i.e. ScrubReportView which is binded to Main View Index.cshtml under ScrubReport
             var scrubReportView = new ScrubReportView
             {
@@ -257,16 +241,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCorrectionCodeList()
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            var globalcodeList = _gService.GetGCodesListByCategoryValue("0101").ToList();
+            var filteredList = globalcodeList.Select(item => new
             {
-                var globalcodeList = globalCodeBal.GetGCodesListByCategoryValue("0101").ToList();
-                var filteredList = globalcodeList.Select(item => new
-                {
-                    Value = item.GlobalCodeValue,
-                    Text = string.Format("{0}-{1}", item.GlobalCodeName, item.Description),
-                }).ToList();
-                return Json(filteredList, JsonRequestBehavior.AllowGet);
-            }
+                Value = item.GlobalCodeValue,
+                Text = string.Format("{0}-{1}", item.GlobalCodeName, item.Description),
+            }).ToList();
+            return Json(filteredList, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -276,32 +257,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetScurbReportbyScrubReportId(int scrubreportId)
         {
-            using (var bal = new ScrubReportBal(Helpers.DefaultBillEditRuleTableNumber))
-            {
-                var result = bal.GetScrubReportDetailById(scrubreportId);
-                var scrubHeaderId = Convert.ToInt32(result.ScrubHeaderID);
-                var list = bal.GetScrubReport(scrubHeaderId, 999);
-                return PartialView(PartialViews.ScrubReportList, list);
-            }
+            var result = _service.GetScrubReportDetailById(scrubreportId, Helpers.DefaultBillEditRuleTableNumber);
+            var scrubHeaderId = Convert.ToInt32(result.ScrubHeaderID);
+            var list = _service.GetScrubReport(scrubHeaderId, 999);
+            return PartialView(PartialViews.ScrubReportList, list);
         }
 
         #region Sorting Events
-
-        //public ActionResult SortClaimsNeedingApprovalGrid(int? billHeaderId, bool? generateScrub)
-        //{
-
-        //    if (billHeaderId == null)
-        //        billHeaderId = 0;
-        //    var corporateId = Helpers.GetSysAdminCorporateID();
-        //    var facilityId = Helpers.GetDefaultFacilityId();
-        //    var userId = Helpers.GetLoggedInUserId();
-        //    var generateScrubStatus = generateScrub != null && (bool)generateScrub;
-        //    using (var scrubReportBal = new ScrubReportBal())
-        //    {
-        //        var headerList = scrubReportBal.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
-        //        return PartialView(PartialViews.ScrubHeaderList, headerList);
-        //    }
-        //}
 
 
         /// <summary>
@@ -318,17 +280,16 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             var userId = Helpers.GetLoggedInUserId();
             var generateScrubStatus = generateScrub != null && (bool)generateScrub;
-            using (var scrubReportBal = new ScrubReportBal())
-            {
-                var headerList = scrubReportBal.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
-                headerList =
-                    headerList.Where(
-                        a =>
-                        a.Status != null
-                        && (a.Section == Convert.ToInt32(ReviewSummarySections.Approved)
-                            && ((int)a.Status == 0 || (int)a.Status == 99))).ToList();
-                return PartialView(PartialViews.ScrubHeaderListF1, headerList);
-            }
+
+            var headerList = _service.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
+            headerList =
+                headerList.Where(
+                    a =>
+                    a.Status != null
+                    && (a.Section == Convert.ToInt32(ReviewSummarySections.Approved)
+                        && ((int)a.Status == 0 || (int)a.Status == 99))).ToList();
+            return PartialView(PartialViews.ScrubHeaderListF1, headerList);
+
         }
 
         /// <summary>
@@ -345,13 +306,12 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             var userId = Helpers.GetLoggedInUserId();
             var generateScrubStatus = generateScrub != null && (bool)generateScrub;
-            using (var scrubReportBal = new ScrubReportBal())
-            {
-                var headerList = scrubReportBal.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
-                headerList =
-                    headerList.Where(a => a.Status != null && (a.Section == Convert.ToInt32(ReviewSummarySections.BillEditErrors) && ((int)a.Status == 0 || (int)a.Status == 99))).ToList();
-                return PartialView(PartialViews.ScrubHeaderList, headerList);
-            }
+
+            var headerList = _service.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
+            headerList =
+                headerList.Where(a => a.Status != null && (a.Section == Convert.ToInt32(ReviewSummarySections.BillEditErrors) && ((int)a.Status == 0 || (int)a.Status == 99))).ToList();
+            return PartialView(PartialViews.ScrubHeaderList, headerList);
+
         }
 
         /// <summary>
@@ -368,16 +328,15 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             var userId = Helpers.GetLoggedInUserId();
             var generateScrubStatus = generateScrub != null && (bool)generateScrub;
-            using (var scrubReportBal = new ScrubReportBal())
-            {
-                var headerList = scrubReportBal.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
-                headerList =
-                    headerList.Where(
-                        a =>
-                        a.Status != null && (a.Section != Convert.ToInt32(ReviewSummarySections.Denials))
-                        && ((int)a.Status == 1 || (int)a.Status == 2)).ToList();
-                return PartialView(PartialViews.ScrubHeaderListWithBillEditsWithError, headerList);
-            }
+
+            var headerList = _service.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
+            headerList =
+                headerList.Where(
+                    a =>
+                    a.Status != null && (a.Section != Convert.ToInt32(ReviewSummarySections.Denials))
+                    && ((int)a.Status == 1 || (int)a.Status == 2)).ToList();
+            return PartialView(PartialViews.ScrubHeaderListWithBillEditsWithError, headerList);
+
         }
 
         /// <summary>
@@ -394,15 +353,14 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             var userId = Helpers.GetLoggedInUserId();
             var generateScrubStatus = generateScrub != null && (bool)generateScrub;
-            using (var scrubReportBal = new ScrubReportBal())
-            {
-                var headerList = scrubReportBal.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
-                headerList =
-                    headerList.Where(a => a.Status != null && (a.Section == Convert.ToInt32(ReviewSummarySections.Denials) && ((int)a.Status == 1 || (int)a.Status == 2 || (int)a.Status == 0))).ToList();
-                return PartialView(PartialViews.ScrubHeaderListWithDenials, headerList);
-            }
+
+            var headerList = _service.GetScrubHeaderList(corporateId, facilityId, Convert.ToInt32(billHeaderId), userId, generateScrubStatus);
+            headerList =
+                headerList.Where(a => a.Status != null && (a.Section == Convert.ToInt32(ReviewSummarySections.Denials) && ((int)a.Status == 1 || (int)a.Status == 2 || (int)a.Status == 0))).ToList();
+            return PartialView(PartialViews.ScrubHeaderListWithDenials, headerList);
+
         }
-        
+
         #endregion
     }
 }

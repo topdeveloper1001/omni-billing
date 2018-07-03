@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
+
 using AutoMapper;
 using System.Data.SqlClient;
 using BillingSystem.Common.Common;

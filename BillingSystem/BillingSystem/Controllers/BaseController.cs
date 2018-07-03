@@ -32,6 +32,8 @@ namespace BillingSystem.Controllers
     using System.Web;
     using BillingSystem.Model;
     using System.Threading.Tasks;
+    using Unity;
+    using BillingSystem.Bal.Interfaces;
 
     /// <summary>
     /// The base controller.
@@ -163,8 +165,11 @@ namespace BillingSystem.Controllers
 
         protected List<DropdownListData> GetGlobaCodesByCategories(IEnumerable<string> categories)
         {
-            using (var bal = new GlobalCodeBal())
-                return bal.GetListByCategoriesRange(categories);
+
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<IGlobalCodeService>();
+
+            return service.GetListByCategoriesRange(categories);
         }
 
 
@@ -172,8 +177,11 @@ namespace BillingSystem.Controllers
 
         protected List<DropdownListData> GetDefaultFacilityList(int corporateId)
         {
-            using (var bal = new FacilityBal())
-                return bal.GetFacilityDropdownData(corporateId, 0);
+
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<IFacilityService>();
+
+            return service.GetFacilityDropdownData(corporateId, 0);
         }
 
         /// <summary>
@@ -217,7 +225,11 @@ namespace BillingSystem.Controllers
             var loggedInUser = Helpers.GetLoggedInUserId();
             var filePath = string.Empty;
 
-            using (var bal = new BaseBal()) filePath = await bal.GetGlobalCodeNameAsync(gcValue, "80443");
+
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<IGlobalCodeService>();
+
+            filePath = await service.GetGlobalCodeNameAsync(gcValue, "80443");
             filePath = string.Format(filePath, cId, fId, userId);
             var list = new List<DocumentsTemplates>();
 
@@ -251,7 +263,11 @@ namespace BillingSystem.Controllers
             var loggedInUser = Helpers.GetLoggedInUserId();
             var filePath = string.Empty;
 
-            using (var bal = new BaseBal()) filePath = bal.GetNameByGlobalCodeValue(gcValue, "80443");
+
+            var container = UnityConfig.RegisterComponents();
+            var bal = container.Resolve<IGlobalCodeService>();
+
+            filePath = bal.GetNameByGlobalCodeValue(gcValue, "80443");
             filePath = string.Format(filePath, cId, fId, userId);
             var list = new List<DocumentsTemplates>();
 

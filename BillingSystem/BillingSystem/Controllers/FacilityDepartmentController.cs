@@ -1,38 +1,26 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="FacilityDepartmentController.cs" company="SPadez">
-//   OmniHealthCare
-// </copyright>
-// <summary>
-//   The facility department controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Model.CustomModel;
+using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
-    using BillingSystem.Bal.Interfaces;
-    using BillingSystem.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
-    using BillingSystem.Models;
-
-    /// <summary>
-    /// The facility department controller.
-    /// </summary>
     public class FacilityDepartmentController : BaseController
     {
-
+        private readonly IFacilityDepartmentService _service;
         private readonly IFacilityStructureService _fsService;
 
-        public FacilityDepartmentController(IFacilityStructureService fsService)
+        public FacilityDepartmentController(IFacilityDepartmentService service, IFacilityStructureService fsService)
         {
+            _service = service;
             _fsService = fsService;
         }
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -60,8 +48,8 @@ namespace BillingSystem.Controllers
                         .Select(
                             item => new SelectListItem
                             {
-                                    // Text = item.ExternalValue1,
-                                    Value = Convert.ToString(item.ExternalValue1),
+                                // Text = item.ExternalValue1,
+                                Value = Convert.ToString(item.ExternalValue1),
                                 Text =
                                                 Convert.ToString(item.ExternalValue1)
                                                 + @" (Department Name :" + item.FacilityStructureName
@@ -72,8 +60,8 @@ namespace BillingSystem.Controllers
                         .Select(
                             item => new SelectListItem
                             {
-                                    // Text = item.ExternalValue2,
-                                    Text =
+                                // Text = item.ExternalValue2,
+                                Text =
                                                 Convert.ToString(item.ExternalValue2)
                                                 + @" (Department Name :" + item.FacilityStructureName
                                                 + @" )",
@@ -100,29 +88,26 @@ namespace BillingSystem.Controllers
         public ActionResult DeleteFacilityDepartment(int id)
         {
             var list = new List<FacilityDepartmentCustomModel>();
-            using (var bal = new FacilityDepartmentBal())
+            // Get FacilityDepartment model object by current FacilityDepartment ID
+            FacilityDepartment model = _service.GetFacilityDepartmentById(id);
+            int userId = Helpers.GetLoggedInUserId();
+            DateTime currentDate = Helpers.GetInvariantCultureDateTime();
+            int corporateid = Helpers.GetSysAdminCorporateID();
+            int facilityid = Helpers.GetSysAdminCorporateID();
+
+            // Check If FacilityDepartment model is not null
+            if (model != null)
             {
-                // Get FacilityDepartment model object by current FacilityDepartment ID
-                FacilityDepartment model = bal.GetFacilityDepartmentById(id);
-                int userId = Helpers.GetLoggedInUserId();
-                DateTime currentDate = Helpers.GetInvariantCultureDateTime();
-                int corporateid = Helpers.GetSysAdminCorporateID();
-                int facilityid = Helpers.GetSysAdminCorporateID();
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDate;
+                model.IsActive = false;
 
-                // Check If FacilityDepartment model is not null
-                if (model != null)
-                {
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDate;
-                    model.IsActive = false;
+                // Update Operation of current FacilityDepartment
+                List<FacilityDepartmentCustomModel> result = _service.SaveFacilityDepartment(model);
+                list = _service.GetFacilityDepartmentList(corporateid, facilityid, true);
 
-                    // Update Operation of current FacilityDepartment
-                    List<FacilityDepartmentCustomModel> result = bal.SaveFacilityDepartment(model);
-                    list = bal.GetFacilityDepartmentList(corporateid, facilityid, true);
-
-                    // return deleted ID of current FacilityDepartment as Json Result to the Ajax Call.
-                    return this.Json(result);
-                }
+                // return deleted ID of current FacilityDepartment as Json Result to the Ajax Call.
+                return this.Json(result);
             }
 
             // Pass the ActionResult with List of FacilityDepartmentViewModel object to Partial View FacilityDepartmentList
@@ -140,14 +125,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetFacilityDepartmentDetails(int id)
         {
-            using (var bal = new FacilityDepartmentBal())
-            {
-                // Call the AddFacilityDepartment Method to Add / Update current FacilityDepartment
-                FacilityDepartment current = bal.GetFacilityDepartmentById(id);
-
-                // Pass the ActionResult with the current FacilityDepartmentViewModel object as model to PartialView FacilityDepartmentAddEdit
-                return this.Json(current);
-            }
+            var m = _service.GetFacilityDepartmentById(id);
+            return this.Json(m);
         }
 
         /// <summary>
@@ -158,15 +137,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetFacilityDepartments(bool showInActive)
         {
-            using (var bal = new FacilityDepartmentBal())
-            {
-                int facilityid = Helpers.GetDefaultFacilityId();
-                int corporateid = Helpers.GetSysAdminCorporateID();
+            int facilityid = Helpers.GetDefaultFacilityId();
+            int corporateid = Helpers.GetSysAdminCorporateID();
 
-                // Get the Entity list
-                List<FacilityDepartmentCustomModel> list = bal.GetFacilityDepartmentList(corporateid, facilityid, showInActive);
-                return this.PartialView(PartialViews.FacilityDepartmentList, list);
-            }
+            // Get the Entity list
+            List<FacilityDepartmentCustomModel> list = _service.GetFacilityDepartmentList(corporateid, facilityid, showInActive);
+            return this.PartialView(PartialViews.FacilityDepartmentList, list);
         }
 
         /// <summary>
@@ -179,25 +155,21 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            // Initialize the FacilityDepartment BAL object
-            using (var bal = new FacilityDepartmentBal())
+            int facilityid = Helpers.GetDefaultFacilityId();
+            int corporateid = Helpers.GetSysAdminCorporateID();
+
+            // Get the Entity list
+            List<FacilityDepartmentCustomModel> list = _service.GetFacilityDepartmentList(corporateid, facilityid, true);
+
+            // Intialize the View Model i.e. FacilityDepartmentView which is binded to Main View Index.cshtml under FacilityDepartment
+            var viewModel = new FacilityDepartmentView
             {
-                int facilityid = Helpers.GetDefaultFacilityId();
-                int corporateid = Helpers.GetSysAdminCorporateID();
+                FacilityDepartmentList = list,
+                CurrentFacilityDepartment = new FacilityDepartment()
+            };
 
-                // Get the Entity list
-                List<FacilityDepartmentCustomModel> list = bal.GetFacilityDepartmentList(corporateid, facilityid, true);
-
-                // Intialize the View Model i.e. FacilityDepartmentView which is binded to Main View Index.cshtml under FacilityDepartment
-                var viewModel = new FacilityDepartmentView
-                {
-                    FacilityDepartmentList = list,
-                    CurrentFacilityDepartment = new FacilityDepartment()
-                };
-
-                // Pass the View Model in ActionResult to View FacilityDepartment
-                return View(viewModel);
-            }
+            // Pass the View Model in ActionResult to View FacilityDepartment
+            return View(viewModel);
         }
 
         /// <summary>
@@ -222,26 +194,23 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new FacilityDepartmentBal())
+                model.CorporateId = corporateid;
+                model.FacilityId = facilityid;
+                model.ExternalValue1 = model.ExternalValue1.Split(':')[1].Replace(")", string.Empty);
+                model.ExternalValue2 = model.ExternalValue2.Split(':')[1].Replace(")", string.Empty);
+                if (model.Id > 0)
                 {
-                    model.CorporateId = corporateid;
-                    model.FacilityId = facilityid;
-                    model.ExternalValue1 = model.ExternalValue1.Split(':')[1].Replace(")", string.Empty);
-                    model.ExternalValue2 = model.ExternalValue2.Split(':')[1].Replace(")", string.Empty);
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    // Call the AddFacilityDepartment Method to Add / Update current FacilityDepartment
-                    list = bal.SaveFacilityDepartment(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                // Call the AddFacilityDepartment Method to Add / Update current FacilityDepartment
+                list = _service.SaveFacilityDepartment(model);
             }
 
             // Pass the ActionResult with List of FacilityDepartmentViewModel object to Partial View FacilityDepartmentList

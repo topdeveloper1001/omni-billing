@@ -1,18 +1,18 @@
-﻿using BillingSystem.Models;
-using BillingSystem.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using BillingSystem.Common;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
-using BillingSystem.Model.CustomModel;
-using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ProjectTaskTargetsController : BaseController
     {
+        private readonly IProjectTaskTargetsService _service;
+
+        public ProjectTaskTargetsController(IProjectTaskTargetsService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the current ProjectTaskTargets in the view model by ID 
         /// </summary>
@@ -20,27 +20,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetProjectTaskTargetsDetails(int id)
         {
-            using (var bal = new ProjectTaskTargetsBal())
+            var current = _service.GetProjectTaskTargetsById(id);
+
+            var jsonResult = new
             {
-                //Call the AddProjectTaskTargets Method to Add / Update current ProjectTaskTargets
-                var current = bal.GetProjectTaskTargetsById(id);
+                current.Id,
+                current.TaskNumber,
+                TaskDate1 = current.TaskDate.GetShortDateString3(),
+                current.TargetedCompletionValue,
+                current.ExternalValue1,
+                current.ExternalValue2,
+                current.ExternalValue3,
+                current.ExternalValue5,
+                current.IsActive
+            };
 
-                var jsonResult = new
-                {
-                    current.Id,
-                    current.TaskNumber,
-                    TaskDate1 = current.TaskDate.GetShortDateString3(),
-                    current.TargetedCompletionValue,
-                    current.ExternalValue1,
-                    current.ExternalValue2,
-                    current.ExternalValue3,
-                    current.ExternalValue5,
-                    current.IsActive
-                };
-
-                //Pass the ActionResult with the current ProjectTaskTargetsViewModel object as model to PartialView ProjectTaskTargetsAddEdit
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            //Pass the ActionResult with the current ProjectTaskTargetsViewModel object as model to PartialView ProjectTaskTargetsAddEdit
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
     }
 }

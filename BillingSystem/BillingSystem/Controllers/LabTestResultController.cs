@@ -14,8 +14,16 @@ namespace BillingSystem.Controllers
 {
     public class LabTestResultController : BaseController
     {
+        private readonly ILabTestResultService _service;
+        private readonly IFacilityService _fService;
         private readonly IUsersService _uService;
-        private readonly IPatientInfoService _piService;
+
+        public LabTestResultController(ILabTestResultService service, IFacilityService fService, IUsersService uService)
+        {
+            _service = service;
+            _fService = fService;
+            _uService = uService;
+        }
 
         /// <summary>
         /// Get the details of the LabTestResult View in the Model LabTestResult such as LabTestResultList, list of countries etc.
@@ -25,14 +33,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult LabTestResultMain()
         {
-            //Initialize the LabTestResult BAL object
-            var labTestResultBal = new LabTestResultBal();
             var facilityid = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
             //Get the Entity list
-            var labTestResultList = labTestResultBal.GetLabTestResult();
+            var labTestResultList = _service.GetLabTestResult();
             //--------------------------uncomment to display data via corporate id and facility id
-            //var labTestResultList = labTestResultBal.GetLabTestResultByCorporateFacility(corporateId,facilityid);
+            //var labTestResultList = _service.GetLabTestResultByCorporateFacility(corporateId,facilityid);
 
             //Intialize the View Model i.e. LabTestResultView which is binded to Main View Index.cshtml under LabTestResult
             var labTestResultView = new LabTestResultView
@@ -52,15 +58,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindLabTestResultList()
         {
-            //Initialize the LabTestResult BAL object
-            using (var labTestResultBal = new LabTestResultBal())
-            {
-                //Get the facilities list
-                var labTestResultList = labTestResultBal.GetLabTestResult();
-
-                //Pass the ActionResult with List of LabTestResultViewModel object to Partial View LabTestResultList
-                return PartialView(PartialViews.LabTestResultList, labTestResultList);
-            }
+            var labTestResultList = _service.GetLabTestResult();
+            return PartialView(PartialViews.LabTestResultList, labTestResultList);
         }
 
         /// <summary>
@@ -75,29 +74,26 @@ namespace BillingSystem.Controllers
             //Initialize the newId variable 
             var newId = -1;
             var userId = Helpers.GetLoggedInUserId();
-            var currentdatetime = Helpers.GetInvariantCultureDateTime();
+            var currentdatetime = _fService.GetInvariantCultureDateTime(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
             var facilityid = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new LabTestResultBal())
+                model.FacilityId = facilityid;
+                model.CorporateId = corporateId;
+                if (model.LabTestResultID > 0)
                 {
-                    model.FacilityId = facilityid;
-                    model.CorporateId = corporateId;
-                    if (model.LabTestResultID > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.Modifieddate = currentdatetime;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentdatetime;
-                    }
-                    //Call the AddLabTestResult Method to Add / Update current LabTestResult
-                    newId = bal.SaveLabTestResult(model);
+                    model.ModifiedBy = userId;
+                    model.Modifieddate = currentdatetime;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentdatetime;
+                }
+                //Call the AddLabTestResult Method to Add / Update current LabTestResult
+                newId = _service.SaveLabTestResult(model);
             }
             return Json(newId);
         }
@@ -109,14 +105,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetLabTestResult(int id)
         {
-            using (var bal = new LabTestResultBal())
-            {
-                //Call the AddLabTestResult Method to Add / Update current LabTestResult
-                var currentLabTestResult = bal.GetLabTestResultByID(id);
+            //Call the AddLabTestResult Method to Add / Update current LabTestResult
+            var currentLabTestResult = _service.GetLabTestResultByID(id);
 
-                //Pass the ActionResult with the current LabTestResultViewModel object as model to PartialView LabTestResultAddEdit
-                return PartialView(PartialViews.LabTestResultAddEdit, currentLabTestResult);
-            }
+            //Pass the ActionResult with the current LabTestResultViewModel object as model to PartialView LabTestResultAddEdit
+            return PartialView(PartialViews.LabTestResultAddEdit, currentLabTestResult);
         }
 
         /// <summary>
@@ -126,18 +119,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteLabTestResult(int id)
         {
-            using (var bal = new LabTestResultBal())
-            {
-                //Get LabTestResult model object by current LabTestResult ID
-                var currentLabTestResult = bal.GetLabTestResultByID(id);
-                //Check If LabTestResult model is not null
-                var result = bal.DeleteLabTestResult(currentLabTestResult);
-
-                //return deleted ID of current LabTestResult as Json Result to the Ajax Call.
-                return Json(result);
-            }
-
-            //Return the Json result as Action Result back JSON Call Success
+            var currentLabTestResult = _service.GetLabTestResultByID(id);
+            var result = _service.DeleteLabTestResult(currentLabTestResult);
+            return Json(result);
         }
 
         /// <summary>
@@ -159,7 +143,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public async Task<ActionResult> DownloadImportExcelFile()
         {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
 
             var virtualPath = CommonConfig.LabtestResultSetExcelTemplate;
             var serverPath = Server.MapPath(virtualPath);
@@ -183,9 +167,9 @@ namespace BillingSystem.Controllers
             var msgBody = ResourceKeyValues.GetFileText("usertokentoaccess");
             Users userCM = null;
             var tokenExpired = true;
-            var currentDate = Helpers.GetInvariantCultureDateTime();
+            var currentDate = _fService.GetInvariantCultureDateTime(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
             userCM = _uService.GetUserById(Convert.ToInt32(Helpers.GetLoggedInUserId()));
-            var facilityname = _piService.GetFacilityNameByFacilityId(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
+            var facilityname = _fService.GetFacilityNameById(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
             if (!string.IsNullOrEmpty(msgBody) && userCM != null)
             {
                 userCM.UserToken = usertoken;
@@ -230,7 +214,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ExportToExcel()
         {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var currentDateTime = _fService.GetInvariantCultureDateTime(Convert.ToInt32(Helpers.GetDefaultFacilityId()));
 
             //Thread.Sleep(10000);
             var workbook = new HSSFWorkbook();
@@ -256,32 +240,30 @@ namespace BillingSystem.Controllers
             row.CreateCell(14).SetCellValue("Bad To");
             rowIndex++;
             //Initialize the LabTestResult BAL object
-            using (var labTestResultBal = new LabTestResultBal())
+            //Get the facilities list
+            var labTestResultList = _service.GetLabTestResult();
+            //Pass the ActionResult with List of LabTestResultViewModel object to Partial View LabTestResultList
+            foreach (var item in labTestResultList)
             {
-                //Get the facilities list
-                var labTestResultList = labTestResultBal.GetLabTestResult();
-                //Pass the ActionResult with List of LabTestResultViewModel object to Partial View LabTestResultList
-                foreach (var item in labTestResultList)
-                {
-                    row = sheet.CreateRow(rowIndex);
-                    row.CreateCell(0).SetCellValue(item.LabTestResultCPTCode.ToString());
-                    row.CreateCell(1).SetCellValue(item.LabTestResultTestName);
-                    row.CreateCell(2).SetCellValue(item.SpecifimenString);
-                    row.CreateCell(3).SetCellValue(item.GenderString);
-                    row.CreateCell(4).SetCellValue(item.AgeFromString);
-                    row.CreateCell(5).SetCellValue(item.AgeToString);
-                    row.CreateCell(6).SetCellValue(item.MeasurementValueString);
-                    row.CreateCell(7).SetCellValue(item.LabTestResultLowRangeResult.ToString());
-                    row.CreateCell(8).SetCellValue(item.LabTestResultHighRangeResult.ToString());
-                    row.CreateCell(9).SetCellValue(item.LabTestResultGoodFrom.ToString());
-                    row.CreateCell(10).SetCellValue(item.LabTestResultGoodTo.ToString());
-                    row.CreateCell(11).SetCellValue(item.LabTestResultCautionFrom.ToString());
-                    row.CreateCell(12).SetCellValue(item.LabTestResultCautionTo.ToString());
-                    row.CreateCell(13).SetCellValue(item.LabTestResultBadFrom.ToString());
-                    row.CreateCell(14).SetCellValue(item.LabTestResultBadTo.ToString());
-                    rowIndex++;
-                }
+                row = sheet.CreateRow(rowIndex);
+                row.CreateCell(0).SetCellValue(item.LabTestResultCPTCode.ToString());
+                row.CreateCell(1).SetCellValue(item.LabTestResultTestName);
+                row.CreateCell(2).SetCellValue(item.SpecifimenString);
+                row.CreateCell(3).SetCellValue(item.GenderString);
+                row.CreateCell(4).SetCellValue(item.AgeFromString);
+                row.CreateCell(5).SetCellValue(item.AgeToString);
+                row.CreateCell(6).SetCellValue(item.MeasurementValueString);
+                row.CreateCell(7).SetCellValue(item.LabTestResultLowRangeResult.ToString());
+                row.CreateCell(8).SetCellValue(item.LabTestResultHighRangeResult.ToString());
+                row.CreateCell(9).SetCellValue(item.LabTestResultGoodFrom.ToString());
+                row.CreateCell(10).SetCellValue(item.LabTestResultGoodTo.ToString());
+                row.CreateCell(11).SetCellValue(item.LabTestResultCautionFrom.ToString());
+                row.CreateCell(12).SetCellValue(item.LabTestResultCautionTo.ToString());
+                row.CreateCell(13).SetCellValue(item.LabTestResultBadFrom.ToString());
+                row.CreateCell(14).SetCellValue(item.LabTestResultBadTo.ToString());
+                rowIndex++;
             }
+
             using (var exportData = new MemoryStream())
             {
                 var cookie = new HttpCookie("Downloaded", "True");

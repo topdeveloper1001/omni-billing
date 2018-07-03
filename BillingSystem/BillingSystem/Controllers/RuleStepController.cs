@@ -5,14 +5,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class RuleStepController : BaseController
     {
+        private readonly IRuleStepService _service;
+        private readonly IRuleMasterService _rmService;
+        private readonly IErrorMasterService _erService;
+        private readonly IGlobalCodeService _gService;
+
+        public RuleStepController(IRuleStepService service, IRuleMasterService rmService, IErrorMasterService erService, IGlobalCodeService gService)
+        {
+            _service = service;
+            _rmService = rmService;
+            _erService = erService;
+            _gService = gService;
+        }
+
+
         /// <summary>
         /// Get the details of the RuleStep View in the Model RuleStep such as RuleStepList, list of countries etc.
         /// </summary>
@@ -22,33 +36,29 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult RuleStepView(int? ruleMasterId)
         {
-            // Initialize the RuleStep BAL object
-            var ruleStepBal = new RuleStepBal();
-            var rulemasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber);
-
             // Get the Entity list
-            var ruleStepList = ruleStepBal.GetRuleStepsList(Convert.ToInt32(ruleMasterId));
-            var rulemasterObj = rulemasterBal.GetRuleMasterById(Convert.ToInt32(ruleMasterId));
+            var ruleStepList = _service.GetRuleStepsList(Convert.ToInt32(ruleMasterId));
+            var rulemasterObj = _rmService.GetRuleMasterById(Convert.ToInt32(ruleMasterId), Helpers.DefaultBillEditRuleTableNumber);
 
             // Intialize the View Model i.e. RuleStepView which is binded to Main View Index.cshtml under RuleStep
             var ruleStepView = new RuleStepView
-                                   {
-                                       RuleStepList = ruleStepList,
-                                       CurrentRuleStep =
+            {
+                RuleStepList = ruleStepList,
+                CurrentRuleStep =
                                            new RuleStep
-                                               {
-                                                   IsActive = true,
-                                                   RuleMasterID = ruleMasterId,
-                                                   CreatedBy = Helpers.GetLoggedInUserId(),
-                                                   CreatedDate = Helpers.GetInvariantCultureDateTime(),
-                                                   EffectiveEndDate = rulemasterObj.EffectiveEndDate,
-                                                   EffectiveStartDate =
+                                           {
+                                               IsActive = true,
+                                               RuleMasterID = ruleMasterId,
+                                               CreatedBy = Helpers.GetLoggedInUserId(),
+                                               CreatedDate = Helpers.GetInvariantCultureDateTime(),
+                                               EffectiveEndDate = rulemasterObj.EffectiveEndDate,
+                                               EffectiveStartDate =
                                                        rulemasterObj.EffectiveStartDate
-                                               },
-                                       RuleMasterStepdesc =
+                                           },
+                RuleMasterStepdesc =
                                            "( " + rulemasterObj.RuleMasterID + " - "
                                            + rulemasterObj.RuleDescription + " )"
-                                   };
+            };
 
             // Pass the View Model in ActionResult to View RuleStep
             return View(ruleStepView);
@@ -64,15 +74,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindRuleStepList(int ruleMasterId)
         {
-            // Initialize the RuleStep BAL object
-            using (var ruleStepBal = new RuleStepBal())
-            {
-                // Get the facilities list
-                var ruleStepList = ruleStepBal.GetRuleStepsList(ruleMasterId);
-
-                // Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList
-                return PartialView(PartialViews.RuleStepList, ruleStepList);
-            }
+            var ruleStepList = _service.GetRuleStepsList(ruleMasterId);
+            return PartialView(PartialViews.RuleStepList, ruleStepList);
         }
 
         /// <summary>
@@ -88,45 +91,39 @@ namespace BillingSystem.Controllers
             var newId = -1;
             var list = new List<RuleStepCustomModel>();
             var userId = Helpers.GetLoggedInUserId();
-            using (var ruleStepMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
+            var ruleMasterStepObj = _rmService.GetRuleMasterCustomModelById(model.RuleMasterID);
+
+            // Check if Model is not null 
+            if (model != null)
             {
-                // Get the facilities list
-                var ruleMasterStepObj = ruleStepMasterBal.GetRuleMasterCustomModelById(model.RuleMasterID);
-
-                // Check if Model is not null 
-                if (model != null)
+                if (model.RuleStepID > 0)
                 {
-                    using (var bal = new RuleStepBal())
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+                if (model.RHSFrom == 2 && model.DataType == Convert.ToInt32(RuleStepDataType.STRING))
+                {
+                    if (!string.IsNullOrEmpty(model.DirectValue) && model.DirectValue.Contains(","))
                     {
-                        if (model.RuleStepID > 0)
-                        {
-                            model.ModifiedBy = userId;
-                            model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                        }
-                        else
-                        {
-                            model.CreatedBy = userId;
-                            model.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                        }
-                        if (model.RHSFrom == 2 && model.DataType == Convert.ToInt32(RuleStepDataType.STRING))
-                        {
-                            if (!string.IsNullOrEmpty(model.DirectValue) && model.DirectValue.Contains(","))
-                            {
-                                var splitDirectvalue = model.DirectValue.Replace(",", "','");
-                                splitDirectvalue = "'" + splitDirectvalue + "'";
-                                model.DirectValue = splitDirectvalue;
-                            }
-                        }
-
-                        model.EffectiveStartDate = ruleMasterStepObj.EffectiveStartDate;
-                        model.EffectiveEndDate = ruleMasterStepObj.EffectiveEndDate;
-
-                        // Call the AddRuleStep Method to Add / Update current RuleStep
-                        newId = bal.SaveRuleStep(model);
-                        list = bal.GetRuleStepsList(Convert.ToInt32(model.RuleMasterID));
+                        var splitDirectvalue = model.DirectValue.Replace(",", "','");
+                        splitDirectvalue = "'" + splitDirectvalue + "'";
+                        model.DirectValue = splitDirectvalue;
                     }
                 }
+
+                model.EffectiveStartDate = ruleMasterStepObj.EffectiveStartDate;
+                model.EffectiveEndDate = ruleMasterStepObj.EffectiveEndDate;
+
+                // Call the AddRuleStep Method to Add / Update current RuleStep
+                newId = _service.SaveRuleStep(model);
+                list = _service.GetRuleStepsList(Convert.ToInt32(model.RuleMasterID));
             }
+
             return PartialView(PartialViews.RuleStepList, list);
         }
 
@@ -137,25 +134,21 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRuleStep(int id)
         {
-            using (var bal = new RuleStepBal())
+            // Call the AddRuleStep Method to Add / Update current RuleStep
+            var currentRuleStep = _service.GetRuleStepByID(id);
+            if (currentRuleStep.RHSFrom == 2 && currentRuleStep.DataType == Convert.ToInt32(RuleStepDataType.STRING))
             {
-                // Call the AddRuleStep Method to Add / Update current RuleStep
-                var currentRuleStep = bal.GetRuleStepByID(id);
-                if (currentRuleStep.RHSFrom == 2 && currentRuleStep.DataType == Convert.ToInt32(RuleStepDataType.STRING))
+                if (!string.IsNullOrEmpty(currentRuleStep.DirectValue) && currentRuleStep.DirectValue.Contains("','"))
                 {
-                    if (!string.IsNullOrEmpty(currentRuleStep.DirectValue)  && currentRuleStep.DirectValue.Contains("','"))
-                    {
-                        var splitDirectvalue = currentRuleStep.DirectValue.Replace("','", ",");
-                        splitDirectvalue = splitDirectvalue.Replace("'", string.Empty);
-                        currentRuleStep.DirectValue = splitDirectvalue;
-                    }
+                    var splitDirectvalue = currentRuleStep.DirectValue.Replace("','", ",");
+                    splitDirectvalue = splitDirectvalue.Replace("'", string.Empty);
+                    currentRuleStep.DirectValue = splitDirectvalue;
                 }
-
-                // Pass the ActionResult with the current RuleStepViewModel object as model to PartialView RuleStepAddEdit
-                return PartialView(PartialViews.RuleStepAddEdit, currentRuleStep);
             }
-        }
 
+            // Pass the ActionResult with the current RuleStepViewModel object as model to PartialView RuleStepAddEdit
+            return PartialView(PartialViews.RuleStepAddEdit, currentRuleStep);
+        }
         /// <summary>
         /// Delete the current RuleStep based on the RuleStep ID passed in the RuleStepModel
         /// </summary>
@@ -163,19 +156,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteRuleStep(int id)
         {
-            using (var bal = new RuleStepBal())
-            {
-                // Get RuleStep model object by current RuleStep ID
-                var currentRuleStep = bal.GetRuleStepByID(id);
+            var currentRuleStep = _service.GetRuleStepByID(id);
 
-                // Get RuleMaster model object by current RuleMaster ID
-                var result = bal.DeleteRuleStep(currentRuleStep);
-
-                // return deleted ID of current DashboardBudget as Json Result to the Ajax Call.
-                return Json(result);
-            }
-
-            // Return the Json result as Action Result back JSON Call Success
+            var result = _service.DeleteRuleStep(currentRuleStep);
+            return Json(result);
         }
 
         /// <summary>
@@ -200,9 +184,9 @@ namespace BillingSystem.Controllers
         //public JsonResult GetRuleStepDropdownData(int startRange, int endRange)
         //{
         //    var lst = new List<string>() {"1", "2", "4", "5", "6", "7"};
-        //    using (var bal = new GlobalCodeBal())
+        //    using (var _service = new GlobalCodeBal())
         //    {
-        //        var globalCodes = bal.GetGlobalCodesByCategoriesRange(startRange, endRange);
+        //        var globalCodes = _service.GetGlobalCodesByCategoriesRange(startRange, endRange);
         //        if (globalCodes.Count > 0)
         //        {
         //            var list = new List<DropdownListData>();
@@ -242,26 +226,23 @@ namespace BillingSystem.Controllers
 
             var categories = new List<string> { "14000", "14100", "14200", "14101", "14102" };
             var lst = new List<string>() { "1", "2", "4", "5", "6", "7" };
-            using (var bal = new GlobalCodeBal())
+            list = _gService.GetListByCategoriesRange(categories);
+            var dataTypes = list.Where(a => a.ExternalValue1.Trim().Contains("14000")).OrderBy(n => n.Text).ToList();
+            var compareTypes = list.Where(a => a.ExternalValue1.Trim().Contains("14100")).OrderByDescending(n => n.Text).ToList();
+            var tList = list.Where(a => a.ExternalValue1.Trim().Contains("14200")).OrderBy(n => n.Text).ToList();
+            var conditionStartList = list.Where(a => a.ExternalValue1.Trim().Contains("14101")).ToList();
+            var conditionEndList = list.Where(a => a.ExternalValue1.Trim().Contains("14102")).ToList();
+            var expCompareTypes = compareTypes.Where(i => i.Value != null && lst.Contains(i.Value)).ToList();
+            var jsonResult = new
             {
-                list = bal.GetListByCategoriesRange(categories);
-                var dataTypes = list.Where(a => a.ExternalValue1.Trim().Contains("14000")).OrderBy(n => n.Text).ToList();
-                var compareTypes = list.Where(a => a.ExternalValue1.Trim().Contains("14100")).OrderByDescending(n => n.Text).ToList();
-                var tList = list.Where(a => a.ExternalValue1.Trim().Contains("14200")).OrderBy(n => n.Text).ToList();
-                var conditionStartList = list.Where(a => a.ExternalValue1.Trim().Contains("14101")).ToList();
-                var conditionEndList = list.Where(a => a.ExternalValue1.Trim().Contains("14102")).ToList();
-                var expCompareTypes = compareTypes.Where(i => i.Value != null && lst.Contains(i.Value)).ToList();
-                var jsonResult = new
-                {
-                    DataTypes = dataTypes,
-                    CompareTypes = compareTypes,
-                    TablesList = tList,
-                    conditionStartList = conditionStartList,
-                    conditionEndList = conditionEndList,
-                    ExpressionTypes = expCompareTypes
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                DataTypes = dataTypes,
+                CompareTypes = compareTypes,
+                TablesList = tList,
+                conditionStartList = conditionStartList,
+                conditionEndList = conditionEndList,
+                ExpressionTypes = expCompareTypes
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -272,14 +253,11 @@ namespace BillingSystem.Controllers
         public ActionResult GetErrorsList()
         {
             var list = new List<DropdownListData>();
-            using (var bal = new ErrorMasterBal())
-            {
-                var corporateId = Helpers.GetDefaultCorporateId();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var errorsList = bal.GetErrorListByCorporateAndFacilityId(corporateId, facilityId, false);
-                if (errorsList.Count > 0)
-                    list.AddRange(errorsList.Select(item => new DropdownListData { Text = string.Format("{0} - {1}", item.ErrorCode, item.ErrorDescription), Value = Convert.ToString(item.ErrorMasterID), ExternalValue1 = item.ErrorDescription }));
-            }
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var errorsList = _erService.GetErrorListByCorporateAndFacilityId(corporateId, facilityId, false);
+            if (errorsList.Count > 0)
+                list.AddRange(errorsList.Select(item => new DropdownListData { Text = string.Format("{0} - {1}", item.ErrorCode, item.ErrorDescription), Value = Convert.ToString(item.ErrorMasterID), ExternalValue1 = item.ErrorDescription }));
             return Json(list);
         }
 
@@ -290,15 +268,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRuleMasterById(int ruleMasterId)
         {
-            //Initialize the RuleStep BAL object
-            using (var ruleStepMasterBal = new RuleMasterBal(Helpers.DefaultBillEditRuleTableNumber))
-            {
-                //Get the facilities list
-                var ruleStepList = ruleStepMasterBal.GetRuleMasterCustomModelById(ruleMasterId);
+            var ruleStepList = _rmService.GetRuleMasterCustomModelById(ruleMasterId);
 
-                //Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList
-                return Json(ruleStepList, JsonRequestBehavior.AllowGet);
-            }  
+            //Pass the ActionResult with List of RuleStepViewModel object to Partial View RuleStepList
+            return Json(ruleStepList, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -308,12 +281,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetRuleStepNumber(int ruleMasterId)
         {
-            using (var ruleStepBal = new RuleStepBal())
-            {
-                var rulestepMaxNumber = ruleStepBal.GetMaxRuleStepNumber(ruleMasterId);
-                
-                return Json(rulestepMaxNumber, JsonRequestBehavior.AllowGet);
-            }    
+            var rulestepMaxNumber = _service.GetMaxRuleStepNumber(ruleMasterId);
+
+            return Json(rulestepMaxNumber, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -323,11 +293,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetPreviewRuleStepResult(int ruleMasterId)
         {
-            using (var ruleStepBal = new RuleStepBal())
-            {
-                var ruleStepPreviewString = ruleStepBal.GetPreviewRuleStepResult(ruleMasterId);
-                return Json(ruleStepPreviewString, JsonRequestBehavior.AllowGet);
-            }  
+            var ruleStepPreviewString = _service.GetPreviewRuleStepResult(ruleMasterId);
+            return Json(ruleStepPreviewString, JsonRequestBehavior.AllowGet);
         }
     }
 }

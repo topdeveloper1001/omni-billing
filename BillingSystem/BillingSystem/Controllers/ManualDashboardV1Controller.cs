@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Transactions;
 using System.Web;
-using BillingSystem.Bal.BusinessAccess;
+using BillingSystem._service.BusinessAccess;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
@@ -14,6 +14,8 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using System.Threading.Tasks;
+using BillingSystem._service.Interfaces;
+using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
@@ -23,12 +25,15 @@ namespace BillingSystem.Controllers
         private readonly IPatientInfoService _piService;
         private readonly IUsersService _uService;
         private readonly IDashboardIndicatorDataService _diService;
+        private readonly IManualDashboardService _service;
 
-        public ManualDashboardV1Controller(IPatientInfoService piService, IUsersService uService, IDashboardIndicatorDataService diService)
+
+        public ManualDashboardV1Controller(IManualDashboardService service, IPatientInfoService piService, IUsersService uService, IDashboardIndicatorDataService diService)
         {
             _piService = piService;
             _uService = uService;
             _diService = diService;
+            _service = service;
         }
 
         /// <summary>
@@ -39,31 +44,27 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the ManualDashboard BAL object
-            using (var bal = new ManualDashboardBal())
+            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var loggedinfacilityId = Helpers.GetDefaultFacilityId();
+            var facilitybal = new FacilityBal();
+            var corporateFacilitydetail = facility_service.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
+                ? loggedinfacilityId
+                 : Helpers.GetFacilityIdNextDefaultCororateFacility();
+
+            var data = new List<ManualDashboardCustomModel>();
+
+            //Intialize the View Model i.e. ManualDashboardView which is binded to Main View Index.cshtml under ManualDashboard
+            var viewModel = new ManualDashboardView
             {
-                var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-                var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
-                    ? loggedinfacilityId
-                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
+                ManualDashboardList = data,
+                CurrentManualDashboard = new ManualDashboardCustomModel(),
+                IsAdmin = userisAdmin,
+                CFacilityId = facilityid
+            };
 
-                var data = new List<ManualDashboardCustomModel>();
-
-                //Intialize the View Model i.e. ManualDashboardView which is binded to Main View Index.cshtml under ManualDashboard
-                var viewModel = new ManualDashboardView
-                {
-                    ManualDashboardList = data,
-                    CurrentManualDashboard = new ManualDashboardCustomModel(),
-                    IsAdmin = userisAdmin,
-                    CFacilityId = facilityid
-                };
-
-                //Pass the View Model in ActionResult to View ManualDashboard
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View ManualDashboard
+            return View(viewModel);
         }
 
         /// <summary>
@@ -72,25 +73,21 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetManualDashboardList()
         {
-            List<ManualDashboardCustomModel> list;
-            using (var bal = new ManualDashboardBal())
-            {
-                var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-                var loggedinfacilityId = Helpers.GetDefaultFacilityId();
-                var facilitybal = new FacilityBal();
-                var corporateFacilitydetail = facilitybal.GetFacilityById(loggedinfacilityId);
-                var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
-                    ? loggedinfacilityId
-                     : Helpers.GetFacilityIdNextDefaultCororateFacility();
+            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var loggedinfacilityId = Helpers.GetDefaultFacilityId();
+            var bal = new FacilityBal();
+            var corporateFacilitydetail = bal.GetFacilityById(loggedinfacilityId);
+            var facilityid = corporateFacilitydetail != null && corporateFacilitydetail.LoggedInID != 0
+                ? loggedinfacilityId
+                 : Helpers.GetFacilityIdNextDefaultCororateFacility();
 
-                //Get the Entity list
-                list = bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
-                        facilityid, Convert.ToString(CurrentDateTime.Year));
-                list = list.Where(x => x.IsActive == true).ToList();
-                var orderByExpression = HtmlExtensions.GetOrderByExpression<ManualDashboardCustomModel>("Indicators");
-                list = HtmlExtensions.OrderByDir<ManualDashboardCustomModel>(list, "ASC", orderByExpression);
+            //Get the Entity list
+            var list = _service.GetManualIndicatorDashboardDataList(Helpers.GetSysAdminCorporateID(),
+                     facilityid, Convert.ToString(CurrentDateTime.Year));
+            list = list.Where(x => x.IsActive == true).ToList();
+            var orderByExpression = HtmlExtensions.GetOrderByExpression<ManualDashboardCustomModel>("Indicators");
+            list = HtmlExtensions.OrderByDir<ManualDashboardCustomModel>(list, "ASC", orderByExpression);
 
-            }
             return PartialView(PartialViews.ManualDashboardList, list);
         }
 
@@ -115,7 +112,7 @@ namespace BillingSystem.Controllers
             {
                 using (var transScope = new TransactionScope())
                 {
-                    using (var bal = new ManualDashboardBal())
+                    using (var bal = new ManualDashboardService())
                     {
                         model.CorporateId = corporateid;
                         model.CreatedBy = userId;
@@ -135,27 +132,27 @@ namespace BillingSystem.Controllers
                         }
 
 
-                        bal.UpdateIndicatorV1(model);
+                        _service.UpdateIndicatorV1(model);
 
                         //Add by shashank to check the Special case for the Indicator i.e. is the Target/Budget is static for indicator 
                         //.... Should only Call for Dashboard type = Budget (Externalvalue1='1')
                         //if (indicatorData != null && !string.IsNullOrEmpty(indicatorData.IndicatorNumber) && indicatorData.ExternalValue1 == "1")
                         //{
                         //    using (var ibal = new DashboardIndicatorDataBal())
-                        //        ibal.SetStaticBudgetTarget(indicatorData);
+                        //        i_service.SetStaticBudgetTarget(indicatorData);
                         //}
 
                         ////Added for saving in the table ManualDashboard
                         //if (indicatorData != null && !string.IsNullOrEmpty(indicatorData.IndicatorNumber))
                         //{
                         //    using (var ibal = new DashboardIndicatorDataBal())
-                        //        ibal.UpdateIndicatorsDataInManualDashboard(indicatorData);
+                        //        i_service.UpdateIndicatorsDataInManualDashboard(indicatorData);
                         //}
 
                         list = userisAdmin
-                            ? bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
+                            ? _service.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
                                 Convert.ToInt32(model.FacilityId), Convert.ToString(CurrentDateTime.Year))
-                                : bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
+                                : _service.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
                                 Helpers.GetDefaultFacilityId(), Convert.ToString(CurrentDateTime.Year));
                         transScope.Complete();
                     }
@@ -176,10 +173,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetManualDashboardDetails(int facilityId, int corporateId, string year, string indicatorNumber, string budgetType)
         {
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
                 //Call the AddManualDashboard Method to Add / Update current ManualDashboard
-                var current = bal.GetManualDashboardDataByIndicatorNumberV1(corporateId, facilityId,
+                var current = _service.GetManualDashboardDataByIndicatorNumberV1(corporateId, facilityId,
                     year, indicatorNumber, budgetType);
 
                 if (current != null)
@@ -210,7 +207,7 @@ namespace BillingSystem.Controllers
             var indicatorsDatalst = _diService.DeleteManualDashboardDetails(corporateId, facilityId,
                      indicatorNumber, budgetType, year, "", "");
 
-            using (var manualDashboardData = new ManualDashboardBal())
+            using (var manualDashboardData = new ManualDashboardService())
             {
                 var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
                 var list = userisAdmin
@@ -229,10 +226,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteManualDashboard(int id)
         {
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
                 //Get ManualDashboard model object by current ManualDashboard ID
-                var model = bal.GetManualDashboardById(id);
+                var model = _service.GetManualDashboardById(id);
                 var userId = Helpers.GetLoggedInUserId();
                 var list = new List<ManualDashboardCustomModel>();
                 var currentDate = Helpers.GetInvariantCultureDateTime();
@@ -245,7 +242,7 @@ namespace BillingSystem.Controllers
                     model.CreatedBy = userId;
                     model.CreatedDate = currentDate;
                     //Update Operation of current ManualDashboard
-                    list = bal.SaveManualDashboard(model);
+                    list = _service.SaveManualDashboard(model);
                     //return deleted ID of current ManualDashboard as Json Result to the Ajax Call.
                 }
                 return PartialView(PartialViews.ManualDashboardList, list);
@@ -264,13 +261,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult IsDataExist(int id, int indicatorNumber, int budgetType, int facilityId, int year)
         {
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
                 //Call the AddManualDashboard Method to Add / Update current ManualDashboard
                 if (id != 0)
                     return Json(true, JsonRequestBehavior.AllowGet);
 
-                var list = bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
+                var list = _service.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
                     Helpers.GetDefaultFacilityId(), Convert.ToString(CurrentDateTime.Year));
                 var selectedValue =
                     !list.Any(x => x.Indicators == indicatorNumber && x.BudgetType == budgetType && x.Year == year);
@@ -288,9 +285,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult RebindGridWithFacility(int facilityId, int year, int indicator, string owner)
         {
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
-                var list = bal.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), facilityId, year, indicator, owner);
+                var list = _service.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), facilityId, year, indicator, owner);
                 return PartialView(PartialViews.ManualDashboardList, list);
             }
         }
@@ -339,9 +336,9 @@ namespace BillingSystem.Controllers
             // CEll STYLE 
             var cellStyle = workbook.CreateCellStyle();
             cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
-                var exportList = bal.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), facilityId,
+                var exportList = _service.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), facilityId,
                     year,
                     indicator, owner);
 
@@ -436,12 +433,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<ManualDashboardCustomModel> GetManualDashboardData(int facilityid)
         {
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
                 var list = facilityid == 0
-                    ? bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), 0,
+                    ? _service.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), 0,
                         Convert.ToString(CurrentDateTime.Year))
-                    : bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
+                    : _service.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
                         facilityid, Convert.ToString(CurrentDateTime.Year));
                 return list;
             }
@@ -462,16 +459,16 @@ namespace BillingSystem.Controllers
             int expiryDays;
             using (var gBal = new GlobalCodeBal())
             {
-                var result = gBal.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
+                var result = g_service.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
                 expiryDays = !string.IsNullOrEmpty(result.GlobalCodeName)
                     ? Convert.ToInt32(result.GlobalCodeName)
                     : 90;
             }
 
-            using (var manualDashboardBal = new ManualDashboardBal())
+            using (var manualDashboardBal = new ManualDashboardService())
             {
                 var expireDate = CurrentDateTime.AddDays(expiryDays);
-                var manualDashboardController = manualDashboardBal.GetUserToken(Helpers.GetLoggedInUsername(), expireDate);
+                var manualDashboardController = manualDashboard_service.GetUserToken(Helpers.GetLoggedInUsername(), expireDate);
                 SendUserTokenAndSave(manualDashboardController.TokenNumber, expireDate).Wait();
             }
 
@@ -522,7 +519,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindManualDashboardIndicatorsDataByOrder(string sort, string sortdir, string facilityId, int year, int indicator, string owner)
         {
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
                 var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
 
@@ -533,15 +530,15 @@ namespace BillingSystem.Controllers
                  */
                 //Get the Entity list
                 //var list = userisAdmin
-                //    ? bal.GetManualIndicatorDashboardDataList(Helpers.GetSysAdminCorporateID(),
+                //    ? _service.GetManualIndicatorDashboardDataList(Helpers.GetSysAdminCorporateID(),
                 //        Convert.ToInt32(facilityId), Convert.ToString(DateTime.Now.Year))
-                //    : bal.GetManualIndicatorDashboardDataList(Helpers.GetSysAdminCorporateID(),
+                //    : _service.GetManualIndicatorDashboardDataList(Helpers.GetSysAdminCorporateID(),
                 //        Helpers.GetDefaultFacilityId(), Convert.ToString(DateTime.Now.Year));
 
                 var list = userisAdmin
-                    ? bal.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
+                    ? _service.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
                         Convert.ToInt32(facilityId), year, indicator, owner)
-                    : bal.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
+                    : _service.RebindManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(),
                         Helpers.GetDefaultFacilityId(), year, indicator, owner);
 
                 //Intialize the View Model i.e. DashboardIndicatorsView which is binded to Main View Index.cshtml under DashboardIndicators
@@ -560,12 +557,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindGridActiveInactive(bool showInActive)
         {
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
                 var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
                 //Get the Entity list
-                var list = userisAdmin ? bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), 0, CurrentDateTime.Year.ToString()) :
-                    bal.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), CurrentDateTime.Year.ToString());
+                var list = userisAdmin ? _service.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), 0, CurrentDateTime.Year.ToString()) :
+                    _service.GetManualIndicatorDashboardDataListV1(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), CurrentDateTime.Year.ToString());
                 list = list.Where(x => x.IsActive == !showInActive).ToList();
                 //Intialize the View Model i.e. DashboardIndicatorsView which is binded to Main View Index.cshtml under DashboardIndicators
                 var orderByExpression = HtmlExtensions.GetOrderByExpression<ManualDashboardCustomModel>("Indicators");
@@ -582,9 +579,9 @@ namespace BillingSystem.Controllers
         public ActionResult GetOwnershipList()
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
-                var olist = bal.GetOwnershipList(Helpers.GetSysAdminCorporateID());
+                var olist = _service.GetOwnershipList(Helpers.GetSysAdminCorporateID());
                 if (olist.Any())
                     list.AddRange(olist.Select(it => new SelectListItem
                     {
@@ -603,9 +600,9 @@ namespace BillingSystem.Controllers
         public ActionResult GetIndicatorsList(string ownership = "")
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
-                var iList = bal.GetIndicatorsList(Helpers.GetSysAdminCorporateID(), ownership);
+                var iList = _service.GetIndicatorsList(Helpers.GetSysAdminCorporateID(), ownership);
                 if (iList.Any())
                 {
                     list.AddRange(iList.Select(i => new SelectListItem
@@ -626,9 +623,9 @@ namespace BillingSystem.Controllers
         public ActionResult GetDashboardIndicatorsList(string ownership = "")
         {
             var list = new List<SelectListItem>();
-            using (var bal = new ManualDashboardBal())
+            using (var bal = new ManualDashboardService())
             {
-                var iList = bal.GetIndicatorsList(Helpers.GetSysAdminCorporateID(), ownership);
+                var iList = _service.GetIndicatorsList(Helpers.GetSysAdminCorporateID(), ownership);
                 if (iList.Any())
                 {
                     list.AddRange(iList.Select(i => new SelectListItem
@@ -675,7 +672,7 @@ namespace BillingSystem.Controllers
         {
             using (var bal = new IndicatorDataCheckListBal())
             {
-                var ind = bal.GetIndicatorDataCheckListSingle(facilityId, corporateId, budgetType, year);
+                var ind = _service.GetIndicatorDataCheckListSingle(facilityId, corporateId, budgetType, year);
                 return ind;
             }
         }

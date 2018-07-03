@@ -1,18 +1,22 @@
 ﻿using BillingSystem.Models;
 using BillingSystem.Common;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DrugInstructionAndDosingController : BaseController
     {
+        private readonly IDrugInstructionAndDosingService _service;
+
+        public DrugInstructionAndDosingController(IDrugInstructionAndDosingService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the DrugInstructionAndDosing View in the Model DrugInstructionAndDosing such as DrugInstructionAndDosingList, list of countries etc.
         /// </summary>
@@ -21,22 +25,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the DrugInstructionAndDosing BAL object
-            using (var bal = new DrugInstructionAndDosingBal())
+            //Get the Entity list
+            var list = _service.GetDrugInstructionAndDosingList();
+
+            //Intialize the View Model i.e. DrugInstructionAndDosingView which is binded to Main View Index.cshtml under DrugInstructionAndDosing
+            var viewModel = new DrugInstructionAndDosingView
             {
-                //Get the Entity list
-                var list = bal.GetDrugInstructionAndDosingList();
+                DrugInstructionAndDosingList = list,
+                CurrentDrugInstructionAndDosing = new DrugInstructionAndDosing()
+            };
 
-                //Intialize the View Model i.e. DrugInstructionAndDosingView which is binded to Main View Index.cshtml under DrugInstructionAndDosing
-                var viewModel = new DrugInstructionAndDosingView
-                {
-                    DrugInstructionAndDosingList = list,
-                    CurrentDrugInstructionAndDosing = new DrugInstructionAndDosing()
-                };
-
-                //Pass the View Model in ActionResult to View DrugInstructionAndDosing
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View DrugInstructionAndDosing
+            return View(viewModel);
         }
 
         /// <summary>
@@ -56,23 +56,19 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DrugInstructionAndDosingBal())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-
-                    //Call the AddDrugInstructionAndDosing Method to Add / Update current DrugInstructionAndDosing
-                    list = bal.SaveDrugInstructionAndDosing(model);
-                    //list = bal.GetDrugInstructionAndDosingList();
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+
+                //Call the AddDrugInstructionAndDosing Method to Add / Update current DrugInstructionAndDosing
+                list = _service.SaveDrugInstructionAndDosing(model);
             }
 
             //Pass the ActionResult with List of DrugInstructionAndDosingViewModel object to Partial View DrugInstructionAndDosingList
@@ -86,12 +82,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDrugInstructionAndDosingList()
         {
-            using (var bal=new DrugInstructionAndDosingBal())
-            {
-                var list = bal.GetDrugInstructionAndDosingList();
-                return PartialView(PartialViews.DrugInstructionAndDosingList, list);
-
-            }
+            var list = _service.GetDrugInstructionAndDosingList();
+            return PartialView(PartialViews.DrugInstructionAndDosingList, list);
         }
 
         /// <summary>
@@ -101,14 +93,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDrugInstructionAndDosingDetails(int id)
         {
-            using (var bal = new DrugInstructionAndDosingBal())
-            {
-                //Call the AddDrugInstructionAndDosing Method to Add / Update current DrugInstructionAndDosing
-                var current = bal.GetDrugInstructionAndDosingById(id);
+            //Call the AddDrugInstructionAndDosing Method to Add / Update current DrugInstructionAndDosing
+            var current = _service.GetDrugInstructionAndDosingById(id);
 
-                //Pass the ActionResult with the current DrugInstructionAndDosingViewModel object as model to PartialView DrugInstructionAndDosingAddEdit
-                return Json(current);
-            }
+            //Pass the ActionResult with the current DrugInstructionAndDosingViewModel object as model to PartialView DrugInstructionAndDosingAddEdit
+            return Json(current);
         }
 
         /// <summary>
@@ -118,28 +107,24 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteDrugInstructionAndDosing(int id)
         {
-            using (var bal = new DrugInstructionAndDosingBal())
-            {
-                //Get DrugInstructionAndDosing model object by current DrugInstructionAndDosing ID
-                var model = bal.GetDrugInstructionAndDosingById(id);
-                var userId = Helpers.GetLoggedInUserId();
-                var list = new List<DrugInstructionAndDosingCustomModel>();
-                var currentDate = Helpers.GetInvariantCultureDateTime();
+            //Get DrugInstructionAndDosing model object by current DrugInstructionAndDosing ID
+            var model = _service.GetDrugInstructionAndDosingById(id);
+            var userId = Helpers.GetLoggedInUserId();
+            var list = new List<DrugInstructionAndDosingCustomModel>();
+            var currentDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If DrugInstructionAndDosing model is not null
-                if (model != null)
-                {
-                    model.IsDeleted = true;
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDate;
-                    //Update Operation of current DrugInstructionAndDosing
-                    var result = bal.SaveDrugInstructionAndDosing(model);
-                    list = bal.GetDrugInstructionAndDosingList();
-                    //return deleted ID of current DrugInstructionAndDosing as Json Result to the Ajax Call.
-                }
-                return PartialView(PartialViews.DrugInstructionAndDosingList, list);
+            //Check If DrugInstructionAndDosing model is not null
+            if (model != null)
+            {
+                model.IsDeleted = true;
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDate;
+                //Update Operation of current DrugInstructionAndDosing
+                var result = _service.SaveDrugInstructionAndDosing(model);
+                list = _service.GetDrugInstructionAndDosingList();
+                //return deleted ID of current DrugInstructionAndDosing as Json Result to the Ajax Call.
             }
-            //Pass the ActionResult with List of DrugInstructionAndDosingViewModel object to Partial View DrugInstructionAndDosingList
+            return PartialView(PartialViews.DrugInstructionAndDosingList, list);
         }
     }
 }

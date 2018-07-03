@@ -21,13 +21,20 @@
         font-weight: bold;
         color: #fff !important;
     }
+
     .custom_popup input[type="text"], input[type="password"], select, input[type="number"] {
-        height: 28px !important; padding:3px !important;
+        height: 28px !important;
+        padding: 3px !important;
     }
 
-.custom_popup input[type="text"].k-input{height:26px !important; padding:0 !important;}
+        .custom_popup input[type="text"].k-input {
+            height: 26px !important;
+            padding: 0 !important;
+        }
 
-.custom_popup .k-timepicker{width:100%;}
+    .custom_popup .k-timepicker {
+        width: 100%;
+    }
 </style>
 <div id="page-wrapper">
     <div class="schduler_frame">
@@ -53,7 +60,8 @@
                 </div>
             </div>
             <div class="schduler_block">
-                <h2>Labels:
+                <h2>
+                    Labels:
                     <input type="button" value="Clear" class="btn btn-danger btn-xs pull-right" />
                     <input type="button" value="Select all" class="btn btn-success btn-xs pull-right" />
                 </h2>
@@ -75,7 +83,6 @@
                 <h2>Calendar View:</h2>
                 <div class="schduler_content" style="max-height: 100px; overflow: auto;">
                     <div id="divViewsList">
-                        @*@{Html.RenderPartial("~/Views/FacultyTimeslots/UserControls/_CalenderViewType.cshtml", null);}*@
                     </div>
                 </div>
             </div>
@@ -88,8 +95,8 @@
                 </div>
             </div>
         </div>
-        <input id="hidFacilitySelected" type="hidden" value="@Helpers.GetDefaultFacilityId()"/>
-        <input id="hidFacilityName" type="hidden" value="@Helpers.GetDefaultFacilityName()"/>
+        <input id="hidFacilitySelected" type="hidden" value="@Helpers.GetDefaultFacilityId()" />
+        <input id="hidFacilityName" type="hidden" value="@Helpers.GetDefaultFacilityName()" />
         <input id="hidSelectedView" type="hidden" value="1" />
         <input id="hidSelectedViewName" type="hidden" value="Day" />
         <input id="hidSchedulingType" type="hidden" value="0" />

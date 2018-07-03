@@ -3,7 +3,6 @@ using System.Data;
 using BillingSystem.Models;
 using System.Web.Mvc;
 using BillingSystem.Common;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using System;
 using BillingSystem.Model.CustomModel;
@@ -17,6 +16,17 @@ namespace BillingSystem.Controllers
     public class GlobalCodeController : BaseController
     {
         private readonly IUsersService _uService;
+        private readonly IFacilityService _fService;
+        private readonly IGlobalCodeService _service;
+        private readonly IGlobalCodeCategoryService _gcService;
+
+        public GlobalCodeController(IUsersService uService, IFacilityService fService, IGlobalCodeService service, IGlobalCodeCategoryService gcService)
+        {
+            _uService = uService;
+            _fService = fService;
+            _service = service;
+            _gcService = gcService;
+        }
 
         #region Global Code
         /// <summary>
@@ -26,30 +36,6 @@ namespace BillingSystem.Controllers
         [CheckRolesAuthorize("1")]
         public ActionResult Index()
         {
-            //Initialize the GlobalCode Bal
-            //var globalCodeBal = new GlobalCodeBal();
-            //var globalCodeCategoryBal = new GlobalCodeCategoryBal();
-            //var facilityBal = new FacilityBal();
-
-            //Get the Global Code list
-            //var globalCodeList = globalCodeBal.GetAllGlobalCodes();
-
-            //List<GlobalCodeListView> gCodesCategory = new List<GlobalCodeListView>();
-            //gCodesCategory = (from y in globalCodeList
-            //                  select new GlobalCodeListView
-            //                  {
-            //                      GlobalCodeID = y.GlobalCodeID,
-            //                      FacilityNumber = y.FacilityNumber,
-            //                      GlobalCodeCategoryName = GetGlobalCodeCategoryNameByID(y.GlobalCodeCategoryValue),
-            //                      GlobalCodeValue = y.GlobalCodeValue,
-            //                      GlobalCodeName = y.GlobalCodeName,
-            //                      Description = y.Description
-
-            //                  }).ToList();
-
-            //var globalCodeCategoryList = globalCodeCategoryBal.GetGlobalCodeCategories();
-
-            //var cId = Helpers.GetDefaultCorporateId();
             var globalCodeView = new GlobalCodeView
             {
                 CurrentGlobalCode = new GlobalCodes { IsActive = true, IsDeleted = false },
@@ -69,28 +55,25 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetGlobaCodeById(int id)
         {
-            using (var bal = new GlobalCodeBal())
+            var result = _service.GetGlobalCodeCustomById(id);
+            var jsonResult = new
             {
-                var result = bal.GetGlobalCodeCustomById(id);
-                var jsonResult = new
-                {
-                    Id = result.GlobalCodes.GlobalCodeID,
-                    Name = result.GlobalCodes.GlobalCodeName,
-                    Value = result.GlobalCodes.GlobalCodeValue,
-                    Category = result.GlobalCodes.GlobalCodeCategoryValue,
-                    result.GlobalCodes.Description,
-                    result.GlobalCodes.IsActive,
-                    result.GlobalCodes.SortOrder,
-                    result.GlobalCodes.ExternalValue1,
-                    result.GlobalCodes.ExternalValue2,
-                    result.GlobalCodes.ExternalValue3,
-                    result.GlobalCodes.ExternalValue4,
-                    result.GlobalCodes.ExternalValue5,
-                    result.GlobalCodes.ExternalValue6,
-                    CategoryName = result.GlobalCodeCustomValue
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                Id = result.GlobalCodes.GlobalCodeID,
+                Name = result.GlobalCodes.GlobalCodeName,
+                Value = result.GlobalCodes.GlobalCodeValue,
+                Category = result.GlobalCodes.GlobalCodeCategoryValue,
+                result.GlobalCodes.Description,
+                result.GlobalCodes.IsActive,
+                result.GlobalCodes.SortOrder,
+                result.GlobalCodes.ExternalValue1,
+                result.GlobalCodes.ExternalValue2,
+                result.GlobalCodes.ExternalValue3,
+                result.GlobalCodes.ExternalValue4,
+                result.GlobalCodes.ExternalValue5,
+                result.GlobalCodes.ExternalValue6,
+                CategoryName = result.GlobalCodeCustomValue
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -100,18 +83,15 @@ namespace BillingSystem.Controllers
         public ActionResult BindGlobalCodeCategories()
         {
             var list = new List<DropdownListData>();
-            using (var bal = new GlobalCodeCategoryBal())
+            var result = _gcService.GetGlobalCodeCategories();
+            if (result.Count > 0)
             {
-                var result = bal.GetGlobalCodeCategories();
-                if (result.Count > 0)
+                list.AddRange(result.Select(item => new DropdownListData
                 {
-                    list.AddRange(result.Select(item => new DropdownListData
-                    {
-                        Text = item.GlobalCodeCategoryName,
-                        Value = item.GlobalCodeCategoryValue,
-                        ExternalValue1 = Convert.ToString(item.GlobalCodeCategoryID)
-                    }));
-                }
+                    Text = item.GlobalCodeCategoryName,
+                    Value = item.GlobalCodeCategoryValue,
+                    ExternalValue1 = Convert.ToString(item.GlobalCodeCategoryID)
+                }));
             }
             return Json(list, JsonRequestBehavior.AllowGet);
         }
@@ -123,17 +103,14 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMaxSortOrderAndGlobalCodeValueByCategoryValue(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var gcc = bal.GetMaxGlobalCodeByCategoryValue(categoryValue);
+            var gcc = _service.GetMaxGlobalCodeByCategoryValue(categoryValue);
 
-                var sortordercount = 0;
-                if (gcc != null)
-                    sortordercount = Convert.ToInt32(gcc.SortOrder);
+            var sortordercount = 0;
+            if (gcc != null)
+                sortordercount = Convert.ToInt32(gcc.SortOrder);
 
-                var jsonResult = new { sortOrder = sortordercount + 1, maxCodeValue = sortordercount };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            var jsonResult = new { sortOrder = sortordercount + 1, maxCodeValue = sortordercount };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -154,11 +131,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         private List<GlobalCodeCustomModel> GlobalCodesList(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var list = bal.GetAllGlobalCodes(categoryValue);
-                return list;
-            }
+            var list = _service.GetAllGlobalCodes(categoryValue);
+            return list;
         }
 
         /// <summary>
@@ -169,7 +143,6 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public int AddUpdateGlobalCode(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -182,7 +155,7 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            return globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
+            return _service.AddUpdateGlobalCodes(objGlobalCode);
         }
 
         /// <summary>
@@ -192,38 +165,40 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteGlobalCode(int globalCodeId)
         {
-            var globalCodeBal = new GlobalCodeBal();
-            var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
+            var objGlobalCode = _service.GetGlobalCodeByGlobalCodeId(globalCodeId);
             objGlobalCode.IsDeleted = true;
             objGlobalCode.DeletedBy = Helpers.GetLoggedInUserId();
             objGlobalCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-            var id = globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-            //return PartialView(PartialViews.GlobalCodesList, globalCodeBal.GetAllGlobalCodes(string.Empty));
+            var id = _service.AddUpdateGlobalCodes(objGlobalCode);
+            //return PartialView(PartialViews.GlobalCodesList, _service.GetAllGlobalCodes(string.Empty));
             return Json(id);
         }
 
         public ActionResult GetGlobalCodesDropdownDataByExternalValue1(string globalCodeValue, string parentCategory)
         {
             var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeBal())
-            {
-                //var current = bal.GetGlobalCodeByCategoryAndCodeValue(parentCategory, globalCodeValue);
-                //int category;
-                //if (current != null && !string.IsNullOrEmpty(current.ExternalValue1) && int.TryParse(current.ExternalValue1, out category))
-                //{
-                //    var gcList = bal.GetListByCategoryId(current.ExternalValue1).OrderBy(x => x.GlobalCodeID).ToList();
-                //    if (gcList.Any())
-                //    {
-                //        list.AddRange(gcList.Select(item => new SelectListItem
-                //        {
-                //            Text = item.GlobalCodeName,
-                //            Value = item.GlobalCodeValue,
-                //        }));
-                //    }
-                //}
 
-                var gcList = bal.GetSubCategories2(globalCodeValue).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
+            var gcList = _service.GetSubCategories2(globalCodeValue).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
+            if (gcList.Any())
+            {
+                list.AddRange(gcList.Select(item => new SelectListItem
+                {
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeValue,
+                }));
+            }
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult GetDashboardSectionsData(string globalCodeValue, string parentCategory)
+        {
+            var list = new List<SelectListItem>();
+            var current = _service.GetGlobalCodeByCategoryAndCodeValue(parentCategory, globalCodeValue);
+            int category;
+            if (current != null && !string.IsNullOrEmpty(current.ExternalValue1) && int.TryParse(current.ExternalValue1, out category))
+            {
+                var gcList = _service.GetGlobalCodesByCategoryValue(current.ExternalValue1).OrderBy(x => x.GlobalCodeID).ToList();
                 if (gcList.Any())
                 {
                     list.AddRange(gcList.Select(item => new SelectListItem
@@ -236,33 +211,9 @@ namespace BillingSystem.Controllers
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult GetDashboardSectionsData(string globalCodeValue, string parentCategory)
-        {
-            var list = new List<SelectListItem>();
-            using (var bal = new GlobalCodeBal())
-            {
-                var current = bal.GetGlobalCodeByCategoryAndCodeValue(parentCategory, globalCodeValue);
-                int category;
-                if (current != null && !string.IsNullOrEmpty(current.ExternalValue1) && int.TryParse(current.ExternalValue1, out category))
-                {
-                    var gcList = bal.GetGlobalCodesByCategoryValue(current.ExternalValue1).OrderBy(x => x.GlobalCodeID).ToList();
-                    if (gcList.Any())
-                    {
-                        list.AddRange(gcList.Select(item => new SelectListItem
-                        {
-                            Text = item.GlobalCodeName,
-                            Value = item.GlobalCodeValue,
-                        }));
-                    }
-                }
-            }
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
-
         [HttpPost]
         public int AddOrderTypeCategory(GlobalCodes m)
         {
-            var globalCodeBal = new GlobalCodeBal();
             m.FacilityNumber = Convert.ToString(Helpers.GetDefaultFacilityId());
             if (m.GlobalCodeID > 0)
             {
@@ -276,7 +227,7 @@ namespace BillingSystem.Controllers
                 m.CreatedBy = Helpers.GetLoggedInUserId();
                 m.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            return globalCodeBal.AddUpdateGlobalCodes(m);
+            return _service.AddUpdateGlobalCodes(m);
         }
 
         #endregion
@@ -292,43 +243,36 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
 
             //Initialize the GlobalCode Bal
-            using (var globalCodeBal = new GlobalCodeBal())
+            var list = _service.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, 1, Helpers.DefaultRecordCount, false, true, facilityId: facilityId);
+
+            //var list = _service.Get
+            var globalCodeView = new GlobalCodeView
             {
-                var list = globalCodeBal.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, 1, Helpers.DefaultRecordCount, false, true, facilityId: facilityId);
+                CurrentGlobalCode = new GlobalCodes { IsActive = true },
+                CodesList = list,
+            };
 
-                //var list = globalCodeBal.Get
-                var globalCodeView = new GlobalCodeView
-                {
-                    CurrentGlobalCode = new GlobalCodes { IsActive = true },
-                    CodesList = list,
-                };
-
-                //Pass the View Model in ActionResult to View Facility
-                return View(globalCodeView);
-            }
+            //Pass the View Model in ActionResult to View Facility
+            return View(globalCodeView);
         }
 
         public JsonResult BindOrderTypeCategoriesListOnScroll(string gcc, int blockNumber)
         {
             var recordCount = Helpers.DefaultRecordCount;
             var facilityId = Helpers.GetDefaultFacilityId();
-            //Initialize the GlobalCode Bal
-            using (var bal = new GlobalCodeBal())
+            var list = !string.IsNullOrEmpty(gcc)
+                ? _service.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, false, true, facilityId: facilityId)
+                : _service.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, Convert.ToInt32(blockNumber),
+                    recordCount, false, true, facilityId: facilityId);
+
+            var jsonResult = new
             {
-                var list = !string.IsNullOrEmpty(gcc)
-                    ? bal.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, false, true, facilityId: facilityId)
-                    : bal.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, Convert.ToInt32(blockNumber),
-                        recordCount, false, true, facilityId: facilityId);
+                list,
+                NoMoreData = list.Count < recordCount,
+            };
 
-                var jsonResult = new
-                {
-                    list,
-                    NoMoreData = list.Count < recordCount,
-                };
-
-                //Pass the View Model in ActionResult to View Facility
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            //Pass the View Model in ActionResult to View Facility
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         //Function to get all GlobalCodes List
@@ -342,13 +286,10 @@ namespace BillingSystem.Controllers
             var recordCount = Helpers.DefaultRecordCount;
             var facilityId = Helpers.GetDefaultFacilityId();
 
-            using (var bal = new GlobalCodeBal())
-            {
-                var list = !string.IsNullOrEmpty(gcc)
-                    ? bal.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: facilityId)
-                    : bal.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: facilityId);
-                return PartialView(PartialViews.OrderSubCategoryList, list);
-            }
+            var list = !string.IsNullOrEmpty(gcc)
+                ? _service.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: facilityId)
+                : _service.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: facilityId);
+            return PartialView(PartialViews.OrderSubCategoryList, list);
         }
 
 
@@ -361,42 +302,36 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetOrderSubCategory(string id)
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var globalCode = bal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(id));
-                return PartialView(PartialViews.AddUpdateOrderSubCategory, globalCode);
-            }
+            var globalCode = _service.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(id));
+            return PartialView(PartialViews.AddUpdateOrderSubCategory, globalCode);
         }
 
         public ActionResult GetOrderSubCategoryDetail(string id)
         {
-            using (var bal = new GlobalCodeBal())
+            var globalCode = _service.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(id));
+            var jsonResult = new
             {
-                var globalCode = bal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(id));
-                var jsonResult = new
-                {
-                    globalCode.GlobalCodeID,
-                    globalCode.GlobalCodeName,
-                    globalCode.FacilityNumber,
-                    globalCode.GlobalCodeCategoryValue,
-                    globalCode.Description,
-                    globalCode.ExternalValue1,
-                    globalCode.ExternalValue2,
-                    globalCode.ExternalValue3,
-                    globalCode.ExternalValue4,
-                    globalCode.ExternalValue5,
-                    globalCode.ExternalValue6,
-                    globalCode.IsActive,
-                    globalCode.IsDeleted,
-                    globalCode.ModifiedBy,
-                    globalCode.ModifiedDate,
-                    globalCode.SortOrder,
-                    globalCode.DeletedDate,
-                    globalCode.DeletedBy,
-                    globalCode.GlobalCodeValue
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                globalCode.GlobalCodeID,
+                globalCode.GlobalCodeName,
+                globalCode.FacilityNumber,
+                globalCode.GlobalCodeCategoryValue,
+                globalCode.Description,
+                globalCode.ExternalValue1,
+                globalCode.ExternalValue2,
+                globalCode.ExternalValue3,
+                globalCode.ExternalValue4,
+                globalCode.ExternalValue5,
+                globalCode.ExternalValue6,
+                globalCode.IsActive,
+                globalCode.IsDeleted,
+                globalCode.ModifiedBy,
+                globalCode.ModifiedDate,
+                globalCode.SortOrder,
+                globalCode.DeletedDate,
+                globalCode.DeletedBy,
+                globalCode.GlobalCodeValue
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -408,19 +343,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteOrderSubCategory(string globalCodeId)
         {
-            using (var bal = new GlobalCodeBal())
+            var m = _service.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(globalCodeId));
+            if (m != null)
             {
-                var m = bal.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(globalCodeId));
-                if (m != null)
-                {
-                    m.IsDeleted = true;
-                    m.DeletedBy = Helpers.GetLoggedInUserId();
-                    m.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    AddUpdateGlobalCode(m);
-                    return Json(m.GlobalCodeID, JsonRequestBehavior.AllowGet);
-                }
-                return Json(null);
+                m.IsDeleted = true;
+                m.DeletedBy = Helpers.GetLoggedInUserId();
+                m.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                AddUpdateGlobalCode(m);
+                return Json(m.GlobalCodeID, JsonRequestBehavior.AllowGet);
             }
+            return Json(null);
         }
 
 
@@ -446,9 +378,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult CheckDuplicateSubCategory(string GlobalCodeName, int GlobalCodeId, string GlobalCodeCategoryValue)
         {
-            var globalCodeBal = new GlobalCodeBal();
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-            var isExist = globalCodeBal.CheckDuplicateGlobalCodeName(GlobalCodeName, GlobalCodeId, GlobalCodeCategoryValue, fn);
+            var isExist = _service.CheckDuplicateGlobalCodeName(GlobalCodeName, GlobalCodeId, GlobalCodeCategoryValue, fn);
             return Json(isExist, JsonRequestBehavior.AllowGet);
         }
 
@@ -456,11 +387,8 @@ namespace BillingSystem.Controllers
         public ActionResult GetOrderSubCategoriesByExternalValue(string startRange, string endRange)
         {
             var fn = Convert.ToString(Helpers.GetDefaultFacilityId());
-            using (var bal = new GlobalCodeCategoryBal())
-            {
-                var list = bal.GetGlobalCodeCategoriesByExternalValue(fn);
-                return Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategoriesByExternalValue(fn);
+            return Json(list);
         }
 
 
@@ -476,20 +404,17 @@ namespace BillingSystem.Controllers
         public ActionResult AllergyMaster()
         {
             //Initialize the GlobalCode Bal
-            using (var globalCodeBal = new GlobalCodeBal())
+            var list = _service.GetGlobalCodesByCategoriesRange(8101, 8999);
+
+            //var list = _service.Get
+            var globalCodeView = new GlobalCodeView
             {
-                var list = globalCodeBal.GetGlobalCodesByCategoriesRange(8101, 8999);
+                CurrentGlobalCode = new GlobalCodes { IsActive = true, GlobalCodeValue = "0" },
+                CodesList = list,
+            };
 
-                //var list = globalCodeBal.Get
-                var globalCodeView = new GlobalCodeView
-                {
-                    CurrentGlobalCode = new GlobalCodes { IsActive = true, GlobalCodeValue = "0" },
-                    CodesList = list,
-                };
-
-                //Pass the View Model in ActionResult to View Facility
-                return View(globalCodeView);
-            }
+            //Pass the View Model in ActionResult to View Facility
+            return View(globalCodeView);
         }
 
         //Delete global code
@@ -500,19 +425,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteAllergy(int globalCodeId)
         {
-            using (var bal = new GlobalCodeBal())
+            var gCode = _service.GetGlobalCodeByGlobalCodeId(globalCodeId);
+            if (gCode != null)
             {
-                var gCode = bal.GetGlobalCodeByGlobalCodeId(globalCodeId);
-                if (gCode != null)
-                {
-                    gCode.IsDeleted = true;
-                    gCode.DeletedBy = Helpers.GetLoggedInUserId();
-                    gCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    AddUpdateGlobalCode(gCode);
-                    return Json(gCode.GlobalCodeID);
-                }
-                return Json(null);
+                gCode.IsDeleted = true;
+                gCode.DeletedBy = Helpers.GetLoggedInUserId();
+                gCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                AddUpdateGlobalCode(gCode);
+                return Json(gCode.GlobalCodeID);
             }
+            return Json(null);
         }
 
 
@@ -522,11 +444,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindAllergyList()
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var list = bal.GetGlobalCodesByCategoriesRange(8101, 8999);
-                return PartialView(PartialViews.AllergyMasterListView, list);
-            }
+            var list = _service.GetGlobalCodesByCategoriesRange(8101, 8999);
+            return PartialView(PartialViews.AllergyMasterListView, list);
         }
 
         //Function to get  GlobalCode for editing
@@ -537,11 +456,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCurrentAllergy(int id)
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var globalCode = bal.GetGlobalCodeByGlobalCodeId(id);
-                return PartialView(PartialViews.AllergyMasterAddEdit, globalCode);
-            }
+            var globalCode = _service.GetGlobalCodeByGlobalCodeId(id);
+            return PartialView(PartialViews.AllergyMasterAddEdit, globalCode);
         }
 
         //Function To reset the User Form
@@ -561,24 +477,20 @@ namespace BillingSystem.Controllers
         #region Correction Codes View
         public ActionResult CorrectionCodesView()
         {
-            using (var bal = new GlobalCodeBal())
+            var globalCodeView = new GlobalCodeView
             {
-                var globalCodeView = new GlobalCodeView
-                {
-                    CurrentGlobalCode = new GlobalCodes { IsActive = true, IsDeleted = false },
-                    CodesList = bal.GetAllGlobalCodes("0101")
-                };
+                CurrentGlobalCode = new GlobalCodes { IsActive = true, IsDeleted = false },
+                CodesList = _service.GetAllGlobalCodes("0101")
+            };
 
-                //Pass the View Model in ActionResult to View Facility
-                return View(globalCodeView);
-            }
+            //Pass the View Model in ActionResult to View Facility
+            return View(globalCodeView);
         }
 
 
         [HttpPost]
         public ActionResult AddUpdateCorrectionCode(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -591,24 +503,21 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-            var list = globalCodeBal.GetAllGlobalCodes("0101");
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            var list = _service.GetAllGlobalCodes("0101");
             return PartialView(PartialViews.CorrectionCodesListView, list);
         }
 
         public ActionResult DeleteCorrectionCode(int globalCodeId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
-            {
-                var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
-                objGlobalCode.IsDeleted = true;
-                objGlobalCode.DeletedBy = Helpers.GetLoggedInUserId();
-                objGlobalCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
+            var objGlobalCode = _service.GetGlobalCodeByGlobalCodeId(globalCodeId);
+            objGlobalCode.IsDeleted = true;
+            objGlobalCode.DeletedBy = Helpers.GetLoggedInUserId();
+            objGlobalCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-                var list = globalCodeBal.GetAllGlobalCodes("0101");
-                return PartialView(PartialViews.CorrectionCodesListView, list);
-            }
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            var list = _service.GetAllGlobalCodes("0101");
+            return PartialView(PartialViews.CorrectionCodesListView, list);
         }
         #endregion
 
@@ -619,20 +528,17 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult FrequencyView()
         {
-            using (var bal = new GlobalCodeBal())
+            var categoryValue = Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString();
+            var mxGlobalCodeValue = Convert.ToInt32(_service.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
+            var globalCodeView = new GlobalCodeView
             {
-                var categoryValue = Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString();
-                var mxGlobalCodeValue = Convert.ToInt32(bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
-                var globalCodeView = new GlobalCodeView
-                {
-                    CurrentGlobalCode = new GlobalCodes { IsActive = true, IsDeleted = false, GlobalCodeValue = Convert.ToString(mxGlobalCodeValue), GlobalCodeID = 0 },
-                    CodesList = bal.GetAllGlobalCodes(categoryValue),
-                    MaxValue = Convert.ToString(mxGlobalCodeValue)
-                };
+                CurrentGlobalCode = new GlobalCodes { IsActive = true, IsDeleted = false, GlobalCodeValue = Convert.ToString(mxGlobalCodeValue), GlobalCodeID = 0 },
+                CodesList = _service.GetAllGlobalCodes(categoryValue),
+                MaxValue = Convert.ToString(mxGlobalCodeValue)
+            };
 
-                // Pass the View Model in ActionResult to View Facility
-                return View(globalCodeView);
-            }
+            // Pass the View Model in ActionResult to View Facility
+            return View(globalCodeView);
         }
 
 
@@ -644,7 +550,6 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateFrequency(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
             var userId = Helpers.GetLoggedInUserId();
             var currentDate = Helpers.GetInvariantCultureDateTime();
             if (objGlobalCode.GlobalCodeID > 0)
@@ -660,9 +565,9 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedDate = currentDate;
             }
 
-            globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-            globalCodeBal.CreateOrderActivitySchedulerTimming(objGlobalCode.GlobalCodeID);
-            var list = globalCodeBal.GetAllGlobalCodes(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString());
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            _service.CreateOrderActivitySchedulerTimming(objGlobalCode.GlobalCodeID);
+            var list = _service.GetAllGlobalCodes(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString());
             return PartialView(PartialViews.FrequencyListView, list);
         }
 
@@ -675,17 +580,14 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteFrequency(int globalCodeId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
-            {
-                var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
-                objGlobalCode.IsDeleted = true;
-                objGlobalCode.DeletedBy = Helpers.GetLoggedInUserId();
-                objGlobalCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
+            var objGlobalCode = _service.GetGlobalCodeByGlobalCodeId(globalCodeId);
+            objGlobalCode.IsDeleted = true;
+            objGlobalCode.DeletedBy = Helpers.GetLoggedInUserId();
+            objGlobalCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-                var list = globalCodeBal.GetAllGlobalCodes(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString());
-                return PartialView(PartialViews.FrequencyListView, list);
-            }
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            var list = _service.GetAllGlobalCodes(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString());
+            return PartialView(PartialViews.FrequencyListView, list);
         }
         #endregion
 
@@ -697,30 +599,27 @@ namespace BillingSystem.Controllers
                 maxValue = 5;
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                using (var bal = new GlobalCodeBal())
+                var mxGlobalCodeValue = Convert.ToInt32(_service.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
+                var categoryName = _service.GetGlobalCategoryNameById(categoryValue);
+                var globalCodeView = new GlobalCodeView
                 {
-                    var mxGlobalCodeValue = Convert.ToInt32(bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
-                    var categoryName = bal.GetGlobalCategoryNameById(categoryValue);
-                    var globalCodeView = new GlobalCodeView
-                    {
-                        CurrentGlobalCode =
-                            new GlobalCodes
-                            {
-                                IsActive = true,
-                                IsDeleted = false,
-                                GlobalCodeValue = Convert.ToString(mxGlobalCodeValue),
-                                GlobalCodeCategoryValue = categoryValue,
-                                ExternalValue6 = Convert.ToInt32(txt) > 0 ? "1" : string.Empty,
-                                ExternalValue5 = categoryName,
-                                ExternalValue1 = Convert.ToString(maxValue)
-                            },
-                        GlobalCategoryName = categoryName,
-                        CodesList = bal.GetAllGlobalCodes(categoryValue)
-                    };
+                    CurrentGlobalCode =
+                        new GlobalCodes
+                        {
+                            IsActive = true,
+                            IsDeleted = false,
+                            GlobalCodeValue = Convert.ToString(mxGlobalCodeValue),
+                            GlobalCodeCategoryValue = categoryValue,
+                            ExternalValue6 = Convert.ToInt32(txt) > 0 ? "1" : string.Empty,
+                            ExternalValue5 = categoryName,
+                            ExternalValue1 = Convert.ToString(maxValue)
+                        },
+                    GlobalCategoryName = categoryName,
+                    CodesList = _service.GetAllGlobalCodes(categoryValue)
+                };
 
-                    //Pass the View Model in ActionResult to View Facility
-                    return View("GenericView", globalCodeView);
-                }
+                //Pass the View Model in ActionResult to View Facility
+                return View("GenericView", globalCodeView);
             }
 
             //Pass the View Model in ActionResult to View Facility
@@ -730,7 +629,6 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateRecord(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
             var userId = Helpers.GetLoggedInUserId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
             if (objGlobalCode.GlobalCodeID > 0)
@@ -743,48 +641,39 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = userId;
                 objGlobalCode.CreatedDate = currentDateTime;
             }
-            globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-            var categoryName = globalCodeBal.GetGlobalCategoryNameById(objGlobalCode.GlobalCodeCategoryValue);
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            var categoryName = _service.GetGlobalCategoryNameById(objGlobalCode.GlobalCodeCategoryValue);
             var globalCodeView = new GlobalCodeView
             {
                 GlobalCategoryName = categoryName,
-                CodesList = globalCodeBal.GetAllGlobalCodes(objGlobalCode.GlobalCodeCategoryValue),
+                CodesList = _service.GetAllGlobalCodes(objGlobalCode.GlobalCodeCategoryValue),
             };
             return PartialView(PartialViews.GenericListView, globalCodeView);
         }
 
         public ActionResult DeleteRecord(int globalCodeId, string category)
         {
-            using (var bal = new GlobalCodeBal())
+            var list = _service.DeleteGlobalCodeById(globalCodeId, category);
+            var categoryName = _service.GetGlobalCategoryNameById(category);
+            var globalCodeView = new GlobalCodeView
             {
-                var list = bal.DeleteGlobalCodeById(globalCodeId, category);
-                var categoryName = bal.GetGlobalCategoryNameById(category);
-                var globalCodeView = new GlobalCodeView
-                {
-                    GlobalCategoryName = categoryName,
-                    CodesList = list,
-                };
-                return PartialView(PartialViews.GenericListView, globalCodeView);
-            }
+                GlobalCategoryName = categoryName,
+                CodesList = list,
+            };
+            return PartialView(PartialViews.GenericListView, globalCodeView);
         }
 
 
         public ActionResult SetMaxGlobalCodeValue(string category)
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var maxValue = bal.GetMaxGlobalCodeValueByCategory(category);
-                return Json(maxValue + 1);
-            }
+            var maxValue = _service.GetMaxGlobalCodeValueByCategory(category);
+            return Json(maxValue + 1);
         }
 
         public ActionResult ShowDeletedRecords(string category, bool showDeleted)
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var list = bal.ShowDeletedRecordsByCategoryValue(category, showDeleted);
-                return PartialView(PartialViews.GenericListView, list);
-            }
+            var list = _service.ShowDeletedRecordsByCategoryValue(category, showDeleted);
+            return PartialView(PartialViews.GenericListView, list);
         }
 
         public JsonResult SearchGlobalCodeCategories(string typeId, string text)
@@ -793,8 +682,7 @@ namespace BillingSystem.Controllers
             {
                 text = text.ToLower().Trim();
                 List<GlobalCodeCategory> list;
-                using (var bal = new GlobalCodeCategoryBal())
-                    list = bal.GetSearchedCategories(text, typeId);
+                list = _gcService.GetSearchedCategories(text, typeId);
 
                 if (list.Count > 0)
                 {
@@ -811,26 +699,20 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetRecordsByCategoryValue(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
-            {
-                var list = bal.GetGCodesListByCategoryValue(categoryValue);
-                return PartialView(PartialViews.LabTestCodesListView, list);
-            }
+            var list = _service.GetGCodesListByCategoryValue(categoryValue);
+            return PartialView(PartialViews.LabTestCodesListView, list);
         }
 
         public ActionResult ShowInActiveRecords(string category, bool showInActive)
         {
-            using (var bal = new GlobalCodeBal())
+            var list = _service.ShowInActiveRecordsByCategoryValue(category, showInActive);
+            var categoryName = _service.GetGlobalCategoryNameById(category);
+            var globalCodeView = new GlobalCodeView
             {
-                var list = bal.ShowInActiveRecordsByCategoryValue(category, showInActive);
-                var categoryName = bal.GetGlobalCategoryNameById(category);
-                var globalCodeView = new GlobalCodeView
-                {
-                    GlobalCategoryName = categoryName,
-                    CodesList = list,
-                };
-                return PartialView(PartialViews.GenericListView, globalCodeView);
-            }
+                GlobalCategoryName = categoryName,
+                CodesList = list,
+            };
+            return PartialView(PartialViews.GenericListView, globalCodeView);
         }
 
         #endregion
@@ -840,11 +722,10 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                using (var bal = new GlobalCodeBal())
+                //using (var _service = new GlobalCodeService())
                 {
-                    var mxGlobalCodeValue = Convert.ToInt32(bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
-                    var gccBal = new GlobalCodeCategoryBal();
-                    var gcc = gccBal.GetGlobalCodeCategoryByValue(categoryValue);
+                    var mxGlobalCodeValue = Convert.ToInt32(_service.GetMaxGlobalCodeValueByCategory(categoryValue) + 1);
+                    var gcc = _gcService.GetGlobalCodeCategoryByValue(categoryValue);
                     var globalCodeView = new GlobalCodeView
                     {
                         CurrentGlobalCode =
@@ -859,7 +740,7 @@ namespace BillingSystem.Controllers
                         GlobalCodeCategoryParentValue = gcc.GlobalCodeCategoryValue,
                         WithExternalValues = Convert.ToBoolean(external),
                         WithCategoryDropdown = Convert.ToBoolean(dropdown),
-                        CodesList = bal.GetAllGlobalCodes(categoryValue),
+                        CodesList = _service.GetAllGlobalCodes(categoryValue),
                         ExternalValueLabelsList = GetExternalValuesList(categoryValue),
                         ShowDescription = false,
                     };
@@ -874,7 +755,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateRecordGenericExternal(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            ////var _service = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -887,8 +768,8 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-            var list = globalCodeBal.GetAllGlobalCodes(objGlobalCode.GlobalCodeCategoryValue);
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            var list = _service.GetAllGlobalCodes(objGlobalCode.GlobalCodeCategoryValue);
             var view = new GlobalCodeView
             {
                 CodesList = list,
@@ -900,9 +781,9 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteRecordGenericExternal(int globalCodeId, string category)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var list = bal.DeleteGlobalCodeById(globalCodeId, category);
+                var list = _service.DeleteGlobalCodeById(globalCodeId, category);
                 var view = new GlobalCodeView
                 {
                     CodesList = list,
@@ -914,9 +795,9 @@ namespace BillingSystem.Controllers
 
         public ActionResult ShowInActiveRecordsInExternalView(string category, bool showInActive)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var list = bal.ShowInActiveRecordsByCategoryValue(category, showInActive);
+                var list = _service.ShowInActiveRecordsByCategoryValue(category, showInActive);
                 var view = new GlobalCodeView
                 {
                     CodesList = list,
@@ -931,7 +812,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateLabTestCode(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            ////var _service = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -944,16 +825,16 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-            var list = globalCodeBal.GetGCodesListByCategoryValue(objGlobalCode.GlobalCodeCategoryValue);
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            var list = _service.GetGCodesListByCategoryValue(objGlobalCode.GlobalCodeCategoryValue);
             return PartialView(PartialViews.LabTestCodesListView, list);
         }
 
         public ActionResult DeleteLabTestCode(int globalCodeId, string category)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var list = bal.DeleteRecordAndGetGlobalCodesList(globalCodeId, category);
+                var list = _service.DeleteRecordAndGetGlobalCodesList(globalCodeId, category);
                 return PartialView(PartialViews.LabTestCodesListView, list);
             }
         }
@@ -961,7 +842,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult AddUpdateLabTestCodeCustom(List<GlobalCodeSaveModel> objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            ////var _service = new GlobalCodeService();
             foreach (var globalCodeSaveModel in objGlobalCode)
             {
                 var categoryType = objGlobalCode.FirstOrDefault();
@@ -998,9 +879,9 @@ namespace BillingSystem.Controllers
                     globalCodeObj.CreatedBy = Helpers.GetLoggedInUserId();
                     globalCodeObj.CreatedDate = Helpers.GetInvariantCultureDateTime();
                 }
-                globalCodeBal.AddUpdateGlobalCodes(globalCodeObj);
+                _service.AddUpdateGlobalCodes(globalCodeObj);
             }
-            //var list = globalCodeBal.GetGCodesListByCategoryValue(objGlobalCode.GlobalCodeCategoryValue);
+            //var list = _service.GetGCodesListByCategoryValue(objGlobalCode.GlobalCodeCategoryValue);
             return PartialView(PartialViews.LabTestCodesListView, null);
         }
 
@@ -1017,16 +898,16 @@ namespace BillingSystem.Controllers
             }
             else
             {
-                using (var bal = new GlobalCodeBal())
+                //using (var _service = new GlobalCodeService())
                 {
                     var gcCategory = (GlobalCodeCategoryValue)Enum.Parse(typeof(GlobalCodeCategoryValue), category);
                     switch (gcCategory)
                     {
                         case GlobalCodeCategoryValue.McManagedCareCode:
-                            list = bal.GetGlobalCodesLabelsListByCategoryValue("100");
+                            list = _service.GetGlobalCodesLabelsListByCategoryValue("100");
                             break;
                         case GlobalCodeCategoryValue.CodeTypes:
-                            list = bal.GetGlobalCodesLabelsListByCategoryValue("99");
+                            list = _service.GetGlobalCodesLabelsListByCategoryValue("99");
                             break;
                         default:
                             list.Add("Name");
@@ -1048,13 +929,13 @@ namespace BillingSystem.Controllers
 
         public ActionResult VitalsView()
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.Vitals));
                 var viewData = new GlobalCodeView
                 {
                     CurrentGlobalCode = new GlobalCodes { IsActive = true },
-                    CodesList = bal.GetAllGlobalCodes(gcCategoryValue)
+                    CodesList = _service.GetAllGlobalCodes(gcCategoryValue)
                 };
                 return View(viewData);
             }
@@ -1070,8 +951,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult CheckDuplicateVital(int id, string categoryValue, string value, string unitOfMeasure)
         {
-            var globalCodeBal = new GlobalCodeBal();
-            var isExist = globalCodeBal.CheckDuplicateVital(id, categoryValue, value, unitOfMeasure);
+            ////var _service = new GlobalCodeService();
+            var isExist = _service.CheckDuplicateVital(id, categoryValue, value, unitOfMeasure);
             return Json(isExist);
         }
 
@@ -1083,7 +964,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult SaveVitals(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            ////var _service = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -1096,9 +977,9 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
+            _service.AddUpdateGlobalCodes(objGlobalCode);
             var gcCategoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.Vitals));
-            var list = globalCodeBal.GetAllGlobalCodes(gcCategoryValue);
+            var list = _service.GetAllGlobalCodes(gcCategoryValue);
             return PartialView(PartialViews.VitalsListView, list);
         }
 
@@ -1124,9 +1005,9 @@ namespace BillingSystem.Controllers
                 GlobalCodeValue = string.Empty,
                 GlobalCodeID = 0
             };
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var current = bal.GetGlobalCodeByFacilityAndCategoryForSecurityparameter(categoryValue, facilityNumber);
+                var current = _service.GetGlobalCodeByFacilityAndCategoryForSecurityparameter(categoryValue, facilityNumber);
                 if (current != null)
                     viewData = current;
             }
@@ -1141,13 +1022,13 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult SaveSecurityParameters(GlobalCodes objGlobalCode)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            ////var _service = new GlobalCodeService();
             var userId = Helpers.GetLoggedInUserId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
             if (string.IsNullOrEmpty(objGlobalCode.GlobalCodeValue))
             {
-                var maxValue = globalCodeBal.GetMaxGlobalCodeValueByCategory(objGlobalCode.GlobalCodeCategoryValue, objGlobalCode.FacilityNumber);
+                var maxValue = _service.GetMaxGlobalCodeValueByCategory(objGlobalCode.GlobalCodeCategoryValue, objGlobalCode.FacilityNumber);
                 maxValue = maxValue == 0 ? 1 : maxValue + 1;
                 objGlobalCode.GlobalCodeValue = Convert.ToString(maxValue);
             }
@@ -1164,7 +1045,7 @@ namespace BillingSystem.Controllers
                 objGlobalCode.CreatedBy = userId;
                 objGlobalCode.CreatedDate = currentDateTime;
             }
-            var id = globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
+            var id = _service.AddUpdateGlobalCodes(objGlobalCode);
             return Json(id, JsonRequestBehavior.AllowGet);
         }
 
@@ -1177,12 +1058,12 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetDetailsByFacilityNumber(string category, string facilityNumber)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
                 var categoryValue = !string.IsNullOrEmpty(category) ? category : "2121";
-                var maxValue = bal.GetMaxGlobalCodeValueByCategory(categoryValue, facilityNumber);
+                var maxValue = _service.GetMaxGlobalCodeValueByCategory(categoryValue, facilityNumber);
                 maxValue = maxValue == 0 ? 1 : maxValue + 1;
-                var retObj = bal.GetGlobalCodeByFacilityAndCategoryForSecurityparameter(categoryValue, facilityNumber);
+                var retObj = _service.GetGlobalCodeByFacilityAndCategoryForSecurityparameter(categoryValue, facilityNumber);
 
                 var objGlobalCode = retObj ??
                                     new GlobalCodes
@@ -1200,9 +1081,7 @@ namespace BillingSystem.Controllers
         {
             var cId = Helpers.GetDefaultCorporateId();
             var facilityNumber = Helpers.GetDefaultFacilityNumber();
-            using (var facBal = new FacilityBal())
-            {
-                var facilities = facBal.GetFacilities(cId);
+                var facilities = _fService.GetFacilities(cId);
                 if (facilities.Count > 0)
                 {
                     var list = new List<SelectListItem>();
@@ -1229,7 +1108,6 @@ namespace BillingSystem.Controllers
                     }
                     return Json(list, JsonRequestBehavior.AllowGet);
                 }
-            }
             return Json(null);
         }
         #endregion
@@ -1244,9 +1122,9 @@ namespace BillingSystem.Controllers
         {
             var facilityNumber = Helpers.GetDefaultFacilityNumber();
 
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var maxValue = bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
+                var maxValue = _service.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
                 var viewData = new GlobalCodeView
                 {
                     CurrentGlobalCode = new GlobalCodes
@@ -1259,7 +1137,7 @@ namespace BillingSystem.Controllers
                         SortOrder = maxValue,
                         GlobalCodeID = 0
                     },
-                    CodesList = bal.GetSubCategoriesList(categoryValue)
+                    CodesList = _service.GetSubCategoriesList(categoryValue)
                 };
 
                 return View(viewData);
@@ -1274,13 +1152,13 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult SaveSubCategory(GlobalCodes model)
         {
-            var globalCodeBal = new GlobalCodeBal();
+            ////var _service = new GlobalCodeService();
             var userId = Helpers.GetLoggedInUserId();
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
 
             if (string.IsNullOrEmpty(model.GlobalCodeValue) || model.GlobalCodeID == 0)
             {
-                var maxValue = globalCodeBal.GetMaxGlobalCodeValueByCategory(model.GlobalCodeCategoryValue, model.FacilityNumber);
+                var maxValue = _service.GetMaxGlobalCodeValueByCategory(model.GlobalCodeCategoryValue, model.FacilityNumber);
                 maxValue = maxValue == 0 ? 1 : maxValue + 1;
                 model.GlobalCodeValue = Convert.ToString(maxValue);
             }
@@ -1304,32 +1182,32 @@ namespace BillingSystem.Controllers
                 model.CreatedDate = currentDateTime;
             }
 
-            globalCodeBal.AddUpdateGlobalCodes(model);
-            var list = globalCodeBal.GetSubCategoriesList(model.GlobalCodeCategoryValue);
+            _service.AddUpdateGlobalCodes(model);
+            var list = _service.GetSubCategoriesList(model.GlobalCodeCategoryValue);
             return PartialView(PartialViews.DashboardSubCategoriesList, list);
         }
 
         public ActionResult RebindList(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var list = bal.GetSubCategoriesList(categoryValue);
+                var list = _service.GetSubCategoriesList(categoryValue);
                 return PartialView(PartialViews.DashboardSubCategoriesList, list);
             }
         }
         public ActionResult RebindListBySubCategory1Value(string categoryValue, string selectedValue)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var list = bal.GetSubCategoriesListBySubCategory1Value(categoryValue, selectedValue);
+                var list = _service.GetSubCategoriesListBySubCategory1Value(categoryValue, selectedValue);
                 return PartialView(PartialViews.DashboardSubCategoriesList, list);
             }
         }
         public ActionResult ChangeSubCategory(string categoryValue)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var maxNumber = bal.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
+                var maxNumber = _service.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
                 return Json(maxNumber, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1341,9 +1219,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetSubCategoryDetails(int id)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var result = bal.GetGlobalCodeCustomById(id);
+                var result = _service.GetGlobalCodeCustomById(id);
                 var jsonResult = new
                 {
                     Id = result.GlobalCodes.GlobalCodeID,
@@ -1393,19 +1271,19 @@ namespace BillingSystem.Controllers
 
         public ActionResult IndicatorSettings()
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
                 var corporateId = Helpers.GetSysAdminCorporateID();
-                var model = bal.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
+                var model = _service.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
                 return View(model);
             }
         }
 
         public ActionResult GetIndicatorSettings(string corporateId)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var result = bal.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
+                var result = _service.GetIndicatorSettingsByCorporateId(Convert.ToString(corporateId));
                 return Json(result, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1419,18 +1297,18 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult ActiveInActive(bool showInActive)
         {
-            var globalCodeBal = new GlobalCodeBal();
-            var list = globalCodeBal.GetActiveInActiveRecord(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString(), showInActive);
+            ////var _service = new GlobalCodeService();
+            var list = _service.GetActiveInActiveRecord(Convert.ToInt32(GlobalCodeCategoryValue.OrderFrequencyType).ToString(), showInActive);
             return PartialView(PartialViews.FrequencyListView, list);
         }
 
 
         public ActionResult ActiveInActiveVital(bool showInActive)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.Vitals));
-                var list = globalCodeBal.GetActiveInActiveRecord(gcCategoryValue, showInActive);
+                var list = _service.GetActiveInActiveRecord(gcCategoryValue, showInActive);
                 return PartialView(PartialViews.VitalsListView, list);
             }
 
@@ -1438,10 +1316,10 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetGenericTypeData(string category)
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var list = bal.GetAllGlobalCodes(category);
-                var categoryName = bal.GetGlobalCategoryNameById(category);
+                var list = _service.GetAllGlobalCodes(category);
+                var categoryName = _service.GetGlobalCategoryNameById(category);
                 var globalCodeView = new GlobalCodeView
                 {
                     GlobalCategoryName = categoryName,
@@ -1456,20 +1334,20 @@ namespace BillingSystem.Controllers
         {
             var recordCount = Helpers.DefaultRecordCount;
             var fn = Helpers.GetDefaultFacilityId();
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
                 var list = !string.IsNullOrEmpty(gcc)
-                    ? bal.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: fn)
-                    : bal.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: fn);
+                    ? _service.GetGlobalCodesByCategoriesRangeOnDemand(gcc, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: fn)
+                    : _service.GetGlobalCodesByCategoriesRangeOnDemand(11000, 11999, Convert.ToInt32(blockNumber), recordCount, true, showInActive, facilityId: fn);
                 return PartialView(PartialViews.OrderSubCategoryList, list);
             }
         }
 
         public ActionResult GetDepartmentTypeList(string categoryId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var list = globalCodeBal.GetAllGlobalCodes(categoryId);
+                var list = _service.GetAllGlobalCodes(categoryId);
                 var view = new GlobalCodeView
                 {
                     CodesList = list,
@@ -1486,13 +1364,13 @@ namespace BillingSystem.Controllers
         #region Licence Type
         public ActionResult LicenceType()
         {
-            using (var bal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString(Convert.ToInt32(GlobalCodeCategoryValue.LicenceType));
                 var viewData = new GlobalCodeView
                 {
                     CurrentGlobalCode = new GlobalCodes { IsActive = true },
-                    CodesList = bal.GetAllGlobalCodes(gcCategoryValue)
+                    CodesList = _service.GetAllGlobalCodes(gcCategoryValue)
                 };
                 return View(viewData);
             }
@@ -1501,7 +1379,7 @@ namespace BillingSystem.Controllers
         public ActionResult SaveLicenceType(GlobalCodes objGlobalCode)
         {
             var gcCategoryValue = Convert.ToString((int)GlobalCodeCategoryValue.LicenceType);
-            var globalCodeBal = new GlobalCodeBal();
+            ////var _service = new GlobalCodeService();
             if (objGlobalCode.GlobalCodeID > 0)
             {
                 objGlobalCode.ModifiedBy = Helpers.GetLoggedInUserId();
@@ -1509,14 +1387,14 @@ namespace BillingSystem.Controllers
             }
             else
             {
-                var maxId = globalCodeBal.GetMaxGlobalCodeValueByCategory(gcCategoryValue);
+                var maxId = _service.GetMaxGlobalCodeValueByCategory(gcCategoryValue);
                 objGlobalCode.GlobalCodeValue = Convert.ToString(maxId + 1);
                 objGlobalCode.CreatedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
 
-            globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-            var list = globalCodeBal.GetAllGlobalCodes(gcCategoryValue);
+            _service.AddUpdateGlobalCodes(objGlobalCode);
+            var list = _service.GetAllGlobalCodes(gcCategoryValue);
             return PartialView(PartialViews.LicenceTypeListView, list);
         }
 
@@ -1541,25 +1419,25 @@ namespace BillingSystem.Controllers
 
         public ActionResult DeleteLicenceType(int globalCodeId)
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
-                var objGlobalCode = globalCodeBal.GetGlobalCodeByGlobalCodeId(globalCodeId);
+                var objGlobalCode = _service.GetGlobalCodeByGlobalCodeId(globalCodeId);
                 objGlobalCode.IsDeleted = true;
                 objGlobalCode.DeletedBy = Helpers.GetLoggedInUserId();
                 objGlobalCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                globalCodeBal.AddUpdateGlobalCodes(objGlobalCode);
-                var list = globalCodeBal.GetAllGlobalCodes(Convert.ToString((int)GlobalCodeCategoryValue.LicenceType));
+                _service.AddUpdateGlobalCodes(objGlobalCode);
+                var list = _service.GetAllGlobalCodes(Convert.ToString((int)GlobalCodeCategoryValue.LicenceType));
                 return PartialView(PartialViews.LicenceTypeListView, list);
             }
         }
 
         public ActionResult GetLicenseTypeData()
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            //using (var _service = new GlobalCodeService())
             {
                 var gcCategoryValue = Convert.ToString((int)GlobalCodeCategoryValue.LicenceType);
-                var list = globalCodeBal.GetAllGlobalCodes(gcCategoryValue);
+                var list = _service.GetAllGlobalCodes(gcCategoryValue);
                 return PartialView(PartialViews.LicenceTypeListView, list);
 
             }
