@@ -4,10 +4,23 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BillingSystem.Model.CustomModel
 {
     [NotMapped]
-    public class DashboardTransactionCounterCustomModel : DashboardTransactionCounter
+    public class DashboardTransactionCounterCustomModel
     {
+        public int CounterId { get; set; }
+        public int? StatisticDescription { get; set; }
+        public DateTime? ActivityDay { get; set; }
+        public decimal? ActivityTotal { get; set; }
+        public decimal? DepartmentNumber { get; set; }
+        public int CorporateId { get; set; }
+        public int FacilityId { get; set; }
+        public int? CreatedBy { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public int? ModifiedBy { get; set; }
+        public DateTime? ModifiedDate { get; set; }
+        public bool? IsActive { get; set; }
         public string DashboardStatDescstring { get; set; }
     }
+
     [NotMapped]
     public class ChargesReportCustomModel
     {

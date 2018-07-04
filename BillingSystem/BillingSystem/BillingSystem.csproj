@@ -353,6 +353,9 @@
     <Compile Include="Common\WebClientWrapper.cs" />
     <Compile Include="Common\WebRequestWrapper.cs" />
     <Compile Include="Controllers\ActiveEncounterController.cs" />
+    <Compile Include="Controllers\CatalogController.cs" />
+    <Compile Include="Controllers\TechnicalSpecificationsController.cs" />
+    <Compile Include="Controllers\CategoriesController.cs" />
     <Compile Include="Controllers\AppointmentTypesController.cs" />
     <Compile Include="Controllers\AssignWorkQueueController.cs" />
     <Compile Include="Controllers\ATCCodesController.cs" />
@@ -528,6 +531,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>JornalEntryAccDataSet.xsd</DependentUpon>
     </Compile>
+    <Compile Include="Models\CatalogView.cs" />
+    <Compile Include="Models\TechnicalSpecificationsView.cs" />
+    <Compile Include="Models\CategoriesView.cs" />
     <Compile Include="Models\ClinicianAppointmentTypesView.cs" />
     <Compile Include="Models\ActiveEncounter.cs" />
     <Compile Include="Models\ActiveEncounterCustomView.cs" />
@@ -2273,6 +2279,8 @@
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-zh_TW.js" />
     <Content Include="Scripts\ActiveEncounter\ActiveEncounter.js" />
     <Content Include="Scripts\ActiveEncounter\UnclosedEncounters.js" />
+    <Content Include="Scripts\TechnicalSpecifications\TechnicalSpecificationsScript.js" />
+    <Content Include="Scripts\Categories\CategoriesScript.js" />
     <Content Include="Scripts\AppointmentTypes\AppointmentTypesScript.js" />
     <Content Include="Scripts\AssignWorkQueue\AssignWorkQueue.js" />
     <Content Include="Scripts\ATCCodes\ATCCodesScript.js" />
@@ -3032,6 +3040,8 @@
     <Content Include="SQL Scripts\Release 5.1\5 - Update PROC SprocGetPatientSummaryTabData 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.1\6 - Update PROC SprocGetPatientInfoView 27 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\1 - Update PROC SprocGetDashboardDisplayOrders 27 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\4 - new PROC SprocGetTechnicalSpecifications 28 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.20\3 - new PROC SprocGetCategories 28 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\10 - New PROC SprocDashboardTargets 28 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\11 - New PROC SprocAuthenticateUser 02 July 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\2 - new PROC SprocGetDashboardIndicatorData 27 June 2018.sql" />
@@ -3275,6 +3285,12 @@
     <Content Include="Views\BillingModifier\index.cshtml" />
     <Content Include="Views\PlaceOfService\index.cshtml" />
     <Content Include="Views\ActiveEncounter\UserControls\_AdministerOrdersinEncounter.cshtml" />
+    <Content Include="Views\Categories\CategoriesMain.cshtml" />
+    <Content Include="Views\Categories\UserControls\_CategoriesAddEdit.cshtml" />
+    <Content Include="Views\Categories\UserControls\_CategoriesList.cshtml" />
+    <Content Include="Views\TechnicalSpecifications\TechnicalSpecificationsMain.cshtml" />
+    <Content Include="Views\TechnicalSpecifications\UserControls\_TechnicalSpecificationsAddEdit.cshtml" />
+    <Content Include="Views\TechnicalSpecifications\UserControls\_TechnicalSpecificationsList.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

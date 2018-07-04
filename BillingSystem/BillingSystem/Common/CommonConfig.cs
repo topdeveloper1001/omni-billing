@@ -202,6 +202,30 @@ namespace BillingSystem.Common
             "{0}/_AppointmentTypesAddEdit",
             CommonConfig.UserControlPath);
 
+        public static readonly string CategoriesList = string.Format(
+            "{0}/_CategoriesList",
+            CommonConfig.UserControlPath);
+
+        public static readonly string CategoriesAddEdit = string.Format(
+            "{0}/_CategoriesAddEdit",
+            CommonConfig.UserControlPath);
+
+        public static readonly string TechnicalSpecificationsList = string.Format(
+            "{0}/_TechnicalSpecificationsList",
+            CommonConfig.UserControlPath);
+
+        public static readonly string TechnicalSpecificationsAddEdit = string.Format(
+            "{0}/_TechnicalSpecificationsAddEdit",
+            CommonConfig.UserControlPath);
+
+        public static readonly string CatalogList = string.Format(
+            "{0}/_CatalogList",
+            CommonConfig.UserControlPath);
+
+        public static readonly string CatalogAddEdit = string.Format(
+            "{0}/_CatalogAddEdit",
+            CommonConfig.UserControlPath);
+
         public static readonly string FacilityDepartmentListView = string.Format(
            "{0}/_FacilityDepartmentListView",
            CommonConfig.UserControlPath);

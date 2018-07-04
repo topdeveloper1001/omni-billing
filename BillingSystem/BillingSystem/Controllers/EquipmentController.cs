@@ -6,6 +6,7 @@ using BillingSystem.Model;
 using System;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Bal.Interfaces;
+using System.Collections.Generic;
 
 namespace BillingSystem.Controllers
 {
@@ -81,6 +82,30 @@ namespace BillingSystem.Controllers
             //Pass the ActionResult with List of FacilityViewModel object to Partial View FacilityList
             return PartialView(PartialViews.EquipmentList, equipmentList);
 
+        }
+
+        /// <summary>
+        /// Bind all the equipment list for dropdown list
+        /// </summary>
+        /// <returns>
+        /// action result with the partial view containing the facility list object
+        /// </returns>
+        [HttpPost]
+        public ActionResult BindEquipmentListForDropDown(string facilityId)
+        {
+            var eqDropDownList = new List<DropdownListData>();
+            var equipmentList = _service.GetEquipmentList(false, facilityId);
+
+            if (equipmentList.Count > 0)
+            {
+                eqDropDownList.AddRange(equipmentList.Select(item => new DropdownListData
+                {
+                    Text = item.EquipmentName,
+                    Value = Convert.ToString(item.EquipmentMasterId),
+                }));
+            }
+
+            return Json(eqDropDownList);
         }
 
         public ActionResult BindDisabledRecords(bool showIsDisabled, string facilityId)

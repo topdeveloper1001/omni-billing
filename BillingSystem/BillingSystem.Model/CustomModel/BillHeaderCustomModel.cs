@@ -1,16 +1,53 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.UI.WebControls;
 
 namespace BillingSystem.Model.CustomModel
 {
     [NotMapped]
-    public class BillHeaderCustomModel : BillHeader
+    public class BillHeaderCustomModel
     {
+        public int BillHeaderID { get; set; }
+        public int? EncounterID { get; set; }
+        public string BillNumber { get; set; }
+        public int? PatientID { get; set; }
+        public int? FacilityID { get; set; }
+        public string PayerID { get; set; }
+        public string MemberID { get; set; }
+        public decimal? Gross { get; set; }
+        public decimal? PatientShare { get; set; }
+        public decimal? PayerShareNet { get; set; }
+        public DateTime? BillDate { get; set; }
+        public string Status { get; set; }
+        public string DenialCode { get; set; }
+        public string PaymentReference { get; set; }
+        public DateTime? DateSettlement { get; set; }
+        public decimal? PaymentAmount { get; set; }
+        public string PatientPayReference { get; set; }
+        public DateTime? PatientDateSettlement { get; set; }
+        public decimal? PatientPayAmount { get; set; }
+        public long? ClaimID { get; set; }
+        public long? FileID { get; set; }
+        public long? ARFileID { get; set; }
+        public int? CreatedBy { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public int? ModifiedBy { get; set; }
+        public DateTime? ModifiedDate { get; set; }
+        public bool? IsDeleted { get; set; }
+        public int? DeletedBy { get; set; }
+        public DateTime? DeletedDate { get; set; }
+        public int? CorporateID { get; set; }
+        public DateTime? DueDate { get; set; }
+        public int? AuthID { get; set; }
+        public string AuthCode { get; set; }
+        public int? MCID { get; set; }
+        public decimal? MCMultiplier { get; set; }
+        public decimal? MCPatientShare { get; set; }
+        public bool? EncounterSelfPayFlag { get; set; }
+
+        public decimal? MCDiscount { get; set; }
+
+        public decimal? ActivityCost { get; set; }
+
         public string FacilityName { get; set; }
         public string CorporateName { get; set; }
         public string EncounterNumber { get; set; }
@@ -36,6 +73,7 @@ namespace BillingSystem.Model.CustomModel
         public int? ClaimFileId { get; set; }
         public int? RemittanceFileid { get; set; }
     }
+
     [NotMapped]
     public class BillHeaderXMLModel
     {

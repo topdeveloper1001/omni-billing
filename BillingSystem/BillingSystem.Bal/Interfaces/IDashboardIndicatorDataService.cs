@@ -17,7 +17,7 @@ namespace BillingSystem.Bal.Interfaces
         List<DashboardIndicatorDataCustomModel> SaveDashboardIndicatorData(DashboardIndicatorData model);
         int SaveDashboardIndicatorDataCustom(DashboardIndicatorData model);
         bool SetStaticBudgetTarget(DashboardIndicatorData model);
-        bool SetStaticBudgetTargetIndciators(DashboardIndicators model);
+        bool SetStaticBudgetTargetIndciators(DashboardIndicatorsCustomModel vm);
         bool UpdateCalculateIndicatorUpdate(DashboardIndicators model);
         bool UpdateDashBoardIndicatorDataStatus(int corporateid, int facilityId, string indicatorNumber, string budgetType, string year, bool status, string type, string subCategory1, string subCategory2);
         bool UpdateIndicatorsDataInManualDashboard(DashboardIndicatorData model);

@@ -60,7 +60,7 @@ namespace BillingSystem.Controllers
         /// <returns>
         /// returns the newly added or updated ID of DashboardIndicators row
         /// </returns>
-        public ActionResult SaveDashboardIndicators(DashboardIndicators model)
+        public ActionResult SaveDashboardIndicators(DashboardIndicatorsCustomModel model)
         {
             var userId = Helpers.GetLoggedInUserId();
             var currentDate = Helpers.GetInvariantCultureDateTime();

@@ -174,7 +174,7 @@ namespace BillingSystem.Model.CustomModel
         /// <value>
         /// The parent identifier.
         /// </value>
-        public Nullable<int> ParentId { get; set; }
+        public int? ParentId { get; set; }
         
         /// <summary>
         /// Gets or sets the facility identifier.
@@ -190,7 +190,7 @@ namespace BillingSystem.Model.CustomModel
         /// <value>
         /// The sort order.
         /// </value>
-        public Nullable<int> SortOrder { get; set; }
+        public int? SortOrder { get; set; }
         
         /// <summary>
         /// Gets or sets a value indicating whether this instance is active.

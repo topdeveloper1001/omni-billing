@@ -12,7 +12,7 @@ using BillingSystem.Common.Interfaces;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common.Common;
 
-namespace BillingSystem.Repository
+namespace BillingSystem.Bal
 {
     public class Repository<T> : IRepository<T> where T : class
     {

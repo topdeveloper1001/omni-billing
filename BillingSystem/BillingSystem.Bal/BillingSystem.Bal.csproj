@@ -85,6 +85,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessAccess\CatalogService.cs" />
+    <Compile Include="BusinessAccess\TechnicalSpecificationsService.cs" />
+    <Compile Include="BusinessAccess\CategoriesService.cs" />
     <Compile Include="BusinessAccess\BillingModifierService.cs" />
     <Compile Include="BusinessAccess\ClinicianAppointmentTypesService.cs" />
     <Compile Include="BusinessAccess\ClinicianRosterService.cs" />
@@ -124,6 +127,8 @@
     <Compile Include="BusinessAccess\HCPCSCodesService.cs" />
     <Compile Include="BusinessAccess\HolidayPlannerDetailsService.cs" />
     <Compile Include="BusinessAccess\HolidayPlannerService.cs" />
+    <Compile Include="Interfaces\ICatalogService.cs" />
+    <Compile Include="Interfaces\ICategoriesService.cs" />
     <Compile Include="Interfaces\IDashboardTransactionCounterService.cs" />
     <Compile Include="Interfaces\IProjectDashboardService.cs" />
     <Compile Include="BusinessAccess\ProjectDashboardService.cs" />
@@ -186,6 +191,7 @@
     <Compile Include="Interfaces\IStateService.cs" />
     <Compile Include="Interfaces\ISystemConfigurationService.cs" />
     <Compile Include="Interfaces\ITabsService.cs" />
+    <Compile Include="Interfaces\ITechnicalSpecificationsService.cs" />
     <Compile Include="Interfaces\ITpFileHeaderService.cs" />
     <Compile Include="Interfaces\ITPXMLParsedDataService.cs" />
     <Compile Include="Interfaces\IUploadChargesService.cs" />

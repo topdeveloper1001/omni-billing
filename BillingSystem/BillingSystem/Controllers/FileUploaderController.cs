@@ -16,6 +16,7 @@ namespace BillingSystem.Controllers
     using System.Transactions;
     using System.Web;
     using System.Web.Mvc;
+    using AutoMapper;
     using BillingSystem.Bal.Interfaces;
     using Common;
     using Common.Common;
@@ -41,8 +42,14 @@ namespace BillingSystem.Controllers
         private readonly IXclaimService _xcService;
         private readonly ITPXMLParsedDataService _xtpService;
         private readonly ITpFileHeaderService _tpService;
+        private readonly IMapper _mapper;
 
-        public FileUploaderController(IDocumentsTemplatesService service, IOpenOrderService ooService, IMedicalNotesService mnService, IOrderActivityService oaService, IXFileHeaderService xfService, IXMLBillingService xbService, IXAdviceXMLParsedDataService xpdService, IXclaimService xcService, ITPXMLParsedDataService xtpService, ITpFileHeaderService tpService)
+
+        public FileUploaderController(IMapper mapper, IDocumentsTemplatesService service, IOpenOrderService ooService
+            , IMedicalNotesService mnService, IOrderActivityService oaService
+            , IXFileHeaderService xfService, IXMLBillingService xbService
+            , IXAdviceXMLParsedDataService xpdService, IXclaimService xcService
+            , ITPXMLParsedDataService xtpService, ITpFileHeaderService tpService)
         {
             _service = service;
             _ooService = ooService;
@@ -54,6 +61,8 @@ namespace BillingSystem.Controllers
             _xcService = xcService;
             _xtpService = xtpService;
             _tpService = tpService;
+
+            _mapper = mapper;
         }
 
         // GET: /FileUploader/
@@ -76,12 +85,17 @@ namespace BillingSystem.Controllers
         {
             var userid = Helpers.GetLoggedInUserId();
             //Get the facilities list
-            var documentslist = _service.GetDocumentsCustomModelByType(associatedType, pid).ToList();
+            var dList = _service.GetDocumentsCustomModelByType(associatedType, pid).ToList();
+
+
+
             //GetDocumentsByType
 
             var fileUploaderView = new FileUploaderView
             {
-                Attachments = documentslist,
+                Attachments = dList != null && dList.Any() ?
+                                dList.Select(a => _mapper.Map<DocumentsTemplates>(a))
+                                : new List<DocumentsTemplates>(),
                 CurrentAttachment = new DocumentsTemplates()
             };
             if (associatedType == 2) //Radiology

@@ -1,0 +1,64 @@
+﻿@using BillingSystem.Common
+@using BillingSystem.Model
+@model TechnicalSpecifications
+
+<style>
+    .btn-group {
+        margin-left: 10px;
+        margin-bottom: 20px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    select {
+        margin-bottom: 10px;
+    }
+</style>
+<div class="form" id="TechnicalSpecificationFormDiv">
+    @Html.HiddenFor(m => m.Id)
+    @*// BBCOLUMNSHERE*@
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Corporate:</label>
+            <select id="ddlCorporate" onchange="BindFacilityDropdownFilterInTechnicalSpecifications($('#ddlCorporate').val())" class="validate[required]"></select>
+            <input type="hidden" id="hfCorporateId" value="@Helpers.GetSysAdminCorporateID()" />
+            
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Facility:</label>
+            <select id="ddlFacilityFilter" onchange="BindEquipmentDropdownInTechnicalSpecifications($('#ddlFacilityFilter').val())" class="validate[required]"></select>
+            <input type="hidden" id="hfFacilityId" value="@Helpers.GetDefaultFacilityId()" />
+
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>Equipment:</label>
+            <select id="ddlEquipment" class="validate[required]"></select>
+            <input type="hidden" id="hfEquipmentId" value="" />
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="rowTable">
+            <label><span class="mandatoryStar"></span>TechnicalSpecification:</label>
+            @Html.TextBoxFor(m => m.TechSpec, new { @maxlength = "120", @id = "txtTechSpec", @class = "validate[required]" })
+
+        </div>
+    </div>
+
+    <div class="clear"></div>
+
+    <div class="btn-group">
+
+        @{
+            var saveText = Model != null && Model.Id > 0 ? "Update" : "Save";
+        }
+        <input type="submit" id="btnSaveTechnicalSpecification" class="btn btn-primary edit-btn marginBtn" value="@saveText" onclick="return SaveTechnicalSpecification();" />
+        <button name="ClientCancel" class="btn btn-primary edit-btn marginBtn" type="button" onclick="return ClearTechnicalSpecificationForm();">Cancel</button>
+    </div>
+</div>
+

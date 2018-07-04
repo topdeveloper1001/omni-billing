@@ -7,7 +7,7 @@ namespace BillingSystem.Bal.Interfaces
     public interface IDashboardIndicatorsService
     {
         bool CheckDuplicateSortOrder(int sortOrder, int indicatorId);
-        bool DeleteIndicator(DashboardIndicators model);
+        bool DeleteIndicator(DashboardIndicatorsCustomModel vm);
         DashboardIndicatorsCustomModel GetDashboardIndicatorsById(int id, long corporateId = 0);
         DashboardIndicatorsCustomModel GetDashboardIndicatorsByNumber(string number, long corporateId);
         //IEnumerable<DashboardIndicatorsCustomModel> GetDashboardIndicatorsDataList(int corporateId, int? showinactive);
@@ -15,7 +15,7 @@ namespace BillingSystem.Bal.Interfaces
         List<DashboardIndicatorsCustomModel> GetDashboardIndicatorsListByCorporate(int corporateId, int facilityId);
         string GetIndicatorNextNumber(int corporateId);
         bool IsIndicatorExist(string indicatorNumber, int id, int corporateId, string subCategory1, string subCategory2);
-        List<DashboardIndicatorsCustomModel> SaveDashboardIndicators(DashboardIndicators model);
-        bool UpdateIndicatorsOtherDetail(DashboardIndicators model);
+        List<DashboardIndicatorsCustomModel> SaveDashboardIndicators(DashboardIndicatorsCustomModel vm);
+        bool UpdateIndicatorsOtherDetail(DashboardIndicatorsCustomModel vm);
     }
 }

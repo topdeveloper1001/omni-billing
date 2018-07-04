@@ -67,6 +67,11 @@ namespace BillingSystem.Repository.UOW
         private AppointmentTypesRepository _AppointmentTypesRepository;
 
         /// <summary>
+        ///     Gets the categories codes repository.
+        /// </summary>
+        private CategoriesRepository _CategoriesRepository;
+
+        /// <summary>
         ///     The _ audit log repository.
         /// </summary>
         private AuditLogRepository _AuditLogRepository;
@@ -874,6 +879,18 @@ namespace BillingSystem.Repository.UOW
             {
                 return _AppointmentTypesRepository
                        ?? (_AppointmentTypesRepository = new AppointmentTypesRepository(_context));
+            }
+        }
+
+        /// <summary>
+        /// Gets the categories repository.
+        /// </summary>
+        public CategoriesRepository CategoriesRepository
+        {
+            get
+            {
+                return _CategoriesRepository
+                       ?? (_CategoriesRepository = new CategoriesRepository(_context));
             }
         }
 

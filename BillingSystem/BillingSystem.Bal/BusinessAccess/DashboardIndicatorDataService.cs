@@ -267,17 +267,17 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <summary>
         /// Sets the static budget target.
         /// </summary>
-        /// <param name="model">The model.</param>
+        /// <param name="vm">The model.</param>
         /// <returns></returns>
-        public bool SetStaticBudgetTargetIndciators(DashboardIndicators model)
+        public bool SetStaticBudgetTargetIndciators(DashboardIndicatorsCustomModel vm)
         {
             var sqlParameters = new SqlParameter[7];
-            sqlParameters[0] = new SqlParameter("pIndicatorNumber", model.IndicatorNumber);
-            sqlParameters[1] = new SqlParameter("pSubCategory1", model.SubCategory1);
-            sqlParameters[2] = new SqlParameter("pSubCategory2", model.SubCategory2);
-            sqlParameters[3] = new SqlParameter("pCorporateId", model.CorporateId.GetValueOrDefault());
+            sqlParameters[0] = new SqlParameter("pIndicatorNumber", vm.IndicatorNumber);
+            sqlParameters[1] = new SqlParameter("pSubCategory1", vm.SubCategory1);
+            sqlParameters[2] = new SqlParameter("pSubCategory2", vm.SubCategory2);
+            sqlParameters[3] = new SqlParameter("pCorporateId", vm.CorporateId.GetValueOrDefault());
             sqlParameters[4] = new SqlParameter("pBudgetType", "1");
-            sqlParameters[5] = new SqlParameter("FacID", model.FacilityId.GetValueOrDefault());
+            sqlParameters[5] = new SqlParameter("FacID", vm.FacilityId.GetValueOrDefault());
             sqlParameters[6] = new SqlParameter("pYear", DateTime.Now.Year);
             _repository.ExecuteCommand(StoredProcedures.SPROC_SetStaticBudgetTarget.ToString(), sqlParameters);
             return true;

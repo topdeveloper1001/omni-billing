@@ -190,7 +190,7 @@ namespace BillingSystem.Controllers
 
         public async Task<ActionResult> SaveDocumentsAsync(long patientId)
         {
-            IEnumerable<DocumentsTemplates> docs = null;
+            IEnumerable<DocumentsTemplatesCustomModel> docs = null;
             if (Request.Files.Count > 0)
             {
                 Session[SessionNames.Files.ToString()] = Request.Files;

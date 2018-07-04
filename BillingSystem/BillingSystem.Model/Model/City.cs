@@ -12,9 +12,8 @@ using System.ComponentModel.DataAnnotations;
 namespace BillingSystem.Model
 {
     using System;
-    using System.Collections.Generic;
     using System.Web.Script.Serialization;
-    
+
     public partial class City
     {
         [Key]
