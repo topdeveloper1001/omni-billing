@@ -2,14 +2,22 @@
 using BillingSystem.Common;
 using System.Collections.Generic;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ProjectDashboardController : BaseController
     {
+        private readonly IProjectDashboardService _service;
+
+        public ProjectDashboardController(IProjectDashboardService service)
+        {
+            _service = service;
+        }
+
+
         /// <summary>
         /// Get the details of the ProjectDashboard View in the Model ProjectDashboard such as ProjectDashboardList, list of countries etc.
         /// </summary>
@@ -17,24 +25,20 @@ namespace BillingSystem.Controllers
         /// <returns>returns the actionresult in the form of current object of the Model ProjectDashboard to be passed to View ProjectDashboard</returns>
         public ActionResult Index()
         {
-            //Initialize the ProjectDashboard BAL object
-            using (var bal = new ProjectDashboardBal())
+            //Get the Entity list
+            var corpoarteid = Helpers.GetSysAdminCorporateID();
+            var facilityid = Helpers.GetDefaultFacilityId();
+            var list = _service.GetProjectDashboardList(corpoarteid, facilityid);
+
+            //Intialize the View Model i.e. ProjectDashboardView which is binded to Main View Index.cshtml under ProjectDashboard
+            var viewModel = new ProjectDashboardView
             {
-                //Get the Entity list
-                var corpoarteid = Helpers.GetSysAdminCorporateID();
-                var facilityid = Helpers.GetDefaultFacilityId();
-                var list = bal.GetProjectDashboardList(corpoarteid, facilityid);
+                ProjectDashboardList = list,
+                CurrentProjectDashboard = new ProjectDashboard()
+            };
 
-                //Intialize the View Model i.e. ProjectDashboardView which is binded to Main View Index.cshtml under ProjectDashboard
-                var viewModel = new ProjectDashboardView
-                {
-                    ProjectDashboardList = list,
-                    CurrentProjectDashboard = new ProjectDashboard()
-                };
-
-                //Pass the View Model in ActionResult to View ProjectDashboard
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View ProjectDashboard
+            return View(viewModel);
         }
 
         /// <summary>
@@ -50,25 +54,22 @@ namespace BillingSystem.Controllers
             var userId = Helpers.GetLoggedInUserId();
             var currentDate = Helpers.GetInvariantCultureDateTime();
             var list = new List<ProjectDashboardCustomModel>();
-                
+
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new ProjectDashboardBal())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-                    //Call the AddProjectDashboard Method to Add / Update current ProjectDashboard
-                    list = bal.SaveProjectDashboard(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+                //Call the AddProjectDashboard Method to Add / Update current ProjectDashboard
+                list = _service.SaveProjectDashboard(model);
             }
             //Pass the ActionResult with List of ProjectDashboardViewModel object to Partial View ProjectDashboardList
             return PartialView(PartialViews.ProjectDashboardList, list);
@@ -81,13 +82,10 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetProjectDashboardDetails(int id)
         {
-            using (var bal = new ProjectDashboardBal())
-            {
-                //Call the AddProjectDashboard Method to Add / Update current ProjectDashboard
-                var current = bal.GetProjectDashboardById(id);
-                //Pass the ActionResult with the current ProjectDashboardViewModel object as model to PartialView ProjectDashboardAddEdit
-                return Json(current);
-            }
+            //Call the AddProjectDashboard Method to Add / Update current ProjectDashboard
+            var current = _service.GetProjectDashboardById(id);
+            //Pass the ActionResult with the current ProjectDashboardViewModel object as model to PartialView ProjectDashboardAddEdit
+            return Json(current);
         }
 
         /// <summary>
@@ -97,29 +95,23 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteProjectDashboard(int id)
         {
-            using (var bal = new ProjectDashboardBal())
-            {
-                //Get ProjectDashboard model object by current ProjectDashboard ID
-                var model = bal.GetProjectDashboardById(id);
-                var userId = Helpers.GetLoggedInUserId();
-                var list = new List<ProjectDashboardCustomModel>();
-                var currentDate = Helpers.GetInvariantCultureDateTime();
+            //Get ProjectDashboard model object by current ProjectDashboard ID
+            var model = _service.GetProjectDashboardById(id);
+            var userId = Helpers.GetLoggedInUserId();
+            var list = new List<ProjectDashboardCustomModel>();
+            var currentDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If ProjectDashboard model is not null
-                if (model != null)
-                {
-                    model.IsActive = false;
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDate;
-                    //Update Operation of current ProjectDashboard
-                    list = bal.SaveProjectDashboard(model);
-                }
+            //Check If ProjectDashboard model is not null
+            if (model != null)
+            {
+                model.IsActive = false;
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDate;
+                //Update Operation of current ProjectDashboard
+                list = _service.SaveProjectDashboard(model);
+            }
             //Pass the ActionResult with List of ProjectDashboardViewModel object to Partial View ProjectDashboardList
             return PartialView(PartialViews.ProjectDashboardList, list);
-            }
         }
-
-
-        
     }
 }

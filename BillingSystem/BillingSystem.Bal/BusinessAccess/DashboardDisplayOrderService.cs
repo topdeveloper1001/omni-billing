@@ -3,11 +3,11 @@ using System.Linq;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Bal.Interfaces;
-using BillingSystem.Repository.Interfaces;
+
 using AutoMapper;
 using System.Data.SqlClient;
 using BillingSystem.Common.Common;
-using BillingSystem.Repository.Common;
+
 
 namespace BillingSystem.Bal.BusinessAccess
 {

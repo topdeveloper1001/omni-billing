@@ -17,11 +17,16 @@ namespace BillingSystem.Controllers
     public class CarePlanTaskController : BaseController
     {
         private readonly ICarePlanTaskService _service;
+        private readonly IFacilityRoleService _frService;
+        private readonly IRoleService _rService;
 
-        public CarePlanTaskController(ICarePlanTaskService service)
+        public CarePlanTaskController(ICarePlanTaskService service, IFacilityRoleService frService, IRoleService rService)
         {
             _service = service;
+            _frService = frService;
+            _rService = rService;
         }
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -240,27 +245,24 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult BindUsersType()
         {
-            using (var fRole = new FacilityRoleBal())
+            var list = new List<DropdownListData>();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var roleList = _frService.GetUserTypeRoleDropDownInTaskPlan(corporateId, facilityId, true);
+            if (roleList.Count > 0)
             {
-                var list = new List<DropdownListData>();
-                var corporateId = Helpers.GetSysAdminCorporateID();
-
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var roleList = fRole.GetUserTypeRoleDropDownInTaskPlan(corporateId, facilityId, true);
-                if (roleList.Count > 0)
-                {
-                    list.AddRange(
-                        roleList.Select(
-                            item =>
-                            new DropdownListData
-                            {
-                                Text = string.Format("{0}", item.RoleName),
-                                Value = Convert.ToString(item.RoleId)
-                            }));
-                }
-
-                return Json(list, JsonRequestBehavior.AllowGet);
+                list.AddRange(
+                    roleList.Select(
+                        item =>
+                        new DropdownListData
+                        {
+                            Text = string.Format("{0}", item.RoleName),
+                            Value = Convert.ToString(item.RoleId)
+                        }));
             }
+
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -273,20 +275,17 @@ namespace BillingSystem.Controllers
         {
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
-            using (var roleBal = new RoleBal())
+            var roles = _rService.GetRolesByCorporateIdFacilityId(
+                Convert.ToInt32(corporateId),
+                Convert.ToInt32(facilityId));
+            if (roles.Count > 0)
             {
-                var roles = roleBal.GetRolesByCorporateIdFacilityId(
-                    Convert.ToInt32(corporateId),
-                    Convert.ToInt32(facilityId));
-                if (roles.Count > 0)
-                {
-                    var list = new List<SelectListItem>();
-                    list.AddRange(
-                        roles.Select(
-                            item => new SelectListItem { Text = item.RoleName, Value = item.RoleID.ToString() }));
-                    list = list.OrderBy(x => x.Text).ToList();
-                    return Json(list);
-                }
+                var list = new List<SelectListItem>();
+                list.AddRange(
+                    roles.Select(
+                        item => new SelectListItem { Text = item.RoleName, Value = item.RoleID.ToString() }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
             }
 
             return Json(0);

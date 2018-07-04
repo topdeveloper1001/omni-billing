@@ -5,7 +5,7 @@ using AutoMapper;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
+
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -17,16 +17,26 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<Careplan> _cpRepository;
         private readonly IRepository<CarePlanTask> _repository;
         private readonly IMapper _mapper;
+        private readonly IRepository<PatientCarePlan> _pcprepository;
 
-        public CarePlanTaskService(IRepository<Careplan> cpRepository, IRepository<CarePlanTask> repository, IMapper mapper)
+        public CarePlanTaskService(IRepository<Careplan> cpRepository, IRepository<CarePlanTask> repository, IMapper mapper, IRepository<PatientCarePlan> pcprepository)
         {
             _cpRepository = cpRepository;
             _repository = repository;
             _mapper = mapper;
+            _pcprepository = pcprepository;
         }
+
+
 
         #region Public Methods and Operators
 
+        private PatientCarePlan GetPatientCarePlanByTaskId(string taskid)
+        {
+            var m = _pcprepository.Where(x => x.TaskId == taskid && x.IsActive == true)
+                    .FirstOrDefault();
+            return m;
+        }
         /// <summary>
         /// The bind care plan.
         /// </summary>
@@ -259,7 +269,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             if (model.Id > 0)
             {
-                var obj = new PatientCarePlanBal().GetPatientCarePlanByTaskId(Convert.ToString(model.Id));
+                var obj = GetPatientCarePlanByTaskId(Convert.ToString(model.Id));
                 var carePlanId =
                     obj != null ? Convert.ToInt32(obj.CarePlanId) : 0;
                 if (carePlanId > 0 && val != 2)//val == 2 means it is saving/updating

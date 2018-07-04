@@ -17,15 +17,22 @@ namespace BillingSystem.Controllers
     public class DashboardController : BaseController
     {
         private readonly IEncounterService _eService;
+        private readonly IRoleTabsService _rtService;
         private readonly IDashboardBudgetService _dbService;
         private readonly IDashboardService _dService;
+        private readonly IFacilityService _fService;
+        private readonly IReportingService _rService;
 
-        public DashboardController(IEncounterService eService, IDashboardBudgetService dbService, IDashboardService dService)
+        public DashboardController(IEncounterService eService, IRoleTabsService rtService, IDashboardBudgetService dbService, IDashboardService dService, IFacilityService fService, IReportingService rService)
         {
             _eService = eService;
+            _rtService = rtService;
             _dbService = dbService;
             _dService = dService;
+            _fService = fService;
+            _rService = rService;
         }
+
 
 
         /// <summary>
@@ -36,13 +43,13 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             //var chargesapplied = bal.SetDashBoardChargesActuals(facilityId, corporateId, currentYear);
             var dashboardview = new BillingDashboardView
             {
-                CurrentDate = _eService.GetInvariantCultureDateTime(facilityId),
+                CurrentDate = _fService.GetInvariantCultureDateTime(facilityId),
                 NumberofCurrentDay = currentDateTime.DayOfYear,
                 ClaimSubmmitedNumber = _dbService.GetDBChargesDashBoard(facilityId, corporateId, Convert.ToString((int)ChargesDashBoard.NumberofTotalClaimsSubmitted), currentYear),
                 ClaimSubmmitedDollorAmount = _dbService.GetDBChargesDashBoard(facilityId, corporateId, Convert.ToString(Convert.ToInt32(ChargesDashBoard.DollarAmountofTotalClaimsSubmitted)), currentYear),
@@ -97,16 +104,15 @@ namespace BillingSystem.Controllers
             {
                 var facilityId = Helpers.GetDefaultFacilityId();
                 var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+                var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
                 var currentYear = Convert.ToString(currentDateTime.Year);
 
                 // bal.SetDashBoardChargesActuals(facilityId, corporateId, currentYear);
                 // bal.SetDashBoardCounterActuals(facilityId, corporateId, currentYear);
                 var dashboardview = new ChargesDashboardView
                 {
-                    CurrentDate = _eService.GetInvariantCultureDateTime(facilityId),
-                    NumberofCurrentDay =
-                                                _eService.GetInvariantCultureDateTime(facilityId).DayOfYear,
+                    CurrentDate = _fService.GetInvariantCultureDateTime(facilityId),
+                    NumberofCurrentDay = _fService.GetInvariantCultureDateTime(facilityId).DayOfYear,
                     RoomChargesCustomModel =
                                                 _dbService.GetDBChargesDashBoard(
                                                     facilityId,
@@ -176,15 +182,15 @@ namespace BillingSystem.Controllers
             {
                 var facilityId = Helpers.GetDefaultFacilityId();
                 var corporateId = Helpers.GetSysAdminCorporateID();
-                var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+                var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
                 var currentYear = Convert.ToString(currentDateTime.Year);
 
                 //var chargesapplied = bal.SetDashBoardCounterActuals(facilityId, corporateId,
                 //    currentYear);
                 var dashboardview = new PatientVolumeDashboardView
                 {
-                    CurrentDate = _eService.GetInvariantCultureDateTime(facilityId),
-                    NumberofCurrentDay = _eService.GetInvariantCultureDateTime(facilityId).DayOfYear,
+                    CurrentDate = _fService.GetInvariantCultureDateTime(facilityId),
+                    NumberofCurrentDay = _fService.GetInvariantCultureDateTime(facilityId).DayOfYear,
                     IPEncountersCustomModel =
                                                 _dbService.GetDBChargesDashBoard(
                                                     facilityId,
@@ -258,7 +264,7 @@ namespace BillingSystem.Controllers
         private double GetClaimEditsValue(DashboardChargesCustomModel item)
         {
             var fId = Helpers.GetDefaultFacilityId();
-            var currentMonth = _eService.GetInvariantCultureDateTime(fId).Month;
+            var currentMonth = _fService.GetInvariantCultureDateTime(fId).Month;
             decimal? value = null;
             switch (currentMonth)
             {
@@ -336,38 +342,36 @@ namespace BillingSystem.Controllers
                                               .ToList()
             };
 
-            using (var bal = new RoleTabsBal())
-            {
-                var roleId = Helpers.GetDefaultRoleId();
-                activeEncounter.EncounterViewAccessible = (bal.CheckIfTabNameAccessibleToGivenRole(
-                    "Admit Patient",
+            var roleId = Helpers.GetDefaultRoleId();
+            activeEncounter.EncounterViewAccessible = (_rtService.CheckIfTabNameAccessibleToGivenRole(
+                "Admit Patient",
+                ControllerAccess.PatientSearch.ToString(),
+                ActionNameAccess.PatientSearch.ToString(),
+                Convert.ToInt32(roleId))
+                                                       && _rtService.CheckIfTabNameAccessibleToGivenRole(
+                                                           "Start Outpatient visit",
+                                                           ControllerAccess.PatientSearch.ToString(),
+                                                           ActionNameAccess.PatientSearch.ToString(),
+                                                           Convert.ToInt32(roleId)));
+            activeEncounter.EndEncounterViewAccessible =
+                (_rtService.CheckIfTabNameAccessibleToGivenRole(
+                    "Discharge patient",
                     ControllerAccess.PatientSearch.ToString(),
                     ActionNameAccess.PatientSearch.ToString(),
                     Convert.ToInt32(roleId))
-                                                           && bal.CheckIfTabNameAccessibleToGivenRole(
-                                                               "Start Outpatient visit",
-                                                               ControllerAccess.PatientSearch.ToString(),
-                                                               ActionNameAccess.PatientSearch.ToString(),
-                                                               Convert.ToInt32(roleId)));
-                activeEncounter.EndEncounterViewAccessible =
-                    (bal.CheckIfTabNameAccessibleToGivenRole(
-                        "Discharge patient",
-                        ControllerAccess.PatientSearch.ToString(),
-                        ActionNameAccess.PatientSearch.ToString(),
-                        Convert.ToInt32(roleId))
-                     && bal.CheckIfTabNameAccessibleToGivenRole(
-                         "Close Outpatient visit",
-                         ControllerAccess.PatientSearch.ToString(),
-                         ActionNameAccess.PatientSearch.ToString(),
-                         Convert.ToInt32(roleId)));
+                 && _rtService.CheckIfTabNameAccessibleToGivenRole(
+                     "Close Outpatient visit",
+                     ControllerAccess.PatientSearch.ToString(),
+                     ActionNameAccess.PatientSearch.ToString(),
+                     Convert.ToInt32(roleId)));
 
-                activeEncounter.DiagnosisViewAccessible =
-                    bal.CheckIfTabNameAccessibleToGivenRole(
-                        "Additional Diagnosis",
-                        ControllerAccess.ActiveEncounter.ToString(),
-                        ActionNameAccess.ActiveEncounter.ToString(),
-                        Convert.ToInt32(roleId));
-            }
+            activeEncounter.DiagnosisViewAccessible =
+                _rtService.CheckIfTabNameAccessibleToGivenRole(
+                    "Additional Diagnosis",
+                    ControllerAccess.ActiveEncounter.ToString(),
+                    ActionNameAccess.ActiveEncounter.ToString(),
+                    Convert.ToInt32(roleId));
+
             return View(activeEncounter);
         }
 
@@ -597,7 +601,7 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public IEnumerable<RegistrationProductivity> GetRegistrationProductivityData(int facilityId, int displayTypeId)
         {
-            var dt = _eService.GetInvariantCultureDateTime(facilityId);
+            var dt = _fService.GetInvariantCultureDateTime(facilityId);
             //var currentDay = DateTime.Now.Day;
             //dt = dt.AddDays(-currentDay);
 
@@ -616,7 +620,7 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetDefaultCorporateId();
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             var jsonResult = _dService.GetHighChartsRegistrationProductivityData(
@@ -639,7 +643,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetDefaultCorporateId();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             var jsonResult = _dService.GetHighChartsRegistrationProductivityData(
@@ -727,7 +731,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             var chartData =
@@ -750,7 +754,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetDefaultCorporateId();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             var jsonResult = _dService.GetHighChartsBillingTrendData(
@@ -769,7 +773,7 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             var claimsList = _dbService.GetDBChargesDashBoard(facilityId, corporateId, "38", currentYear);
@@ -830,17 +834,15 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
-            using (var bal = new ReportingBal())
-            {
-                var currentMonthdate = currentDateTime;
-                var firstDayOfMonth = new DateTime(currentMonthdate.Year, 1, 1);
-                var dataSource = bal.GetDenialCodesReport(corporateId, facilityId, firstDayOfMonth, currentDateTime,
-                    displayType);
-                var jsonResult = Json(dataSource, JsonRequestBehavior.AllowGet);
-                jsonResult.MaxJsonLength = int.MaxValue;
-                return jsonResult;
-            }
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
+
+            var currentMonthdate = currentDateTime;
+            var firstDayOfMonth = new DateTime(currentMonthdate.Year, 1, 1);
+            var dataSource = _rService.GetDenialCodesReport(corporateId, facilityId, firstDayOfMonth, currentDateTime,
+                displayType);
+            var jsonResult = Json(dataSource, JsonRequestBehavior.AllowGet);
+            jsonResult.MaxJsonLength = int.MaxValue;
+            return jsonResult;
         }
 
         /// <summary>
@@ -871,16 +873,16 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             _dbService.SetDashBoardChargesActuals(facilityId, corporateId, currentYear);
             //bal.SetDashBoardCounterActuals(facilityId, corporateId, currentYear);
             var dashboardview = new ChargesDashboardView
             {
-                CurrentDate = _eService.GetInvariantCultureDateTime(facilityId),
+                CurrentDate = _fService.GetInvariantCultureDateTime(facilityId),
                 NumberofCurrentDay =
-                                            _eService.GetInvariantCultureDateTime(facilityId).DayOfYear,
+                                            _fService.GetInvariantCultureDateTime(facilityId).DayOfYear,
                 CurrentFacilityId = facilityId,
                 RoomChargesCustomModel = _dbService.GetDBChargesDashBoard(
                                                 facilityId,
@@ -955,8 +957,8 @@ namespace BillingSystem.Controllers
             chargesapplied = facilityId == -1 || _dbService.SetDashBoardCounterActuals(facilityId, corporateId, fiscalyear);
             var dashboardview = new ChargesDashboardView
             {
-                CurrentDate = _eService.GetInvariantCultureDateTime(facilityId),
-                NumberofCurrentDay = _eService.GetInvariantCultureDateTime(facilityId).DayOfYear,
+                CurrentDate = _fService.GetInvariantCultureDateTime(facilityId),
+                NumberofCurrentDay = _fService.GetInvariantCultureDateTime(facilityId).DayOfYear,
                 CurrentFacilityId = facilityId,
                 RoomChargesCustomModel = _dbService.GetDBChargesDashBoard(facilityId, corporateId, Convert.ToString(Convert.ToInt32(ChargesDashBoard.RoomGrossCharges)), fiscalyear),
                 IPChargesCustomModel = _dbService.GetDBChargesDashBoard(
@@ -1039,15 +1041,15 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
 
-            var currentDateTime = _eService.GetInvariantCultureDateTime(facilityId);
+            var currentDateTime = _fService.GetInvariantCultureDateTime(facilityId);
             var currentYear = Convert.ToString(currentDateTime.Year);
 
             //var chargesapplied = bal.SetDashBoardCounterActuals(facilityId, corporateId, currentYear);
             var dashboardview = new PatientVolumeDashboardView
             {
                 CurrentFacilityId = facilityId,
-                CurrentDate = _eService.GetInvariantCultureDateTime(facilityId),
-                NumberofCurrentDay = _eService.GetInvariantCultureDateTime(facilityId).DayOfYear,
+                CurrentDate = _fService.GetInvariantCultureDateTime(facilityId),
+                NumberofCurrentDay = _fService.GetInvariantCultureDateTime(facilityId).DayOfYear,
                 IPEncountersCustomModel = _dbService.GetDBChargesDashBoard(
                                                 facilityId,
                                                 corporateId,
@@ -1117,8 +1119,8 @@ namespace BillingSystem.Controllers
             var dashboardview = new PatientVolumeDashboardView
             {
                 CurrentFacilityId = facilityId,
-                CurrentDate = _eService.GetInvariantCultureDateTime(facilityId),
-                NumberofCurrentDay = _eService.GetInvariantCultureDateTime(facilityId).DayOfYear,
+                CurrentDate = _fService.GetInvariantCultureDateTime(facilityId),
+                NumberofCurrentDay = _fService.GetInvariantCultureDateTime(facilityId).DayOfYear,
                 IPEncountersCustomModel = _dbService.GetDBChargesDashBoard(
                                                 facilityId,
                                                 corporateId,

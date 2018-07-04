@@ -5,15 +5,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using Kendo.Mvc.UI;
 using Kendo.Mvc.Extensions;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class MedicalVitalController : BaseController
     {
+        private readonly IMedicalVitalService _service;
+
+        public MedicalVitalController(IMedicalVitalService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the MedicalVital View in the Model MedicalVital such as MedicalVitalList, list of countries etc.
         /// </summary>
@@ -21,11 +28,8 @@ namespace BillingSystem.Controllers
         /// <returns>returns the actionresult in the form of current object of the Model MedicalVital to be passed to View MedicalVital</returns>
         public ActionResult MedicalVitalMain()
         {
-            //Initialize the MedicalVital BAL object
-            var MedicalVitalBal = new MedicalVitalBal();
-
             //Get the Entity list
-            var MedicalVitalList = MedicalVitalBal.GetMedicalVital();
+            var MedicalVitalList = _service.GetMedicalVital();
 
             //Intialize the View Model i.e. MedicalVitalView which is binded to Main View Index.cshtml under MedicalVital
             var MedicalVitalView = new MedicalVitalView
@@ -47,17 +51,13 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindMedicalVitalList(int PatientID)
         {
-            //Initialize the MedicalNotes BAL object
-            using (var medicalVitalBal = new MedicalVitalBal())
-            {
-                var medicalVitalType = Convert.ToInt32(Common.Common.MedicalRecordType.Vitals);
-                //Get the facilities list
-                //var medicalNotesList = medicalNotesBal.GetMedicalNotes();
-                var medicalVitalList = medicalVitalBal.GetCustomMedicalVitals(PatientID, medicalVitalType);
+            var medicalVitalType = Convert.ToInt32(Common.Common.MedicalRecordType.Vitals);
+            //Get the facilities list
+            //var medicalNotesList = medicalNotesBal.GetMedicalNotes();
+            var medicalVitalList = _service.GetCustomMedicalVitals(PatientID, medicalVitalType);
 
-                //Pass the ActionResult with List of MedicalNotesViewModel object to Partial View MedicalNotesList
-                return PartialView(PartialViews.MedicalVitalList, medicalVitalList);
-            }
+            //Pass the ActionResult with List of MedicalNotesViewModel object to Partial View MedicalNotesList
+            return PartialView(PartialViews.MedicalVitalList, medicalVitalList);
         }
 
         /// <summary>
@@ -83,21 +83,18 @@ namespace BillingSystem.Controllers
                 medicalVitalModel.CorporateID = corporateId;
                 medicalVitalModel.CommentBy = userId;
                 medicalVitalModel.CommentDate = Helpers.GetInvariantCultureDateTime();
-                using (var medicalVitalBal = new MedicalVitalBal())
+                if (medicalVitalModel.MedicalVitalID > 0)
                 {
-                    if (medicalVitalModel.MedicalVitalID > 0)
-                    {
-                        medicalVitalModel.ModifiedBy = userId;
-                        medicalVitalModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        medicalVitalModel.CreatedBy = userId;
-                        medicalVitalModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    //Call the AddMedicalVital Method to Add / Update current MedicalVital
-                    newId = medicalVitalBal.AddUptdateMedicalVital(medicalVitalModel);
+                    medicalVitalModel.ModifiedBy = userId;
+                    medicalVitalModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    medicalVitalModel.CreatedBy = userId;
+                    medicalVitalModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                }
+                //Call the AddMedicalVital Method to Add / Update current MedicalVital
+                newId = _service.AddUptdateMedicalVital(medicalVitalModel);
             }
             return Json(newId);
         }
@@ -117,29 +114,28 @@ namespace BillingSystem.Controllers
                 var CorporateId = Helpers.GetDefaultCorporateId();
                 var FacilityId = Helpers.GetDefaultFacilityId();
                 var objListModuleAccessPermission = (from item in medicalVitalModelList
-                    where item != null
-                    select new MedicalVital()
-                    {
-                        MedicalVitalID = item.MedicalVitalID,
-                        MedicalVitalType = item.MedicalVitalType,
-                        PatientID = item.PatientID,
-                        EncounterID = item.EncounterID,
-                        MedicalRecordNumber = item.MedicalRecordNumber,
-                        GlobalCodeCategoryID = item.GlobalCodeCategoryID,
-                        GlobalCode = item.GlobalCode,
-                        AnswerValueMin = item.AnswerValueMin,
-                        AnswerValueMax = item.AnswerValueMax,
-                        AnswerUOM = item.AnswerUOM,
-                        Comments = item.Comments,
-                        CorporateID = CorporateId,
-                        FacilityID = FacilityId,
-                        CommentBy = userid,
-                        CommentDate = Helpers.GetInvariantCultureDateTime(),
-                        CreatedBy = userid,
-                        CreatedDate = Helpers.GetInvariantCultureDateTime()
-                    }).ToList();
-                var moduleaccessbal = new MedicalVitalBal();
-                moduleaccessbal.AddUpdateModuleAccess(objListModuleAccessPermission);
+                                                     where item != null
+                                                     select new MedicalVital()
+                                                     {
+                                                         MedicalVitalID = item.MedicalVitalID,
+                                                         MedicalVitalType = item.MedicalVitalType,
+                                                         PatientID = item.PatientID,
+                                                         EncounterID = item.EncounterID,
+                                                         MedicalRecordNumber = item.MedicalRecordNumber,
+                                                         GlobalCodeCategoryID = item.GlobalCodeCategoryID,
+                                                         GlobalCode = item.GlobalCode,
+                                                         AnswerValueMin = item.AnswerValueMin,
+                                                         AnswerValueMax = item.AnswerValueMax,
+                                                         AnswerUOM = item.AnswerUOM,
+                                                         Comments = item.Comments,
+                                                         CorporateID = CorporateId,
+                                                         FacilityID = FacilityId,
+                                                         CommentBy = userid,
+                                                         CommentDate = Helpers.GetInvariantCultureDateTime(),
+                                                         CreatedBy = userid,
+                                                         CreatedDate = Helpers.GetInvariantCultureDateTime()
+                                                     }).ToList();
+                _service.AddUpdateModuleAccess(objListModuleAccessPermission);
                 return Json(1);
             }
             catch (Exception ex)
@@ -158,17 +154,13 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindLabTestList(int PatientID, int Encounterid)
         {
-            //Initialize the MedicalNotes BAL object
-            using (var medicalVitalBal = new MedicalVitalBal())
-            {
-                var medicalVitalType = Convert.ToInt32(Common.Common.MedicalRecordType.LabTest);
-                //Get the facilities list
-                //var medicalNotesList = medicalNotesBal.GetMedicalNotes();
-                var medicalVitalList = medicalVitalBal.GetCustomLabTest(PatientID, Encounterid, medicalVitalType);
+            var medicalVitalType = Convert.ToInt32(Common.Common.MedicalRecordType.LabTest);
+            //Get the facilities list
+            //var medicalNotesList = medicalNotesBal.GetMedicalNotes();
+            var medicalVitalList = _service.GetCustomLabTest(PatientID, Encounterid, medicalVitalType);
 
-                //Pass the ActionResult with List of MedicalNotesViewModel object to Partial View MedicalNotesList
-                return PartialView(PartialViews.MedicalVitalList, medicalVitalList);
-            }
+            //Pass the ActionResult with List of MedicalNotesViewModel object to Partial View MedicalNotesList
+            return PartialView(PartialViews.MedicalVitalList, medicalVitalList);
         }
 
         /// <summary>
@@ -178,17 +170,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetMedicalVital(int MedicalVitalID)
         {
-            using (var MedicalVitalBal = new MedicalVitalBal())
-            {
-                //Call the AddMedicalVital Method to Add / Update current MedicalVital
-                var currentMedicalVital = MedicalVitalBal.GetMedicalVitalByID(Convert.ToInt32(MedicalVitalID));
+            var currentMedicalVital = _service.GetMedicalVitalByID(Convert.ToInt32(MedicalVitalID));
 
-                //If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
-                //ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
-
-                //Pass the ActionResult with the current MedicalVitalViewModel object as model to PartialView MedicalVitalAddEdit
-                return PartialView(PartialViews.MedicalVitalAddEdit, currentMedicalVital);
-            }
+            return PartialView(PartialViews.MedicalVitalAddEdit, currentMedicalVital);
         }
 
         /// <summary>
@@ -198,24 +182,18 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteMedicalVital(int MedicalVitalID)
         {
-            using (var MedicalVitalBal = new MedicalVitalBal())
+            var currentMedicalVital = _service.GetMedicalVitalByID(Convert.ToInt32(MedicalVitalID));
+            if (currentMedicalVital != null)
             {
-                //Get MedicalVital model object by current MedicalVital ID
-                var currentMedicalVital = MedicalVitalBal.GetMedicalVitalByID(Convert.ToInt32(MedicalVitalID));
+                currentMedicalVital.IsDeleted = true;
+                currentMedicalVital.DeletedBy = Helpers.GetLoggedInUserId();
+                currentMedicalVital.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If MedicalVital model is not null
-                if (currentMedicalVital != null)
-                {
-                    currentMedicalVital.IsDeleted = true;
-                    currentMedicalVital.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentMedicalVital.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                //Update Operation of current MedicalVital
+                var result = _service.AddUptdateMedicalVital(currentMedicalVital);
 
-                    //Update Operation of current MedicalVital
-                    var result = MedicalVitalBal.AddUptdateMedicalVital(currentMedicalVital);
-
-                    //return deleted ID of current MedicalVital as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current MedicalVital as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             //Return the Json result as Action Result back JSON Call Success
@@ -294,9 +272,8 @@ namespace BillingSystem.Controllers
         public IEnumerable<Result> GetChartData(string chartObject, int patientId, int displayTypeId, DateTime selectedDate, string ResultType)
         {
             List<Result> objList = new List<Result>();
-            var medicalVitalBal = new MedicalVitalBal();
             List<MedicalVitalCustomModel> medicalVitalList = new List<MedicalVitalCustomModel>();
-            medicalVitalList = medicalVitalBal.GetMedicalVitalsChartData(patientId, displayTypeId, selectedDate);
+            medicalVitalList = _service.GetMedicalVitalsChartData(patientId, displayTypeId, selectedDate);
             medicalVitalList = medicalVitalList.Where(x => x.VitalName == chartObject).ToList();
             foreach (var item in medicalVitalList)
             {
@@ -336,13 +313,10 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(tillDate))
                 selectedTillDate = Convert.ToDateTime(tillDate);
 
-            using (var bal = new MedicalVitalBal())
-            {
-                var chartData = bal.GetMedicalVitalChart2(vitalCode, patientId, selectedFrom, selectedTillDate).ToDataSourceResult(request);
-                var jsonResult = Json(chartData, JsonRequestBehavior.AllowGet);
-                jsonResult.MaxJsonLength = int.MaxValue;
-                return jsonResult;
-            }
+            var chartData = _service.GetMedicalVitalChart2(vitalCode, patientId, selectedFrom, selectedTillDate).ToDataSourceResult(request);
+            var jsonResult = Json(chartData, JsonRequestBehavior.AllowGet);
+            jsonResult.MaxJsonLength = int.MaxValue;
+            return jsonResult;
         }
 
         /// <summary>
@@ -364,21 +338,18 @@ namespace BillingSystem.Controllers
             if (!string.IsNullOrEmpty(tillDate))
                 selectedTillDate = Convert.ToDateTime(tillDate);
 
-            using (var bal = new MedicalVitalBal())
+            var chartData = _service.GetMedicalVitalChart2(vitalCode, patientId, selectedFrom, selectedTillDate);
+            var objToReturn = new
             {
-                var chartData = bal.GetMedicalVitalChart2(vitalCode, patientId, selectedFrom, selectedTillDate);
-                var objToReturn = new
-                                      {
-                    BloodPressureSystolic = chartData.Where(x => x.VitalCode == 1).ToList(),
-                    BloodPressureDiastolic = chartData.Where(x => x.VitalCode == 5).ToList(),
-                    Weight = chartData.Where(x => x.VitalCode == 2).ToList(),
-                    Temperature = chartData.Where(x => x.VitalCode == 3).ToList(),
-                    HeartRate = chartData.Where(x => x.VitalCode == 4).ToList()
-                };
-                var jsonResult = Json(objToReturn, JsonRequestBehavior.AllowGet);
-                jsonResult.MaxJsonLength = int.MaxValue;
-                return jsonResult;
-            }
+                BloodPressureSystolic = chartData.Where(x => x.VitalCode == 1).ToList(),
+                BloodPressureDiastolic = chartData.Where(x => x.VitalCode == 5).ToList(),
+                Weight = chartData.Where(x => x.VitalCode == 2).ToList(),
+                Temperature = chartData.Where(x => x.VitalCode == 3).ToList(),
+                HeartRate = chartData.Where(x => x.VitalCode == 4).ToList()
+            };
+            var jsonResult = Json(objToReturn, JsonRequestBehavior.AllowGet);
+            jsonResult.MaxJsonLength = int.MaxValue;
+            return jsonResult;
         }
 
         public class Result

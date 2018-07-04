@@ -8,7 +8,7 @@ using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
+
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -23,10 +23,10 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<Drug> _drugRepository;
         private readonly IRepository<ServiceCode> _sRepository;
         private readonly IRepository<DiagnosisCode> _dcRepository;
-
+        private readonly IRepository<BillingCodeTableSet> _bcRepository;
         private readonly BillingEntities _context;
 
-        public BillActivityService(IRepository<BillActivity> repository, IRepository<BillHeader> bRepository, IRepository<GlobalCodes> gRepository, IRepository<CPTCodes> cRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, BillingEntities context)
+        public BillActivityService(IRepository<BillActivity> repository, IRepository<BillHeader> bRepository, IRepository<GlobalCodes> gRepository, IRepository<CPTCodes> cRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<BillingCodeTableSet> bcRepository, BillingEntities context)
         {
             _repository = repository;
             _bRepository = bRepository;
@@ -37,41 +37,9 @@ namespace BillingSystem.Bal.BusinessAccess
             _drugRepository = drugRepository;
             _sRepository = sRepository;
             _dcRepository = dcRepository;
+            _bcRepository = bcRepository;
             _context = context;
         }
-
-        //public BillActivityBal(string cptTableNumber, string serviceCodeTableNumber, string drgTableNumber, string drugTableNumber, string hcpcsTableNumber, string diagnosisTableNumber)
-        //{
-        //    if (!string.IsNullOrEmpty(cptTableNumber))
-        //    {
-        //        CptTableNumber = cptTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(serviceCodeTableNumber))
-        //    {
-        //        ServiceCodeTableNumber = serviceCodeTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(drgTableNumber))
-        //    {
-        //        DrgTableNumber = drgTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(drugTableNumber))
-        //    {
-        //        DrugTableNumber = drugTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(hcpcsTableNumber))
-        //    {
-        //        HcpcsTableNumber = hcpcsTableNumber;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(diagnosisTableNumber))
-        //    {
-        //        DiagnosisTableNumber = diagnosisTableNumber;
-        //    }
-        //}
 
         /// <summary>
         /// Gets the bill detail view.
@@ -110,7 +78,14 @@ namespace BillingSystem.Bal.BusinessAccess
             return list;
 
         }
-
+        public bool CheckForDuplicateTableSet(int id, string tableNumber, string typeId)
+        {
+            return _bcRepository.Where(d => (d.Id == id || id == 0) && d.TableNumber.Trim().Equals(tableNumber) && d.CodeTableType.Trim().Equals(typeId)).Any();
+        }
+        public List<BillingCodeTableSet> GetTableNumbersList(string typeId)
+        {
+            return _bcRepository.Where(d => d.CodeTableType.Trim().Equals(typeId) || string.IsNullOrEmpty(typeId)).OrderBy(f => f.CodeTableType).ToList();
+        }
         public string GetNameByGlobalCodeValue(string codeValue, string categoryValue, string fId = "")
         {
             if (!string.IsNullOrEmpty(codeValue))

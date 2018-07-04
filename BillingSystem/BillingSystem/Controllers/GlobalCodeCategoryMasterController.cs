@@ -1,37 +1,42 @@
 ﻿using BillingSystem.Models;
 using System.Web.Mvc;
 using BillingSystem.Common;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using BillingSystem.Common.Common;
 using System;
 using System.Linq;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class GlobalCodeCategoryMasterController : BaseController
     {
+        private readonly IGlobalCodeCategoryMasterService _service;
+        private readonly IGlobalCodeCategoryService _gcService;
+
+        public GlobalCodeCategoryMasterController(IGlobalCodeCategoryMasterService service, IGlobalCodeCategoryService gcService)
+        {
+            _service = service;
+            _gcService = gcService;
+        }
+
         /// <summary>
         /// Indexes this instance.
         /// </summary>
         /// <returns></returns>
         public ActionResult Index()
         {
-            //Initialize the GlobalCode Bal
-            using (var bal = new GlobalCodeCategoryMasterBal())
+            var viewData = new GlobalCodeCategoryMasterView
             {
-                var viewData = new GlobalCodeCategoryMasterView
+                GCC = new GlobalCodeCategory
                 {
-                    GCC = new GlobalCodeCategory
-                    {
-                        IsActive = true,
-                        FacilityNumber = Convert.ToString(Helpers.GetDefaultFacilityId())
-                    },
-                    //Categories = bal.GetAllGlobalCodeCategories(),
-                };
+                    IsActive = true,
+                    FacilityNumber = Convert.ToString(Helpers.GetDefaultFacilityId())
+                },
+                //Categories = _service.GetAllGlobalCodeCategories(),
+            };
 
-                return View(viewData);
-            }
+            return View(viewData);
         }
 
 
@@ -43,8 +48,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult GetGlobalCodeCategoryList()
         {
-            var bal = new GlobalCodeCategoryMasterBal();
-            return PartialView(PartialViews.GlobalCodeCategoryMasterList, bal.GetAllGlobalCodeCategories());
+            return PartialView(PartialViews.GlobalCodeCategoryMasterList, _service.GetAllGlobalCodeCategories());
         }
 
         //Function to get  GlobalCode for editing
@@ -56,13 +60,10 @@ namespace BillingSystem.Controllers
         public ActionResult EditGlobalCategoryCode(int GlobalCodeCategoryId)
         {
             //Initialize the GlobalCode Bal
-            var globalCodeCategoryMasterBal = new GlobalCodeCategoryMasterBal();
-            // var currentGCCMaster = globalCodeCategoryMasterBal.GetGlobalCategoriesByGlobalCodeCategoryId(GlobalCodeCategoryId);
-            var facilityBal = new FacilityBal();
             var cId = Helpers.GetDefaultCorporateId();
             var viewData = new GlobalCodeCategoryMasterView
             {
-                GCC = globalCodeCategoryMasterBal.GetGlobalCategoriesByGlobalCodeCategoryId(GlobalCodeCategoryId),
+                GCC = _service.GetGlobalCategoriesByGlobalCodeCategoryId(GlobalCodeCategoryId),
                 //LstFacility = facilityBal.GetFacilities(cId)
             };
             return PartialView(PartialViews.AddUpdateGlobalCodeCategoryMaster, viewData);
@@ -77,7 +78,6 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public int AddUpdateGlobalCodeCategory(GlobalCodeCategory m)
         {
-            var bal = new GlobalCodeCategoryMasterBal();
             m.FacilityNumber = Convert.ToString(Helpers.GetDefaultFacilityId());
             if (m.GlobalCodeCategoryID > 0)
             {
@@ -89,7 +89,7 @@ namespace BillingSystem.Controllers
                 m.CreatedBy = Helpers.GetLoggedInUserId();
                 m.CreatedDate = Helpers.GetInvariantCultureDateTime();
             }
-            return bal.AddUpdateGlobalCategory(m);
+            return _service.AddUpdateGlobalCategory(m);
         }
 
         //Delete global code
@@ -100,14 +100,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteGlobalCodeCategory(int globalCodeCategoryId)
         {
-            var bal = new GlobalCodeCategoryMasterBal();
-            var m = bal.GetGlobalCategoriesByGlobalCodeCategoryId(globalCodeCategoryId);
+            var m = _service.GetGlobalCategoriesByGlobalCodeCategoryId(globalCodeCategoryId);
             m.IsDeleted = true;
             m.DeletedBy = Helpers.GetLoggedInUserId();
             m.DeletedDate = Helpers.GetInvariantCultureDateTime();
-            var i = bal.AddUpdateGlobalCategory(m);
+            var i = _service.AddUpdateGlobalCategory(m);
 
-            return PartialView(PartialViews.GlobalCodeCategoryMasterList, bal.GetAllGlobalCodeCategories());
+            return PartialView(PartialViews.GlobalCodeCategoryMasterList, _service.GetAllGlobalCodeCategories());
         }
 
         //Function To reset the User Form
@@ -138,12 +137,11 @@ namespace BillingSystem.Controllers
         public ActionResult OrderCategory()
         {
             //Initialize the GlobalCode Bal
-            var globalCodeCategoryMasterBal = new GlobalCodeCategoryMasterBal();
             var objGlobalCodeCategoryMasterView = new GlobalCodeCategoryMasterView
             {
                 GCC = new GlobalCodeCategory { IsActive = true },
 
-                Categories = globalCodeCategoryMasterBal.GetAllGlobalCodeCategoriesByOrderType(OrderType.CPT.ToString(), Convert.ToString(Helpers.GetDefaultFacilityId())),
+                Categories = _service.GetAllGlobalCodeCategoriesByOrderType(OrderType.CPT.ToString(), Convert.ToString(Helpers.GetDefaultFacilityId())),
                 //LstFacility = facilityBal.GetFacilities(cId)
             };
 
@@ -153,11 +151,8 @@ namespace BillingSystem.Controllers
         //Function to get globalcode list for OrderCategory
         public ActionResult GetGlobalCodeCatByExternalValue()
         {
-            using (var bal = new GlobalCodeCategoryBal())
-            {
-                var list = bal.GetGlobalCodeCategoriesByExternalValue("0");
-                return Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategoriesByExternalValue("0");
+            return Json(list);
         }
         //Function to get all GlobalCodes List
         /// <summary>
@@ -167,8 +162,7 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult GetGlobalCodeCategoryListOrderType()
         {
-            var bal = new GlobalCodeCategoryMasterBal();
-            return PartialView(PartialViews.OrderCategoryTypeList, bal.GetAllGlobalCodeCategoriesByOrderType(OrderType.CPT.ToString(), Convert.ToString(Helpers.GetDefaultFacilityId())));
+            return PartialView(PartialViews.OrderCategoryTypeList, _service.GetAllGlobalCodeCategoriesByOrderType(OrderType.CPT.ToString(), Convert.ToString(Helpers.GetDefaultFacilityId())));
         }
 
 
@@ -181,8 +175,7 @@ namespace BillingSystem.Controllers
         public JsonResult EditGlobalCategoryCodeOrderType(int GlobalCodeCategoryId)
         {
             //Initialize the GlobalCode Bal
-            var bal = new GlobalCodeCategoryMasterBal();
-            var m = bal.GetGlobalCategoriesByGlobalCodeCategoryId(GlobalCodeCategoryId);
+            var m = _service.GetGlobalCategoriesByGlobalCodeCategoryId(GlobalCodeCategoryId);
             var jsonData = new { m, SaveText = ResourceKeyValues.GetKeyValue("update") };
             return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
@@ -195,14 +188,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteGlobalCodeCategoryOrderType(int globalCodeCategoryId)
         {
-            var bal = new GlobalCodeCategoryMasterBal();
-            var m = bal.GetGlobalCategoriesByGlobalCodeCategoryId(globalCodeCategoryId);
+            var m = _service.GetGlobalCategoriesByGlobalCodeCategoryId(globalCodeCategoryId);
             m.IsDeleted = true;
             m.DeletedBy = Helpers.GetLoggedInUserId();
             m.DeletedDate = Helpers.GetInvariantCultureDateTime();
-            var i = bal.AddUpdateGlobalCategory(m);
+            var i = _service.AddUpdateGlobalCategory(m);
 
-            return PartialView(PartialViews.OrderCategoryTypeList, bal.GetAllGlobalCodeCategoriesByOrderType(OrderType.CPT.ToString(), Convert.ToString(Helpers.GetDefaultFacilityId())));
+            return PartialView(PartialViews.OrderCategoryTypeList, _service.GetAllGlobalCodeCategoriesByOrderType(OrderType.CPT.ToString(), Convert.ToString(Helpers.GetDefaultFacilityId())));
         }
 
         //Function To reset the User Form
@@ -213,7 +205,6 @@ namespace BillingSystem.Controllers
         public ActionResult ResetGlobalCodeCategoryFormOrderType()
         {
             //Initialize the GlobalCode Bal
-            var facilityBal = new FacilityBal();
             var cId = Helpers.GetDefaultCorporateId();
             var objGlobalCodeCategoryMasterView = new GlobalCodeCategoryMasterView
             {
@@ -227,18 +218,15 @@ namespace BillingSystem.Controllers
 
         public JsonResult BindOrderTypeCategories()
         {
-            using (var bal = new GlobalCodeCategoryMasterBal())
-            {
-                var list = bal.GetOrderTypeCategoriesByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), true);
+            var list = _service.GetOrderTypeCategoriesByFacility(Helpers.GetDefaultFacilityId(), Helpers.GetLoggedInUserId(), true);
 
-                var jsonData = list.Select(a => new[] { Convert.ToString(a.GlobalCodeCategoryID),a.GlobalCodeCategoryName
+            var jsonData = list.Select(a => new[] { Convert.ToString(a.GlobalCodeCategoryID),a.GlobalCodeCategoryName
                     , a.GlobalCodeCategoryValue, a.ExternalValue1, a.ExternalValue2, a.ExternalValue4,a.ExternalValue3  });
 
-                var s = Json(jsonData, JsonRequestBehavior.AllowGet);
-                s.MaxJsonLength = int.MaxValue;
-                s.RecursionLimit = int.MaxValue;
-                return s;
-            }
+            var s = Json(jsonData, JsonRequestBehavior.AllowGet);
+            s.MaxJsonLength = int.MaxValue;
+            s.RecursionLimit = int.MaxValue;
+            return s;
         }
 
     }

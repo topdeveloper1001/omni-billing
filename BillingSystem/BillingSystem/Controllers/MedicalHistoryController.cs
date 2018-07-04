@@ -10,8 +10,7 @@ namespace BillingSystem.Controllers
 
     using System.Collections.Generic;
     using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using Common;
     using Model;
     using Model.CustomModel;
@@ -20,6 +19,15 @@ namespace BillingSystem.Controllers
 
     public class MedicalHistoryController : BaseController
     {
+        private readonly IMedicalHistoryService _service;
+        private readonly IFacilityService _fService;
+
+        public MedicalHistoryController(IMedicalHistoryService service, IFacilityService fService)
+        {
+            _service = service;
+            _fService = fService;
+        }
+
         /// <summary>
         ///     Add New or Update the MedicalHistory based on if we pass the MedicalHistory ID in the MedicalHistoryViewModel
         ///     object.
@@ -36,34 +44,31 @@ namespace BillingSystem.Controllers
             //Check if MedicalHistoryViewModel 
             if (model != null)
             {
-                using (var bal = new MedicalHistoryBal(Helpers.DefaultDrugTableNumber))
+                var userId = Helpers.GetLoggedInUserId();
+                var currentDateTime = _fService.GetInvariantCultureDateTime(Helpers.GetDefaultFacilityId());
+                if (model.Id > 0)
                 {
-                    var userId = Helpers.GetLoggedInUserId();
-                    var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                    if (model.Id > 0)
+                    if (model.IsDeleted == true)
                     {
-                        if (model.IsDeleted == true)
-                        {
-                            model.DeletedBy = userId;
-                            model.DeletedDate = currentDateTime;
-                        }
-                        else
-                        {
-                            model.ModifiedBy = userId;
-                            model.ModifiedDate = currentDateTime;
-                        }
+                        model.DeletedBy = userId;
+                        model.DeletedDate = currentDateTime;
                     }
                     else
                     {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDateTime;
+                        model.ModifiedBy = userId;
+                        model.ModifiedDate = currentDateTime;
                     }
-
-                    //Call the AddMedicalHistory Method to Add / Update / Delete Current Medication
-                    bal.AddUpdateMedicalHistory(model);
-
-                    list = bal.GetMedicalHistory(model.PatientId, model.EncounterId);
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDateTime;
+                }
+
+                //Call the AddMedicalHistory Method to Add / Update / Delete Current Medication
+                _service.AddUpdateMedicalHistory(model);
+
+                list = _service.GetMedicalHistory(model.PatientId, model.EncounterId);
             }
             return this.PartialView(PartialViews.MedicalHistoryList, list);
         }
@@ -75,13 +80,9 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetMedicalHistory(int medicalRecordId)
         {
-            using (var bal = new MedicalHistoryBal(Helpers.DefaultDrugTableNumber))
-            {
-                //Call the AddMedicalHistory Method to Add / Update current MedicalHistory
-                var vm = bal.GetMedicalHistoryById(medicalRecordId);
+            var vm = _service.GetMedicalHistoryById(medicalRecordId);
 
-                return this.Json(vm, JsonRequestBehavior.AllowGet);
-            }
+            return this.Json(vm, JsonRequestBehavior.AllowGet);
         }
     }
 }

@@ -14,6 +14,13 @@ namespace BillingSystem.Controllers
     public class LabTestMasterController : BaseController
     {
         private readonly ICPTCodesService _cptService;
+        private readonly IGlobalCodeService _gService;
+
+        public LabTestMasterController(ICPTCodesService cptService, IGlobalCodeService gService)
+        {
+            _cptService = cptService;
+            _gService = gService;
+        }
 
         #region Lab Test master Master
         /// <summary>
@@ -22,26 +29,22 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult Index()
         {
-            //Initialize the GlobalCode Bal
-            using (var globalCodeBal = new GlobalCodeBal())
+            var cptcodeList = new List<CPTCodesCustomModel>();
+            var labTestRange = _gService.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
+            if (!string.IsNullOrEmpty(labTestRange))
             {
-                var cptcodeList = new List<CPTCodesCustomModel>();
-                var labTestRange = globalCodeBal.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
-                if (!string.IsNullOrEmpty(labTestRange))
-                {
-                    cptcodeList = _cptService.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]), Convert.ToInt32(labTestRange.Split('-')[1]), Helpers.DefaultCptTableNumber);
+                cptcodeList = _cptService.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]), Convert.ToInt32(labTestRange.Split('-')[1]), Helpers.DefaultCptTableNumber);
 
-                }
-                //var list = globalCodeBal.Get
-                var globalCodeView = new CPTCodesView
-                {
-                    CurrentCPTCodeCustom = new CPTCodesCustomModel() { IsActive = true },
-                    CPTCodesCustomList = cptcodeList,
-                };
-
-                //Pass the View Model in ActionResult to View Facility
-                return View(globalCodeView);
             }
+            //var list = _gService.Get
+            var globalCodeView = new CPTCodesView
+            {
+                CurrentCPTCodeCustom = new CPTCodesCustomModel() { IsActive = true },
+                CPTCodesCustomList = cptcodeList,
+            };
+
+            //Pass the View Model in ActionResult to View Facility
+            return View(globalCodeView);
         }
 
         //Delete global code
@@ -90,16 +93,13 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult BindLabTestList()
         {
-            using (var globalCodeBal = new GlobalCodeBal())
+            var cptcodeList = new List<CPTCodesCustomModel>();
+            var labTestRange = _gService.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
+            if (!string.IsNullOrEmpty(labTestRange))
             {
-                var cptcodeList = new List<CPTCodesCustomModel>();
-                var labTestRange = globalCodeBal.GetRangeByCategoryType(Convert.ToInt32(GlobalCodeCategoryValue.LabTest).ToString());
-                if (!string.IsNullOrEmpty(labTestRange))
-                {
-                    cptcodeList = _cptService.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]), Convert.ToInt32(labTestRange.Split('-')[1]), Helpers.DefaultCptTableNumber);
-                }
-                return PartialView(PartialViews.LabTestListView, cptcodeList);
+                cptcodeList = _cptService.GetCPTCustomCodesByRange(Convert.ToInt32(labTestRange.Split('-')[0]), Convert.ToInt32(labTestRange.Split('-')[1]), Helpers.DefaultCptTableNumber);
             }
+            return PartialView(PartialViews.LabTestListView, cptcodeList);
         }
 
         //Function to get  GlobalCode for editing

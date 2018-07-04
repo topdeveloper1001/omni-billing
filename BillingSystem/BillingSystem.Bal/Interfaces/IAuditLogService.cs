@@ -1,6 +1,6 @@
 ﻿using BillingSystem.Model;
 
-namespace BillingSystem.Bal.BusinessAccess
+namespace BillingSystem.Bal.Interfaces
 {
     public interface IAuditLogService
     {

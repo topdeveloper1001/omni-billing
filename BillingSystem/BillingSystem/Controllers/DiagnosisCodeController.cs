@@ -4,20 +4,27 @@ using BillingSystem.Common;
 using System;
 using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
-using BillingSystem.Model;
 using System.Web.UI.WebControls;
 using System.IO;
-using System.Web.UI;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
-
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class DiagnosisCodeController : BaseController
     {
+        private readonly IDiagnosisCodeService _service;
+        private readonly IDiagnosisService _dService;
+
+        public DiagnosisCodeController(IDiagnosisCodeService service, IDiagnosisService dService)
+        {
+            _service = service;
+            _dService = dService;
+        }
+
+
         /// <summary>
         /// Get the details of the DiagnosisCode View in the Model DiagnosisCode such as DiagnosisCodeList, list of countries etc.
         /// </summary>
@@ -26,11 +33,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DiagnosisCodeMain()
         {
-            //Initialize the DiagnosisCode BAL object
-            var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber);
-
             //Get the Entity list
-            var diagnosisCodeList = diagnosisCodeBal.GetListOnDemand(1, Helpers.DefaultRecordCount);
+            var diagnosisCodeList = _service.GetListOnDemand(1, Helpers.DefaultRecordCount, Helpers.DefaultDiagnosisTableNumber);
 
             //Intialize the View Model i.e. DiagnosisCodeView which is binded to Main View Index.cshtml under DiagnosisCode
             var diagnosisCodeView = new DiagnosisCodeView
@@ -53,54 +57,47 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindDiagnosisCodeList()
         {
-            //Initialize the DiagnosisCode BAL object
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+            //Get the facilities list
+            var diagnosisCodeList = _service.GetDiagnosisCode(Helpers.DefaultDiagnosisTableNumber);
+            var diagnosisCodeView = new DiagnosisCodeView
             {
-                //Get the facilities list
-                var diagnosisCodeList = diagnosisCodeBal.GetDiagnosisCode();
-                var diagnosisCodeView = new DiagnosisCodeView
-                {
-                    DiagnosisCodeList = diagnosisCodeList,
-                    CurrentDiagnosisCode = new Model.DiagnosisCode(),
-                    UserId = Helpers.GetLoggedInUserId()
-                };
-                //Pass the ActionResult with List of DiagnosisCodeViewModel object to Partial View DiagnosisCodeList
-                return PartialView(PartialViews.DiagnosisCodeList, diagnosisCodeView);
-            }
+                DiagnosisCodeList = diagnosisCodeList,
+                CurrentDiagnosisCode = new Model.DiagnosisCode(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
+            //Pass the ActionResult with List of DiagnosisCodeViewModel object to Partial View DiagnosisCodeList
+            return PartialView(PartialViews.DiagnosisCodeList, diagnosisCodeView);
+
         }
 
         public ActionResult BindDiagnosisCodeListNew(string blockNumber, bool showInActive)
         {
             var takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
-            //Initialize the DiagnosisCode BAL object
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+
+            //Get the facilities list
+            var diagnosisCodeList = _service.GetDiagnosisCodeData(showInActive, Helpers.DefaultDiagnosisTableNumber).OrderByDescending(i => i.DiagnosisTableNumberId).Take(takeValue).ToList();
+            var diagnosisCodeView = new DiagnosisCodeView
             {
-                //Get the facilities list
-                var diagnosisCodeList = diagnosisCodeBal.GetDiagnosisCodeData(showInActive).OrderByDescending(i => i.DiagnosisTableNumberId).Take(takeValue).ToList();
-                var diagnosisCodeView = new DiagnosisCodeView
-                {
-                    DiagnosisCodeList = diagnosisCodeList,
-                    CurrentDiagnosisCode = new Model.DiagnosisCode(),
-                    UserId = Helpers.GetLoggedInUserId()
-                };
-                //Pass the ActionResult with List of DiagnosisCodeViewModel object to Partial View DiagnosisCodeList
-                return PartialView(PartialViews.DiagnosisCodeList, diagnosisCodeView);
-            }
+                DiagnosisCodeList = diagnosisCodeList,
+                CurrentDiagnosisCode = new Model.DiagnosisCode(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
+            //Pass the ActionResult with List of DiagnosisCodeViewModel object to Partial View DiagnosisCodeList
+            return PartialView(PartialViews.DiagnosisCodeList, diagnosisCodeView);
         }
+
         public JsonResult RebindDiagnosisCodeList(int blockNumber, string tableNumber)
         {
             var recordCount = Helpers.DefaultRecordCount;
-            using (var bal = new DiagnosisCodeBal(tableNumber))
+            var list = _service.GetListOnDemand(blockNumber, recordCount, Helpers.DefaultDiagnosisTableNumber);
+            var jsonResult = new
             {
-                var list = bal.GetListOnDemand(blockNumber, recordCount);
-                var jsonResult = new
-                {
-                    list,
-                    NoMoreData = list.Count < recordCount,
-                    UserId = Helpers.GetLoggedInUserId()
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                list,
+                NoMoreData = list.Count < recordCount,
+                UserId = Helpers.GetLoggedInUserId()
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+
         }
         /// <summary>
         /// Add New or Update the DiagnosisCode based on if we pass the DiagnosisCode ID in the DiagnosisCodeViewModel object.
@@ -117,24 +114,22 @@ namespace BillingSystem.Controllers
             //Check if DiagnosisCodeViewModel 
             if (DiagnosisCodeModel != null)
             {
-                using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+                if (DiagnosisCodeModel.DiagnosisTableNumberId > 0)
                 {
-                    if (DiagnosisCodeModel.DiagnosisTableNumberId > 0)
-                    {
-                        DiagnosisCodeModel.CreatedBy = Helpers.GetLoggedInUserId();
-                        DiagnosisCodeModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
-                        DiagnosisCodeModel.ModifiedBy = Helpers.GetLoggedInUserId();
-                        DiagnosisCodeModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        DiagnosisCodeModel.CreatedBy = Helpers.GetLoggedInUserId();
-                        DiagnosisCodeModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
-
-                    }
-                    //Call the AddDiagnosisCode Method to Add / Update current DiagnosisCode
-                    newId = diagnosisCodeBal.AddUptdateDiagnosisCode(DiagnosisCodeModel);
+                    DiagnosisCodeModel.CreatedBy = Helpers.GetLoggedInUserId();
+                    DiagnosisCodeModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                    DiagnosisCodeModel.ModifiedBy = Helpers.GetLoggedInUserId();
+                    DiagnosisCodeModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+                else
+                {
+                    DiagnosisCodeModel.CreatedBy = Helpers.GetLoggedInUserId();
+                    DiagnosisCodeModel.CreatedDate = Helpers.GetInvariantCultureDateTime();
+
+                }
+                //Call the AddDiagnosisCode Method to Add / Update current DiagnosisCode
+                newId = _service.AddUptdateDiagnosisCode(DiagnosisCodeModel, Helpers.DefaultDiagnosisTableNumber);
+
             }
             return Json(newId);
         }
@@ -146,18 +141,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetDiagnosisCode(int id)
         {
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
-            {
-                //Call the AddDiagnosisCode Method to Add / Update current DiagnosisCode
-                var currentDiagnosisCode = diagnosisCodeBal.GetDiagnosisCodeByID(id);
+            //Call the AddDiagnosisCode Method to Add / Update current DiagnosisCode
+            var currentDiagnosisCode = _service.GetDiagnosisCodeByID(id);
 
-                //If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
-                //ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
+            //If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
+            //ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
 
-                //Pass the ActionResult with the current DiagnosisCodeViewModel object as model to PartialView DiagnosisCodeAddEdit
-                return PartialView(PartialViews.DiagnosisCodeAddEdit, currentDiagnosisCode);
-            }
+            //Pass the ActionResult with the current DiagnosisCodeViewModel object as model to PartialView DiagnosisCodeAddEdit
+            return PartialView(PartialViews.DiagnosisCodeAddEdit, currentDiagnosisCode);
         }
+
 
         /// <summary>
         /// Delete the current DiagnosisCode based on the DiagnosisCode ID passed in the DiagnosisCodeModel
@@ -165,26 +158,23 @@ namespace BillingSystem.Controllers
         /// <param name="id">The identifier.</param>
         /// <returns></returns>
         public ActionResult DeleteDiagnosisCode(int id)
-        {
-            using (var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber))
+        {        //Get DiagnosisCode model object by current DiagnosisCode ID
+            var currentDiagnosisCode = _service.GetDiagnosisCodeByID(id);
+
+            //Check If DiagnosisCode model is not null
+            if (currentDiagnosisCode != null)
             {
-                //Get DiagnosisCode model object by current DiagnosisCode ID
-                var currentDiagnosisCode = diagnosisCodeBal.GetDiagnosisCodeByID(id);
+                currentDiagnosisCode.IsDeleted = true;
+                currentDiagnosisCode.DeletedBy = Helpers.GetLoggedInUserId();
+                currentDiagnosisCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
-                //Check If DiagnosisCode model is not null
-                if (currentDiagnosisCode != null)
-                {
-                    currentDiagnosisCode.IsDeleted = true;
-                    currentDiagnosisCode.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentDiagnosisCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                //Update Operation of current DiagnosisCode
+                var result = _service.AddUptdateDiagnosisCode(currentDiagnosisCode, Helpers.DefaultDiagnosisTableNumber);
 
-                    //Update Operation of current DiagnosisCode
-                    var result = diagnosisCodeBal.AddUptdateDiagnosisCode(currentDiagnosisCode);
-
-                    //return deleted ID of current DiagnosisCode as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current DiagnosisCode as Json Result to the Ajax Call.
+                return Json(result);
             }
+
 
             //Return the Json result as Action Result back JSON Call Success
             return Json(null);
@@ -226,9 +216,9 @@ namespace BillingSystem.Controllers
         //    diagnosisCodetable.Columns.Add("DiagnosisDiseaseChapter", typeof(string));
 
 
-        //    var diagnosisCodeBal = new DiagnosisCodeBal(Helpers.DefaultDiagnosisTableNumber);
+        //    var _service = new _service(Helpers.DefaultDiagnosisTableNumber);
         //    //Get the facilities list
-        //    var objDiagnosisCodeData = diagnosisCodeBal.GetDiagnosisCode();
+        //    var objDiagnosisCodeData = _service.GetDiagnosisCode();
         //    foreach (var item in objDiagnosisCodeData)
         //    {
         //        var model = new DiagnosisCode
@@ -331,10 +321,10 @@ namespace BillingSystem.Controllers
 
 
         //    rowIndex++;
-        //    using (var diagnosisBal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber))
+        //    using (var _dService = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber))
         //    {
         //        //Get the facilities list
-        //        var objCptCodesData = diagnosisBal.GetAllDiagnosisCodes();
+        //        var objCptCodesData = _dService.GetAllDiagnosisCodes();
         //        //Get the facilities list
         //        var cellStyle = workbook.CreateCellStyle();
         //        cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
@@ -404,37 +394,36 @@ namespace BillingSystem.Controllers
 
 
             rowIndex++;
-            using (var diagnosisBal = new DiagnosisBal(Helpers.DefaultCptTableNumber, Helpers.DefaultDrgTableNumber))
+
+            //Get the facilities list
+            var objCptCodesData = searchText != null ? _dService.ExportFilteredDiagnosisCodes(searchText, tableNumber) : _dService.GetAllDiagnosisCodes(facilityId, Helpers.DefaultDiagnosisTableNumber);
+            //Get the facilities list
+            var cellStyle = workbook.CreateCellStyle();
+            cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+
+            foreach (var item in objCptCodesData)
             {
-                //Get the facilities list
-                var objCptCodesData = searchText != null ? diagnosisBal.ExportFilteredDiagnosisCodes(searchText, tableNumber) : diagnosisBal.GetAllDiagnosisCodes(facilityId);
-                //Get the facilities list
-                var cellStyle = workbook.CreateCellStyle();
-                cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+                row = sheet.CreateRow(rowIndex);
+                row.CreateCell(0).SetCellType(CellType.Numeric);
+                row.CreateCell(0).CellStyle = cellStyle;
+                row.CreateCell(0).SetCellValue(Convert.ToDouble(item.DiagnosisTableNumberId));
+                row.CreateCell(1).SetCellValue(item.DiagnosisTableNumber);
+                row.CreateCell(2).SetCellValue(item.DiagnosisTableName);
+                row.CreateCell(3).SetCellValue(item.DiagnosisCode1);
+                //row.CreateCell(4).SetCellType(CellType.Numeric);
+                //row.CreateCell(4).CellStyle = cellStyle;
+                row.CreateCell(4).SetCellValue((item.ShortDescription));
+                row.CreateCell(5).SetCellValue(item.DiagnosisMediumDescription);
+                row.CreateCell(6).SetCellValue(item.DiagnosisFullDescription);
+                row.CreateCell(7).SetCellValue(item.DiagnosisWeight.ToString());
+                row.CreateCell(8).SetCellValue(item.DiagnosisEffectiveStartDate.ToString());
+                row.CreateCell(9).SetCellValue((item.DiagnosisEffectiveEndDate).ToString());
+                row.CreateCell(10).SetCellValue((item.DiagnosisDiseaseGroup));
+                row.CreateCell(11).SetCellValue((item.DiagnosisDiseaseCategory));
+                row.CreateCell(12).SetCellValue((item.DiagnosisDiseaseChapter));
 
-                foreach (var item in objCptCodesData)
-                {
-                    row = sheet.CreateRow(rowIndex);
-                    row.CreateCell(0).SetCellType(CellType.Numeric);
-                    row.CreateCell(0).CellStyle = cellStyle;
-                    row.CreateCell(0).SetCellValue(Convert.ToDouble(item.DiagnosisTableNumberId));
-                    row.CreateCell(1).SetCellValue(item.DiagnosisTableNumber);
-                    row.CreateCell(2).SetCellValue(item.DiagnosisTableName);
-                    row.CreateCell(3).SetCellValue(item.DiagnosisCode1);
-                    //row.CreateCell(4).SetCellType(CellType.Numeric);
-                    //row.CreateCell(4).CellStyle = cellStyle;
-                    row.CreateCell(4).SetCellValue((item.ShortDescription));
-                    row.CreateCell(5).SetCellValue(item.DiagnosisMediumDescription);
-                    row.CreateCell(6).SetCellValue(item.DiagnosisFullDescription);
-                    row.CreateCell(7).SetCellValue(item.DiagnosisWeight.ToString());
-                    row.CreateCell(8).SetCellValue(item.DiagnosisEffectiveStartDate.ToString());
-                    row.CreateCell(9).SetCellValue((item.DiagnosisEffectiveEndDate).ToString());
-                    row.CreateCell(10).SetCellValue((item.DiagnosisDiseaseGroup));
-                    row.CreateCell(11).SetCellValue((item.DiagnosisDiseaseCategory));
-                    row.CreateCell(12).SetCellValue((item.DiagnosisDiseaseChapter));
+                rowIndex++;
 
-                    rowIndex++;
-                }
             }
             using (var exportData = new MemoryStream())
             {

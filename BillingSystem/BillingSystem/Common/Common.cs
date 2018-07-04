@@ -28,16 +28,17 @@ namespace BillingSystem.Common
     using System.Web.UI;
     using System.Xml;
     using System.Xml.Linq;
-    using Bal.BusinessAccess;
     using Common;
-    using Model;
     using Model.CustomModel;
-    using Repository.Common;
     using System.Web.Configuration;
     using Newtonsoft.Json.Serialization;
     using Newtonsoft.Json;
     using System.ComponentModel;
     using System.Threading.Tasks;
+    using Unity;
+    using BillingSystem.Bal.Interfaces;
+    using BillingSystem.Models;
+
 
     // Menu Manipulations
     /// <summary>
@@ -644,14 +645,15 @@ namespace BillingSystem.Common
         /// </param>
         /// <returns>
         /// The <see cref="int"/>.
-        /// </returns>
+        ///// </returns>
         public static int GetCorporateIdByFacilityId(int facilityId)
         {
-            using (var facilitybal = new FacilityBal())
-            {
-                var facilityObj = facilitybal.GetFacilityById(facilityId);
-                return facilityObj != null ? Convert.ToInt32(facilityObj.CorporateID) : 0;
-            }
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<IFacilityService>();
+
+            var facilityObj = service.GetFacilityById(facilityId);
+            return facilityObj != null ? Convert.ToInt32(facilityObj.CorporateID) : 0;
+
         }
 
         /// <summary>
@@ -813,14 +815,17 @@ namespace BillingSystem.Common
             {
                 var facilityId =
                     (HttpContext.Current.Session[SessionNames.SessionClass.ToString()] as SessionClass).FacilityId;
-                var facilitybal = new FacilityBal();
-                var facilityObj = facilitybal.GetFacilityById(facilityId);
+
+                var container = UnityConfig.RegisterComponents();
+                var service = container.Resolve<IFacilityService>();
+
+                var facilityObj = service.GetFacilityById(facilityId);
                 var isFacilityDefaultCorporateFacility = facilityObj.LoggedInID != 0;
                 if (isFacilityDefaultCorporateFacility)
                 {
                     var corporatedId = GetSysAdminCorporateID();
                     var facilities =
-                        facilitybal.GetFacilitiesByCorpoarteId(corporatedId)
+                        service.GetFacilitiesByCorpoarteId(corporatedId)
                             .Where(x => x.FacilityId != facilityId)
                             .ToList()
                             .OrderBy(x => x.FacilityId);
@@ -855,8 +860,11 @@ namespace BillingSystem.Common
         public static DateTime GetInvariantCultureDateTime()
         {
             var facilityid = GetDefaultFacilityId();
-            var facilitybal = new FacilityBal();
-            var facilityObj = facilitybal.GetFacilityTimeZoneById(facilityid);
+
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<IFacilityService>();
+
+            var facilityObj = service.GetFacilityTimeZoneById(facilityid);
             var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
             var utcTime = DateTime.Now.ToUniversalTime();
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
@@ -869,15 +877,17 @@ namespace BillingSystem.Common
         }
 
 
-        public static DateTime GetInvariantCultureDateTime(int fId)
-        {
-            var facilitybal = new FacilityBal();
-            var facilityObj = facilitybal.GetFacilityTimeZoneById(fId);
-            var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
-            var utcTime = DateTime.Now.ToUniversalTime();
-            var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
-            return convertedTime;
-        }
+        //public static DateTime GetInvariantCultureDateTime(int fId)
+        //{
+
+        //    var container = UnityConfig.RegisterComponents();
+        //    var service = container.Resolve<IFacilityService>();
+        //    var facilityObj = service.GetFacilityTimeZoneById(fId);
+        //    var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
+        //    var utcTime = DateTime.Now.ToUniversalTime();
+        //    var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
+        //    return convertedTime;
+        //}
 
         /// <summary>
         /// Gets the last day of current month.
@@ -989,28 +999,30 @@ namespace BillingSystem.Common
         /// </returns>
         public static List<DropdownListData> GetPhysiciansByUserRole(int userTypeId)
         {
-            using (var pBal = new PhysicianBal())
-            {
-                var list = new List<DropdownListData>();
-                var usersList = pBal.GetDistinctUsersByUserTypeId(
-                    userTypeId,
-                    GetSysAdminCorporateID(),
-                    GetDefaultFacilityId());
-                if (usersList.Count > 0)
-                {
-                    list.AddRange(
-                        usersList.Select(
-                            item =>
-                            new DropdownListData
-                            {
-                                Text = string.Format("{0} {1}", item.FirstName, item.LastName),
-                                Value = Convert.ToString(item.UserID)
-                            }));
-                }
 
-                return list;
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<IPhysicianService>();
+
+            var list = new List<DropdownListData>();
+            var usersList = service.GetDistinctUsersByUserTypeId(
+                userTypeId,
+                GetSysAdminCorporateID(),
+                GetDefaultFacilityId());
+            if (usersList.Count > 0)
+            {
+                list.AddRange(
+                    usersList.Select(
+                        item =>
+                        new DropdownListData
+                        {
+                            Text = string.Format("{0} {1}", item.FirstName, item.LastName),
+                            Value = Convert.ToString(item.UserID)
+                        }));
             }
+
+            return list;
         }
+
 
         /// <summary>
         /// Gets the reporting type action.
@@ -1860,7 +1872,7 @@ namespace BillingSystem.Common
             return (int)(age.Days / 365.25);
         }
 
-        
+
         public static DataTable FillDataTableToImport(DataTable dt, string codeType, out int status)
         {
             status = (int)ExcelImportResultCodes.Success;

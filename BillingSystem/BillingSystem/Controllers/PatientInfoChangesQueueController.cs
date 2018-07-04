@@ -1,18 +1,23 @@
 ﻿using BillingSystem.Models;
 using BillingSystem.Common;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class PatientInfoChangesQueueController : BaseController
     {
+        private readonly IPatientInfoChangesQueueService _service;
+
+        public PatientInfoChangesQueueController(IPatientInfoChangesQueueService service)
+        {
+            _service = service;
+        }
+
+
         /// <summary>
         /// Get the details of the PatientInfoChangesQueue View in the Model PatientInfoChangesQueue such as PatientInfoChangesQueueList, list of countries etc.
         /// </summary>
@@ -21,22 +26,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the PatientInfoChangesQueue BAL object
-            using (var bal = new PatientInfoChangesQueueBal())
+            //Get the Entity list
+            var list = _service.GetPatientInfoChangesQueueList();
+
+            //Intialize the View Model i.e. PatientInfoChangesQueueView which is binded to Main View Index.cshtml under PatientInfoChangesQueue
+            var viewModel = new PatientInfoChangesQueueView
             {
-                //Get the Entity list
-                var list = bal.GetPatientInfoChangesQueueList();
+                PatientInfoChangesQueueList = list,
+                CurrentPatientInfoChangesQueue = new PatientInfoChangesQueue()
+            };
 
-                //Intialize the View Model i.e. PatientInfoChangesQueueView which is binded to Main View Index.cshtml under PatientInfoChangesQueue
-                var viewModel = new PatientInfoChangesQueueView
-                {
-                    PatientInfoChangesQueueList = list,
-                    CurrentPatientInfoChangesQueue = new PatientInfoChangesQueue()
-                };
-
-                //Pass the View Model in ActionResult to View PatientInfoChangesQueue
-                return View(viewModel);
-            }
+            //Pass the View Model in ActionResult to View PatientInfoChangesQueue
+            return View(viewModel);
         }
 
         /// <summary>
@@ -56,23 +57,19 @@ namespace BillingSystem.Controllers
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PatientInfoChangesQueueBal())
+                if (model.Id > 0)
                 {
-                    if (model.Id > 0)
-                    {
-                        model.ModifiedBy = userId;
-                        model.ModifiedDate = currentDate;
-                    }
-                    else
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = currentDate;
-                    }
-                    //Call the AddPatientInfoChangesQueue Method to Add / Update current PatientInfoChangesQueue
-                    list = bal.SavePatientInfoChangesQueue(model);
+                    model.ModifiedBy = userId;
+                    model.ModifiedDate = currentDate;
                 }
+                else
+                {
+                    model.CreatedBy = userId;
+                    model.CreatedDate = currentDate;
+                }
+                //Call the AddPatientInfoChangesQueue Method to Add / Update current PatientInfoChangesQueue
+                list = _service.SavePatientInfoChangesQueue(model);
             }
-
             //Pass the ActionResult with List of PatientInfoChangesQueueViewModel object to Partial View PatientInfoChangesQueueList
             return PartialView(PartialViews.PatientInfoChangesQueueList, list);
         }
@@ -84,14 +81,8 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public JsonResult GetPatientInfoChangesQueueDetails(int id)
         {
-            using (var bal = new PatientInfoChangesQueueBal())
-            {
-                //Call the AddPatientInfoChangesQueue Method to Add / Update current PatientInfoChangesQueue
-                var current = bal.GetPatientInfoChangesQueueByID(id);
-
-                //Pass the ActionResult with the current PatientInfoChangesQueueViewModel object as model to PartialView PatientInfoChangesQueueAddEdit
-                return Json(current);
-            }
+            var current = _service.GetPatientInfoChangesQueueByID(id);
+            return Json(current);
         }
 
         /// <summary>
@@ -101,30 +92,26 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeletePatientInfoChangesQueue(int id)
         {
-            using (var bal = new PatientInfoChangesQueueBal())
+            var model = _service.GetPatientInfoChangesQueueByID(id);
+            var userId = Helpers.GetLoggedInUserId();
+            var list = new List<PatientInfoChangesQueueCustomModel>();
+            var currentDate = Helpers.GetInvariantCultureDateTime();
+
+            //Check If PatientInfoChangesQueue model is not null
+            if (model != null)
             {
-                //Get PatientInfoChangesQueue model object by current PatientInfoChangesQueue ID
-                var model = bal.GetPatientInfoChangesQueueByID(id);
-                var userId = Helpers.GetLoggedInUserId();
-                var list = new List<PatientInfoChangesQueueCustomModel>();
-                var currentDate = Helpers.GetInvariantCultureDateTime();
+                model.IsActive = false;
+                model.ModifiedBy = userId;
+                model.ModifiedDate = currentDate;
 
-                //Check If PatientInfoChangesQueue model is not null
-                if (model != null)
-                {
-                    model.IsActive = false;
-                    model.ModifiedBy = userId;
-                    model.ModifiedDate = currentDate;
-
-                    //Update Operation of current PatientInfoChangesQueue
-                    var result = bal.SavePatientInfoChangesQueue(model);
-                    list = bal.GetPatientInfoChangesQueueList();
-                    //return deleted ID of current PatientInfoChangesQueue as Json Result to the Ajax Call.
-                }
-                return PartialView(PartialViews.PatientInfoChangesQueueList, list);
+                //Update Operation of current PatientInfoChangesQueue
+                var result = _service.SavePatientInfoChangesQueue(model);
+                list = _service.GetPatientInfoChangesQueueList();
+                //return deleted ID of current PatientInfoChangesQueue as Json Result to the Ajax Call.
             }
-
-            //Pass the ActionResult with List of PatientInfoChangesQueueViewModel object to Partial View PatientInfoChangesQueueList
+            return PartialView(PartialViews.PatientInfoChangesQueueList, list);
         }
+
+        //Pass the ActionResult with List of PatientInfoChangesQueueViewModel object to Partial View PatientInfoChangesQueueList
     }
 }

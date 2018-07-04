@@ -10,29 +10,30 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-using System.Text;
-using System.Web.UI.WebControls;
 
 namespace BillingSystem.Controllers
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using Common;
     using Model;
-    using Model.CustomModel;
     using Models;
-    using System.Xml;
-    using System.Xml.Linq;
 
     /// <summary>
     /// The xml billing controller.
     /// </summary>
     public class XMLBillingController : BaseController
     {
+        private readonly IXMLBillingService _service;
+
+        public XMLBillingController(IXMLBillingService service)
+        {
+            _service = service;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -42,18 +43,14 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindXFileHeaderList()
         {
-            // Initialize the XFileHeader BAL object
-            using (var xmlBillingBal = new XMLBillingBal())
-            {
-                var coporateId = Helpers.GetSysAdminCorporateID();
-                var facilityid = Helpers.GetDefaultFacilityId();
+            var coporateId = Helpers.GetSysAdminCorporateID();
+            var facilityid = Helpers.GetDefaultFacilityId();
 
-                // Get the facilities list
-                var xmlBillingList = xmlBillingBal.GetXFileHeader(facilityid, coporateId);
+            // Get the facilities list
+            var xmlBillingList = _service.GetXFileHeader(facilityid, coporateId);
 
-                // Pass the ActionResult with List of XFileHeaderViewModel object to Partial View XFileHeaderList
-                return PartialView(PartialViews.XMLBillingList, xmlBillingList);
-            }
+            // Pass the ActionResult with List of XFileHeaderViewModel object to Partial View XFileHeaderList
+            return PartialView(PartialViews.XMLBillingList, xmlBillingList);
         }
 
         /// <summary>
@@ -81,25 +78,21 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteXFileHeader(int XFileHeaderID)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
+            var currentXFileHeader = _service.GetXFileHeaderByID(Convert.ToInt32(XFileHeaderID));
+            var userId = Helpers.GetLoggedInUserId();
+
+            // Check If XFileHeader model is not null
+            if (currentXFileHeader != null)
             {
-                // Get XFileHeader model object by current XFileHeader ID
-                var currentXFileHeader = xFileHeaderBal.GetXFileHeaderByID(Convert.ToInt32(XFileHeaderID));
-                var userId = Helpers.GetLoggedInUserId();
+                // currentXFileHeader.IsActive = false;
+                // currentXFileHeader.ModifiedBy = userId;
+                currentXFileHeader.ModifiedDate = Helpers.GetInvariantCultureDateTime();
 
-                // Check If XFileHeader model is not null
-                if (currentXFileHeader != null)
-                {
-                    // currentXFileHeader.IsActive = false;
-                    // currentXFileHeader.ModifiedBy = userId;
-                    currentXFileHeader.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                // Update Operation of current XFileHeader
+                var result = _service.AddUptdateXFileHeader(currentXFileHeader);
 
-                    // Update Operation of current XFileHeader
-                    var result = xFileHeaderBal.AddUptdateXFileHeader(currentXFileHeader);
-
-                    // return deleted ID of current XFileHeader as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                // return deleted ID of current XFileHeader as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -115,17 +108,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetXFileHeader(int XFileHeaderID)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
-            {
-                // Call the AddXFileHeader Method to Add / Update current XFileHeader
-                var currentXFileHeader = xFileHeaderBal.GetXFileHeaderByID(Convert.ToInt32(XFileHeaderID));
-
-                // If the view is shown in ViewMode only, then ViewBag.ViewOnly is set to true otherwise false.
-                // ViewBag.ViewOnly = !string.IsNullOrEmpty(model.ViewOnly);
-
-                // Pass the ActionResult with the current XFileHeaderViewModel object as model to PartialView XFileHeaderAddEdit
-                return PartialView(PartialViews.XMLBillingAddEdit, currentXFileHeader);
-            }
+            var currentXFileHeader = _service.GetXFileHeaderByID(Convert.ToInt32(XFileHeaderID));
+            return PartialView(PartialViews.XMLBillingAddEdit, currentXFileHeader);
         }
 
         /// <summary>
@@ -159,17 +143,13 @@ namespace BillingSystem.Controllers
             // Check if XFileHeaderViewModel 
             if (XFileHeaderModel != null)
             {
-                using (var xFileHeaderBal = new XMLBillingBal())
+                if (XFileHeaderModel.FileID > 0)
                 {
-                    if (XFileHeaderModel.FileID > 0)
-                    {
-                        // XFileHeaderModel.ModifiedBy = userId;
-                        XFileHeaderModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-                    // Call the AddXFileHeader Method to Add / Update current XFileHeader
-                    newId = xFileHeaderBal.AddUptdateXFileHeader(XFileHeaderModel);
+                    XFileHeaderModel.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+
+                // Call the AddXFileHeader Method to Add / Update current XFileHeader
+                newId = _service.AddUptdateXFileHeader(XFileHeaderModel);
             }
 
             return Json(newId);
@@ -177,7 +157,7 @@ namespace BillingSystem.Controllers
 
         // public ActionResult ViewFile(int id, string fileName)
         // {
-        // using (var xFileHeaderBal = new XMLBillingBal())
+        // using (var _service = new XMLBillingBal())
         // {
         // var filePath = string.Format("{0}\\Documents\\Corporate-{1}\\{2}", Server.MapPath("~"), Helpers.GetDefaultCorporateId(), id);
         // var fileIsExists = Directory.Exists(filePath);
@@ -188,7 +168,7 @@ namespace BillingSystem.Controllers
         // //if (!fileIsExists)
         // //{
         // //    //Call the AddXFileHeader Method to Add / Update current XFileHeader
-        // //    var currentXFileHeader = xFileHeaderBal.GetXFileHeaderByID(Convert.ToInt32(id));
+        // //    var currentXFileHeader = _service.GetXFileHeaderByID(Convert.ToInt32(id));
         // //    XmlParser.SaveStringToXMLFile(filePath, currentXFileHeader.XFile, id.ToString());
         // //    //xmlString = Server.HtmlEncode(currentXFileHeader.XFile);
         // //}
@@ -212,21 +192,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public string ViewFile(int id)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
-            {
-                var xmlString = xFileHeaderBal.GetFormattedXmlStringByXFileId(id);
-
-                // Response.Clear();
-                // Response.Buffer = true;
-                // Response.Charset = "";
-                // Response.Cache.SetCacheability(HttpCacheability.NoCache);
-                // Response.ContentType = "application/xml";
-                // Response.WriteFile(xmlString);
-                // Response.Flush();
-                // Response.End();
-                // xmlString = HttpUtility.HtmlEncode(xmlString);
-                return xmlString;
-            }
+            var xmlString = _service.GetFormattedXmlStringByXFileId(id);
+            return xmlString;
         }
 
         /// <summary>
@@ -238,20 +205,18 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult XMLBillingMain()
         {
-            // Initialize the XFileHeader BAL object
-            var xmlBillingBal = new XMLBillingBal();
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateid = Helpers.GetSysAdminCorporateID();
 
             // Get the Entity list
-            var xmlBillingList = xmlBillingBal.GetXFileHeaderCModel(facilityId, corporateid);
+            var xmlBillingList = _service.GetXFileHeaderCModel(facilityId, corporateid);
 
             // Intialize the View Model i.e. XFileHeaderView which is binded to Main View Index.cshtml under XFileHeader
             var xFileHeaderView = new XMLBillingView
-                                      {
-                                          XFileHeaderList = xmlBillingList,
-                                          CurrentXFileHeader = new XFileHeader()
-                                      };
+            {
+                XFileHeaderList = xmlBillingList,
+                CurrentXFileHeader = new XFileHeader()
+            };
 
             // Pass the View Model in ActionResult to View XFileHeader
             return View(xFileHeaderView);
@@ -260,18 +225,15 @@ namespace BillingSystem.Controllers
 
         public FileResult ExportToXml(int id)
         {
-            using (var xFileHeaderBal = new XMLBillingBal())
-            {
-                const string xmlDec = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>";
-                var xmlObject = xFileHeaderBal.GetXmlStringById(id);
-                var xmlString = xmlDec;
-                xmlString += xmlObject.XFileXML1;
-                var currentDateTime = Helpers.GetInvariantCultureDateTime();
-                var fileName = string.Format("ExportedFile{0}.xml", currentDateTime.ToString("yy-MMM-dd ddd"));
-                var path = Server.MapPath("~") + "Documents//XmlBillFiles//" + fileName;
-                System.IO.File.WriteAllText(path, xmlString);
-                return File(path, "application/vnd.ms-excel", fileName);
-            }
+            const string xmlDec = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>";
+            var xmlObject = _service.GetXmlStringById(id);
+            var xmlString = xmlDec;
+            xmlString += xmlObject.XFileXML1;
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var fileName = string.Format("ExportedFile{0}.xml", currentDateTime.ToString("yy-MMM-dd ddd"));
+            var path = Server.MapPath("~") + "Documents//XmlBillFiles//" + fileName;
+            System.IO.File.WriteAllText(path, xmlString);
+            return File(path, "application/vnd.ms-excel", fileName);
         }
         #endregion
     }

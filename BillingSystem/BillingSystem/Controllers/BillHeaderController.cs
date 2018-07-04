@@ -22,17 +22,25 @@ namespace BillingSystem.Controllers
     public class BillHeaderController : BaseController
     {
         private readonly IBillHeaderService _service;
+        private readonly IFacilityService _fService;
         private readonly IBillActivityService _baService;
         private readonly IPatientInfoService _piService;
         private readonly IEncounterService _eService;
+        private readonly IErrorMasterService _erService;
+        private readonly IXMLBillingService _xService;
 
-        public BillHeaderController(IBillHeaderService service, IBillActivityService baService, IPatientInfoService piService, IEncounterService eService)
+        public BillHeaderController(IBillHeaderService service, IFacilityService fService, IBillActivityService baService, IPatientInfoService piService, IEncounterService eService, IErrorMasterService erService, IXMLBillingService xService)
         {
             _service = service;
+            _fService = fService;
             _baService = baService;
             _piService = piService;
             _eService = eService;
+            _erService = erService;
+            _xService = xService;
         }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -179,21 +187,18 @@ namespace BillingSystem.Controllers
         {
             if (!string.IsNullOrEmpty(text))
             {
-                using (var bal = new ErrorMasterBal())
-                {
-                    var list = bal.GetSearchedDenialsList(text);
-                    var filteredList =
-                        list.Select(
-                            item =>
-                            new
-                            {
-                                ID = item.ErrorMasterID,
-                                Menu_Title = string.Format("{0} - {1}", item.ErrorCode, item.ErrorDescription),
-                                Name = item.ErrorCode
-                            }).ToList();
+                var list = _erService.GetSearchedDenialsList(text);
+                var filteredList =
+                    list.Select(
+                        item =>
+                        new
+                        {
+                            ID = item.ErrorMasterID,
+                            Menu_Title = string.Format("{0} - {1}", item.ErrorCode, item.ErrorDescription),
+                            Name = item.ErrorCode
+                        }).ToList();
 
-                    return Json(filteredList, JsonRequestBehavior.AllowGet);
-                }
+                return Json(filteredList, JsonRequestBehavior.AllowGet);
             }
 
             return Json(null);
@@ -382,7 +387,7 @@ namespace BillingSystem.Controllers
                 current.PatientDateSettlement = model.PatientDateSettlement;
                 current.PatientPayAmount = model.PatientPayAmount;
                 current.ModifiedBy = Helpers.GetLoggedInUserId();
-                current.ModifiedDate = Helpers.GetInvariantCultureDateTime(Convert.ToInt32(model.FacilityID));
+                current.ModifiedDate = _fService.GetInvariantCultureDateTime(Convert.ToInt32(model.FacilityID));
                 result = _service.SaveManualPayment(current);
 
             }
@@ -402,10 +407,10 @@ namespace BillingSystem.Controllers
         public ActionResult ScrubXMLBill(int encounterId)
         {
             var userId = Helpers.GetLoggedInUserId();
-           
-                var billheaderObj = _eService.GetEncounterEndCheck(encounterId, userId);
-                return Json(billheaderObj, JsonRequestBehavior.AllowGet);
-             
+
+            var billheaderObj = _eService.GetEncounterEndCheck(encounterId, userId);
+            return Json(billheaderObj, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -440,30 +445,30 @@ namespace BillingSystem.Controllers
             {
                 var corporateId = Helpers.GetDefaultCorporateId();
                 var facilityId = Helpers.GetDefaultFacilityId();
-              
-                    var lstBhIds = billHeaderIds.Split(',').Select(int.Parse).ToList();
-                 
-                    var encounteridlist =
-                        lstBhIds.Select(_service.GetBillHeaderById)
-                            .Select(billHeaderObj => Convert.ToInt32(billHeaderObj.EncounterID))
-                            .ToList();
-                    var preliminaryStatus = _service.SetPreliminaryBillStatusByEncounterId(encounteridlist, userId);
 
-                    if (typeId == Convert.ToInt32(QueryStringType.Encounter))
-                    {
-                        list = _service.GetBillHeaderListByEncounterId(id, corporateId, facilityId);
-                    }
-                    else if (typeId == Convert.ToInt32(QueryStringType.Patient))
-                    {
-                        list = _service.GetBillHeaderListByPatientId(id, corporateId, facilityId);
-                    }
-                    else
-                    {
-                        list = _service.GetAllBillHeaderList(corporateId, facilityId);
-                    }
+                var lstBhIds = billHeaderIds.Split(',').Select(int.Parse).ToList();
 
-                    return PartialView(PartialViews.BillHeaderList, list);
-                 
+                var encounteridlist =
+                    lstBhIds.Select(_service.GetBillHeaderById)
+                        .Select(billHeaderObj => Convert.ToInt32(billHeaderObj.EncounterID))
+                        .ToList();
+                var preliminaryStatus = _service.SetPreliminaryBillStatusByEncounterId(encounteridlist, userId);
+
+                if (typeId == Convert.ToInt32(QueryStringType.Encounter))
+                {
+                    list = _service.GetBillHeaderListByEncounterId(id, corporateId, facilityId);
+                }
+                else if (typeId == Convert.ToInt32(QueryStringType.Patient))
+                {
+                    list = _service.GetBillHeaderListByPatientId(id, corporateId, facilityId);
+                }
+                else
+                {
+                    list = _service.GetAllBillHeaderList(corporateId, facilityId);
+                }
+
+                return PartialView(PartialViews.BillHeaderList, list);
+
             }
 
             return PartialView(PartialViews.BillHeaderList, list);
@@ -506,15 +511,12 @@ namespace BillingSystem.Controllers
                 var xml = Helpers.GetXML(completePath);
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    using (var bal = new XMLBillingBal())
-                    {
-                        var result = bal.RemittanceXMLParser(xml, savedFileName, true, corporateId, facilityId);
-                        var msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
-                        //if (result)
-                        //{
-                        return RedirectToAction("ManualPayment", new { message = msg, encounterId = EncounterID });
-                        //}
-                    }
+                    var result = _xService.RemittanceXMLParser(xml, savedFileName, true, corporateId, facilityId);
+                    var msg = string.IsNullOrEmpty(result) || result.Equals("1") ? "1" : result;
+                    //if (result)
+                    //{
+                    return RedirectToAction("ManualPayment", new { message = msg, encounterId = EncounterID });
+                    //}
                 }
             }
 
@@ -531,22 +533,22 @@ namespace BillingSystem.Controllers
             var facilityId = Helpers.GetDefaultFacilityId();
             BillDetailsView billDetailsView = null;
             ViewBag.ShowPatientHeader = false;
-           
-                var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
-                var payerWiseBillHeaderList = _service.GetFinalBillPayerHeadersList(corporateId, facilityId);
 
-                // Bill Details ViewModel to be binded to UI
-                billDetailsView = new BillDetailsView
-                {
-                    PatientInfo = new PatientInfoCustomModel(),
-                    BillHeaderList = billHeaderList,
-                    BillActivityList = new List<BillDetailCustomModel>(),
-                    EncounterId = 0,
-                    QueryStringId = 0,
-                    QueryStringTypeId = 0,
-                    PayerWiseBillHeaderList = payerWiseBillHeaderList
-                };
-             
+            var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
+            var payerWiseBillHeaderList = _service.GetFinalBillPayerHeadersList(corporateId, facilityId);
+
+            // Bill Details ViewModel to be binded to UI
+            billDetailsView = new BillDetailsView
+            {
+                PatientInfo = new PatientInfoCustomModel(),
+                BillHeaderList = billHeaderList,
+                BillActivityList = new List<BillDetailCustomModel>(),
+                EncounterId = 0,
+                QueryStringId = 0,
+                QueryStringTypeId = 0,
+                PayerWiseBillHeaderList = payerWiseBillHeaderList
+            };
+
 
             // Pass the View Model in ActionResult to View BillHeader
             return View(billDetailsView);
@@ -559,61 +561,58 @@ namespace BillingSystem.Controllers
         /// <param name="billHeaderIds">The bill header ids.</param>
         /// <returns></returns>
         public ActionResult SendEClaimsByPayerIds(string payerId, string billHeaderIds)
-        { 
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var data = _service.SendEClaimsByPayer(Helpers.GetDefaultFacilityId(), payerId, billHeaderIds);
-                using (var xmlBilling = new XMLBillingBal())
-                {
-                    var xmlFileId = xmlBilling.GetLatestXFileHeaderId();
-                    var filePath = string.Format(
-                        "{0}\\Content\\Documents\\Corporate{1}\\{2}",
-                        Server.MapPath("~"),
-                        corporateId,
-                        xmlFileId);
+        {
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var data = _service.SendEClaimsByPayer(Helpers.GetDefaultFacilityId(), payerId, billHeaderIds);
+            var xmlFileId = _xService.GetLatestXFileHeaderId();
+            var filePath = string.Format(
+                "{0}\\Content\\Documents\\Corporate{1}\\{2}",
+                Server.MapPath("~"),
+                corporateId,
+                xmlFileId);
 
-                    var fileIsExists = Directory.Exists(filePath);
-                    if (fileIsExists)
-                    {
-                        Directory.Delete(filePath, true);
-                        var dir = new DirectoryInfo(filePath);
-                        dir.Refresh();
-                    }
+            var fileIsExists = Directory.Exists(filePath);
+            if (fileIsExists)
+            {
+                Directory.Delete(filePath, true);
+                var dir = new DirectoryInfo(filePath);
+                dir.Refresh();
+            }
 
-                    // Call the AddXFileHeader Method to Add / Update current XFileHeader
-                    var billHeaderXmlModel = data.FirstOrDefault();
-                    if (billHeaderXmlModel != null) XmlParser.SaveStringToXMLFile(filePath, billHeaderXmlModel.XMLOUT, Convert.ToString(xmlFileId));
+            // Call the AddXFileHeader Method to Add / Update current XFileHeader
+            var billHeaderXmlModel = data.FirstOrDefault();
+            if (billHeaderXmlModel != null) XmlParser.SaveStringToXMLFile(filePath, billHeaderXmlModel.XMLOUT, Convert.ToString(xmlFileId));
 
-                    var xmlString = string.Format("/Content/Documents/Corporate{0}/{1}/{2}.xml", Helpers.GetDefaultCorporateId(),
-                        xmlFileId, xmlFileId);
+            var xmlString = string.Format("/Content/Documents/Corporate{0}/{1}/{2}.xml", Helpers.GetDefaultCorporateId(),
+                xmlFileId, xmlFileId);
 
-                    var getXfileHeader = xmlBilling.GetXFileHeaderByID(xmlFileId);
-                    if (getXfileHeader != null)
-                    {
-                        getXfileHeader.XPath = xmlString;
-                        xmlBilling.AddUptdateXFileHeader(getXfileHeader);
-                    }
-                }
-                var facilityId = Helpers.GetDefaultFacilityId();
+            var getXfileHeader = _xService.GetXFileHeaderByID(xmlFileId);
+            if (getXfileHeader != null)
+            {
+                getXfileHeader.XPath = xmlString;
+                _xService.AddUptdateXFileHeader(getXfileHeader);
+            }
+            var facilityId = Helpers.GetDefaultFacilityId();
 
-                var billHeaderListView = string.Empty;
-                //var billHeaderList = bal.GetFinalBillByPayerHeadersList(corporateId, Helpers.GetDefaultFacilityId(), payerId);
-                var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
-                var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
-                var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
-                var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
+            var billHeaderListView = string.Empty;
+            //var billHeaderList = bal.GetFinalBillByPayerHeadersList(corporateId, Helpers.GetDefaultFacilityId(), payerId);
+            var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
+            var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
+            var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
+            var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
 
-                var payerClaimsList = _service.GetFinalBillPayerHeadersList(corporateId, Helpers.GetDefaultFacilityId());
-                var payerClaimsView = RenderPartialViewToString(PartialViews.PayerClaimsList, payerClaimsList);
-                var inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
-                var outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
+            var payerClaimsList = _service.GetFinalBillPayerHeadersList(corporateId, Helpers.GetDefaultFacilityId());
+            var payerClaimsView = RenderPartialViewToString(PartialViews.PayerClaimsList, payerClaimsList);
+            var inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
+            var outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
 
-                var erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
+            var erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
 
-                var jsonData = new { payerClaimsView, inPatientView, outPatientView, erPatientView };
-                var datatoReturn = Json(jsonData, JsonRequestBehavior.AllowGet);
-                datatoReturn.MaxJsonLength = int.MaxValue;
-                return datatoReturn;
-             
+            var jsonData = new { payerClaimsView, inPatientView, outPatientView, erPatientView };
+            var datatoReturn = Json(jsonData, JsonRequestBehavior.AllowGet);
+            datatoReturn.MaxJsonLength = int.MaxValue;
+            return datatoReturn;
+
         }
 
         /// <summary>
@@ -625,9 +624,9 @@ namespace BillingSystem.Controllers
             var corporateId = Helpers.GetDefaultCorporateId();
             var facilityId = Helpers.GetDefaultFacilityId();
             var listToReturn = new List<BillHeaderCustomModel>();
-         
-                listToReturn = _service.GetAllBillHeaderList(corporateId, facilityId);
-             
+
+            listToReturn = _service.GetAllBillHeaderList(corporateId, facilityId);
+
             return PartialView(PartialViews.BillHeaderList, listToReturn);
         }
 
@@ -639,27 +638,27 @@ namespace BillingSystem.Controllers
         {
             var facilityId = Helpers.GetDefaultFacilityId();
             var corporateId = Helpers.GetSysAdminCorporateID();
-            
-                var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
 
-                var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
-                var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
-                var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
-                var payerClaimsList = _service.GetFinalBillPayerHeadersList(corporateId, Helpers.GetDefaultFacilityId());
+            var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
 
-                var inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
-                var outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
+            var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
+            var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
+            var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
+            var payerClaimsList = _service.GetFinalBillPayerHeadersList(corporateId, Helpers.GetDefaultFacilityId());
 
-                var erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
-                //var billHeaderPatialView = RenderPartialViewToString(PartialViews.FinalBillHeadersListView,
-                //    billHeaderList);
-                var payerclaimPartialView = RenderPartialViewToString(
-                    PartialViews.PayerClaimsList,
-                    payerClaimsList);
+            var inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
+            var outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
 
-                var jsonData = new { outPatientView, inPatientView, erPatientView, payerclaimPartialView };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-             
+            var erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
+            //var billHeaderPatialView = RenderPartialViewToString(PartialViews.FinalBillHeadersListView,
+            //    billHeaderList);
+            var payerclaimPartialView = RenderPartialViewToString(
+                PartialViews.PayerClaimsList,
+                payerClaimsList);
+
+            var jsonData = new { outPatientView, inPatientView, erPatientView, payerclaimPartialView };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+
         }
 
         public ActionResult GetFinalBillByPayerHeadersList(string payerId)
@@ -668,21 +667,21 @@ namespace BillingSystem.Controllers
             var outPatientView = "";
             var erPatientView = "";
             List<BillHeaderCustomModel> billHeaderList = null;
-             
-                billHeaderList = !string.IsNullOrEmpty(payerId) ?
-                       _service.GetFinalBillByPayerHeadersList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), payerId) :
-                       _service.GetFinalBillHeadersList(0, 0, false, Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
 
-                var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
-                var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
-                var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
-                inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
-                outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
+            billHeaderList = !string.IsNullOrEmpty(payerId) ?
+                   _service.GetFinalBillByPayerHeadersList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), payerId) :
+                   _service.GetFinalBillHeadersList(0, 0, false, Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
 
-                erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
-                var jsonData = new { inPatientView, outPatientView, erPatientView };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-             
+            var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
+            var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
+            var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
+            inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
+            outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
+
+            erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
+            var jsonData = new { inPatientView, outPatientView, erPatientView };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+
         }
 
         public ActionResult FinalBillsListView(int? id, int? typeId)
@@ -693,34 +692,34 @@ namespace BillingSystem.Controllers
             if (id == null || typeId == null || Convert.ToInt32(id) == 0)
             {
                 ViewBag.ShowPatientHeader = false;
-              
-                    var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
 
-                    /* Who: Krishna
-                     When: 12-April-2016
-                     What: To get 3 different List (In/Op/Er)
-                     Why: Clicent Requriment Task Id On Tms: XXXXX*/
-                    var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
-                    var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
-                    var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
+                var billHeaderList = _service.GetFinalBillHeadersList(0, 0, false, corporateId, facilityId);
 
-                    var payerWiseBillHeaderList = _service.GetFinalBillPayerHeadersList(corporateId, facilityId);
+                /* Who: Krishna
+                 When: 12-April-2016
+                 What: To get 3 different List (In/Op/Er)
+                 Why: Clicent Requriment Task Id On Tms: XXXXX*/
+                var opPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
+                var inPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
+                var erPatientList = billHeaderList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
 
-                    // Bill Details ViewModel to be binded to UI
-                    billDetailsView = new BillDetailsView
-                    {
-                        PatientInfo = new PatientInfoCustomModel(),
-                        //BillHeaderList = billHeaderList,
-                        InPatientListView = inPatientList,
-                        OutPatientListView = opPatientList,
-                        ErPatientListView = erPatientList,
-                        BillActivityList = new List<BillDetailCustomModel>(),
-                        EncounterId = 0,
-                        QueryStringId = 0,
-                        QueryStringTypeId = 0,
-                        PayerWiseBillHeaderList = payerWiseBillHeaderList
-                    };
-                 
+                var payerWiseBillHeaderList = _service.GetFinalBillPayerHeadersList(corporateId, facilityId);
+
+                // Bill Details ViewModel to be binded to UI
+                billDetailsView = new BillDetailsView
+                {
+                    PatientInfo = new PatientInfoCustomModel(),
+                    //BillHeaderList = billHeaderList,
+                    InPatientListView = inPatientList,
+                    OutPatientListView = opPatientList,
+                    ErPatientListView = erPatientList,
+                    BillActivityList = new List<BillDetailCustomModel>(),
+                    EncounterId = 0,
+                    QueryStringId = 0,
+                    QueryStringTypeId = 0,
+                    PayerWiseBillHeaderList = payerWiseBillHeaderList
+                };
+
             }
 
             // Pass the View Model in ActionResult to View BillHeader
@@ -733,29 +732,29 @@ namespace BillingSystem.Controllers
         /// <param name="payerid">The payerid.</param>
         /// <returns></returns>
         public ActionResult GetClaimsByPayerId(string payerid)
-        { 
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                var billHeaderList = _service.GetFinalBillByPayerHeadersList(corporateId, facilityId, payerid);
-                return PartialView(PartialViews.FinalBillHeadersListView, billHeaderList);
-             
+        {
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var billHeaderList = _service.GetFinalBillByPayerHeadersList(corporateId, facilityId, payerid);
+            return PartialView(PartialViews.FinalBillHeadersListView, billHeaderList);
+
         }
 
         public ActionResult GetClaimsByPayerIdView(string payerIds)
-        { 
-                var mainList = _service.GetFinalBillByPayerHeadersList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), payerIds);
-                var opPatientList = mainList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
-                var inPatientList = mainList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
-                var erPatientList = mainList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
+        {
+            var mainList = _service.GetFinalBillByPayerHeadersList(Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), payerIds);
+            var opPatientList = mainList.Where(x => x.EncounterPatientType.Equals("OutPatient")).ToList();
+            var inPatientList = mainList.Where(x => x.EncounterPatientType.Equals("InPatient")).ToList();
+            var erPatientList = mainList.Where(x => x.EncounterPatientType.Equals("ERPatient")).ToList();
 
-                var inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
-                var outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
+            var inPatientView = RenderPartialViewToString(PartialViews.InPatientFinalBillList, inPatientList);
+            var outPatientView = RenderPartialViewToString(PartialViews.OutPatientFinalBillList, opPatientList);
 
-                var erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
+            var erPatientView = RenderPartialViewToString(PartialViews.ErPatientFinalBillList, erPatientList);
 
-                var jsonData = new { inPatientView, outPatientView, erPatientView };
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
-             
+            var jsonData = new { inPatientView, outPatientView, erPatientView };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+
         }
 
         #endregion
@@ -791,42 +790,42 @@ namespace BillingSystem.Controllers
             {
                 case QueryStringType.Encounter:
 
-                   
-                        encounterId = id;
 
-                        // Call Stored Procedures here to apply charges of Bed and Order Bill against the current Encounter ID
-                        // Commented by Shashank On 15 Sept 2015
-                        // bal.ApplyBedChargesAndOrderBill(id);
+                    encounterId = id;
 
-                        // Get Patient Details by current Encounter ID
-                        patientId = _piService.GetPatientIdByEncounterId(id);
-                        patientInfo = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
+                    // Call Stored Procedures here to apply charges of Bed and Order Bill against the current Encounter ID
+                    // Commented by Shashank On 15 Sept 2015
+                    // bal.ApplyBedChargesAndOrderBill(id);
 
-                        billHeaderList = _service.GetBillHeaderListByEncounterId(id, corporateId, facilityId);
-                     
+                    // Get Patient Details by current Encounter ID
+                    patientId = _piService.GetPatientIdByEncounterId(id);
+                    patientInfo = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
+
+                    billHeaderList = _service.GetBillHeaderListByEncounterId(id, corporateId, facilityId);
+
 
                     break;
                 case QueryStringType.Patient:
 
                     #region Patient Type
 
-                    
-                        // Call Stored Procedures here to apply charges of Bed and Order Bill against the current Encounter ID
-                        var encountersList = _eService.GetActiveEncounterIdsByPatientId(id);
 
-                        // Apply Bed Charges to each encounter of Patient ID
-                        // Commented by Shashank On 15 Sept 2015
-                        // if (encountersList.Count > 0)
-                        // {
-                        // encountersList = encountersList.Distinct().ToList();
-                        // encountersList.ForEach(item => bal.ApplyBedChargesAndOrderBill(item));
-                        // }
+                    // Call Stored Procedures here to apply charges of Bed and Order Bill against the current Encounter ID
+                    var encountersList = _eService.GetActiveEncounterIdsByPatientId(id);
 
-                        // Get Patient Details by current Encounter ID
-                        patientInfo = _piService.GetPatientDetailsByPatientId(id);
+                    // Apply Bed Charges to each encounter of Patient ID
+                    // Commented by Shashank On 15 Sept 2015
+                    // if (encountersList.Count > 0)
+                    // {
+                    // encountersList = encountersList.Distinct().ToList();
+                    // encountersList.ForEach(item => bal.ApplyBedChargesAndOrderBill(item));
+                    // }
 
-                        billHeaderList = _service.GetBillHeaderListByPatientId(id, corporateId, facilityId);
-                      
+                    // Get Patient Details by current Encounter ID
+                    patientInfo = _piService.GetPatientDetailsByPatientId(id);
+
+                    billHeaderList = _service.GetBillHeaderListByPatientId(id, corporateId, facilityId);
+
 
                     #endregion
 

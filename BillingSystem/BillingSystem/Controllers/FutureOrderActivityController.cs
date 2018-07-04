@@ -9,13 +9,9 @@
 
 namespace BillingSystem.Controllers
 {
-    using System.Collections.Generic;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
-    using BillingSystem.Model;
-    using BillingSystem.Model.CustomModel;
     using BillingSystem.Model.Model;
     using BillingSystem.Models;
 
@@ -24,6 +20,14 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class FutureOrderActivityController : Controller
     {
+        private readonly IFutureOrderActivityService _service;
+
+        public FutureOrderActivityController(IFutureOrderActivityService service)
+        {
+            _service = service;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -33,16 +37,12 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindFutureOrderActivityList()
         {
-            // Initialize the FutureOrderActivity BAL object
-            using (var FutureOrderActivityBal = new FutureOrderActivityBal())
-            {
-                // Get the facilities list
-                var FutureOrderActivityList = FutureOrderActivityBal.GetFutureOrderActivity();
+            // Get the facilities list
+            var FutureOrderActivityList = _service.GetFutureOrderActivity();
 
-                // Pass the ActionResult with List of FutureOrderActivityViewModel object to Partial View FutureOrderActivityList
-                //return this.PartialView(PartialViews.FutureOrderActivityList, FutureOrderActivityList);
-                return null;
-            }
+            // Pass the ActionResult with List of FutureOrderActivityViewModel object to Partial View FutureOrderActivityList
+            //return this.PartialView(PartialViews.FutureOrderActivityList, FutureOrderActivityList);
+            return null;
         }
 
         /// <summary>
@@ -56,30 +56,27 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteFutureOrderActivity(int id)
         {
-            using (var bal = new FutureOrderActivityBal())
+            // Get FutureOrderActivity model object by current FutureOrderActivity ID
+            var currentFutureOrderActivity = _service.GetFutureOrderActivityById(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            // Check If FutureOrderActivity model is not null
+            if (currentFutureOrderActivity != null)
             {
-                // Get FutureOrderActivity model object by current FutureOrderActivity ID
-                var currentFutureOrderActivity = bal.GetFutureOrderActivityById(id);
-                var userId = Helpers.GetLoggedInUserId();
+                currentFutureOrderActivity.IsActive = false;
 
-                // Check If FutureOrderActivity model is not null
-                if (currentFutureOrderActivity != null)
-                {
-                    currentFutureOrderActivity.IsActive = false;
+                // currentFutureOrderActivity.ModifiedBy = userId;
+                // currentFutureOrderActivity.ModifiedDate = DateTime.Now;
 
-                    // currentFutureOrderActivity.ModifiedBy = userId;
-                    // currentFutureOrderActivity.ModifiedDate = DateTime.Now;
+                // Update Operation of current FutureOrderActivity
+                int result = _service.SaveFutureOrderActivity(currentFutureOrderActivity);
 
-                    // Update Operation of current FutureOrderActivity
-                    int result = bal.SaveFutureOrderActivity(currentFutureOrderActivity);
-
-                    // return deleted ID of current FutureOrderActivity as Json Result to the Ajax Call.
-                    return this.Json(result);
-                }
+                // return deleted ID of current FutureOrderActivity as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
-            return this.Json(null);
+            return Json(null);
         }
 
         /// <summary>
@@ -93,15 +90,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetFutureOrderActivity(int id)
         {
-            using (var bal = new FutureOrderActivityBal())
-            {
-                // Call the AddFutureOrderActivity Method to Add / Update current FutureOrderActivity
-                FutureOrderActivity currentFutureOrderActivity = bal.GetFutureOrderActivityById(id);
-
-                // Pass the ActionResult with the current FutureOrderActivityViewModel object as model to PartialView FutureOrderActivityAddEdit
-                //return this.PartialView(PartialViews.FutureOrderActivityAddEdit, currentFutureOrderActivity);
-                return null;
-            }
+            FutureOrderActivity currentFutureOrderActivity = _service.GetFutureOrderActivityById(id);
+            return null;
         }
 
         /// <summary>
@@ -114,20 +104,13 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult FutureOrderActivityMain()
         {
-            // Initialize the FutureOrderActivity BAL object
-            var FutureOrderActivityBal = new FutureOrderActivityBal();
-
-            // Get the Entity list
-            var FutureOrderActivityList = FutureOrderActivityBal.GetFutureOrderActivity();
-
-            // Intialize the View Model i.e. FutureOrderActivityView which is binded to Main View Index.cshtml under FutureOrderActivity
+            var FutureOrderActivityList = _service.GetFutureOrderActivity();
             var FutureOrderActivityView = new FutureOrderActivityView
-                                         {
-                                             FutureOrderActivityList = FutureOrderActivityList, 
-                                             CurrentFutureOrderActivity = new FutureOrderActivity()
-                                         };
+            {
+                FutureOrderActivityList = FutureOrderActivityList,
+                CurrentFutureOrderActivity = new FutureOrderActivity()
+            };
 
-            // Pass the View Model in ActionResult to View FutureOrderActivity
             return null;
         }
 
@@ -166,17 +149,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new FutureOrderActivityBal())
-                {
-                    if (model.FutureOrderActivityID > 0)
-                    {
-                        // model.ModifiedBy = userId;
-                        // model.ModifiedDate = DateTime.Now;
-                    }
-
-                    // Call the AddFutureOrderActivity Method to Add / Update current FutureOrderActivity
-                    newId = bal.SaveFutureOrderActivity(model);
-                }
+                newId = _service.SaveFutureOrderActivity(model);
             }
 
             return this.Json(newId);

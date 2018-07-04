@@ -16,6 +16,7 @@ namespace BillingSystem.Controllers
 {
     using System.Web.Mvc;
     using Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using Common;
 
     /// <summary>
@@ -23,6 +24,12 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class MarFormController : BaseController
     {
+        private readonly IOrderActivityService _service;
+
+        public MarFormController(IOrderActivityService service)
+        {
+            _service = service;
+        }
         #region Public Methods and Operators
 
         public ActionResult Index()
@@ -43,18 +50,15 @@ namespace BillingSystem.Controllers
                 : vm.FromDate;
             var firstDayOfMonth = new DateTime(date.Year, date.Month, 1);
             var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-            using (var orderActivityBal = new OrderActivityBal())
-            {
-                vm.FromDate = firstDayOfMonth;
-                vm.TillDate = lastDayOfMonth;
-                var lstMarViewCustomModel = orderActivityBal.GetMARView(vm);
+            vm.FromDate = firstDayOfMonth;
+            vm.TillDate = lastDayOfMonth;
+            var lstMarViewCustomModel = _service.GetMARView(vm);
 
-                list = (lstMarViewCustomModel.GroupJoin(lstMarViewCustomModel,
-                        c => c.OrderInfo,
-                        o => o.OrderStatus,
-                        (c, result) => new MarGroupCustomModel(c.OrderInfo, c.OrderStatus, lstMarViewCustomModel))
-                        .DistinctBy(x => x.OrderInfo)).ToList();
-            }
+            list = (lstMarViewCustomModel.GroupJoin(lstMarViewCustomModel,
+                    c => c.OrderInfo,
+                    o => o.OrderStatus,
+                    (c, result) => new MarGroupCustomModel(c.OrderInfo, c.OrderStatus, lstMarViewCustomModel))
+                    .DistinctBy(x => x.OrderInfo)).ToList();
             return PartialView(PartialViews.MarFormList, list);
         }
 

@@ -1,21 +1,27 @@
-﻿using System.Net;
-using BillingSystem.Models;
+﻿using BillingSystem.Models;
 using System.Web.Mvc;
 using BillingSystem.Common;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
 using System;
 using BillingSystem.Model.CustomModel;
 using System.Collections.Generic;
-using Glimpse.Core.Configuration;
+using Unity;
 
 namespace BillingSystem.Controllers
 {
     using System.Linq;
+    using BillingSystem.Bal.Interfaces;
     using Hangfire;
 
     public class FacilityController : BaseController
     {
+        private readonly IFacilityService _service;
+
+        public FacilityController(IFacilityService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the Facility View in the Model Facility such as FacilityList, list of countries etc.
         /// </summary>
@@ -24,13 +30,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult Index()
         {
-            //Initialize the Facility Communicator object
-            var facilityBal = new FacilityBal();
-
             //Get the facilities list
             var cId = Helpers.GetDefaultCorporateId();
-            //var facilityList = facilityBal.GetFacilities(cId);
-            var facilityList = facilityBal.GetFacilityList(cId);
+            //var facilityList = _service.GetFacilities(cId);
+            var facilityList = _service.GetFacilityList(cId);
 
             //Intialize the View Model i.e. FacilityView which is binded to Main View Index.cshtml under Facility
             var facilityView = new FacilityView
@@ -51,11 +54,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetFListJson()
         {
-            var facilityBal = new FacilityBal();
-            //Get the facilities list
             var cId = Helpers.GetDefaultCorporateId();
-            //var facilityList = facilityBal.GetFacilities(cId);
-            var facilityList = facilityBal.GetFacilityList(cId);
+            //var facilityList = _service.GetFacilities(cId);
+            var facilityList = _service.GetFacilityList(cId);
             var jsonResult = new
             {
                 aaData = facilityList.Select(f => new[] {
@@ -75,16 +76,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult BindFaciltyList()
         {
-            //Initialize the Facility Communicator object
-            using (var facilityBal = new FacilityBal())
-            {
-                //Get the facilities list
-                var cId = Helpers.GetDefaultCorporateId();
-                //var facilityList = facilityBal.GetFacilities(cId);
-                var facilityList = facilityBal.GetFacilityList(cId);
-                //Pass the ActionResult with List of FacilityViewModel object to Partial View FacilityList
-                return PartialView(PartialViews.FacilityList, facilityList);
-            }
+            //Get the facilities list
+            var cId = Helpers.GetDefaultCorporateId();
+            //var facilityList = _service.GetFacilities(cId);
+            var facilityList = _service.GetFacilityList(cId);
+            //Pass the ActionResult with List of FacilityViewModel object to Partial View FacilityList
+            return PartialView(PartialViews.FacilityList, facilityList);
         }
 
         /// <summary>
@@ -96,37 +93,34 @@ namespace BillingSystem.Controllers
         //[AcceptVerbs(HttpVerbs.Get)]
         public ActionResult GetFacility(int facilityId)
         {
-            using (var facilityBal = new FacilityBal())
+            //Call the AddFacility Method to Add / Update current facility
+            var currentFacility = _service.GetFacilityById(facilityId);
+            var jsonResult = new
             {
-                //Call the AddFacility Method to Add / Update current facility
-                var currentFacility = facilityBal.GetFacilityById(facilityId);
-                var jsonResult = new
-                {
-                    currentFacility.FacilityId,
-                    currentFacility.FacilityNumber,
-                    currentFacility.FacilityName,
-                    currentFacility.FacilityStreetAddress,
-                    currentFacility.FacilityStreetAddress2,
-                    currentFacility.FacilityCity,
-                    currentFacility.FacilityZipCode,
-                    currentFacility.FacilityLicenseNumber,
-                    FacilityLicenseNumberExpire = currentFacility.FacilityLicenseNumberExpire.GetShortDateString1(),
-                    currentFacility.FacilityTypeLicense,
-                    currentFacility.FacilityRelated,
-                    currentFacility.FacilityTotalStaffedBed,
-                    currentFacility.FacilityTotalLicenseBed,
-                    currentFacility.FacilityPOBox,
-                    currentFacility.CountryID,
-                    currentFacility.FacilityState,
-                    currentFacility.IsActive,
-                    currentFacility.CorporateID,
-                    currentFacility.FacilityTimeZone,
-                    currentFacility.RegionId,
-                    currentFacility.IsDeleted,
-                    currentFacility.SenderID,
-                };
-                return Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+                currentFacility.FacilityId,
+                currentFacility.FacilityNumber,
+                currentFacility.FacilityName,
+                currentFacility.FacilityStreetAddress,
+                currentFacility.FacilityStreetAddress2,
+                currentFacility.FacilityCity,
+                currentFacility.FacilityZipCode,
+                currentFacility.FacilityLicenseNumber,
+                FacilityLicenseNumberExpire = currentFacility.FacilityLicenseNumberExpire.GetShortDateString1(),
+                currentFacility.FacilityTypeLicense,
+                currentFacility.FacilityRelated,
+                currentFacility.FacilityTotalStaffedBed,
+                currentFacility.FacilityTotalLicenseBed,
+                currentFacility.FacilityPOBox,
+                currentFacility.CountryID,
+                currentFacility.FacilityState,
+                currentFacility.IsActive,
+                currentFacility.CorporateID,
+                currentFacility.FacilityTimeZone,
+                currentFacility.RegionId,
+                currentFacility.IsDeleted,
+                currentFacility.SenderID,
+            };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -151,35 +145,32 @@ namespace BillingSystem.Controllers
             {
                 var fId = model.FacilityId;
 
-                using (var bal = new FacilityBal())
+                var status = _service.CheckDuplicateFacilityNoAndLicenseNo(model.FacilityNumber, model.FacilityLicenseNumber,
+                model.FacilityId, model.CorporateID.Value);
+
+                if (status > 0)
+                    return Json(status, JsonRequestBehavior.AllowGet);
+
+                if (model.FacilityId > 0)
                 {
-                    var status = bal.CheckDuplicateFacilityNoAndLicenseNo(model.FacilityNumber, model.FacilityLicenseNumber,
-                    model.FacilityId, model.CorporateID.Value);
-
-                    if (status > 0)
-                        return Json(status, JsonRequestBehavior.AllowGet);
-
-                    if (model.FacilityId > 0)
-                    {
-                        model.ModifiedBy = Helpers.GetLoggedInUserId();
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-                    else
-                    {
-                        model.CreatedBy = Helpers.GetLoggedInUserId();
-                        model.CreatedDate = Helpers.GetInvariantCultureDateTime();
+                    model.ModifiedBy = Helpers.GetLoggedInUserId();
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                }
+                else
+                {
+                    model.CreatedBy = Helpers.GetLoggedInUserId();
+                    model.CreatedDate = Helpers.GetInvariantCultureDateTime();
 
 
-                    }
+                }
 
 
-                    //Call the AddFacility Method to Add / Update current facility
-                    list = bal.AddUpdateFacility(model, out fId);
+                //Call the AddFacility Method to Add / Update current facility
+                list = _service.AddUpdateFacility(model, out fId);
 
-                    if (fId > 0)
-                    {
-                        BackgroundJob.Enqueue(() => CreateDefaultFacilityItems(fId, model.FacilityName, Helpers.GetLoggedInUserId()));
-                    }
+                if (fId > 0)
+                {
+                    BackgroundJob.Enqueue(() => CreateDefaultFacilityItems(fId, model.FacilityName, Helpers.GetLoggedInUserId()));
                 }
             }
             return PartialView(PartialViews.FacilityList, list);
@@ -208,10 +199,10 @@ namespace BillingSystem.Controllers
             if (isExists)
                 return Json(1, JsonRequestBehavior.AllowGet);
 
-            using (var bal = new FacilityBal())
+            using (var _service = new FacilityBal())
             {
                 //Get facility model object by current facility ID
-                var currentFacility = bal.GetFacilityById(facilityId);
+                var currentFacility = _service.GetFacilityById(facilityId);
 
                 //Check If facility model is not null
                 if (currentFacility != null)
@@ -221,13 +212,12 @@ namespace BillingSystem.Controllers
                     currentFacility.DeletedDate = Helpers.GetInvariantCultureDateTime();
 
                     //Update Operation of current facility
-                    list = bal.AddUpdateFacility(currentFacility);
+                    list = _service.AddUpdateFacility(currentFacility);
                 }
             }*/
-            var facilityBal = new FacilityBal();
             var cId = Helpers.GetDefaultCorporateId();
-            facilityBal.DeleteFacilityData(Convert.ToString(facilityId));
-            list = facilityBal.GetFacilityList(cId);
+            _service.DeleteFacilityData(Convert.ToString(facilityId));
+            list = _service.GetFacilityList(cId);
 
 
             //var oFacilityBal = new FacilityBal();
@@ -248,19 +238,16 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetCorporateFacilities(int Id)
         {
-            using (var facilityBal = new FacilityBal())
-            {
-                var result = facilityBal.GetFacilitiesByCorporateIdWithoutCountries(Id).ToList().OrderBy(x => x.FacilityName).ToList();
-                return Json(result);
-            }
+            var result = _service.GetFacilitiesByCorporateIdWithoutCountries(Id).ToList().OrderBy(x => x.FacilityName).ToList();
+            return Json(result);
         }
 
         public static void CreateDefaultFacilityItems(int fId, string fName, int userId)
         {
-            using (var bal = new FacilityBal())
-            {
-                bal.CreateDefaultFacilityItems(fId, fName, userId);
-            }
+
+            var container = UnityConfig.RegisterComponents();
+            var service = container.Resolve<IFacilityService>();
+            service.CreateDefaultFacilityItems(fId, fName, userId);
         }
     }
 }

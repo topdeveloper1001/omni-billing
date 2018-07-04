@@ -22,12 +22,15 @@ namespace BillingSystem.Controllers
     {
         private readonly ICarePlanService _cpService;
         private readonly ICPTCodesService _service;
+        private readonly IGlobalCodeCategoryService _gcService;
 
-        public CPTCodesController(ICarePlanService cpService, ICPTCodesService service)
+        public CPTCodesController(ICarePlanService cpService, ICPTCodesService service, IGlobalCodeCategoryService gcService)
         {
             _cpService = cpService;
             _service = service;
+            _gcService = gcService;
         }
+
 
         /// <summary>
         /// Indexes this instance.
@@ -269,11 +272,9 @@ namespace BillingSystem.Controllers
             var startRange = Convert.ToInt32(GlobalCodeCategoryValue.CPTCodestartRange);
             var finishRange = Convert.ToInt32(GlobalCodeCategoryValue.CPTCodesFinishRange);
 
-            using (var bal = new GlobalCodeCategoryBal())
-            {
-                var list = bal.GetGlobalCodeCategoriesRange(startRange, finishRange);
-                return Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategoriesRange(startRange, finishRange);
+            return Json(list);
+
         }
 
         /// <summary>

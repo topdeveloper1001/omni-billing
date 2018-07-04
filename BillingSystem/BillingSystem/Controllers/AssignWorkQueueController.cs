@@ -13,6 +13,7 @@ namespace BillingSystem.Controllers
     using System.Linq;
     using System.Web.Mvc;
     using Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using Common;
     using Models;
 
@@ -21,18 +22,25 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class AssignWorkQueueController : BaseController
     {
+        private readonly IScrubReportService _service;
+
+        public AssignWorkQueueController(IScrubReportService service)
+        {
+            _service = service;
+        }
+
+
         /// <summary>
         /// Indexes this instance.
         /// </summary>
         /// <returns></returns>
         public ActionResult Index()
         {
-            var scrubReportBal = new ScrubReportBal();
 
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             var userId = Helpers.GetLoggedInUserId();
-            var headerList = scrubReportBal.GetScrubHeaderList(
+            var headerList = _service.GetScrubHeaderList(
                 corporateId,
                 facilityId,
                 Convert.ToInt32(0),

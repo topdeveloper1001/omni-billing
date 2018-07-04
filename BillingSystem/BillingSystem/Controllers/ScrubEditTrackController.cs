@@ -1,15 +1,21 @@
-﻿using BillingSystem.Bal.Mapper;
-using BillingSystem.Models;
+﻿using BillingSystem.Models;
 using BillingSystem.Common;
-using System;
 using System.Web.Mvc;
 using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Model;
+using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Controllers
 {
     public class ScrubEditTrackController : BaseController
     {
+        private readonly IScrubEditTrackService _service;
+
+        public ScrubEditTrackController(IScrubEditTrackService service)
+        {
+            _service = service;
+        }
+
         /// <summary>
         /// Get the details of the ScrubEditTrack View in the Model ScrubEditTrack such as ScrubEditTrackList, list of countries etc.
         /// </summary>
@@ -18,19 +24,16 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult ScrubEditTrackMain()
         {
-            //Initialize the ScrubEditTrack BAL object
-            var scrubEditTrackBal = new ScrubEditTrackBal();
-
             var corporateId = Helpers.GetSysAdminCorporateID();
             var facilityId = Helpers.GetDefaultFacilityId();
             //Get the Entity list
-            var scrubEditTrackList = scrubEditTrackBal.GetScrubEditTrack(corporateId, facilityId);
+            var scrubEditTrackList = _service.GetScrubEditTrack(corporateId, facilityId);
 
             //Intialize the View Model i.e. ScrubEditTrackView which is binded to Main View Index.cshtml under ScrubEditTrack
             var scrubEditTrackView = new ScrubEditTrackView
             {
-               ScrubEditTrackList = scrubEditTrackList,
-               CurrentScrubEditTrack = new Model.ScrubEditTrack()
+                ScrubEditTrackList = scrubEditTrackList,
+                CurrentScrubEditTrack = new Model.ScrubEditTrack()
             };
 
             //Pass the View Model in ActionResult to View ScrubEditTrack
@@ -46,17 +49,14 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindScrubEditTrackList()
         {
-            //Initialize the ScrubEditTrack BAL object
-            using (var scrubEditTrackBal = new ScrubEditTrackBal())
-            {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                //Get the facilities list
-                var scrubEditTrackList = scrubEditTrackBal.GetScrubEditTrack(corporateId, facilityId);
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            //Get the facilities list
+            var scrubEditTrackList = _service.GetScrubEditTrack(corporateId, facilityId);
 
-                //Pass the ActionResult with List of ScrubEditTrackViewModel object to Partial View ScrubEditTrackList
-                return PartialView(PartialViews.ScrubEditTrackList, scrubEditTrackList);
-            }
+            //Pass the ActionResult with List of ScrubEditTrackViewModel object to Partial View ScrubEditTrackList
+            return PartialView(PartialViews.ScrubEditTrackList, scrubEditTrackList);
+
         }
 
         /// <summary>
@@ -70,21 +70,19 @@ namespace BillingSystem.Controllers
         {
             //Initialize the newId variable 
             var newId = -1;
-			var userId = Helpers.GetLoggedInUserId();
+            var userId = Helpers.GetLoggedInUserId();
 
             //Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new ScrubEditTrackBal())
+                if (model.ScrubEditTrackID > 0)
                 {
-                    if (model.ScrubEditTrackID > 0)
-                    {
-                        model.CreatedBy = userId;
-                        model.CreatedDate = CurrentDateTime;
-                    }
-                    //Call the AddScrubEditTrack Method to Add / Update current ScrubEditTrack
-                    newId = bal.SaveScrubEditTrack(model);
+                    model.CreatedBy = userId;
+                    model.CreatedDate = CurrentDateTime;
                 }
+                //Call the AddScrubEditTrack Method to Add / Update current ScrubEditTrack
+                newId = _service.SaveScrubEditTrack(model);
+
             }
             return Json(newId);
         }
@@ -96,14 +94,11 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult GetScrubEditTrack(int id)
         {
-            using (var bal = new ScrubEditTrackBal())
-            {
-                //Call the AddScrubEditTrack Method to Add / Update current ScrubEditTrack
-                var currentScrubEditTrack = bal.GetScrubEditTrackByID(id);
+            //Call the AddScrubEditTrack Method to Add / Update current ScrubEditTrack
+            var currentScrubEditTrack = _service.GetScrubEditTrackByID(id);
 
-                //Pass the ActionResult with the current ScrubEditTrackViewModel object as model to PartialView ScrubEditTrackAddEdit
-                return PartialView(PartialViews.ScrubEditTrackAddEdit, currentScrubEditTrack);
-            }
+            //Pass the ActionResult with the current ScrubEditTrackViewModel object as model to PartialView ScrubEditTrackAddEdit
+            return PartialView(PartialViews.ScrubEditTrackAddEdit, currentScrubEditTrack);
         }
 
         /// <summary>
@@ -113,26 +108,24 @@ namespace BillingSystem.Controllers
         /// <returns></returns>
         public ActionResult DeleteScrubEditTrack(int id)
         {
-            using (var bal = new ScrubEditTrackBal())
+            //Get ScrubEditTrack model object by current ScrubEditTrack ID
+            var currentScrubEditTrack = _service.GetScrubEditTrackByID(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            //Check If ScrubEditTrack model is not null
+            if (currentScrubEditTrack != null)
             {
-                //Get ScrubEditTrack model object by current ScrubEditTrack ID
-                var currentScrubEditTrack = bal.GetScrubEditTrackByID(id);
-				var userId = Helpers.GetLoggedInUserId();
+                currentScrubEditTrack.IsActive = false;
+                currentScrubEditTrack.CreatedBy = userId;
+                currentScrubEditTrack.CreatedDate = CurrentDateTime;
 
-                //Check If ScrubEditTrack model is not null
-                if (currentScrubEditTrack != null)
-                {
-                    currentScrubEditTrack.IsActive = false;
-                    currentScrubEditTrack.CreatedBy = userId;
-                    currentScrubEditTrack.CreatedDate = CurrentDateTime;
+                //Update Operation of current ScrubEditTrack
+                var result = _service.SaveScrubEditTrack(currentScrubEditTrack);
 
-                    //Update Operation of current ScrubEditTrack
-                    var result = bal.SaveScrubEditTrack(currentScrubEditTrack);
-
-                    //return deleted ID of current ScrubEditTrack as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                //return deleted ID of current ScrubEditTrack as Json Result to the Ajax Call.
+                return Json(result);
             }
+
 
             //Return the Json result as Action Result back JSON Call Success
             return Json(null);
@@ -155,17 +148,14 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetScrubEditTrackList()
         {
-            //Initialize the ScrubEditTrack BAL object
-            using (var scrubEditTrackBal = new ScrubEditTrackBal())
-            {
-                var corporateId = Helpers.GetSysAdminCorporateID();
-                var facilityId = Helpers.GetDefaultFacilityId();
-                //Get the facilities list
-                var scrubEditTrackList = scrubEditTrackBal.GetScrubEditTrack(corporateId, facilityId);
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            //Get the facilities list
+            var scrubEditTrackList = _service.GetScrubEditTrack(corporateId, facilityId);
 
-                //Pass the ActionResult with List of ScrubEditTrackViewModel object to Partial View ScrubEditTrackList
-                return PartialView(PartialViews.ScrubEditTrackList, scrubEditTrackList);
-            }
+            //Pass the ActionResult with List of ScrubEditTrackViewModel object to Partial View ScrubEditTrackList
+            return PartialView(PartialViews.ScrubEditTrackList, scrubEditTrackList);
+
         }
     }
 }

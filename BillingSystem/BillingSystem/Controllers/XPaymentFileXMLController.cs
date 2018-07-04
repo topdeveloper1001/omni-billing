@@ -12,8 +12,7 @@ namespace BillingSystem.Controllers
     using System.Collections.Generic;
     using System.Linq;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
     using BillingSystem.Model.CustomModel;
@@ -24,6 +23,12 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class XPaymentFileXMLController : BaseController
     {
+        private readonly IXPaymentFileXMLService _service;
+
+        public XPaymentFileXMLController(IXPaymentFileXMLService service)
+        {
+            _service = service;
+        }
         #region Public Methods and Operators
 
         /// <summary>
@@ -37,14 +42,10 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetXPaymentFileXML(int id)
         {
-            using (var bal = new XPaymentFileXMLBal())
-            {
-                // Call the AddXPaymentFileXML Method to Add / Update current XPaymentFileXML
-                XPaymentFileXML currentXPaymentFileXml = bal.GetXPaymentFileXMLByID(id);
+                XPaymentFileXML currentXPaymentFileXml = _service.GetXPaymentFileXMLByID(id);
 
                 // Pass the ActionResult with the current XPaymentFileXMLViewModel object as model to PartialView XPaymentFileXMLAddEdit
                 return this.PartialView(PartialViews.XPaymentFileXMLAddEdit, currentXPaymentFileXml);
-            }
         }
 
         /// <summary>
@@ -78,12 +79,9 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult XPaymentFileXMLMain(int claimId)
         {
-            // Initialize the XPaymentFileXML BAL object
-            var xPaymentFileXmlBal = new XPaymentFileXMLBal();
-
             // Get the Entity list
             List<XPaymentFileXMLCustomModel> xPaymentFileXmlList =
-                xPaymentFileXmlBal.GetXPaymentFileXML(claimId).ToList();
+                _service.GetXPaymentFileXML(claimId).ToList();
 
             // Intialize the View Model i.e. XPaymentFileXMLView which is binded to Main View Index.cshtml under XPaymentFileXML
             var xPaymentFileXmlView = new XPaymentFileXMLView { XPaymentFileXMLList = xPaymentFileXmlList, };

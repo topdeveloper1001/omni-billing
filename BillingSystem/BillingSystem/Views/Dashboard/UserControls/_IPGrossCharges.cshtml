@@ -6,7 +6,7 @@
     var currentCulutue = CultureInfo.CurrentCulture.Name;
     if (Session[SessionNames.SessionClass.ToString()] != null)
     {
-        var sessionClass = Session[SessionNames.SessionClass.ToString()] as BillingSystem.Model.SessionClass;
+        var sessionClass = Session[SessionNames.SessionClass.ToString()] as BillingSystem.Models.SessionClass;
         if (sessionClass != null)
         {
             var currentculturename = sessionClass.SelectedCulture;

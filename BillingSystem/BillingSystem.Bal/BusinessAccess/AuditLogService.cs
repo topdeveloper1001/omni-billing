@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Model;
-using BillingSystem.Repository.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess
 {

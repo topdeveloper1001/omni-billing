@@ -1,15 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ServiceCodeController.cs" company="Spadez">
-//   OmniHelathcare
-// </copyright>
-// <owner>
-// Krishan
-// </owner>
-// <summary>
-//   Defines the ServiceCodeController type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿
 namespace BillingSystem.Controllers
 {
     using System;
@@ -18,8 +7,7 @@ namespace BillingSystem.Controllers
     using System.Linq;
     using System.Web;
     using System.Web.Mvc;
-
-    using BillingSystem.Bal.BusinessAccess;
+    using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Common.Common;
     using BillingSystem.Model;
@@ -35,6 +23,16 @@ namespace BillingSystem.Controllers
     /// </summary>
     public class ServiceCodeController : BaseController
     {
+        private readonly IServiceCodeService _service;
+        private readonly IGlobalCodeCategoryService _gcService;
+
+        public ServiceCodeController(IServiceCodeService service, IGlobalCodeCategoryService gcService)
+        {
+            _service = service;
+            _gcService = gcService;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -52,22 +50,18 @@ namespace BillingSystem.Controllers
 
             int takeValue = Convert.ToInt32(Helpers.DefaultRecordCount) * Convert.ToInt32(blockNumber);
 
-            // Initialize the ServiceCode Communicator object
-            using (var serviceCodeBal = new ServiceCodeBal(tn))
+            // Get the facilities list
+            var serviceCodeList =
+                _service.GetServiceCodesActiveInActive(showInActive, tn).OrderByDescending(f => f.ServiceCodeId).Take(takeValue).ToList();
+            var serviceCodeView = new ServiceCodeViewModel
             {
-                // Get the facilities list
-                var serviceCodeList =
-                    serviceCodeBal.GetServiceCodesActiveInActive(showInActive).OrderByDescending(f => f.ServiceCodeId).Take(takeValue).ToList();
-                var serviceCodeView = new ServiceCodeViewModel
-                                          {
-                                              ServiceCodeList = serviceCodeList,
-                                              CurrentServiceCode = new ServiceCode(),
-                                              UserId = Helpers.GetLoggedInUserId()
-                                          };
+                ServiceCodeList = serviceCodeList,
+                CurrentServiceCode = new ServiceCode(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
-                // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
-                return this.PartialView(PartialViews.ServiceCodeList, serviceCodeView);
-            }
+            // Pass the ActionResult with List of ServiceCodeViewModel object to Partial View ServiceCodeList
+            return this.PartialView(PartialViews.ServiceCodeList, serviceCodeView);
         }
 
         /// <summary>
@@ -81,25 +75,22 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteServiceCode(CommonModel model)
         {
-            using (var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            // Get ServiceCode model object by current ServiceCode ID
+            ServiceCode currentServiceCode = _service.GetServiceCodeById(Convert.ToInt32(model.Id));
+
+            // Check If ServiceCode model is not null
+            if (currentServiceCode != null)
             {
-                // Get ServiceCode model object by current ServiceCode ID
-                ServiceCode currentServiceCode = serviceCodeBal.GetServiceCodeById(Convert.ToInt32(model.Id));
+                currentServiceCode.IsDeleted = true;
+                currentServiceCode.DeletedBy = Helpers.GetLoggedInUserId();
+                currentServiceCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
+                currentServiceCode.IsActive = true;
 
-                // Check If ServiceCode model is not null
-                if (currentServiceCode != null)
-                {
-                    currentServiceCode.IsDeleted = true;
-                    currentServiceCode.DeletedBy = Helpers.GetLoggedInUserId();
-                    currentServiceCode.DeletedDate = Helpers.GetInvariantCultureDateTime();
-                    currentServiceCode.IsActive = true;
+                // Update Operation of current ServiceCode
+                int result = _service.AddUpdateServiceCode(currentServiceCode, Helpers.DefaultServiceCodeTableNumber);
 
-                    // Update Operation of current ServiceCode
-                    int result = serviceCodeBal.AddUpdateServiceCode(currentServiceCode);
-
-                    // return deleted ID of current ServiceCode as Json Result to the Ajax Call.
-                    return this.Json(result);
-                }
+                // return deleted ID of current ServiceCode as Json Result to the Ajax Call.
+                return this.Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -139,43 +130,41 @@ namespace BillingSystem.Controllers
             row.CreateCell(9).SetCellValue("Service Code Service Code Main");
             row.CreateCell(10).SetCellValue("Service Service Code Sub");
             rowIndex++;
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+            // Get the facilities list
+            var objServiceCodesData = searchText != null
+                                                        ? _service.ExportServiceCodes(searchText, tableNumber)
+                                                        : _service.GetServiceCodes(Helpers.DefaultServiceCodeTableNumber);
+            ICellStyle cellStyle = workbook.CreateCellStyle();
+            cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+
+            foreach (ServiceCode item in objServiceCodesData)
             {
-                // Get the facilities list
-                var objServiceCodesData = searchText != null
-                                                            ? bal.ExportServiceCodes(searchText, tableNumber)
-                                                            : bal.GetServiceCodes();
-                ICellStyle cellStyle = workbook.CreateCellStyle();
-                cellStyle.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+                row = sheet.CreateRow(rowIndex);
+                row.CreateCell(0).SetCellType(CellType.Numeric);
+                row.CreateCell(0).CellStyle = cellStyle;
+                row.CreateCell(0).SetCellValue(Convert.ToDouble(item.ServiceCodeTableNumber));
+                row.CreateCell(1).SetCellValue(item.ServiceCodeTableDescription);
+                row.CreateCell(2).SetCellValue(item.ServiceCodeValue);
+                row.CreateCell(3).SetCellValue(item.ServiceCodeDescription);
+                row.CreateCell(4).SetCellType(CellType.Numeric);
+                row.CreateCell(4).CellStyle = cellStyle;
+                row.CreateCell(4).SetCellValue(Convert.ToDouble(item.ServiceCodePrice));
+                row.CreateCell(5).SetCellValue(item.ServiceCodeEffectiveDate.ToString());
+                row.CreateCell(6).SetCellValue(item.ServiceExpiryDate.ToString());
+                row.CreateCell(7).SetCellValue(item.ServiceCodeBasicApplicationRule);
+                row.CreateCell(8).SetCellValue(item.ServiceCodeOtherApplicationRule);
+                row.CreateCell(9).SetCellType(CellType.Numeric);
+                row.CreateCell(9).CellStyle = cellStyle;
 
-                foreach (ServiceCode item in objServiceCodesData)
-                {
-                    row = sheet.CreateRow(rowIndex);
-                    row.CreateCell(0).SetCellType(CellType.Numeric);
-                    row.CreateCell(0).CellStyle = cellStyle;
-                    row.CreateCell(0).SetCellValue(Convert.ToDouble(item.ServiceCodeTableNumber));
-                    row.CreateCell(1).SetCellValue(item.ServiceCodeTableDescription);
-                    row.CreateCell(2).SetCellValue(item.ServiceCodeValue);
-                    row.CreateCell(3).SetCellValue(item.ServiceCodeDescription);
-                    row.CreateCell(4).SetCellType(CellType.Numeric);
-                    row.CreateCell(4).CellStyle = cellStyle;
-                    row.CreateCell(4).SetCellValue(Convert.ToDouble(item.ServiceCodePrice));
-                    row.CreateCell(5).SetCellValue(item.ServiceCodeEffectiveDate.ToString());
-                    row.CreateCell(6).SetCellValue(item.ServiceExpiryDate.ToString());
-                    row.CreateCell(7).SetCellValue(item.ServiceCodeBasicApplicationRule);
-                    row.CreateCell(8).SetCellValue(item.ServiceCodeOtherApplicationRule);
-                    row.CreateCell(9).SetCellType(CellType.Numeric);
-                    row.CreateCell(9).CellStyle = cellStyle;
+                // row.CreateCell(9).SetCellValue(Convert.ToDouble(item.ServiceCodeServiceCodeMain));
+                row.CreateCell(9).SetCellValue(item.ServiceCodeServiceCodeMain);
+                row.CreateCell(10).SetCellType(CellType.Numeric);
+                row.CreateCell(10).CellStyle = cellStyle;
 
-                    // row.CreateCell(9).SetCellValue(Convert.ToDouble(item.ServiceCodeServiceCodeMain));
-                    row.CreateCell(9).SetCellValue(item.ServiceCodeServiceCodeMain);
-                    row.CreateCell(10).SetCellType(CellType.Numeric);
-                    row.CreateCell(10).CellStyle = cellStyle;
+                // row.CreateCell(10).SetCellValue(Convert.ToDouble(item.ServiceServiceCodeSub));
+                row.CreateCell(10).SetCellValue(item.ServiceServiceCodeSub);
+                rowIndex++;
 
-                    // row.CreateCell(10).SetCellValue(Convert.ToDouble(item.ServiceServiceCodeSub));
-                    row.CreateCell(10).SetCellValue(item.ServiceServiceCodeSub);
-                    rowIndex++;
-                }
             }
 
             using (var exportData = new MemoryStream())
@@ -199,26 +188,25 @@ namespace BillingSystem.Controllers
         /// </returns>
         public JsonResult GetServiceCode(string id)
         {
-            using (var bal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
-            {
-                ServiceCode current = bal.GetServiceCodeById(Convert.ToInt32(id));
-                var jsonResult =
-                    new
-                        {
-                            current.ServiceCodeId,
-                            current.ServiceCodeValue,
-                            current.ServiceCodeDescription,
-                            current.ServiceCodePrice,
-                            ServiceCodeEffectiveDate = current.ServiceCodeEffectiveDate.GetShortDateString3(),
-                            ServiceExpiryDate = current.ServiceExpiryDate.GetShortDateString3(),
-                            current.ServiceCodeBasicApplicationRule,
-                            current.ServiceCodeOtherApplicationRule,
-                            current.ServiceCodeServiceCodeMain,
-                            current.ServiceServiceCodeSub,
-                            current.CanOverRide
-                        };
-                return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+
+            ServiceCode current = _service.GetServiceCodeById(Convert.ToInt32(id));
+            var jsonResult =
+                new
+                {
+                    current.ServiceCodeId,
+                    current.ServiceCodeValue,
+                    current.ServiceCodeDescription,
+                    current.ServiceCodePrice,
+                    ServiceCodeEffectiveDate = current.ServiceCodeEffectiveDate.GetShortDateString3(),
+                    ServiceExpiryDate = current.ServiceExpiryDate.GetShortDateString3(),
+                    current.ServiceCodeBasicApplicationRule,
+                    current.ServiceCodeOtherApplicationRule,
+                    current.ServiceCodeServiceCodeMain,
+                    current.ServiceServiceCodeSub,
+                    current.CanOverRide
+                };
+            return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
+
         }
 
         /// <summary>
@@ -233,11 +221,8 @@ namespace BillingSystem.Controllers
             int startRange = Convert.ToInt32(GlobalCodeCategoryValue.ServiceCodeStartRange);
             int finishRange = Convert.ToInt32(GlobalCodeCategoryValue.ServiceCodeFinishRange);
 
-            using (var bal = new GlobalCodeCategoryBal())
-            {
-                List<GlobalCodeCategory> list = bal.GetGlobalCodeCategoriesRange(startRange, finishRange);
-                return this.Json(list);
-            }
+            var list = _gcService.GetGlobalCodeCategoriesRange(startRange, finishRange);
+            return this.Json(list);
         }
 
         /// <summary>
@@ -252,14 +237,10 @@ namespace BillingSystem.Controllers
         {
             int recordCount = Helpers.DefaultRecordCount;
 
-            // var tableNumber = GetTableNumber(corporateId, facilityNumber);
-            using (var serviceCodeBal = new ServiceCodeBal(tableNumber))
-            {
-                List<ServiceCodeCustomModel> list = serviceCodeBal.GetServiceCodesListOnDemandCustom(blockNumber, recordCount);
-                var jsonResult =
-                    new { list, NoMoreData = list.Count < recordCount, UserId = Helpers.GetLoggedInUserId() };
-                return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
-            }
+            List<ServiceCodeCustomModel> list = _service.GetServiceCodesListOnDemandCustom(blockNumber, recordCount, tableNumber);
+            var jsonResult =
+                new { list, NoMoreData = list.Count < recordCount, UserId = Helpers.GetLoggedInUserId() };
+            return this.Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -279,17 +260,15 @@ namespace BillingSystem.Controllers
             // Check if ServiceCodeViewModel 
             if (model != null)
             {
-                using (var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber))
+                if (model.ServiceCodeId > 0)
                 {
-                    if (model.ServiceCodeId > 0)
-                    {
-                        model.ModifiedBy = Helpers.GetLoggedInUserId();
-                        model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-                    // Call the AddServiceCode Method to Add / Update current ServiceCode
-                    newId = serviceCodeBal.AddUpdateServiceCode(model);
+                    model.ModifiedBy = Helpers.GetLoggedInUserId();
+                    model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
                 }
+
+                // Call the AddServiceCode Method to Add / Update current ServiceCode
+                newId = _service.AddUpdateServiceCode(model, Helpers.DefaultServiceCodeTableNumber);
+
             }
 
             return this.Json(newId);
@@ -302,20 +281,14 @@ namespace BillingSystem.Controllers
         /// The <see cref="ActionResult"/>.
         /// </returns>
         public ActionResult ServiceCode()
-        {
-            // Initialize the ServiceCode Communicator object
-            var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber);
-
+        { 
             // Intialize the View Model i.e. ServiceCodeView which is binded to Main View Index.cshtml under ServiceCode
             var serviceCodeView = new ServiceCodeViewModel
-                                      {
-                                          ServiceCodeList =
-                                              serviceCodeBal.GetServiceCodesListOnDemandCustom(
-                                                  1,
-                                                  Helpers.DefaultRecordCount),
-                                          CurrentServiceCode = new ServiceCode(),
-                                          UserId = Helpers.GetLoggedInUserId()
-                                      };
+            {
+                ServiceCodeList = _service.GetServiceCodesListOnDemandCustom(1, Helpers.DefaultRecordCount, Helpers.DefaultServiceCodeTableNumber),
+                CurrentServiceCode = new ServiceCode(),
+                UserId = Helpers.GetLoggedInUserId()
+            };
 
             // Pass the View Model in ActionResult to View ServiceCode
             return View(serviceCodeView);
@@ -323,8 +296,7 @@ namespace BillingSystem.Controllers
 
         public ActionResult GetServiceCodesList()
         {
-            var serviceCodeBal = new ServiceCodeBal(Helpers.DefaultServiceCodeTableNumber);
-            return this.Json(serviceCodeBal.GetServiceCodesList(), JsonRequestBehavior.AllowGet);
+             return this.Json(_service.GetServiceCodesList(Helpers.DefaultServiceCodeTableNumber), JsonRequestBehavior.AllowGet);
         }
 
 

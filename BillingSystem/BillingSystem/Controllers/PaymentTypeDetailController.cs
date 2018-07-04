@@ -1,27 +1,22 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HolidayPlannerController.cs" company="SPadez">
-//   OmniHealthcare
-// </copyright>
-// <summary>
-//   The holiday planner controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿
 using BillingSystem.Model.Model;
+using System.Web.Mvc;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Models;
 
 namespace BillingSystem.Controllers
 {
-    using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
-    using Common;
-    using Models;
-
-    /// <summary>
-    /// PaymentTypeDetail controller.
-    /// </summary>
     public class PaymentTypeDetailController : Controller
     {
+        private readonly IPaymentTypeDetailService _service;
+
+        public PaymentTypeDetailController(IPaymentTypeDetailService service)
+        {
+            _service = service;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -31,15 +26,8 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindPaymentTypeDetailList()
         {
-            // Initialize the PaymentTypeDetail BAL object
-            using (var paymentTypeDetailBal = new PaymentTypeDetailBal())
-            {
-                // Get the facilities list
-                var paymentTypeDetailList = paymentTypeDetailBal.GetPaymentTypeDetail();
-
-                // Pass the ActionResult with List of PaymentTypeDetailViewModel object to Partial View PaymentTypeDetailList
-                return PartialView(PartialViews.PaymentTypeDetailList, paymentTypeDetailList);
-            }
+            var paymentTypeDetailList = _service.GetPaymentTypeDetail();
+            return PartialView(PartialViews.PaymentTypeDetailList, paymentTypeDetailList);
         }
 
         /// <summary>
@@ -53,26 +41,12 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeletePaymentTypeDetail(int id)
         {
-            using (var bal = new PaymentTypeDetailBal())
+            var currentPaymentTypeDetail = _service.GetPaymentTypeDetailById(id);
+            // Check If PaymentTypeDetail model is not null
+            if (currentPaymentTypeDetail != null)
             {
-                // Get PaymentTypeDetail model object by current PaymentTypeDetail ID
-                var currentPaymentTypeDetail = bal.GetPaymentTypeDetailById(id);
-                //var userId = Helpers.GetLoggedInUserId();
-
-                // Check If PaymentTypeDetail model is not null
-                if (currentPaymentTypeDetail != null)
-                {
-                    //currentPaymentTypeDetail.IsActive = false;
-
-                    // currentPaymentTypeDetail.ModifiedBy = userId;
-                    // currentPaymentTypeDetail.ModifiedDate = DateTime.Now;
-
-                    // Update Operation of current PaymentTypeDetail
-                    int result = bal.SavePaymentTypeDetail(currentPaymentTypeDetail);
-
-                    // return deleted ID of current PaymentTypeDetail as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                int result = _service.SavePaymentTypeDetail(currentPaymentTypeDetail);
+                return Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -90,14 +64,8 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetPaymentTypeDetail(int id)
         {
-            using (var bal = new PaymentTypeDetailBal())
-            {
-                // Call the AddPaymentTypeDetail Method to Add / Update current PaymentTypeDetail
-                PaymentTypeDetail currentPaymentTypeDetail = bal.GetPaymentTypeDetailById(id);
-
-                // Pass the ActionResult with the current PaymentTypeDetailViewModel object as model to PartialView PaymentTypeDetailAddEdit
-                return PartialView(PartialViews.PaymentTypeDetailAddEdit, currentPaymentTypeDetail);
-            }
+            var currentPaymentTypeDetail = _service.GetPaymentTypeDetailById(id);
+            return PartialView(PartialViews.PaymentTypeDetailAddEdit, currentPaymentTypeDetail);
         }
 
         /// <summary>
@@ -110,18 +78,15 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult PaymentTypeDetailMain()
         {
-            // Initialize the PaymentTypeDetail BAL object
-            var paymentTypeDetailBal = new PaymentTypeDetailBal();
-
             // Get the Entity list
-            var paymentTypeDetailList = paymentTypeDetailBal.GetPaymentTypeDetail();
+            var paymentTypeDetailList = _service.GetPaymentTypeDetail();
 
             // Intialize the View Model i.e. PaymentTypeDetailView which is binded to Main View Index.cshtml under PaymentTypeDetail
             var paymentTypeDetailView = new PaymentTypeDetailView
-                                         {
-                                             PaymentTypeDetailList = paymentTypeDetailList, 
-                                             CurrentPaymentTypeDetail = new PaymentTypeDetail()
-                                         };
+            {
+                PaymentTypeDetailList = paymentTypeDetailList,
+                CurrentPaymentTypeDetail = new PaymentTypeDetail()
+            };
 
             // Pass the View Model in ActionResult to View PaymentTypeDetail
             return View(paymentTypeDetailView);
@@ -161,17 +126,7 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new PaymentTypeDetailBal())
-                {
-                    if (model.Id > 0)
-                    {
-                        // model.ModifiedBy = userId;
-                        // model.ModifiedDate = DateTime.Now;
-                    }
-
-                    // Call the AddPaymentTypeDetail Method to Add / Update current PaymentTypeDetail
-                    newId = bal.SavePaymentTypeDetail(model);
-                }
+                newId = _service.SavePaymentTypeDetail(model);
             }
 
             return Json(newId);

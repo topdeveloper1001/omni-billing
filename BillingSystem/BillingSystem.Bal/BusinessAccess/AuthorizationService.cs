@@ -5,10 +5,9 @@ using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using System.Threading.Tasks;
-using BillingSystem.Repository.Interfaces;
 using System.Data.SqlClient;
 using AutoMapper;
-using BillingSystem.Repository.Common;
+
 using BillingSystem.Bal.Interfaces;
 
 namespace BillingSystem.Bal.BusinessAccess

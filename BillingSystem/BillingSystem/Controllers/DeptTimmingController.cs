@@ -1,29 +1,21 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HolidayPlannerController.cs" company="SPadez">
-//   OmniHealthcare
-// </copyright>
-// <summary>
-//   The holiday planner controller.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+﻿using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common;
+using BillingSystem.Model;
+using BillingSystem.Models;
+using System.Web.Mvc;
 
 namespace BillingSystem.Controllers
 {
-    using System.Collections.Generic;
-    using System.Web.Mvc;
-
-    using Bal.BusinessAccess;
-    using Common;
-    using Model;
-    using Models;
-
-    using iTextSharp.text;
-
-    /// <summary>
-    /// DeptTimming controller.
-    /// </summary>
     public class DeptTimmingController : BaseController
     {
+        private readonly IDeptTimmingService _service;
+
+        public DeptTimmingController(IDeptTimmingService service)
+        {
+            _service = service;
+        }
+
+
         #region Public Methods and Operators
 
         /// <summary>
@@ -33,15 +25,11 @@ namespace BillingSystem.Controllers
         [HttpPost]
         public ActionResult BindDeptTimmingList()
         {
-            // Initialize the DeptTimming BAL object
-            using (var deptTimmingBal = new DeptTimmingBal())
-            {
-                // Get the facilities list
-                var deptTimmingList = deptTimmingBal.GetDeptTimming();
+            // Get the facilities list
+            var deptTimmingList = _service.GetDeptTimming();
 
-                // Pass the ActionResult with List of DeptTimmingViewModel object to Partial View DeptTimmingList
-                return PartialView(PartialViews.DeptTimmingList, deptTimmingList);
-            }
+            // Pass the ActionResult with List of DeptTimmingViewModel object to Partial View DeptTimmingList
+            return PartialView(PartialViews.DeptTimmingList, deptTimmingList);
         }
 
         /// <summary>
@@ -55,23 +43,20 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeleteDeptTimming(int id)
         {
-            using (var bal = new DeptTimmingBal())
+            // Get DeptTimming model object by current DeptTimming ID
+            var currentDeptTimming = _service.GetDeptTimmingById(id);
+            var userId = Helpers.GetLoggedInUserId();
+
+            // Check If DeptTimming model is not null
+            if (currentDeptTimming != null)
             {
-                // Get DeptTimming model object by current DeptTimming ID
-                var currentDeptTimming = bal.GetDeptTimmingById(id);
-                var userId = Helpers.GetLoggedInUserId();
+                currentDeptTimming.IsActive = false;
 
-                // Check If DeptTimming model is not null
-                if (currentDeptTimming != null)
-                {
-                    currentDeptTimming.IsActive = false;
+                // Update Operation of current DeptTimming
+                int result = _service.SaveDeptTimming(currentDeptTimming);
 
-                    // Update Operation of current DeptTimming
-                    int result = bal.SaveDeptTimming(currentDeptTimming);
-
-                    // return deleted ID of current DeptTimming as Json Result to the Ajax Call.
-                    return Json(result);
-                }
+                // return deleted ID of current DeptTimming as Json Result to the Ajax Call.
+                return Json(result);
             }
 
             // Return the Json result as Action Result back JSON Call Success
@@ -89,14 +74,11 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult GetDeptTimming(int id)
         {
-            using (var bal = new DeptTimmingBal())
-            {
-                // Call the AddDeptTimming Method to Add / Update current DeptTimming
-                DeptTimming currentDeptTimming = bal.GetDeptTimmingById(id);
+            // Call the AddDeptTimming Method to Add / Update current DeptTimming
+            var currentDeptTimming = _service.GetDeptTimmingById(id);
 
-                // Pass the ActionResult with the current DeptTimmingViewModel object as model to PartialView DeptTimmingAddEdit
-                return PartialView(PartialViews.DeptTimmingAddEdit, currentDeptTimming);
-            }
+            // Pass the ActionResult with the current DeptTimmingViewModel object as model to PartialView DeptTimmingAddEdit
+            return PartialView(PartialViews.DeptTimmingAddEdit, currentDeptTimming);
         }
 
         /// <summary>
@@ -109,18 +91,15 @@ namespace BillingSystem.Controllers
         /// </returns>
         public ActionResult DeptTimmingMain()
         {
-            // Initialize the DeptTimming BAL object
-            var deptTimmingBal = new DeptTimmingBal();
-
             // Get the Entity list
-            var deptTimmingList = deptTimmingBal.GetDeptTimming();
+            var deptTimmingList = _service.GetDeptTimming();
 
             // Intialize the View Model i.e. DeptTimmingView which is binded to Main View Index.cshtml under DeptTimming
             var deptTimmingView = new DeptTimmingView
-                                         {
-                                             DeptTimmingList = deptTimmingList, 
-                                             CurrentDeptTimming = new DeptTimming()
-                                         };
+            {
+                DeptTimmingList = deptTimmingList,
+                CurrentDeptTimming = new DeptTimming()
+            };
 
             // Pass the View Model in ActionResult to View DeptTimming
             return View(deptTimmingView);
@@ -160,23 +139,14 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                using (var bal = new DeptTimmingBal())
-                {
-                    if (model.DeptTimmingId > 0)
-                    {
-                        // model.ModifiedBy = userId;
-                        // model.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    }
-
-                    // Call the AddDeptTimming Method to Add / Update current DeptTimming
-                    newId = bal.SaveDeptTimming(model);
-                }
+                // Call the AddDeptTimming Method to Add / Update current DeptTimming
+                newId = _service.SaveDeptTimming(model);
             }
 
             return Json(newId);
         }
 
-        
+
         #endregion
     }
 }

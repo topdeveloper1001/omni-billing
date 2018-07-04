@@ -7,19 +7,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingSystem", "BillingSys
 	ProjectSection(ProjectDependencies) = postProject
 		{9B238813-3F79-47E2-8975-CEF73834812C} = {9B238813-3F79-47E2-8975-CEF73834812C}
 		{DF38E31D-B8D4-437C-9F9B-BDA62427DEFD} = {DF38E31D-B8D4-437C-9F9B-BDA62427DEFD}
-		{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36} = {2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}
 		{1E07D2E7-645B-4B42-945D-2A191D849582} = {1E07D2E7-645B-4B42-945D-2A191D849582}
 		{B0899DF4-CF27-4055-87F6-53072CD72794} = {B0899DF4-CF27-4055-87F6-53072CD72794}
 	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingSystem.Repository", "BillingSystem.Repository\BillingSystem.Repository.csproj", "{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingSystem.Common", "BillingSystem.Common\BillingSystem.Common.csproj", "{B0899DF4-CF27-4055-87F6-53072CD72794}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{2A24B530-6EB0-41FB-AE93-F3D8B8163DE3}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
@@ -43,10 +39,6 @@ Global
 		{BAD924ED-76D8-4553-9717-507365917B63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAD924ED-76D8-4553-9717-507365917B63}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BAD924ED-76D8-4553-9717-507365917B63}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2537DBCA-A818-40D5-8B4E-D13D5E0D6F36}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B0899DF4-CF27-4055-87F6-53072CD72794}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B0899DF4-CF27-4055-87F6-53072CD72794}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0899DF4-CF27-4055-87F6-53072CD72794}.Release|Any CPU.ActiveCfg = Release|Any CPU
