@@ -1127,6 +1127,12 @@ namespace BillingSystem.Common.Common
         INT = 5,
     }
 
+    public enum OtherKeys
+    {
+        controller,
+        action
+    }
+
     public enum ControllerAccess
     {
         Summary,              //EHR TAB

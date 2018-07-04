@@ -1,46 +1,28 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="BaseController.cs" company="Spadez Solutions PVT. LTD.">
-//    ServicesDotCom
-// </copyright>
-// <summary>
-//   Defines the BaseController type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
-using System.Linq;
-using System.Web.Mvc.Filters;
-using System.Web.Security;
-using BillingSystem.Bal.BusinessAccess;
-using BillingSystem.Model.CustomModel;
+﻿using BillingSystem.Model.CustomModel;
+using System;
+using System.Globalization;
+using System.Threading;
+using System.Web.Mvc;
+using BillingSystem.Common;
+using BillingSystem.Common.Common;
+using BillingSystem.Interface;
+using System.IO;
+using System.Collections.Generic;
+using System.Web;
+using BillingSystem.Model;
+using System.Threading.Tasks;
+using Unity;
+using BillingSystem.Bal.Interfaces;
+using BillingSystem.Filters;
 
 namespace BillingSystem.Controllers
 {
-    using System;
-    using System.Globalization;
-    using System.Net;
-    using System.Threading;
-    using System.Web.Mvc;
-    using System.Web.Routing;
-
-    using BillingSystem.Common;
-    using BillingSystem.Common.Common;
-    using BillingSystem.Interface;
-    using System.IO;
-    using System.Collections.Generic;
-    using System.Configuration;
-    using System.Collections.Specialized;
-    using System.Web;
-    using BillingSystem.Model;
-    using System.Threading.Tasks;
-    using Unity;
-    using BillingSystem.Bal.Interfaces;
-
     /// <summary>
     /// The base controller.
     /// </summary>
     [SessionExpire]
     [LoginAuthorize]
-    /*[OutputCache(NoStore = true, Duration = 0, VaryByParam = "*")]*/
+    [CheckPermissions]
     public class BaseController : Controller
     {
         /// <summary>
@@ -106,14 +88,11 @@ namespace BillingSystem.Controllers
                     #region look for the direct Match with macrolanguage if direct match not found look for the macrolanguage
 
                     if (browserLanguage == "ar-sa" || browserLanguage == "ar" || browserLanguage == "sa")
-                    {
                         browserLanguage = "ar-sa";
-                    }
+
 
                     if (browserLanguage == "en-us" || browserLanguage == "en")
-                    {
                         browserLanguage = CommonConfig.DefaultLanguage;
-                    }
 
                     #endregion
 
@@ -144,7 +123,6 @@ namespace BillingSystem.Controllers
             base.OnActionExecuting(filterContext);
         }
 
-
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
@@ -160,9 +138,6 @@ namespace BillingSystem.Controllers
             // Just need to add the logic to save the performance time of the system in the DB.
         }
 
-
-
-
         protected List<DropdownListData> GetGlobaCodesByCategories(IEnumerable<string> categories)
         {
 
@@ -171,9 +146,6 @@ namespace BillingSystem.Controllers
 
             return service.GetListByCategoriesRange(categories);
         }
-
-
-        
 
         protected List<DropdownListData> GetDefaultFacilityList(int corporateId)
         {
@@ -313,154 +285,154 @@ namespace BillingSystem.Controllers
         #endregion
     }
 
-    public class SessionExpire : ActionFilterAttribute
-    {
-        public override void OnActionExecuting(ActionExecutingContext filterContext)
-        {
-            var e = filterContext.HttpContext;
-            if (Helpers.GetLoggedInUserId() == 0)
-            {
-                if (filterContext.HttpContext.Request.IsAjaxRequest())
-                {
-                    // For AJAX requests, we're overriding the returned JSON result with a simple string,
-                    // indicating to the calling JavaScript code that a redirect should be performed.
-                    filterContext.HttpContext.Response.StatusCode = (int)System.Net.HttpStatusCode.InternalServerError;
-                    //var context = new HttpContextWrapper(new HttpContext(null,response:new HttpResponse(badRequest));
-                    filterContext.Result = new JsonResult
-                    {
-                        Data = "_Logon_",
-                        JsonRequestBehavior = JsonRequestBehavior.DenyGet
-                    };
-                }
-                else
-                {
-                    filterContext.Result =
-                        new RedirectToRouteResult(
-                            new RouteValueDictionary
-                                {
-                                        { "action", "Index" },
-                                        { "controller", "Login" },
-                                        { "returnUrl", filterContext.HttpContext.Request.RawUrl }
-                                });
-                }
-                return;
-            }
-        }
-    }
+    //public class SessionExpire : ActionFilterAttribute
+    //{
+    //    public override void OnActionExecuting(ActionExecutingContext filterContext)
+    //    {
+    //        var e = filterContext.HttpContext;
+    //        if (Helpers.GetLoggedInUserId() == 0)
+    //        {
+    //            if (filterContext.HttpContext.Request.IsAjaxRequest())
+    //            {
+    //                // For AJAX requests, we're overriding the returned JSON result with a simple string,
+    //                // indicating to the calling JavaScript code that a redirect should be performed.
+    //                filterContext.HttpContext.Response.StatusCode = (int)System.Net.HttpStatusCode.InternalServerError;
+    //                //var context = new HttpContextWrapper(new HttpContext(null,response:new HttpResponse(badRequest));
+    //                filterContext.Result = new JsonResult
+    //                {
+    //                    Data = "_Logon_",
+    //                    JsonRequestBehavior = JsonRequestBehavior.DenyGet
+    //                };
+    //            }
+    //            else
+    //            {
+    //                filterContext.Result =
+    //                    new RedirectToRouteResult(
+    //                        new RouteValueDictionary
+    //                            {
+    //                                    { "action", "Index" },
+    //                                    { "controller", "Login" },
+    //                                    { "returnUrl", filterContext.HttpContext.Request.RawUrl }
+    //                            });
+    //            }
+    //            return;
+    //        }
+    //    }
+    //}
 
     /// <summary>
     /// The logon authorize.
     /// </summary>
-    public class LoginAuthorize : AuthorizeAttribute
-    {
-        /// <summary>
-        /// Function     : Handle Unauthorized Request
-        /// Objective    : This function to Overide default HandleUnauthorizedRequest function
-        /// </summary>
-        /// <param name="context">
-        /// The filter Context.
-        /// </param>
-        protected override void HandleUnauthorizedRequest(AuthorizationContext context)
-        {
-            if (context.HttpContext.Request.Url != null)
-            {
-                var values = new RouteValueDictionary(new
-                {
-                    action = ActionResults.login,
-                    controller = ControllerNames.home,
-                    ReturnUrl = context.HttpContext.Request.Url.PathAndQuery //to be used later
-                });
+    //public class LoginAuthorize : AuthorizeAttribute
+    //{
+    //    /// <summary>
+    //    /// Function     : Handle Unauthorized Request
+    //    /// Objective    : This function to Overide default HandleUnauthorizedRequest function
+    //    /// </summary>
+    //    /// <param name="context">
+    //    /// The filter Context.
+    //    /// </param>
+    //    protected override void HandleUnauthorizedRequest(AuthorizationContext context)
+    //    {
+    //        if (context.HttpContext.Request.Url != null)
+    //        {
+    //            var values = new RouteValueDictionary(new
+    //            {
+    //                action = ActionResults.login,
+    //                controller = ControllerNames.home,
+    //                ReturnUrl = context.HttpContext.Request.Url.PathAndQuery //to be used later
+    //            });
 
-                context.Result = new RedirectToRouteResult(values);
-            }
-            else
-            {
-                context.Result = new RedirectResult(CommonConfig.LoginUrl, false);
-            }
-        }
+    //            context.Result = new RedirectToRouteResult(values);
+    //        }
+    //        else
+    //        {
+    //            context.Result = new RedirectResult(CommonConfig.LoginUrl, false);
+    //        }
+    //    }
 
-        /// <summary>
-        /// Function     : OnAuthorization
-        /// Objective    : This function to Overide default OnAuthorization function
-        /// </summary>
-        /// <param name="filterContext">
-        /// The filter Context.
-        /// </param>
-        /// <returns>
-        /// </returns>
-        public override void OnAuthorization(AuthorizationContext filterContext)
-        {
-            var userId = Helpers.GetLoggedInUserId();
-            if (userId == 0)
-            {
-                base.OnAuthorization(filterContext);
-                filterContext.Result = new RedirectResult(CommonConfig.LoginUrl, false);
-            }
-        }
-    }
+    //    /// <summary>
+    //    /// Function     : OnAuthorization
+    //    /// Objective    : This function to Overide default OnAuthorization function
+    //    /// </summary>
+    //    /// <param name="filterContext">
+    //    /// The filter Context.
+    //    /// </param>
+    //    /// <returns>
+    //    /// </returns>
+    //    public override void OnAuthorization(AuthorizationContext filterContext)
+    //    {
+    //        var userId = Helpers.GetLoggedInUserId();
+    //        if (userId == 0)
+    //        {
+    //            base.OnAuthorization(filterContext);
+    //            filterContext.Result = new RedirectResult(CommonConfig.LoginUrl, false);
+    //        }
+    //    }
+    //}
 
 
-    public class CheckRolesAuthorize : AuthorizeAttribute
-    {
-        /// <summary>
-        /// Function     : Handle Unauthorized Request
-        /// Objective    : This function to Overide default HandleUnauthorizedRequest function
-        /// </summary>
-        /// <param name="context">
-        /// The filter Context.
-        /// </param>
-        protected override void HandleUnauthorizedRequest(AuthorizationContext context)
-        {
-            if (context.HttpContext.Request.Url != null)
-            {
-                var values = new RouteValueDictionary(new
-                {
-                    action = ActionResults.login,
-                    controller = ControllerNames.home,
-                    ReturnUrl = context.HttpContext.Request.Url.PathAndQuery //to be used later
-                });
+    //public class CheckRolesAuthorize : AuthorizeAttribute
+    //{
+    //    /// <summary>
+    //    /// Function     : Handle Unauthorized Request
+    //    /// Objective    : This function to Overide default HandleUnauthorizedRequest function
+    //    /// </summary>
+    //    /// <param name="context">
+    //    /// The filter Context.
+    //    /// </param>
+    //    protected override void HandleUnauthorizedRequest(AuthorizationContext context)
+    //    {
+    //        if (context.HttpContext.Request.Url != null)
+    //        {
+    //            var values = new RouteValueDictionary(new
+    //            {
+    //                action = ActionResults.login,
+    //                controller = ControllerNames.home,
+    //                ReturnUrl = context.HttpContext.Request.Url.PathAndQuery //to be used later
+    //            });
 
-                context.Result = new RedirectToRouteResult(values);
-            }
-            else
-            {
-                context.Result = new RedirectResult(CommonConfig.LoginUrl, false);
-            }
-        }
+    //            context.Result = new RedirectToRouteResult(values);
+    //        }
+    //        else
+    //        {
+    //            context.Result = new RedirectResult(CommonConfig.LoginUrl, false);
+    //        }
+    //    }
 
-        public CheckRolesAuthorize(params string[] roleKeys)
-        {
-            var roles = new List<string>();
-            var allRoles = (NameValueCollection)ConfigurationManager.GetSection("CustomRoles");
-            foreach (var roleKey in roleKeys)
-                roles.AddRange(allRoles[roleKey].Split(new[] { ',' }));
+    //    public CheckRolesAuthorize(params string[] roleKeys)
+    //    {
+    //        var roles = new List<string>();
+    //        var allRoles = (NameValueCollection)ConfigurationManager.GetSection("CustomRoles");
+    //        foreach (var roleKey in roleKeys)
+    //            roles.AddRange(allRoles[roleKey].Split(new[] { ',' }));
 
-            Roles = string.Join(",", roles);
-        }
+    //        Roles = string.Join(",", roles);
+    //    }
 
-        /// <summary>
-        /// Function     : OnAuthorization
-        /// Objective    : This function to Overide default OnAuthorization function
-        /// </summary>
-        /// <param name="filterContext">
-        /// The filter Context.
-        /// </param>
-        /// <returns>
-        /// </returns>
-        public override void OnAuthorization(AuthorizationContext filterContext)
-        {
-            var userId = Helpers.GetLoggedInUserId();
-            var roles = Roles.Trim().ToLower();
-            var currentRole = Helpers.CurrentRoleKey.Trim().ToLower();
-            var currentAccess = string.IsNullOrEmpty(Roles) || roles.Contains(currentRole) || roles.Equals("all");
-            if (userId == 0 || !currentAccess)
-            {
-                base.OnAuthorization(filterContext);
-                filterContext.Result = !currentAccess
-                    ? new RedirectResult(CommonConfig.UnauthorizedAccess, false)
-                    : new RedirectResult(CommonConfig.LoginUrl, false);
+    //    /// <summary>
+    //    /// Function     : OnAuthorization
+    //    /// Objective    : This function to Overide default OnAuthorization function
+    //    /// </summary>
+    //    /// <param name="filterContext">
+    //    /// The filter Context.
+    //    /// </param>
+    //    /// <returns>
+    //    /// </returns>
+    //    public override void OnAuthorization(AuthorizationContext filterContext)
+    //    {
+    //        var userId = Helpers.GetLoggedInUserId();
+    //        var roles = Roles.Trim().ToLower();
+    //        var currentRole = Helpers.CurrentRoleKey.Trim().ToLower();
+    //        var currentAccess = string.IsNullOrEmpty(Roles) || roles.Contains(currentRole) || roles.Equals("all");
+    //        if (userId == 0 || !currentAccess)
+    //        {
+    //            base.OnAuthorization(filterContext);
+    //            filterContext.Result = !currentAccess
+    //                ? new RedirectResult(CommonConfig.UnauthorizedAccess, false)
+    //                : new RedirectResult(CommonConfig.LoginUrl, false);
 
-            }
-        }
-    }
+    //        }
+    //    }
+    //}
 }

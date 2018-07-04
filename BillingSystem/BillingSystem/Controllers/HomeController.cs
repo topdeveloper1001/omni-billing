@@ -20,6 +20,7 @@ using System.Data;
 using Excel;
 using System.Threading.Tasks;
 using BillingSystem.Bal.Interfaces;
+using BillingSystem.Filters;
 
 namespace BillingSystem.Controllers
 {
@@ -71,7 +72,22 @@ namespace BillingSystem.Controllers
         private readonly IDocumentsTemplatesService _docService;
         #endregion
 
-        public HomeController(IAppointmentTypesService atService, IAuditLogService adService, IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service, IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService, IBillingSystemParametersService bspService, ICPTCodesService cptService, IUsersService uService, ICountryService cService, ICorporateService coService, ICityService ctService, IIndicatorDataCheckListService iService, IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, ISystemConfigurationService scsService, IFacilityService fService, IRoleTabsService rtService, IStateService stService, IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService, IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService, IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService, IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService, IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService, ISchedulingService schService, IDeptTimmingService deptService, IDocumentsTemplatesService docService)
+        public HomeController(IAppointmentTypesService atService, IAuditLogService adService
+            , IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service
+            , IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService
+            , IBillingSystemParametersService bspService, ICPTCodesService cptService
+            , IUsersService uService, ICountryService cService, ICorporateService coService
+            , ICityService ctService, IIndicatorDataCheckListService iService
+            , IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService
+            , IModuleAccessService maService, ISystemConfigurationService scsService
+            , IFacilityService fService, IRoleTabsService rtService, IStateService stService
+            , IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService
+            , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService
+            , IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService
+            , IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService
+            , IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService
+            , ISchedulingService schService, IDeptTimmingService deptService
+            , IDocumentsTemplatesService docService)
         {
             _atService = atService;
             _adService = adService;
@@ -703,9 +719,8 @@ namespace BillingSystem.Controllers
 
             var isExists = _uService.CheckExistsPassword(newPassword, userid);
             if (isExists)
-            {
                 return Json("-1");
-            }
+
             var currentUser = _uService.GetUserById(userid);
             currentUser.Password = newPassword;
             var isupdated = _uService.AddUpdateUser(currentUser, 0);
@@ -723,7 +738,6 @@ namespace BillingSystem.Controllers
                 FacilityId = Helpers.GetDefaultFacilityId()
             };
             _adService.AddUptdateAuditLog(auditlogObj);
-            //Session.RemoveAll();
             return Json(isupdated > 0);
         }
 
@@ -3597,7 +3611,7 @@ namespace BillingSystem.Controllers
         //    return View();
         //}
         [AllowAnonymous]
-        public ActionResult ConfirmationView(string st, string vtoken, int patientId, string physicianId, bool bit)
+        public async Task<ActionResult> ConfirmationView(string st, string vtoken, int patientId, string physicianId, bool bit)
         {
             //Check If Verification Token is there
             var validRequest = !string.IsNullOrEmpty(vtoken);
@@ -3639,9 +3653,9 @@ namespace BillingSystem.Controllers
                         {
 
                             var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
-                            Helpers.SendAppointmentNotification(list, email,
-                                Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
-                                patientId, Convert.ToInt32(physicianId), 2);
+                            await Helpers.SendAppointmentNotification(list, email,
+                                  Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
+                                  patientId, Convert.ToInt32(physicianId), 2);
 
                         }
 
@@ -3649,9 +3663,9 @@ namespace BillingSystem.Controllers
                     if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
                     {
                         var email = _pldService.GetPatientEmail(patientId);
-                        Helpers.SendAppointmentNotification(list, email,
-                                    Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
-                                    patientId, Convert.ToInt32(physicianId), 5);
+                        await Helpers.SendAppointmentNotification(list, email,
+                                      Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
+                                      patientId, Convert.ToInt32(physicianId), 5);
                     }
                     if (st == "2" && bit != true)//After Physician Approvel Mail sent to Patient
                     {
@@ -3663,9 +3677,9 @@ namespace BillingSystem.Controllers
                             item.AppointmentType = appointmentType;
                         }
                         var email = _pldService.GetPatientEmail(patientId);
-                        Helpers.SendAppointmentNotification(list, email,
-                                    Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
-                                    patientId, Convert.ToInt32(physicianId), 4);
+                        await Helpers.SendAppointmentNotification(list, email,
+                                       Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
+                                       patientId, Convert.ToInt32(physicianId), 4);
                     }
                 }
             }

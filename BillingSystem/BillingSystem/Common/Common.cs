@@ -921,6 +921,27 @@ namespace BillingSystem.Common
             return 0;
         }
 
+        public static bool CheckAccess(string controller, string action)
+        {
+            if (
+                HttpContext.Current != null
+                && HttpContext.Current.Session[SessionNames.SessionClass.ToString()] != null
+                && !string.IsNullOrEmpty(controller) && !string.IsNullOrEmpty(action)
+                )
+            {
+                controller = controller.ToLower().Trim();
+                action = action.ToLower().Trim();
+
+                var session = HttpContext.Current.Session[SessionNames.SessionClass.ToString()] as SessionClass;
+                var menus = session.MenuSessionList;
+
+                return menus.Any(a => !string.IsNullOrEmpty(a.Controller) && a.Controller.ToLower().Trim().Equals(controller)
+                && !string.IsNullOrEmpty(a.Action) && a.Action.ToLower().Trim().Equals(action) && a.IsActive && !a.IsDeleted);
+            }
+
+            return false;
+        }
+
         public static long GetDefaultCountryCode
         {
             get
