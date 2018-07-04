@@ -6,6 +6,7 @@ using BillingSystem.Model;
 using System;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Bal.Interfaces;
+using System.Collections.Generic;
 
 namespace BillingSystem.Controllers
 {
@@ -93,24 +94,18 @@ namespace BillingSystem.Controllers
         public ActionResult BindEquipmentListForDropDown(string facilityId)
         {
             var eqDropDownList = new List<DropdownListData>();
-            //Initialize the Facility Communicator object
-            using (var equipmentBal = new EquipmentBal())
+            var equipmentList = _service.GetEquipmentList(false, facilityId);
+
+            if (equipmentList.Count > 0)
             {
-                //Get the facilities list
-                //var equipmentList = equipmentBal.GetEquipmentList();
-                var equipmentList = equipmentBal.GetEquipmentList(false, facilityId);
-
-                if (equipmentList.Count > 0)
+                eqDropDownList.AddRange(equipmentList.Select(item => new DropdownListData
                 {
-                    eqDropDownList.AddRange(equipmentList.Select(item => new DropdownListData
-                    {
-                        Text = item.EquipmentName,
-                        Value = Convert.ToString(item.EquipmentMasterId),
-                    }));
-                }
-
-                return Json(eqDropDownList);
+                    Text = item.EquipmentName,
+                    Value = Convert.ToString(item.EquipmentMasterId),
+                }));
             }
+
+            return Json(eqDropDownList);
         }
 
         public ActionResult BindDisabledRecords(bool showIsDisabled, string facilityId)

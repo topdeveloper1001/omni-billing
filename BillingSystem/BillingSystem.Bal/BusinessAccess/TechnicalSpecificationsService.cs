@@ -1,10 +1,7 @@
-﻿using AutoMapper;
-using BillingSystem.Bal.Interfaces;
+﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
-using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -20,7 +17,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         private readonly IRepository<TechnicalSpecifications> _repository;
         private readonly BillingEntities _context;
-        
+
         public TechnicalSpecificationsService(IRepository<TechnicalSpecifications> repository, BillingEntities context)
         {
             _repository = repository;
@@ -40,7 +37,6 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var model = _repository.Where(x => x.Id == id).FirstOrDefault();
             return model;
-
         }
 
         /// <summary>
@@ -85,12 +81,11 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="itemID">The Item number.</param>
         /// <returns></returns>
         public bool CheckDuplicateTechnicalSpecification(int id, long itemID, int? corporateId, int? facilityId)
-        { 
-                var isExists = _repository.Where(model => model.Id != id && model.ItemID == itemID 
-                && model.CorporateId == corporateId && model.FacilityId == facilityId)
-                        .Any();
-                return isExists;
-             
+        {
+            var isExists = _repository.Where(model => model.Id != id && model.ItemID == itemID
+            && model.CorporateId == corporateId && model.FacilityId == facilityId)
+                    .Any();
+            return isExists;
         }
 
         /// <summary>
@@ -108,7 +103,6 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <summary>
         /// Gets the TechnicalSpecifications data.
         /// </summary>
-
         /// <returns></returns>
         public List<TechnicalSpecificationsCustomModel> GetTechnicalSpecificationsData(int corporateId, int facilityId)
         {
@@ -118,13 +112,13 @@ namespace BillingSystem.Bal.BusinessAccess
             sqlParameters[0] = new SqlParameter("FacilityId", facilityId);
             sqlParameters[1] = new SqlParameter("CorporateId", corporateId);
 
-            
+
             IEnumerable<TechnicalSpecificationsCustomModel> result = _context.Database.SqlQuery<TechnicalSpecificationsCustomModel>(spName, sqlParameters);
-            
+
             return result.ToList();
-            
+
         }
-        
+
         #endregion
     }
 }

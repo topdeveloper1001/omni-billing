@@ -33,6 +33,7 @@ namespace BillingSystem
             container.RegisterType<IBillingModifierService, BillingModifierService>();
             container.RegisterType<IBillingSystemParametersService, BillingSystemParametersService>();
             container.RegisterType<ICarePlanService, CarePlanService>();
+            container.RegisterType<ICategoriesService, CategoriesService>();
             container.RegisterType<ICarePlanTaskService, CarePlanTaskService>();
             container.RegisterType<ICityService, CityService>();
             container.RegisterType<IClinicianAppointmentTypesService, ClinicianAppointmentTypesService>();
@@ -142,6 +143,7 @@ namespace BillingSystem
             container.RegisterType<IStateService, StateService>();
             container.RegisterType<ISystemConfigurationService, SystemConfigurationService>();
             container.RegisterType<ITabsService, TabsService>();
+            container.RegisterType<ITechnicalSpecificationsService, TechnicalSpecificationsService>();
             container.RegisterType<ITpFileHeaderService, TpFileHeaderService>();
             container.RegisterType<ITPXMLParsedDataService, TPXMLParsedDataService>();
             container.RegisterType<IUploadChargesService, UploadChargesService>();
