@@ -16,13 +16,13 @@ namespace BillingSystem.Bal.BusinessAccess
     /// <summary>
     /// The Categories bal.
     /// </summary>
-    public class TechnicalSpecificationsService : ITechnicalSpecificationsService
+    public class CatalogService : ICatalogService
     {
 
-        private readonly IRepository<TechnicalSpecifications> _repository;
+        private readonly IRepository<Catalog> _repository;
         private readonly BillingEntities _context;
         
-        public TechnicalSpecificationsService(IRepository<TechnicalSpecifications> repository, BillingEntities context)
+        public CatalogService(IRepository<Catalog> repository, BillingEntities context)
         {
             _repository = repository;
             _context = context;
@@ -35,9 +35,9 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns>
-        /// The <see cref="TechnicalSpecifications" />.
+        /// The <see cref="Catalog" />.
         /// </returns>
-        public TechnicalSpecifications GetTechnicalSpecificationById(int id)
+        public Catalog GetCatalogById(int id)
         {
             var model = _repository.Where(x => x.Id == id).FirstOrDefault();
             return model;
@@ -51,7 +51,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns>
         /// The <see cref="int" />.
         /// </returns>
-        public int SaveTechnicalSpecifications(TechnicalSpecifications model)
+        public int SaveCatalog(Catalog model)
         {
             if (model.Id > 0)
             {
@@ -66,7 +66,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         }
 
-        public int DeleteTechnicalSpecificationsData(TechnicalSpecifications model)
+        public int DeleteCatalogData(Catalog model)
         {
             if (model.Id > 0)
             {
@@ -76,27 +76,13 @@ namespace BillingSystem.Bal.BusinessAccess
 
         }
 
-        /// <summary>
-        /// Checks the type of the duplicate appointment.
-        /// </summary>
-        /// <param name="id">The identifier.</param>
-        /// <param name="itemID">The Item number.</param>
-        /// <returns></returns>
-        public bool CheckDuplicateTechnicalSpecification(int id, long itemID, int? corporateId, int? facilityId)
-        { 
-                var isExists = _repository.Where(model => model.Id != id && model.ItemID == itemID 
-                && model.CorporateId == corporateId && model.FacilityId == facilityId)
-                        .Any();
-                return isExists;
-             
-        }
-
+       
         /// <summary>
         /// Gets the technical specifications by facility identifier.
         /// </summary>
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
-        public List<TechnicalSpecifications> GetTechnicalSpecificationsByFacilityId(int facilityId)
+        public List<Catalog> GetCatalogByFacilityId(int facilityId)
         {
             var list = _repository.Where(x => x.FacilityId == facilityId).ToList();
             return list;
@@ -104,23 +90,23 @@ namespace BillingSystem.Bal.BusinessAccess
         }
 
         /// <summary>
-        /// Gets the TechnicalSpecifications data.
+        /// Gets the Catalog data.
         /// </summary>
 
         /// <returns></returns>
-        public List<TechnicalSpecificationsCustomModel> GetTechnicalSpecificationsData(int corporateId, int facilityId)
+        public List<CatalogCustomModel> GetCatalogData(int corporateId, int facilityId)
         {
-            //var spName = string.Format("EXEC {0} @FacilityId,@CorporateId", StoredProcedures.SprocGetTechnicalSpecifications);
+            //var spName = string.Format("EXEC {0} @FacilityId,@CorporateId", StoredProcedures.SprocGetCatalog);
             var sqlParameters = new SqlParameter[2];
 
             sqlParameters[0] = new SqlParameter("FacilityId", facilityId);
             sqlParameters[1] = new SqlParameter("CorporateId", corporateId);
 
 
-            using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetTechnicalSpecifications.ToString(), isCompiled: false
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetCatalog.ToString(), isCompiled: false
                 , parameters: sqlParameters))
             {
-                var result = ms.GetResultWithJson<TechnicalSpecificationsCustomModel>(JsonResultsArray.DashboardResult.ToString());
+                var result = ms.GetResultWithJson<CatalogCustomModel>(JsonResultsArray.DashboardResult.ToString());
                 return result;
             }
 

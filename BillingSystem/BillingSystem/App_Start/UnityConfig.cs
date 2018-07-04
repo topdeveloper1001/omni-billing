@@ -26,6 +26,7 @@ namespace BillingSystem
             container.RegisterType<IAppointmentTypesService, AppointmentTypesService>();
             container.RegisterType<ICategoriesService, CategoriesService>();
             container.RegisterType<ITechnicalSpecificationsService, TechnicalSpecificationsService>();
+            container.RegisterType<ICatalogService, CatalogService>();
             container.RegisterType<IATCCodesService, ATCCodesService>(); 
             container.RegisterType<IAuditLogService, AuditLogService>(); 
             container.RegisterType<IAuthorizationService, AuthorizationService>(); 

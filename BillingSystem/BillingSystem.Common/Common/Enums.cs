@@ -601,6 +601,7 @@ namespace BillingSystem.Common.Common
 
         SprocGetCategories,
         SprocGetTechnicalSpecifications,
+        SprocGetCatalog,
         /*Added by Amit Jain for Reports in Review Expected Payment Screen
          */
         SPROC_REP_ExpectedPaymentInsNotPaid,

@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomModel\AlergyView.cs" />
+    <Compile Include="CustomModel\CatalogCustomModel.cs" />
     <Compile Include="CustomModel\TechnicalSpecificationsCustomModel.cs" />
     <Compile Include="CustomModel\CategoriesCustomModel.cs" />
     <Compile Include="CustomModel\BillingModifierCustomModel.cs" />
@@ -288,12 +289,17 @@
     <Compile Include="Migrations\201806290916287_AddFieldsTechnicalSpecifications.Designer.cs">
       <DependentUpon>201806290916287_AddFieldsTechnicalSpecifications.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201807032011274_Catalog.cs" />
+    <Compile Include="Migrations\201807032011274_Catalog.Designer.cs">
+      <DependentUpon>201807032011274_Catalog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\Appointment.cs" />
     <Compile Include="Model\AppointmentTypes.cs" />
     <Compile Include="Model\ATCCodes.cs" />
     <Compile Include="Model\BaseEntity.cs" />
     <Compile Include="Model\BillingModifier.cs" />
+    <Compile Include="Model\Catalog.cs" />
     <Compile Include="Model\TechnicalSpecifications.cs" />
     <Compile Include="Model\Categories.cs" />
     <Compile Include="Model\ClinicianAppointmentType.cs" />
@@ -498,6 +504,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201806290916287_AddFieldsTechnicalSpecifications.resx">
       <DependentUpon>201806290916287_AddFieldsTechnicalSpecifications.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201807032011274_Catalog.resx">
+      <DependentUpon>201807032011274_Catalog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

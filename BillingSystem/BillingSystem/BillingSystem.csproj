@@ -340,6 +340,7 @@
     <Compile Include="Common\WebClientWrapper.cs" />
     <Compile Include="Common\WebRequestWrapper.cs" />
     <Compile Include="Controllers\ActiveEncounterController.cs" />
+    <Compile Include="Controllers\CatalogController.cs" />
     <Compile Include="Controllers\TechnicalSpecificationsController.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
     <Compile Include="Controllers\AppointmentTypesController.cs" />
@@ -520,6 +521,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>JornalEntryAccDataSet.xsd</DependentUpon>
     </Compile>
+    <Compile Include="Models\CatalogView.cs" />
     <Compile Include="Models\TechnicalSpecificationsView.cs" />
     <Compile Include="Models\CategoriesView.cs" />
     <Compile Include="Models\ClinicianAppointmentTypesView.cs" />

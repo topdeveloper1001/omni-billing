@@ -11,6 +11,23 @@ CREATE Procedure [dbo].[SprocGetTechnicalSpecifications]  ---- SPROC_GetTechnica
 AS
 BEGIN
 	
-	SELECT * From TechnicalSpecifications 
-	WHERE FacilityId=@FacilityId and CorporateId=@CorporateId
+	Declare @TechnicalSpecificationTempTable table(
+	[Id] [int] ,[ItemID] [bigint],[TechSpec] [nvarchar](120) NULL,[CorporateId] [int] NULL,[FacilityId] [int] NULL,
+	[CreatedBy] [int] NULL,	
+	[EName] [nvarchar](500) NULL
+	)
+	
+	Insert Into @TechnicalSpecificationTempTable
+	Select T.[Id], T.[ItemID], T.[TechSpec], T.[CorporateId],T.[FacilityId],
+		T.[CreatedBy],
+	 E.EquipmentName as EName
+	
+
+	from [TechnicalSpecifications] T 
+	
+	LEFT join [EquipmentMaster] E on T.ItemID =E.EquipmentMasterId
+	where T.FacilityId=@FacilityId and T.CorporateId=@CorporateId
+
+	SELECT * From @TechnicalSpecificationTempTable
+	For Json Path, Root('DashboardResult'),Include_Null_Values
 END

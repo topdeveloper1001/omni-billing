@@ -158,11 +158,6 @@ namespace BillingSystem.Controllers
             // Check if Model is not null 
             if (model != null)
             {
-                var isExist = _service.CheckDuplicateTechnicalSpecification(model.Id, model.ItemID, model.CorporateId, model.FacilityId);
-
-                if (isExist)
-                    return Json("-1");
-
                 if (model.Id > 0)
                 {
                     model.ModifiedBy = userId;
