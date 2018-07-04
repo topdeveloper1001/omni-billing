@@ -65,7 +65,7 @@ namespace BillingSystem.Controllers
             {
 
                 // Update Operation of current currentCategory
-                int result = _service.DeleteCategoriesData(currentCategory);
+                var result = _service.DeleteCategoriesData(currentCategory);
 
 
                 // return deleted ID of current Category as Json Result to the Ajax Call.
@@ -150,7 +150,7 @@ namespace BillingSystem.Controllers
         public ActionResult SaveCategories(Categories model)
         {
             // Initialize the newId variable 
-            int newId = -1;
+            long newId = -1;
             int userId = Helpers.GetLoggedInUserId();
 
             // Check if Model is not null 

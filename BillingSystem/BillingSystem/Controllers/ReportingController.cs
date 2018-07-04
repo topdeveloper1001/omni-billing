@@ -20,6 +20,7 @@ namespace BillingSystem.Controllers
 
     using RazorPDF;
     using BillingSystem.Bal.Interfaces;
+    using AutoMapper;
 
     #endregion
 
@@ -39,8 +40,12 @@ namespace BillingSystem.Controllers
         private readonly IPhysicianService _phService;
         private readonly IScrubReportService _srService;
         private readonly IXmlReportingService _xrService;
+        private readonly IMapper _mapper;
 
-        public ReportingController(IEncounterService eService, IBillActivityService baService, IBillHeaderService bhService, IFacilityStructureService fsService, IPatientInfoService piService, IUsersService uService, IReportingService service, IFacilityService fService, IPhysicianService phService, IScrubReportService srService, IXmlReportingService xrService)
+        public ReportingController(IMapper mapper, IEncounterService eService, IBillActivityService baService
+            , IBillHeaderService bhService, IFacilityStructureService fsService, IPatientInfoService piService
+            , IUsersService uService, IReportingService service, IFacilityService fService
+            , IPhysicianService phService, IScrubReportService srService, IXmlReportingService xrService)
         {
             _eService = eService;
             _baService = baService;
@@ -53,6 +58,8 @@ namespace BillingSystem.Controllers
             _phService = phService;
             _srService = srService;
             _xrService = xrService;
+
+            _mapper = mapper;
         }
 
 
@@ -801,7 +808,7 @@ namespace BillingSystem.Controllers
             {
                 BillDetails = billActivtiesList.Any() ? billActivtiesList
                                                  : new List<BillDetailCustomModel>(),
-                BillHeaderDeatils = billheaderObj,
+                BillHeaderDeatils = _mapper.Map<BillHeader>(billheaderObj),
                 EncounterDetails = encounterObj ?? new Encounter(),
                 FacilityDetails = facilityObj ?? new Facility(),
                 PatientDetails = patientinfoObj ?? new PatientInfo()
@@ -822,7 +829,7 @@ namespace BillingSystem.Controllers
         {
             PdfResult pdf = null;
 
-            BillHeaderCustomModel billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
+            var billheaderObj = _bhService.GetBillHeaderById(billHeaderId);
             int facilityId = billheaderObj.FacilityID ?? Helpers.GetDefaultFacilityId();
             var facilityObj = _fService.GetFacilityById(facilityId);
 
@@ -841,7 +848,7 @@ namespace BillingSystem.Controllers
                                              billActivtiesList.Any()
                                                  ? billActivtiesList
                                                  : new List<BillDetailCustomModel>(),
-                BillHeaderDeatils = billheaderObj,
+                BillHeaderDeatils = _mapper.Map<BillHeader>(billheaderObj),
                 EncounterDetails = encounterObj ?? new Encounter(),
                 FacilityDetails = facilityObj ?? new Facility(),
                 PatientDetails = patientinfoObj ?? new PatientInfo()

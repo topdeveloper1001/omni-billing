@@ -161,7 +161,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="patientId">The patient identifier.</param>
         /// <param name="associatedType">Type of the associated.</param>
         /// <returns></returns>
-        public IEnumerable<DocumentsTemplates> GetPatientCustomDocuments(int patientId, int associatedType)
+        public IEnumerable<DocumentsTemplatesCustomModel> GetPatientCustomDocuments(int patientId, int associatedType)
         {
             try
             {
@@ -205,6 +205,7 @@ namespace BillingSystem.Bal.BusinessAccess
                     ExternalValue3 = item.ExternalValue3,
                     ReferenceNumber = item.AssociatedType == 4 ? item.ExternalValue2 : string.Empty
                 }));
+
                 return vmlst;
 
             }

@@ -16,7 +16,7 @@ namespace BillingSystem.Bal.Interfaces
         IEnumerable<DocumentsTemplatesCustomModel> GetDocumentsCustomModelByType(int associatedType, int pid);
         List<DocumentsTemplates> GetListByAssociateType(int associatedType);
         IEnumerable<DocumentsTemplates> GetNurseDocuments(int patientId, int encounterId);
-        IEnumerable<DocumentsTemplates> GetPatientCustomDocuments(int patientId, int associatedType);
+        IEnumerable<DocumentsTemplatesCustomModel> GetPatientCustomDocuments(int patientId, int associatedType);
         IEnumerable<DocumentsTemplates> GetPatientDocuments(int patientId);
         Task<List<DocumentsTemplates>> GetPatientDocumentsList(int patientId);
         Task<IEnumerable<DocumentsTemplatesCustomModel>> SaveDocumentsAsync(DataTable dt, bool showDocsList, string exclusions);

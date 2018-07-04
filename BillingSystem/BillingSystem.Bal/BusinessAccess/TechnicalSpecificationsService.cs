@@ -5,7 +5,6 @@ using BillingSystem.Model.CustomModel;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
-using BillingSystem.Repository.Common;
 
 namespace BillingSystem.Bal.BusinessAccess
 {

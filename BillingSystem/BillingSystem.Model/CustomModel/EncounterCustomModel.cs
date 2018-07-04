@@ -1,19 +1,91 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BillingSystem.Model.CustomModel
 {
     [NotMapped]
-    public class EncounterCustomModel : Encounter
+    public class EncounterCustomModel
     {
+        public int EncounterID { get; set; }
+        public string EncounterNumber { get; set; }
+        public DateTime? EncounterRegistrationDate { get; set; }
+        public DateTime? EncounterStartTime { get; set; }
+        public DateTime? EncounterInpatientAdmitDate { get; set; }
+        public string EncounterRegistrationPersonnel { get; set; }
+        public string PersonEmiratesIDNumber { get; set; }
+        public int? PatientID { get; set; }
+        public int? EncounterFacilityID { get; set; }
+        public string EncounterFacility { get; set; }
+        public int? EncounterStartType { get; set; }
+        public int? EncounterConfidentialityLevel { get; set; }
+        public string EncounterProvideLocation { get; set; }
+        public string EncounterAmbulatoryCondition { get; set; }
+        public int? EncounterModeofArrival { get; set; }
+        public string EncounterPrimaryReferralSource { get; set; }
+        public string EncounterReferralSource { get; set; }
+        public string EncounterReferringHospital { get; set; }
+        public string EncounterReferringClinic { get; set; }
+        public string EncounterTransferHospital { get; set; }
+        public int? EncounterPatientType { get; set; }
+        public string EncounterMedicalService { get; set; }
+        public int? EncounterServiceCategory { get; set; }
+        public int? EncounterAdmitType { get; set; }
+        public string EncounterAdmitReason { get; set; }
+        public int? EncounterAccidentRelated { get; set; }
+        public string EncounterAccidentType { get; set; }
+        public DateTime? EncounterAccidentDate { get; set; }
+        public bool? EncounterPoliceInvolved { get; set; }
+        public int? EncounterSpecimenType { get; set; }
+        public string EncounterTrackingGroup { get; set; }
+        public string EncounterNurseAmbulatory { get; set; }
+        public int? EncounterType { get; set; }
+        public string EncounterAccomodation { get; set; }
+        public string EncounterAccomodationRequest { get; set; }
+        public string EncounterAccomodationReason { get; set; }
+        public string EncounterIsolation { get; set; }
+        public string EncounterTransferSource { get; set; }
+        public string EncounterReferringFacilityAccess { get; set; }
+        public string EncounterReferringMRN { get; set; }
+        public string EncounterDischargePlan { get; set; }
+        public string EncounterTransferDestination { get; set; }
+        public string EncounterDischargeLocation { get; set; }
+        public DateTime? EncounterEndTime { get; set; }
+        public string EncounterDischargeDisposition { get; set; }
+        public string EncounterDischargePersonnelID { get; set; }
+        public string EncounterAcuteCareFacilitynonUAE { get; set; }
+        public DateTime? EncounterDeceasedDate { get; set; }
+        public string EncounterComment { get; set; }
+        public int? EncounterEndType { get; set; }
+        public string EncounterEligibilityIDPayer { get; set; }
+        public decimal? Charges { get; set; }
+        public decimal? Payment { get; set; }
+        public int? EncounterSpecialty { get; set; }
+        public string EncounterLocation { get; set; }
+        public string WorkingDiagnosis { get; set; }
+        public int? EncounterPhysicianType { get; set; }
+        public int? EncounterAttendingPhysician { get; set; }
+        public int? CorporateID { get; set; }
+        public bool? IsAutoClosed { get; set; }
+        public bool? HomeCareRecurring { get; set; }
+        public bool? IsMCContractBaseRateApplied { get; set; }
+
+        public PatientInfo PatientInfo { get; set; }
+        public int? CreatedBy { get; set; }
+
+        public DateTime? CreatedDate { get; set; }
+
+        public int? ModifiedBy { get; set; }
+
+        public DateTime? ModifiedDate { get; set; }
+
+        public string WaitTime { get; set; }
+        public string PatientState { get; set; }
+        public string Triage { get; set; }
+
         public DateTime? ENMCreateDate { get; set; }
         public string FacilityName { get; set; }
         public string PatientName { get; set; }
-        //public string PersonEmiratesIDNumber { get; set; }
         public string PersonMedicalRecordNumber { get; set; }
         public string EncounterState { get; set; }
         public string patientBedId { get; set; }// added to get the or save patient Bed id
@@ -54,7 +126,6 @@ namespace BillingSystem.Model.CustomModel
         public List<AuthorizationCustomModel> EncounterAuthorizationList { get; set; }
 
         public List<DocumentsTemplates> AuthDocs { get; set; } = new List<DocumentsTemplates>();
-        //public int OverrideBedType { get; set; }
         public string OverrideBedType { get; set; }
 
         public List<BillDetailCustomModel> EncounterBedTransaction { get; set; }

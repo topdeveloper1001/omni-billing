@@ -66,7 +66,7 @@ namespace BillingSystem.Controllers
             {
 
                 // Update Operation of current currentCatalog
-                int result = _service.DeleteCatalogData(currentCatalog);
+                var result = _service.DeleteCatalogData(currentCatalog);
 
 
                 // return deleted ID of current Catalog as Json Result to the Ajax Call.
@@ -152,7 +152,7 @@ namespace BillingSystem.Controllers
         public ActionResult SaveCatalog(Catalog model)
         {
             // Initialize the newId variable 
-            int newId = -1;
+            long newId = -1;
             int userId = Helpers.GetLoggedInUserId();
 
             // Check if Model is not null 
@@ -187,21 +187,21 @@ namespace BillingSystem.Controllers
                 currentCatalog.Id,
                 currentCatalog.FacilityId,
                 currentCatalog.CorporateId,
-                currentCatalog.ItemID,
-                currentCatalog.ManufacturerID,
+                currentCatalog.ItemId,
+                currentCatalog.ManufacturerId,
                 currentCatalog.ManufacturerName,
-                currentCatalog.ProductID,
+                currentCatalog.ProductId,
                 currentCatalog.ProductName,
                 currentCatalog.ProductDescription,
                 currentCatalog.ManufacturerItemCode,
                 currentCatalog.ItemDescription,
-                currentCatalog.ItemImageURL,
+                currentCatalog.ItemImageUrl,
                 currentCatalog.VenderItemCode,
                 currentCatalog.Pkg,
                 currentCatalog.UnitPrice,
                 currentCatalog.PriceDescription,
                 currentCatalog.Availability,
-                currentCatalog.CategoryPathID,
+                currentCatalog.CategoryPathId,
                 currentCatalog.CategoryPathName,
                 currentCatalog.PackingListDescritpion,
                 currentCatalog.UnitWeight,
@@ -213,7 +213,7 @@ namespace BillingSystem.Controllers
                 currentCatalog.HazMatCode,
                 currentCatalog.PharmacyProductType,
                 currentCatalog.NationalDrugCode,
-                currentCatalog.BrandID,
+                currentCatalog.BrandId,
                 currentCatalog.BrandName,
                 currentCatalog.ProdCatNumber,
                 currentCatalog.Size

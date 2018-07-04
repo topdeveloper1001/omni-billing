@@ -70,7 +70,7 @@ namespace BillingSystem.Model
         //public DbSet<DashboardData> DashboardData { get; set; }
         public DbSet<DashboardDisplayOrder> DashboardDisplayOrder { get; set; }
         public DbSet<DashboardIndicatorData> DashboardIndicatorData { get; set; }
-        public DbSet<DashboardIndicatorData_BKUP> DashboardIndicatorData_BKUP { get; set; }
+        //public DbSet<DashboardIndicatorData_BKUP> DashboardIndicatorData_BKUP { get; set; }
         public DbSet<DashboardIndicatorData_Template> DashboardIndicatorData_Template { get; set; }
         public DbSet<DashBoardIndicatorEffects> DashBoardIndicatorEffects { get; set; }
         public DbSet<DashboardIndicators> DashboardIndicators { get; set; }

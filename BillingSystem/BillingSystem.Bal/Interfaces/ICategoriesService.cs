@@ -6,10 +6,10 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface ICategoriesService
     {
-        bool CheckDuplicateCategory(int id, string prodCatNum, string prodCat);
-        int DeleteCategoriesData(Categories model);
+        bool CheckDuplicateCategory(long id, string prodCatNum, string prodCat);
+        long DeleteCategoriesData(Categories model);
         Categories GetCategoryById(int id);
-        int SaveCategories(Categories model);
+        long SaveCategories(Categories model);
         List<CategoriesCustomModel> GetCategoriesData();
     }
 }

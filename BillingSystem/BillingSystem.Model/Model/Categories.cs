@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BillingSystem.Model
 {
-    public class Categories
+    public class Categories : BaseEntity<long>
     {
-        [Key]
-        public int Id { get; set; }
         [MaxLength(12)]
         public string ProdCatNumber { get; set; }
         [MaxLength(40)]
@@ -18,9 +16,9 @@ namespace BillingSystem.Model
         [MaxLength(40)]
         public string ProdSubcat3 { get; set; }
 
-        public int? CreatedBy { get; set; }
+        public int CreatedBy { get; set; }
 
-        public DateTime? CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }
 
         public int? ModifiedBy { get; set; }
 

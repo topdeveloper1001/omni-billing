@@ -81,8 +81,9 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </summary>
         /// <param name="model">The model.</param>
         /// <returns></returns>
-        public List<DashboardIndicatorsCustomModel> SaveDashboardIndicators(DashboardIndicators model)
+        public List<DashboardIndicatorsCustomModel> SaveDashboardIndicators(DashboardIndicatorsCustomModel vm)
         {
+            var model = _mapper.Map<DashboardIndicators>(vm);
             var executedStatus = false;
             if (model.IndicatorID > 0)
             {
@@ -122,9 +123,10 @@ namespace BillingSystem.Bal.BusinessAccess
             return list;
         }
 
-        public bool DeleteIndicator(DashboardIndicators model)
+        public bool DeleteIndicator(DashboardIndicatorsCustomModel vm)
         {
-            _repository.UpdateEntity(model, model.IndicatorID);
+            var m = _mapper.Map<DashboardIndicators>(vm);
+            _repository.UpdateEntity(m, m.IndicatorID);
             return true;
         }
 
@@ -212,19 +214,18 @@ namespace BillingSystem.Bal.BusinessAccess
             return isExists;
         }
 
-        public bool UpdateIndicatorsOtherDetail(DashboardIndicators model)
+        public bool UpdateIndicatorsOtherDetail(DashboardIndicatorsCustomModel vm)
         {
             var sqlParameters = new SqlParameter[6];
-            sqlParameters[0] = new SqlParameter("pIndicatorNumber", model.IndicatorNumber);
-            sqlParameters[1] = new SqlParameter("pSubCategory1", model.SubCategory1);
-            sqlParameters[2] = new SqlParameter("pSubCategory2", model.SubCategory2);
-            sqlParameters[3] = new SqlParameter("pCId", model.CorporateId.GetValueOrDefault());
-            sqlParameters[4] = new SqlParameter("pFId", model.FacilityId.GetValueOrDefault());
-            sqlParameters[5] = new SqlParameter("pIsActive", model.IsActive);
+            sqlParameters[0] = new SqlParameter("pIndicatorNumber", vm.IndicatorNumber);
+            sqlParameters[1] = new SqlParameter("pSubCategory1", vm.SubCategory1);
+            sqlParameters[2] = new SqlParameter("pSubCategory2", vm.SubCategory2);
+            sqlParameters[3] = new SqlParameter("pCId", vm.CorporateId.GetValueOrDefault());
+            sqlParameters[4] = new SqlParameter("pFId", vm.FacilityId.GetValueOrDefault());
+            sqlParameters[5] = new SqlParameter("pIsActive", vm.IsActive);
 
             _repository.ExecuteCommand(StoredProcedures.SPROC_MakeIndicatorInActive.ToString(), sqlParameters);
             return true;
         }
-
     }
 }

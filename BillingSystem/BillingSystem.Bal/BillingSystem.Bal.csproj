@@ -127,6 +127,7 @@
     <Compile Include="BusinessAccess\HCPCSCodesService.cs" />
     <Compile Include="BusinessAccess\HolidayPlannerDetailsService.cs" />
     <Compile Include="BusinessAccess\HolidayPlannerService.cs" />
+    <Compile Include="Interfaces\ICatalogService.cs" />
     <Compile Include="Interfaces\ICategoriesService.cs" />
     <Compile Include="Interfaces\IDashboardTransactionCounterService.cs" />
     <Compile Include="Interfaces\IProjectDashboardService.cs" />

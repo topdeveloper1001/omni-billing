@@ -292,6 +292,10 @@
     <Compile Include="Migrations\201807032011274_Catalog.Designer.cs">
       <DependentUpon>201807032011274_Catalog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201807040925335_CategoryDBChangesPlusInOthers.cs" />
+    <Compile Include="Migrations\201807040925335_CategoryDBChangesPlusInOthers.Designer.cs">
+      <DependentUpon>201807040925335_CategoryDBChangesPlusInOthers.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\Appointment.cs" />
     <Compile Include="Model\AppointmentTypes.cs" />
@@ -346,7 +350,6 @@
     <Compile Include="Model\DashboardBudget.cs" />
     <Compile Include="Model\DashboardDisplayOrder.cs" />
     <Compile Include="Model\DashboardIndicatorData.cs" />
-    <Compile Include="Model\DashboardIndicatorData_BKUP.cs" />
     <Compile Include="Model\DashboardIndicatorData_Template.cs" />
     <Compile Include="Model\DashBoardIndicatorEffects.cs" />
     <Compile Include="Model\DashboardIndicators.cs" />
@@ -505,6 +508,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201807032011274_Catalog.resx">
       <DependentUpon>201807032011274_Catalog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201807040925335_CategoryDBChangesPlusInOthers.resx">
+      <DependentUpon>201807040925335_CategoryDBChangesPlusInOthers.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

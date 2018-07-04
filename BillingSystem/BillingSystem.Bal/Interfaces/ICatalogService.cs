@@ -6,9 +6,9 @@ namespace BillingSystem.Bal.Interfaces
 {
     public interface ICatalogService
     {
-        int DeleteCatalogData(Catalog model);
+        long DeleteCatalogData(Catalog model);
         Catalog GetCatalogById(int id);
-        int SaveCatalog(Catalog model);
+        long SaveCatalog(Catalog model);
         List<CatalogCustomModel> GetCatalogData(int corporateId, int facilityId);
         List<Catalog> GetCatalogByFacilityId(int facilityId);
     }

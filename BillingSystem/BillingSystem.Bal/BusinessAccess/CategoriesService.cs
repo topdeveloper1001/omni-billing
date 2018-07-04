@@ -19,7 +19,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         private readonly IRepository<Categories> _repository;
         private readonly BillingEntities _context;
-        
+
         public CategoriesService(IRepository<Categories> repository, BillingEntities context)
         {
             _repository = repository;
@@ -39,7 +39,6 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var model = _repository.Where(x => x.Id == id).FirstOrDefault();
             return model;
-
         }
 
         /// <summary>
@@ -49,7 +48,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns>
         /// The <see cref="int" />.
         /// </returns>
-        public int SaveCategories(Categories model)
+        public long SaveCategories(Categories model)
         {
             if (model.Id > 0)
             {
@@ -59,22 +58,18 @@ namespace BillingSystem.Bal.BusinessAccess
                 _repository.Update(model, model.Id);
             }
             else
-            {
                 _repository.Create(model);
-            }
 
             return model.Id;
-
         }
 
-        public int DeleteCategoriesData(Categories model)
+        public long DeleteCategoriesData(Categories model)
         {
             if (model.Id > 0)
             {
                 _repository.Delete(model);
             }
             return model.Id;
-
         }
 
         /// <summary>
@@ -84,12 +79,12 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="prodCatNum">The category number.</param>
         /// <param name="prodCat">The category name.</param>
         /// <returns></returns>
-        public bool CheckDuplicateCategory(int id, string prodCatNum, string prodCat)
-        { 
-                var isExists = _repository.Where(model => model.Id != id && model.ProdCatNumber.Trim().ToLower().Equals(prodCatNum) && model.ProdCat.Trim().ToLower().Equals(prodCat))
-                        .Any();
-                return isExists;
-             
+        public bool CheckDuplicateCategory(long id, string prodCatNum, string prodCat)
+        {
+            var isExists = _repository.Where(model => model.Id != id && model.ProdCatNumber.Trim().ToLower().Equals(prodCatNum) && model.ProdCat.Trim().ToLower().Equals(prodCat))
+                    .Any();
+            return isExists;
+
         }
 
 
@@ -101,15 +96,15 @@ namespace BillingSystem.Bal.BusinessAccess
         public List<CategoriesCustomModel> GetCategoriesData()
         {
             var spName = string.Format("EXEC {0}", StoredProcedures.SprocGetCategories);
-            
+
             IEnumerable<CategoriesCustomModel> result = _context.Database.SqlQuery<CategoriesCustomModel>(spName);
-                                    
+
             return result.ToList();
-            
+
             //return _repository.GetAll().ToList();
 
         }
-        
+
         #endregion
     }
 }

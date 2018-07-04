@@ -3,7 +3,7 @@ using BillingSystem.Bal.Interfaces;
 using System.Web.Http;
 using Unity;
 using Unity.WebApi;
-using BillingSystem.Repository;
+using BillingSystem.Bal;
 using Unity.Lifetime;
 using BillingSystem.Model;
 using Unity.Injection;

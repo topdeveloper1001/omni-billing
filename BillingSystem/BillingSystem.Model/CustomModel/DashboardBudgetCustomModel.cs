@@ -1,11 +1,38 @@
 ﻿
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BillingSystem.Model.CustomModel
 {
     [NotMapped]
-    public class DashboardBudgetCustomModel : DashboardBudget
+    public class DashboardBudgetCustomModel
     {
+        public int BudgetId { get; set; }
+        public int? BudgetType { get; set; }
+        public string BudgetDescription { get; set; }
+        public decimal? DepartmentNumber { get; set; }
+        public string FiscalYear { get; set; }
+        public decimal? JanuaryBudget { get; set; }
+        public decimal? FebruaryBudget { get; set; }
+        public decimal? MarchBudget { get; set; }
+        public decimal? AprilBudget { get; set; }
+        public decimal? MayBudget { get; set; }
+        public decimal? JuneBudget { get; set; }
+        public decimal? JulyBudget { get; set; }
+        public decimal? AugustBudget { get; set; }
+        public decimal? SeptemberBudget { get; set; }
+        public decimal? OctoberBudget { get; set; }
+        public decimal? NovemberBudget { get; set; }
+        public decimal? DecemberBudget { get; set; }
+        public int CorporateId { get; set; }
+        public int FacilityId { get; set; }
+        public int? CreatedBy { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public int? ModifiedBy { get; set; }
+        public DateTime? ModifiedDate { get; set; }
+        public bool? IsActive { get; set; }
+        public string BudgetFor { get; set; }
+
         public string BudgetTypeString { get; set; }
         public string BudgetForStr { get; set; }
     }

@@ -1,14 +1,10 @@
-﻿using AutoMapper;
-using BillingSystem.Bal.Interfaces;
+﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
-using BillingSystem.Repository.Interfaces;
-using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
-using BillingSystem.Repository.Common;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
@@ -51,7 +47,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns>
         /// The <see cref="int" />.
         /// </returns>
-        public int SaveCatalog(Catalog model)
+        public long SaveCatalog(Catalog model)
         {
             if (model.Id > 0)
             {
@@ -66,7 +62,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         }
 
-        public int DeleteCatalogData(Catalog model)
+        public long DeleteCatalogData(Catalog model)
         {
             if (model.Id > 0)
             {

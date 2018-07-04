@@ -10,8 +10,8 @@ namespace BillingSystem.Model.CustomModel
      [NotMapped]
     public class OpenOrderExtension
     {
-        public Nullable<int> PhysicianID { get; set; }
-        public Nullable<int> OrderCount { get; set; }
+        public int? PhysicianID { get; set; }
+        public int? OrderCount { get; set; }
         public string OrderType { get; set; }
         public string OrderTypeName { get; set; }
         public string OrderCode { get; set; }
