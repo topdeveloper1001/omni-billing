@@ -21,8 +21,7 @@ namespace BillingSystem.Controllers
     /// The base controller.
     /// </summary>
     [SessionExpire]
-    [LoginAuthorize]
-    [CheckPermissions]
+    [CustomAuth]
     public class BaseController : Controller
     {
         /// <summary>
@@ -37,7 +36,6 @@ namespace BillingSystem.Controllers
         /// The start time.
         /// </value>
         private DateTime StartTime { get; set; }
-
 
         /// <summary>
         /// Gets or sets the _ current date time.

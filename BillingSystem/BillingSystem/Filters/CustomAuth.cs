@@ -1,10 +1,12 @@
 ﻿using BillingSystem.Common;
+using BillingSystem.Common.Common;
+using System;
 using System.Web.Mvc;
 using System.Web.Routing;
 
 namespace BillingSystem.Filters
 {
-    public class LoginAuthorize : AuthorizeAttribute
+    public class CustomAuth : AuthorizeAttribute
     {
         /// <summary>
         /// Function     : Handle Unauthorized Request
@@ -43,11 +45,37 @@ namespace BillingSystem.Filters
         /// </returns>
         public override void OnAuthorization(AuthorizationContext filterContext)
         {
-            var userId = Helpers.GetLoggedInUserId();
-            if (userId == 0)
+            var status = Helpers.GetLoggedInUserId() > 0 ? 0 : 1;
+            var filterResult = string.Empty;
+
+            if (status == 0)
             {
+                var currentController = filterContext.RouteData.Values.ContainsKey(OtherKeys.controller.ToString())
+                        ? Convert.ToString(filterContext.RouteData.Values[OtherKeys.controller.ToString()]) : string.Empty;
+
+                var currentAction = filterContext.RouteData.Values.ContainsKey(OtherKeys.action.ToString())
+                    ? Convert.ToString(filterContext.RouteData.Values[OtherKeys.action.ToString()]) : string.Empty;
+
+                var isAjaxRequest = filterContext.HttpContext.Request.IsAjaxRequest();
+                status = Helpers.CheckAccess(currentController, currentAction, isAjaxRequest) || currentAction.ToLower().Equals("welcome") ? 0 : 2;
+            }
+
+            if (status > 0)
+            {
+                switch (status)
+                {
+                    case 1:
+                        filterResult = CommonConfig.LoginUrl;
+                        break;
+                    case 2:
+                        filterResult = CommonConfig.UnauthorizedAccess;
+                        break;
+                    default:
+                        break;
+                }
+
+                filterContext.Result = new RedirectResult(filterResult, false);
                 base.OnAuthorization(filterContext);
-                filterContext.Result = new RedirectResult(CommonConfig.LoginUrl, false);
             }
         }
     }

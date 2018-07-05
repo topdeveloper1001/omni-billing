@@ -305,7 +305,7 @@ namespace BillingSystem.Controllers
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult BindTargetCompletionValueDropDown(string categoryId)
         {
             var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder);

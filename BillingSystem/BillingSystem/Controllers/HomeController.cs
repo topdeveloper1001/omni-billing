@@ -159,6 +159,7 @@ namespace BillingSystem.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public ActionResult PatientLogin(PatientLoginDetail model)
         {
             if (model != null && !string.IsNullOrEmpty(model.Password) && !string.IsNullOrEmpty(model.Email))
@@ -618,6 +619,7 @@ namespace BillingSystem.Controllers
         //    return View(login);
         //}
         [HttpPost]
+        [AllowAnonymous]
         public async Task<ActionResult> UserLogin(Users model)
         {
             UsersViewModel user = null;
@@ -803,7 +805,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetAllGlobalCodeCategories()
         {
             var list = _gcService.GetGlobalCodeCategories();
@@ -814,6 +816,7 @@ namespace BillingSystem.Controllers
         /// Welcomes this instance.
         /// </summary>
         /// <returns></returns>
+        [CustomAuth]
         public ActionResult Welcome()
         {
             var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
@@ -829,7 +832,7 @@ namespace BillingSystem.Controllers
         /// <param name="endRange">The end range.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetGlobalCodeCategories(string startRange, string endRange)
         {
             var list = _gcService.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
@@ -862,13 +865,14 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
-        //[AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public JsonResult GetGlobalCodes(string categoryId)
         {
             var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeName);
             return Json(list, JsonRequestBehavior.AllowGet);
         }
+
+        [CustomAuth]
         public ActionResult GetGlobalCodesOrderByGlobalCodeId(string categoryId)
         {
             var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeID);
@@ -880,7 +884,7 @@ namespace BillingSystem.Controllers
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetGlobalCodesOrderbyCode(string categoryId)
         {
             var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => Convert.ToDecimal(x.GlobalCodeValue)).ToList();
@@ -893,7 +897,7 @@ namespace BillingSystem.Controllers
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetGlobalCodesOrderBy(string categoryId)
         {
             var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder).ToList();
@@ -906,7 +910,7 @@ namespace BillingSystem.Controllers
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetGlobalCodesOrderbyName(string categoryId)
         {
             var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => (x.GlobalCodeName)).ToList();
@@ -920,7 +924,7 @@ namespace BillingSystem.Controllers
         /// <param name="patientTypeId">The patient type identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetEncounterTypes(string categoryId, string patientTypeId)
         {
             var list = _gService.GetEncounterTypesByPatientType(categoryId, patientTypeId);
@@ -931,7 +935,7 @@ namespace BillingSystem.Controllers
         /// Gets the countries with code.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetCountriesWithCode()
         {
             var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
@@ -945,7 +949,7 @@ namespace BillingSystem.Controllers
         /// <param name="facilityNumber">The facility number.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFacilityNameById(string facilityNumber)
         {
             if (string.IsNullOrEmpty(facilityNumber))
@@ -978,7 +982,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult BindCorporateDDL()
         {
             var corporatId = Helpers.GetDefaultCorporateId();
@@ -992,7 +996,7 @@ namespace BillingSystem.Controllers
         /// Gets the corporates dropdown data.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetCorporatesDropdownData()
         {
             var cId = Helpers.GetDefaultCorporateId();
@@ -1016,7 +1020,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="corporateId">The corporate identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetRolesDropdownData(string corporateId)
         {
             var roles = _roService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
@@ -1039,7 +1043,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="corporateId">The corporate identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetDistinctRolesDropdownData(string corporateId)
         {
             var roles = _roService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
@@ -1064,7 +1068,7 @@ namespace BillingSystem.Controllers
         /// <param name="corporateId">The corporate identifier.</param>
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetRolesByFacilityDropdownData(string corporateId, string facilityId)
         {
             var roles = _roService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
@@ -1109,7 +1113,7 @@ namespace BillingSystem.Controllers
         /// Gets the user header.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetUserHeader()
         {
 
@@ -1125,7 +1129,7 @@ namespace BillingSystem.Controllers
         /// <param name="tableNumber"></param>
         /// <param name="blockNumber"></param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFilteredCodes(string text, string searchType, string drugStatus, string tableNumber, string blockNumber = null)
         {
             var st = Convert.ToInt32(searchType);
@@ -1254,7 +1258,7 @@ namespace BillingSystem.Controllers
         /// <param name="startRange">The start range.</param>
         /// <param name="endRange">The end range.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetGlobalCodesByCategoriesRange(string startRange, string endRange)
         {
             var list = _gService.GetGlobalCodesByCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
@@ -1267,7 +1271,7 @@ namespace BillingSystem.Controllers
         /// <param name="codetypeid">The codetypeid.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetOrderCodes(string codetypeid)
         {
             var orderType = (OrderType)Enum.Parse(typeof(OrderType), codetypeid);
@@ -1294,7 +1298,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="categoryValue">The category value.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetMaxGlobalCodeValueByCategory(string categoryValue)
         {
             var maxId = _gService.GetMaxGlobalCodeValueByCategory(categoryValue);
@@ -1306,7 +1310,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="pid">The pid.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetOldEncounterList(int pid)
         {
             var patientEncounterlist = _eService.GetEncounterListByPatientId(pid);
@@ -1318,7 +1322,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="searchType">Type of the search.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetSerachList(string searchType)
         {
             if (!string.IsNullOrEmpty(searchType))
@@ -1398,7 +1402,7 @@ namespace BillingSystem.Controllers
         /// <param name="subCategoryId">The sub category identifier.</param>
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetOrderingCodes(string text, int subCategoryId, int categoryId)
         {
             var finalList = new List<GeneralCodesCustomModel>();
@@ -1486,7 +1490,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="tableName">Name of the table.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetColumnsByTableName(string tableName)
         {
             var list = new List<DropdownListData>();
@@ -1512,7 +1516,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="tableid">The tableid.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetColumnsForTable(string tableid)
         {
             var list = new List<DropdownListData>();
@@ -1550,7 +1554,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="drugCode">The drug code.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetDrugDetailsByDrugCode(string drugCode)
         {
             var drugObj = _drugService.GetDrugListbyDrugCode(drugCode, Helpers.DefaultDrugTableNumber);
@@ -1564,7 +1568,7 @@ namespace BillingSystem.Controllers
         /// <param name="code">The code.</param>
         /// <param name="Type">The type.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetSelectedCodeParent(string code, string Type)
         {
             if (code != null)
@@ -1618,7 +1622,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="labtrest">The labtrest.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetCategoryLabtest(string labtrest)
         {
             var golbalcodeObj = _gService.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(labtrest));
@@ -1630,7 +1634,7 @@ namespace BillingSystem.Controllers
         /// Gets the users by default corporate identifier.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetUsersByDefaultCorporateId()
         {
             var list = new List<DropdownListData>();
@@ -1669,7 +1673,7 @@ namespace BillingSystem.Controllers
         /// <param name="userId">The user identifier.</param>
         /// <added by="Shashank">ON 12/16/2014</added>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetUsersDetailByUserID(Int32 userId)
         {
             var userObj = _uService.GetUserById(userId);
@@ -1682,7 +1686,7 @@ namespace BillingSystem.Controllers
         /// <param name="globalcodeId">The globalcode identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetGlobalCodesChilds(string globalcodeId)
         {
             var list = _gService.GetGlobalCodesByCategoryValue(globalcodeId).OrderBy(x => x.GlobalCodeID);
@@ -1695,7 +1699,7 @@ namespace BillingSystem.Controllers
         /// <param name="corporateid">The corporateid.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFacilitiesbyCorporate(int corporateid)
         {
             var finalList = new List<DropdownListData>();
@@ -1719,7 +1723,7 @@ namespace BillingSystem.Controllers
         /// Gets the users.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetUsers()
         {
             var users = new List<DropdownListData>();
@@ -1742,7 +1746,7 @@ namespace BillingSystem.Controllers
         /// Gets the patient list.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetPatientList()
         {
             var list = new List<DropdownListData>();
@@ -1767,7 +1771,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="patientId">The patient identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetEncountersListByPatientId(int patientId)
         {
             var list = new List<DropdownListData>();
@@ -1790,7 +1794,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="encounterId">The encounter identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetBillHeaderListByEncounterId(int encounterId)
         {
             var list = new List<DropdownListData>();
@@ -1812,7 +1816,7 @@ namespace BillingSystem.Controllers
         /// <param name="facilityId">The facility identifier.</param>
         /// <param name="userType">Type of the user.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetUsersByFacilityId(int facilityId)
         {
             var finalList = new List<DropdownListData>();
@@ -1836,7 +1840,7 @@ namespace BillingSystem.Controllers
         /// <param name="text">The text.</param>
         /// <param name="orderTypeId">The order type identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetOrderCodesByOrderTypeId(string text, int orderTypeId)
         {
             var list = new List<GeneralCodesCustomModel>();
@@ -1972,7 +1976,7 @@ namespace BillingSystem.Controllers
         /// <param name="tableName">Name of the table.</param>
         /// <param name="columnName">Name of the column.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetColumnDataType(string tableName, string columnName)
         {
             var datatype = GetColumnDataTypeByTableNameColumnName(tableName, columnName);
@@ -2173,7 +2177,7 @@ namespace BillingSystem.Controllers
         /// <param name="ordercode">The ordercode.</param>
         /// <param name="ordrtype">The ordrtype.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetOrderCodeDesc(string ordercode, string ordrtype)
         {
             if (!string.IsNullOrEmpty(ordercode) && !string.IsNullOrEmpty(ordrtype))
@@ -2207,7 +2211,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="tableId">The table identifier.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetColumnForManagedCareTable(string tableId)
         {
             var globalcodelist = _gService.GetGlobalCodesByCategoryValue("1017").Where(x => x.ExternalValue1 == tableId).OrderBy(x => x.GlobalCodeID).ToList();
@@ -2308,7 +2312,7 @@ namespace BillingSystem.Controllers
         /// Gets the facilities dropdown data with facility number.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFacilitiesDropdownDataWithFacilityNumber(int? corporateId)
         {
             var facilities = _fService.GetFacilities(Convert.ToInt32(corporateId));
@@ -2330,7 +2334,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="text">The text.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetServiceCodes(string text)
         {
             var finalList = new List<GeneralCodesCustomModel>();
@@ -2370,7 +2374,7 @@ namespace BillingSystem.Controllers
         /// Gets the service codes list.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetServiceCodesList()
         {
             var finalList = GetServiceCodes1(Helpers.DefaultServiceCodeTableNumber);
@@ -2384,7 +2388,7 @@ namespace BillingSystem.Controllers
         /// <param name="codeMainValue">The code main value.</param>
         /// <param name="rowCount">The row count.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public JsonResult GetServiceCodesByCodeMainValue(string codeMainValue, int rowCount)
         {
             var list = new List<SelectListItem>();
@@ -2406,7 +2410,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="mueValue">The mue value.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public JsonResult GetCptCodesListByMueValue(string mueValue)
         {
             var list = new List<SelectListItem>();
@@ -2670,7 +2674,7 @@ namespace BillingSystem.Controllers
         /// Get Facilities list
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFacilitiesWithoutCorporateDropdownData()
         {
             var cId = Helpers.GetDefaultCorporateId();
@@ -2697,7 +2701,7 @@ namespace BillingSystem.Controllers
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetMonthsData(string categoryId, int facilityId)
         {
             var currentDateTime = Helpers.GetInvariantCultureDateTime();
@@ -2739,7 +2743,7 @@ namespace BillingSystem.Controllers
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFacilityUsers(int facilityId)
         {
             var list = new List<SelectListItem>();
@@ -2761,7 +2765,7 @@ namespace BillingSystem.Controllers
         /// Gets the non admin users by corporate.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetNonAdminUsersByCorporate()
         {
             var cId = Helpers.GetSysAdminCorporateID();
@@ -2806,7 +2810,7 @@ namespace BillingSystem.Controllers
         /// Gets the service code and desc list.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetServiceCodeAndDescList()
         {
             var list = new List<SelectListItem>();
@@ -3009,7 +3013,7 @@ namespace BillingSystem.Controllers
         /// Checks the tabs access.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public JsonResult CheckTabsAccess()
         {
             var ehrAccess = true;
@@ -3038,7 +3042,7 @@ namespace BillingSystem.Controllers
         /// Gets the rule editor users.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetRuleEditorUsers()
         {
             var list = new List<DropdownListData>();
@@ -3061,7 +3065,7 @@ namespace BillingSystem.Controllers
         /// <param name="tableNumber"></param>
         /// <param name="type">The type.</param>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetCodesByFacility(string tableNumber, string type)
         {
             // var tableNumber = GetTableNumber(corporateid, facilitynumber, type);
@@ -3294,7 +3298,7 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <returns>Json List</returns>
         [AcceptVerbs(HttpVerbs.Post)]
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFacilityDeapartments()
         {
             var loggedinFacility = Helpers.GetDefaultFacilityId();
@@ -3486,7 +3490,7 @@ namespace BillingSystem.Controllers
         /// Get Facilities list
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetFacilitiesDropdownData()
         {
             var cId = Helpers.GetDefaultCorporateId();
@@ -3912,8 +3916,6 @@ namespace BillingSystem.Controllers
             return PartialView(viewpath, globalCodelist);
         }
 
-
-
         public ActionResult GetFilteredCodesInFav(string text, string searchType, string blockNumber = null)
         {
             var tableNumber = string.Empty;
@@ -4033,7 +4035,7 @@ namespace BillingSystem.Controllers
         /// Gets the roles by facility dropdown data.
         /// </summary>
         /// <returns></returns>
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetRolesByFacilityDropdownDataCustom()
         {
             var roles = _roService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(Helpers.GetSysAdminCorporateID()), Convert.ToInt32(Helpers.GetDefaultFacilityId()));
@@ -4086,7 +4088,7 @@ namespace BillingSystem.Controllers
             return View();
         }
 
-        [LoginAuthorize]
+        [CustomAuth]
         public JsonResult SaveFilesTemporarily()
         {
             var result = false;
@@ -4229,7 +4231,7 @@ namespace BillingSystem.Controllers
             return result ? 1 : 0;
         }
 
-        [LoginAuthorize]
+        [CustomAuth]
         public ActionResult GetCountriesWithDefault()
         {
             var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);

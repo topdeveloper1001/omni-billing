@@ -511,9 +511,8 @@
     </Compile>
     <Compile Include="Filters\CheckRolesAuthorize.cs" />
     <Compile Include="Filters\GlobalExceptionHandler.cs" />
-    <Compile Include="Filters\LoginAuthorize.cs" />
+    <Compile Include="Filters\CustomAuth.cs" />
     <Compile Include="Filters\SessionExpire.cs" />
-    <Compile Include="Filters\SetPermissionsAttribute.cs" />
     <Compile Include="GetUtilizationDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

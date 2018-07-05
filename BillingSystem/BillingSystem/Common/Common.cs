@@ -921,11 +921,12 @@ namespace BillingSystem.Common
             return 0;
         }
 
-        public static bool CheckAccess(string controller, string action)
+        public static bool CheckAccess(string controller, string action, bool isAjaxRequest = true)
         {
+            var access = false;
             if (
-                HttpContext.Current != null
-                && HttpContext.Current.Session[SessionNames.SessionClass.ToString()] != null
+                HttpContext.Current != null &&
+                HttpContext.Current.Session[SessionNames.SessionClass.ToString()] != null
                 && !string.IsNullOrEmpty(controller) && !string.IsNullOrEmpty(action)
                 )
             {
@@ -935,11 +936,12 @@ namespace BillingSystem.Common
                 var session = HttpContext.Current.Session[SessionNames.SessionClass.ToString()] as SessionClass;
                 var menus = session.MenuSessionList;
 
-                return menus.Any(a => !string.IsNullOrEmpty(a.Controller) && a.Controller.ToLower().Trim().Equals(controller)
-                && !string.IsNullOrEmpty(a.Action) && a.Action.ToLower().Trim().Equals(action) && a.IsActive && !a.IsDeleted);
+                access = menus.Any(a => !string.IsNullOrEmpty(a.Controller) && a.Controller.ToLower().Trim().Equals(controller)
+                 && !string.IsNullOrEmpty(a.Action) && (a.Action.ToLower().Trim().Equals(action) || isAjaxRequest)
+                 && a.IsActive && !a.IsDeleted);
             }
 
-            return false;
+            return access;
         }
 
         public static long GetDefaultCountryCode
