@@ -3295,6 +3295,9 @@
     <Content Include="Views\TechnicalSpecifications\UserControls\_TechnicalSpecificationsAddEdit.cshtml" />
     <Content Include="Views\TechnicalSpecifications\UserControls\_TechnicalSpecificationsList.cshtml" />
     <Content Include="Views\Login\UserResetPassword.cshtml" />
+    <Content Include="Views\Login\ForgotPassword.cshtml" />
+    <Content Include="Views\Login\ResetPassword.cshtml" />
+    <Content Include="Views\Login\Verify.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -5067,7 +5070,6 @@
     <Content Include="Views\Dashboard\UserControls\_PatientVolumeStats.cshtml" />
     <Content Include="Views\Dashboard\ExportToExcel.cshtml" />
     <Content Include="Views\PatientInfo\UserControls\_SecurityTab.cshtml" />
-    <Content Include="Views\Home\Verify.cshtml" />
     <Content Include="Views\PatientPortal\UserControls\_PatientPortalTabView.cshtml" />
     <Content Include="Views\PatientPortal\UserControls\_PatientInfoView.cshtml" />
     <Content Include="Views\PatientPortal\UserControls\_PatientBillingInfo.cshtml" />
@@ -5078,7 +5080,6 @@
     <Content Include="Views\Reporting\UserControls\_ChargesReport.cshtml" />
     <Content Include="Views\Reporting\UserControls\_ChargesDetailReport.cshtml" />
     <Content Include="Views\PatientPortal\UserControls\_LabClosedActivtiesList.cshtml" />
-    <Content Include="Views\Home\ResetPassword.cshtml" />
     <Content Include="Views\PatientInfoChangesQueue\Index.cshtml" />
     <Content Include="Views\PatientInfoChangesQueue\UserControls\_PatientInfoChangesQueueAddEdit.cshtml" />
     <Content Include="Views\PatientInfoChangesQueue\UserControls\_PatientInfoChangesQueueList.cshtml" />
@@ -5189,7 +5190,6 @@
     <Content Include="Views\ExternalDashboard\UserControls\_FinancialKpiListInProjects.cshtml" />
     <Content Include="Views\ExternalDashboard\UserControls\_IndiKpiList.cshtml" />
     <Content Include="Views\Home\welcome.cshtml" />
-    <Content Include="Views\Home\ForgotPassword.cshtml" />
     <Content Include="Views\GlobalCode\IndicatorSettings.cshtml" />
     <Content Include="Views\ExternalDashboard\ExecutiveDashboardV1.cshtml" />
     <Content Include="Views\ExternalDashboard\ExecutiveDashboardViewV1.cshtml" />
