@@ -231,7 +231,7 @@ function BindLabTestCategories(ddlSelector, hdSelector) {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetGlobalCodesOrderBy',
+        url: '/GlobalCode/GetGlobalCodesOrderBy',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -302,7 +302,7 @@ function bindLabTests() {
         });
         $.ajax({
             type: "POST",
-            url: '/Home/GetCategoryLabtest',
+            url: '/GlobalCode/GetCategoryLabtest',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

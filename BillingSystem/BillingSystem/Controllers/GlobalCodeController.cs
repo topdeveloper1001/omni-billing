@@ -19,12 +19,16 @@ namespace BillingSystem.Controllers
         private readonly IUsersService _uService;
          private readonly IGlobalCodeService _service;
         private readonly IGlobalCodeCategoryService _gcService;
+        private readonly IPhysicianService _phService;
+        private readonly ICPTCodesService _cService;
 
         public GlobalCodeController(IUsersService uService, IGlobalCodeService service, IGlobalCodeCategoryService gcService)
         {
             _uService = uService;
              _service = service;
             _gcService = gcService;
+            _phService = phService;
+            _cService = cService;
         }
 
         #region Global Code
@@ -1120,27 +1124,23 @@ namespace BillingSystem.Controllers
         public ActionResult DashSubCategoryView(string categoryValue)
         {
             var facilityNumber = Helpers.GetDefaultFacilityNumber();
-
-            //using (var _service = new GlobalCodeService())
+            var maxValue = _service.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
+            var viewData = new GlobalCodeView
             {
-                var maxValue = _service.GetMaxGlobalCodeValueByCategory(categoryValue) + 1;
-                var viewData = new GlobalCodeView
+                CurrentGlobalCode = new GlobalCodes
                 {
-                    CurrentGlobalCode = new GlobalCodes
-                    {
-                        IsActive = true,
-                        IsDeleted = false,
-                        GlobalCodeCategoryValue = categoryValue,
-                        FacilityNumber = facilityNumber,
-                        GlobalCodeValue = Convert.ToString(maxValue),
-                        SortOrder = maxValue,
-                        GlobalCodeID = 0
-                    },
-                    CodesList = _service.GetSubCategoriesList(categoryValue)
-                };
+                    IsActive = true,
+                    IsDeleted = false,
+                    GlobalCodeCategoryValue = categoryValue,
+                    FacilityNumber = facilityNumber,
+                    GlobalCodeValue = Convert.ToString(maxValue),
+                    SortOrder = maxValue,
+                    GlobalCodeID = 0
+                },
+                CodesList = _service.GetSubCategoriesList(categoryValue)
+            };
 
-                return View(viewData);
-            }
+            return View(viewData);
         }
 
         /// <summary>
@@ -1444,5 +1444,335 @@ namespace BillingSystem.Controllers
 
         #endregion
 
+
+        /// <summary>
+        /// Gets the global codes check ListView.
+        /// </summary>
+        /// <param name="ggcValue">The GGC value.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodesCheckListView(string ggcValue)
+        {
+            var globalCodelist = _service.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "3").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
+            var viewpath = $"../Scheduler/{PartialViews.StatusCheckBoxList}";
+            return PartialView(viewpath, globalCodelist);
+        }
+
+        /// <summary>
+        /// Gets the global codes availability.
+        /// </summary>
+        /// <param name="ggcValue">The GGC value.</param>
+        /// <param name="facilityId">The facility identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodesAvailability(string ggcValue, string facilityId)
+        {
+            var globalCodelist = _service.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "1").ToList();
+            var holidayStatus = _service.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "4").ToList();
+            var holidayTypes = _service.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "3").ToList();
+            var cId = Helpers.GetSysAdminCorporateID().ToString();
+            cId = string.IsNullOrEmpty(facilityId)
+                      ? cId
+                      : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var userid = Helpers.GetLoggedInUserId();
+            var corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+            var list = new
+            {
+                gClist = globalCodelist,
+                physicians = corporateUsers,
+                hStatus = holidayStatus,
+                hTypes = holidayTypes
+            };
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
+        public JsonResult GetGlobalCodes(string categoryId)
+        {
+            var list = _service.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeName);
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
+
+        /// <summary>
+        /// Gets the global code categories.
+        /// </summary>
+        /// <param name="startRange">The start range.</param>
+        /// <param name="endRange">The end range.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodeCategories(string startRange, string endRange)
+        {
+            var list = _gcService.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
+            return Json(list);
+        }
+
+        ///// <summary>
+        ///// Gets the subcategort code.
+        ///// </summary>
+        ///// <param name="startRange">The start range.</param>
+        ///// <param name="endRange">The end range.</param>
+        ///// <returns></returns>
+        //public ActionResult GetSubcategortCode(string startRange, string endRange)
+        //{
+        //    var list = new List<SelectListItem>();
+        //    var finalList = _gcService.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
+        //    if (finalList.Count > 0)
+        //    {
+        //        list.AddRange(finalList.Select(item => new SelectListItem
+        //        {
+        //            Text = string.Format("{0}", item.GlobalCodeCategoryName),
+        //            Value = item.GlobalCodeCategoryValue.Trim()
+        //        }));
+        //    }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
+
+        public ActionResult GetGlobalCodesOrderByGlobalCodeId(string categoryId)
+        {
+            var list = _service.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeID);
+            return Json(list);
+        }
+
+        /// <summary>
+        /// Gets the global codes.
+        /// </summary>
+        /// <param name="categoryId">The category identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodesOrderbyCode(string categoryId)
+        {
+            var list = _service.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => Convert.ToDecimal(x.GlobalCodeValue)).ToList();
+            return Json(list);
+        }
+
+        /// <summary>
+        /// Gets the global codes order by.
+        /// </summary>
+        /// <param name="categoryId">The category identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodesOrderBy(string categoryId)
+        {
+            var list = _service.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder).ToList();
+            return Json(list);
+        }
+
+        /// <summary>
+        /// Gets the name of the global codes orderby.
+        /// </summary>
+        /// <param name="categoryId">The category identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodesOrderbyName(string categoryId)
+        {
+            var list = _service.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => (x.GlobalCodeName)).ToList();
+            return Json(list);
+        }
+
+
+        /// <summary>
+        /// Gets the encounter types.
+        /// </summary>
+        /// <param name="categoryId">The category identifier.</param>
+        /// <param name="patientTypeId">The patient type identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetEncounterTypes(string categoryId, string patientTypeId)
+        {
+            var list = _service.GetEncounterTypesByPatientType(categoryId, patientTypeId);
+            return Json(list);
+        }
+
+
+        /// <summary>
+        /// Gets the maximum global code value by category.
+        /// </summary>
+        /// <param name="categoryValue">The category value.</param>
+        /// <returns></returns>
+        public ActionResult GetMaxGlobalCodeValueByCategory(string categoryValue)
+        {
+            var maxId = _service.GetMaxGlobalCodeValueByCategory(categoryValue);
+            return Json(maxId);
+        }
+
+        /// <summary>
+        /// Gets the columns for table.
+        /// </summary>
+        /// <param name="tableid">The tableid.</param>
+        /// <returns></returns>
+        public ActionResult GetColumnsForTable(string tableid)
+        {
+            var list = new List<DropdownListData>();
+            var kColumnlist = new List<DropdownListData>();
+            var keyColumn = string.Empty;
+            var result = _service.GetTableStruturebyTableId(tableid).OrderBy(x => Convert.ToInt32(x.SortOrder)).ToList();
+            var firstOrDefault = result.FirstOrDefault(x => x.ExternalValue2 == "1");
+            if (firstOrDefault != null)
+                keyColumn = result.Any() ? firstOrDefault.GlobalCodeName : "";
+            if (result.Count > 0)
+            {
+                list.AddRange(result.Select(item => new DropdownListData
+                {
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeValue,
+                }));
+                list = list.OrderBy(a => a.Text).ToList();
+            }
+            var keyColumnList = result.Where(x => x.ExternalValue3 == "1").ToList();
+            if (keyColumnList.Count > 0)
+            {
+                kColumnlist.AddRange(keyColumnList.Select(item => new DropdownListData
+                {
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeName,
+                }));
+                kColumnlist = kColumnlist.OrderBy(a => a.Text).ToList();
+            }
+            var jsonResult = new { List = list, KeyColumnList = kColumnlist, KeyColumn = keyColumn };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+        }
+
+
+        /// <summary>
+        /// Gets the global codes childs.
+        /// </summary>
+        /// <param name="globalcodeId">The globalcode identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodesChilds(string globalcodeId)
+        {
+            var list = _service.GetGlobalCodesByCategoryValue(globalcodeId).OrderBy(x => x.GlobalCodeID);
+            return Json(list);
+        }
+
+        /// <summary>
+        /// Gets the category labtest.
+        /// </summary>
+        /// <param name="labtrest">The labtrest.</param>
+        /// <returns></returns>
+        public ActionResult GetCategoryLabtest(string labtrest)
+        {
+            var golbalcodeObj = _service.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(labtrest));
+            var list = _cService.GetCodesByRange(Convert.ToInt32(golbalcodeObj.ExternalValue2), Convert.ToInt32(golbalcodeObj.ExternalValue3), Helpers.DefaultCptTableNumber);
+            return Json(list);
+        }
+
+        /// <summary>
+        /// Gets the selected code parent.
+        /// </summary>
+        /// <param name="code">The code.</param>
+        /// <param name="Type">The type.</param>
+        /// <returns></returns>
+        public ActionResult GetSelectedCodeParent(string code, string Type)
+        {
+            if (code != null)
+            {
+
+                var fId = Helpers.GetDefaultFacilityId();
+                var tn = string.Empty;
+
+                switch (Type)
+                {
+                    case "3":
+                        tn = Helpers.DefaultCptTableNumber;
+                        break;
+                    case "4":
+                        tn = Helpers.DefaultHcPcsTableNumber;
+                        break;
+                    case "5":
+                        tn = Helpers.DefaultDrugTableNumber;
+                        break;
+                    default:
+                        break;
+                }
+
+                var vm = _service.GetSelectedCodeParent1(code, Type, fId, tn);
+                return Json(vm, JsonRequestBehavior.AllowGet);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the security parameters.
+        /// </summary>
+        /// <param name="globalCodeCategoryValue">The global code category value.</param>
+        /// <returns></returns>
+        public JsonResult GetSecurityParameters(string globalCodeCategoryValue)
+        {
+            decimal value = 0;
+
+            var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+            if (objSession != null)
+                value = objSession.AutoLogOffMinutes;
+
+            if (value <= 0)
+            {
+                var result = _service.GetGlobalCodeByFacilityAndCategory(globalCodeCategoryValue, Helpers.GetDefaultFacilityNumber());
+                value = result == null ? Convert.ToDecimal(0) : Convert.ToDecimal(result.GlobalCodeName);
+                if (objSession != null)
+                    objSession.AutoLogOffMinutes = value;
+            }
+            return Json(value, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult GetColumnForManagedCareTable(string tableId)
+        {
+            var globalcodelist = _service.GetGlobalCodesByCategoryValue("1017").Where(x => x.ExternalValue1 == tableId).OrderBy(x => x.GlobalCodeID).ToList();
+            var globalcodeKeyColumnList = _service.GetGlobalCodesByCategoryValue("1016").FirstOrDefault(x => x.GlobalCodeValue == tableId);
+            var list = new List<DropdownListData>();
+            if (globalcodelist.Count > 0)
+            {
+                list.AddRange(globalcodelist.Select(item => new DropdownListData
+                {
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeName,
+                }));
+                list = list.OrderBy(a => a.Text).ToList();
+            }
+            var jsonResult = new { List = list, KeyColumn = globalcodeKeyColumnList != null ? globalcodeKeyColumnList.ExternalValue1 : "" };
+            return Json(jsonResult, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult GetMonthsData(string categoryId, int facilityId)
+        {
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var cId = Helpers.GetDefaultCorporateId();
+            facilityId = facilityId > 0 ? facilityId : Helpers.GetDefaultFacilityId();
+            var defaultYear = currentDateTime.Year;
+            var defaultMonth = currentDateTime.Month - 1;
+
+            var list = new List<SelectListItem>();
+            var glist = _service.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
+            if (glist.Any())
+            {
+                list.AddRange(glist.Select(item => new SelectListItem
+                {
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeValue
+                }));
+            }
+
+            //var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
+            //if (defaults.Count > 0)
+            //{
+            //    defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
+            //    defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
+            //}
+            defaultYear = DateTime.Now.Year;
+            defaultMonth = DateTime.Now.Month;
+
+            var jsonData = new
+            {
+                list,
+                defaultYear,
+                defaultMonth
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+        }
+
+        /// <summary>
+        /// Gets the global codes check ListView pre scheduling.
+        /// </summary>
+        /// <param name="ggcValue">The GGC value.</param>
+        /// <returns></returns>
+        public ActionResult GetGlobalCodesCheckListViewPreScheduling(string ggcValue)
+        {
+            var globalCodelist = _service.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "2" && x.ExternalValue1 != "3" && x.ExternalValue1 != "4").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
+            var viewpath = $"../Scheduler/{PartialViews.StatusCheckBoxList}";
+            return PartialView(viewpath, globalCodelist);
+        }
     }
 }

@@ -408,6 +408,75 @@ namespace BillingSystem.Controllers
             return Json(current, JsonRequestBehavior.AllowGet);
         }
 
+        /// <summary>
+        /// Gets the corporate physicians.
+        /// </summary>
+        /// <param name="corporateId">The corporate identifier.</param>
+        /// <param name="facilityId">The facility identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetCorporatePhysicians(string corporateId, string facilityId)
+        {
+            var cId = string.IsNullOrEmpty(corporateId) ? Helpers.GetSysAdminCorporateID().ToString() : corporateId;
+            cId = string.IsNullOrEmpty(facilityId)
+                      ? cId
+                      : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var userid = Helpers.GetLoggedInUserId();
+            var corporateUsers = _service.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+            var viewpath = $"../Scheduler/{PartialViews.PhysicianCheckBoxList}";
+            return PartialView(viewpath, corporateUsers);
+        }
+
+
+        public ActionResult GetPhysicianByFacility(int facilityId)
+        {
+            var list = new List<SelectListItem>();
+            var corporateUsers = new List<PhysicianCustomModel>();
+            var cId = Helpers.GetSysAdminCorporateID().ToString();
+            cId = facilityId == 0
+                ? cId
+                : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+            corporateUsers = _service.GetCorporatePhysiciansPreScheduling(Convert.ToInt32(cId), Convert.ToInt32(facilityId));
+
+            var updatedList = new
+            {
+                phyList = corporateUsers
+            };
+            return Json(updatedList, JsonRequestBehavior.AllowGet);
+        }
+
+        /// <summary>
+        /// Gets the clinical identifier number.
+        /// </summary>
+        /// <returns></returns>
+        public ActionResult GetClinicalIDNumber()
+        {
+            var physicians = _service.GetPhysiciansListByFacilityId(Helpers.GetDefaultFacilityId());
+            if (physicians.Count > 0)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(physicians.Select(item => new SelectListItem
+                {
+                    Text = item.Physician.PhysicianLicenseNumber,
+                    Value = item.Physician.PhysicianLicenseNumber
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
+            }
+            return Json(0);
+        }
+
+        /// <summary>
+        /// Gets the facility phycisian.
+        /// </summary>
+        /// <param name="coporateId">The coporate identifier.</param>
+        /// <param name="facilityId">The facility identifier.</param>
+        /// <returns></returns>
+        public JsonResult GetFacilityPhycisian(int coporateId, int facilityId)
+        {
+            var lst = _service.GetFacilityPhysicians(facilityId);
+            return Json(lst, JsonRequestBehavior.AllowGet);
+        }
         #endregion
 
     }

@@ -1,4 +1,5 @@
 ﻿var homeUrl = "/Home/";
+var gcUrl = "/GlobalCode/";
 var sess_pollInterval = 30000;
 var sess_expirationMinutes = 10.00;
 var sess_intervalID;
@@ -608,7 +609,7 @@ function GetStates(countryID, ddlSelector, hdSelector) {
     var id = countryID;
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetStatesByCountryId",
+        url: "/Tabs/GetStatesByCountryId",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -862,7 +863,7 @@ function BindGenericDDL(selector, SelectedValueSelector, ControlerURL) {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: ControlerURL,//homeUrl + "GetPhoneCodes",
+        url: ControlerURL,
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1052,7 +1053,7 @@ function BindRoles(corporateId, selector, selectedId) {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetRolesDropdownData",
+        url: "/Security/GetRolesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1092,7 +1093,7 @@ function BindRolesByFacility(corporateId, facilityId, selector, selectedId) {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetRolesByFacilityDropdownData",
+        url: "/Security/GetRolesByFacilityDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1132,7 +1133,7 @@ function BindFacilityRolesByFacilityCorporateId(corporateId, facilityId, selecto
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetFacilityRolesByCorporateFacilityDropdownData",
+        url: "/Security/GetFacilityRolesByCorporateFacilityDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1330,7 +1331,7 @@ function SetLoginDetails() {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetRolesDropdownData",
+        url: "/Security/GetRolesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2549,7 +2550,7 @@ function BindGlobalCodes(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2584,7 +2585,7 @@ function BindGlobalCodesWithValue(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2613,7 +2614,7 @@ function BindGlobalCodesWithValueOrderBy(selector, categoryIdval, hidValueSelect
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2647,7 +2648,7 @@ function BindGlobalCodesWithValueForMonth(selector, categoryIdval, hidValueSelec
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodesOrderByGlobalCodeId",
+        url: "/GlobalCode/GetGlobalCodesOrderByGlobalCodeId",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2676,7 +2677,7 @@ function BindGlobalCodesWithValueWithOrder(selector, categoryIdval, hidValueSele
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodesOrderbyCode",
+        url: "/GlobalCode/GetGlobalCodesOrderbyCode",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2706,7 +2707,7 @@ function BindGlobalCodesOrderbyName(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodesOrderbyName",
+        url: "/GlobalCode/GetGlobalCodesOrderbyName",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2746,7 +2747,7 @@ function InitializeSession() {
             sessKeyPressed(ed, e);
         }
     });
-    $.post(homeUrl + "GetSecurityParameters", { globalCodeCategoryValue: 2121 }, function (responseData) {
+    $.post("/GlobalCode/GetSecurityParameters", { globalCodeCategoryValue: 2121 }, function (responseData) {
         if (responseData != null) {
             sess_expirationMinutes = parseInt(responseData, 10);
             if (sess_expirationMinutes <= 0)
@@ -3353,7 +3354,7 @@ function BindGlobalCodesWithValueCustom(selector, categoryIdval, hidValueSelecto
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -3444,7 +3445,7 @@ function BindGlobalCodesWithValueSelection(selector, categoryIdval, hidValue) {
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7100,7 +7101,7 @@ function BindGlobalCodeValuesToMultipleControls(selectors, categoryIdval) {
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7132,7 +7133,7 @@ function BindGlobalCodeValuesClasss(clsselectors, categoryIdval) {
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7177,13 +7178,6 @@ function BindAndSetDefaultMonth(category, fId, ddlYearSelector, ddlMonthSelector
         error: function (msg) {
         }
     });
-    //$.post(homeUrl + "GetMonthsData", { categoryId: category, facilityId: fId }, function (data) {
-    //    BindDropdownData(data.list, ddlMonthSelector, "");
-    //    $(ddlMonthSelector).val(data.defaultMonth);
-
-    //    if ($(ddlYearSelector).length > 0)
-    //        $(ddlYearSelector).val(data.defaultYear);
-    //});
 }
 
 function BuildActualFiveBarGraphs(dashboardData, containerid, charttype, chartName, chartLegendPosition, subtitle) {
@@ -7511,7 +7505,7 @@ function CopyBillingCodes(typeId, isAll) {
 function BindTableSetList(typeId, ddlSelector, hdValue) {
     $.ajax({
         type: "POST",
-        url: '/Home/GetTableNumbers',
+        url: '/BillHeader/GetTableNumbers',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7565,7 +7559,7 @@ function CheckDuplicateTableSet(typeId) {
     if ($("#tableNumber").val() > 0) {
         $.ajax({
             type: "POST",
-            url: '/Home/CheckForDuplicateTableSet',
+            url: '/BillHeader/CheckForDuplicateTableSet',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -9263,7 +9257,7 @@ function BindOrderTypeCategoriesinSummary(ddlSelector, hdSelector, externalV) {
 
     $.ajax({
         type: "POST",
-        url: "/Summary/GetOrderTypeCategoriesInSummaryNew",           //GetGlobalCodeCategories
+        url: "/Summary/GetOrderTypeCategoriesInSummaryNew",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

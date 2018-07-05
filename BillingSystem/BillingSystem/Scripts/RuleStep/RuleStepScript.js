@@ -545,38 +545,11 @@ function SetRadioButtonSelected(selectedValue) {
 }
 
 function OnChangeTableDropdown(ddlSelector, dropdownType) {
-    //var value = $(ddlSelector + " option:selected").text();
-    //if (value != null && value != '' && value.indexOf('Select') == -1) {
-    //    $.ajax({
-    //        type: "POST",
-    //        url: '/Home/GetColumnsByTableName',
-    //        async: false,
-    //        contentType: "application/json; charset=utf-8",
-    //        dataType: "json",
-    //        data: JSON.stringify({ tableName: value }),
-    //        success: function (data) {
-    //            //For LHS
-    //            var items = '<option value="' + data.KeyColumn + '">' + data.KeyColumn + '</option>';
-    //            if (dropdownType == 1) {
-    //                BindDropdownData(data.List, "#ddlLHSC", "#hdLHSC");
-    //                $("#ddlLHSK").html(items);
-    //            }
-    //                //For RHS
-    //            else {
-    //                BindDropdownData(data.List, "#ddlRHSC", "#hdRHSC");
-    //                $("#ddlRHSK").html(items);
-    //            }
-    //        },
-    //        error: function (msg) {
-
-    //        }
-    //    });
-    //}
     var value = $(ddlSelector).val();
     if (value != null && value != '') {
         $.ajax({
             type: "POST",
-            url: '/Home/GetColumnsForTable',
+            url: '/GlobalCode/GetColumnsForTable',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -593,7 +566,7 @@ function OnChangeTableDropdown(ddlSelector, dropdownType) {
                     BindDropdownData(data.List, "#ddlLHSCPopup", "#hdLHSCPopup");
 
                 }
-                    //For RHS
+                //For RHS
                 else {
                     BindDropdownData(data.List, "#ddlRHSC", "#hdRHSC");
                     BindDropdownData(data.KeyColumnList, "#ddlRHSK", "#hdRHSK");

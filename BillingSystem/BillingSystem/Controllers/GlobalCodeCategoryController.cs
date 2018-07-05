@@ -345,5 +345,11 @@ namespace BillingSystem.Controllers
             return PartialView(PartialViews.LabTestOrderSetList, list);
         }
         #endregion
+
+        public ActionResult GetGlobalCodeCatByExternalValue(string startRange, string endRange)
+        {
+            var list = _service.GetGlobalCodeCategoriesByExternalValue();
+            return Json(list);
+        }
     }
 }

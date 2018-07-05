@@ -15,12 +15,15 @@ namespace BillingSystem.Controllers
     public class TabsController : BaseController
     {
         private readonly ITabsService _service;
+        private readonly IStateService _sService;
+
 
         const string partialViewPath = "../Tabs/";
 
-        public TabsController(ITabsService service)
+        public TabsController(ITabsService service, IStateService sService)
         {
             _service = service;
+            _sService = sService;
         }
 
         /// <summary>
@@ -202,6 +205,13 @@ namespace BillingSystem.Controllers
                 s.MenuSessionList = _service.GetTabsByRole(s.UserName, s.RoleId);
 
             }
+        }
+
+
+        public JsonResult GetStatesByCountryId(string countryId)
+        {
+            var stateList = _sService.GetStatesByCountryId(Convert.ToInt32(countryId));
+            return Json(stateList, JsonRequestBehavior.AllowGet);
         }
     }
 }

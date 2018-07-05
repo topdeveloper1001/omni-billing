@@ -88,7 +88,7 @@ function BindCorporateFacilityRoles() {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: "/Home/GetRolesByFacilityDropdownData",
+        url: "/Security/GetRolesByFacilityDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -358,7 +358,7 @@ function BindGenericType(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

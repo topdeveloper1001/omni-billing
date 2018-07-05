@@ -1270,7 +1270,7 @@ function BindGlobalCode(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodesOrderBy",
+        url: "/GlobalCode/GetGlobalCodesOrderBy",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

@@ -313,7 +313,7 @@ function BindSubCategories(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },

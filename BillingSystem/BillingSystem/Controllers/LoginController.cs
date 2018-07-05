@@ -27,18 +27,20 @@ namespace BillingSystem.Controllers
         private readonly IFacilityStructureService _fsService;
         private readonly IEncounterService _eService;
         private readonly IFacilityService _fService;
+        private readonly ISchedulingService _sService;
+        private readonly IAppointmentTypesService _atService;
 
-        public LoginController(IUsersService uService, IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService, IFacilityService fService)
+        public LoginController(IUsersService uService, IPatientLoginDetailService pldService
+            , ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, ISchedulingService sService
+            , IAppointmentTypesService atService)
         {
             _uService = uService;
             _pldService = pldService;
             _ltService = ltService;
             _tService = tService;
             _maService = maService;
-            _piService = piService;
-            _fsService = fsService;
-            _eService = eService;
-            _fService = fService;
+            _sService = sService;
+            _atService = atService;
         }
 
         /// <summary>

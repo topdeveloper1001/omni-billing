@@ -306,11 +306,13 @@ namespace BillingSystem.Bal.BusinessAccess
             var age = DateTime.Now - dateValue;
             return (int)(age.Days / 365.25);
         }
+
         private string GetPatientEmail(int patientId)
         {
             var m = _pldRepository.Where(x => x.PatientId == patientId && (x.IsDeleted == null || x.IsDeleted == false)).FirstOrDefault();
             return m != null ? m.Email : string.Empty;
         }
+
         private string GetCorporateNameFromId(int corpId)
         {
             var corpName = "";
@@ -774,8 +776,11 @@ namespace BillingSystem.Bal.BusinessAccess
             return vm;
         }
 
-        public List<SchedulingCustomModel> GetSchedulingListByPatient(int patientId, string physicianId, string vToken)
+        public List<SchedulingCustomModel> GetSchedulingListByPatient(int patientId, string physicianId, string vToken, out string patientEmail)
         {
+            var p = _pldRepository.Get(patientId);
+            patientEmail = p != null ? p.Email : string.Empty;
+
             var list = new List<SchedulingCustomModel>();
             var schedulingObj = _repository.Where(x => x.AssociatedId == patientId && x.PhysicianId.Trim().Equals(physicianId) && x.ExtValue4.Trim().Equals(vToken)).OrderByDescending(s => s.ScheduleFrom).ToList();
             list = MapValues(schedulingObj);

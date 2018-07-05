@@ -365,7 +365,7 @@ var BindFacilityRoles = function () {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetRolesByFacilityDropdownData',
+        url: '/Security/GetRolesByFacilityDropdownData',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -388,7 +388,7 @@ var BindCorporateRoles = function () {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetDistinctRolesDropdownData',
+        url: '/Security/GetDistinctRolesDropdownData',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -454,7 +454,7 @@ function ShowInActiveRuleMaster(chkSelector) {
 var BindFacilityRolesCustom = function () {
     $.ajax({
         type: "POST",
-        url: '/Home/GetRolesByFacilityDropdownDataCustom',
+        url: '/Security/GetRolesByFacilityDropdownDataCustom',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

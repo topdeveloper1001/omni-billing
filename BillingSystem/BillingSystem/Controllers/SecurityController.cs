@@ -9,6 +9,7 @@ using BillingSystem.Common.Common;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Bal.Interfaces;
+using Microsoft.Ajax.Utilities;
 
 namespace BillingSystem.Controllers
 {
@@ -44,10 +45,113 @@ namespace BillingSystem.Controllers
             _maService = maService;
         }
 
+        /// <summary>
+        /// Gets the roles dropdown data.
+        /// </summary>
+        /// <param name="corporateId">The corporate identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetRolesDropdownData(string corporateId)
+        {
+            var roles = _rService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
+            if (roles.Count > 0)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
+                {
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                return Json(list);
+            }
 
+            return Json(null);
+        }
 
-        //
-        // GET: /Security/
+        /// <summary>
+        /// Gets the distinct roles dropdown data.
+        /// </summary>
+        /// <param name="corporateId">The corporate identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetDistinctRolesDropdownData(string corporateId)
+        {
+            var roles = _rService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
+            if (roles.Count > 0)
+            {
+                roles = roles.DistinctBy(x => x.RoleName).ToList();
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
+                {
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                return Json(list);
+            }
+
+            return Json(null);
+        }
+
+        /// <summary>
+        /// Gets the roles by facility dropdown data.
+        /// </summary>
+        /// <param name="corporateId">The corporate identifier.</param>
+        /// <param name="facilityId">The facility identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetRolesByFacilityDropdownData(string corporateId, string facilityId)
+        {
+            var roles = _rService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
+            if (roles.Count > 0)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
+                {
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
+            }
+            return Json(0);
+        }
+
+        /// <summary>
+        /// Gets the facility roles by corporate facility dropdown data.
+        /// </summary>
+        /// <param name="corporateId">The corporate identifier.</param>
+        /// <param name="facilityId">The facility identifier.</param>
+        /// <returns></returns>
+        public ActionResult GetFacilityRolesByCorporateFacilityDropdownData(string corporateId, string facilityId)
+        {
+            var roles = _rService.GetFacilityRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
+            if (roles.Count > 0)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
+                {
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
+            }
+            return Json(0);
+        }
+
+        public ActionResult GetRolesByFacilityDropdownDataCustom()
+        {
+            var roles = _rService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(Helpers.GetSysAdminCorporateID()), Convert.ToInt32(Helpers.GetDefaultFacilityId()));
+            if (roles.Count > 0)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(roles.Select(item => new SelectListItem
+                {
+                    Text = item.RoleName,
+                    Value = item.RoleID.ToString()
+                }));
+                list = list.OrderBy(x => x.Text).ToList();
+                return Json(list);
+            }
+            return Json(0);
+        }
 
         #region Users Section
 
