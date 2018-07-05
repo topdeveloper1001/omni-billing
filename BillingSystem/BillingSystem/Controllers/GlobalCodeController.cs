@@ -17,19 +17,22 @@ namespace BillingSystem.Controllers
     public class GlobalCodeController : BaseController
     {
         private readonly IUsersService _uService;
-         private readonly IGlobalCodeService _service;
+        private readonly IGlobalCodeService _service;
         private readonly IGlobalCodeCategoryService _gcService;
         private readonly IPhysicianService _phService;
         private readonly ICPTCodesService _cService;
 
-        public GlobalCodeController(IUsersService uService, IGlobalCodeService service, IGlobalCodeCategoryService gcService)
+        public GlobalCodeController(IUsersService uService, IGlobalCodeService service, IGlobalCodeCategoryService gcService
+            , IPhysicianService phService, ICPTCodesService cService)
         {
             _uService = uService;
-             _service = service;
+            _service = service;
             _gcService = gcService;
             _phService = phService;
             _cService = cService;
         }
+
+
 
         #region Global Code
         /// <summary>

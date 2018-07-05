@@ -12,12 +12,9 @@ using System.Globalization;
 using System.Threading;
 using System.Web;
 using Kendo.Mvc.Extensions;
-using Microsoft.Ajax.Utilities;
 using Kendo.Mvc.UI;
-using System.Net.Mime;
 using System.Data;
 using Excel;
-using System.Threading.Tasks;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Filters;
 
@@ -29,15 +26,9 @@ namespace BillingSystem.Controllers
     {
         #region Services
 
-        private readonly IAppointmentTypesService _atService;
         private readonly IATCCodesService _atcService;
         private readonly ICPTCodesService _cptService;
-         private readonly ILoginTrackingService _ltService;
-         private readonly IRoleTabsService _rtService;
-        private readonly IStateService _stService;
-        private readonly IGlobalCodeCategoryService _gcService;
-        private readonly IRoleService _roService;
-        private readonly IGlobalCodeService _gService;
+        private readonly ILoginTrackingService _ltService;
         private readonly IServiceCodeService _scService;
         private readonly IDRGCodesService _drgService;
         private readonly IHCPCSCodesService _hcpcService;
@@ -46,36 +37,14 @@ namespace BillingSystem.Controllers
         private readonly IDrugService _drugService;
         private readonly IOpenOrderService _ooService;
         private readonly IRuleMasterService _rmService;
-        //private readonly IBillActivityService _baService;
-        private readonly IUserRoleService _urService;
-        //private readonly IFacilityRoleService _frService;
-        //private readonly IPhysicianService _phService;
-        //private readonly ISchedulingService _schService;
-        //private readonly IAppointmentTypesService _atService;
-        //private readonly IDeptTimmingService _deptService;
-        //private readonly IDocumentsTemplatesService _docService;
-        #endregion
 
-        public HomeController(IAppointmentTypesService atService, IATCCodesService atcService, ICPTCodesService cptService
-            , ILoginTrackingService ltService, IRoleTabsService rtService, IStateService stService
-            , IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService
-            , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService
-            , IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService
-            , IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService
-            , IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService
-            , ISchedulingService schService, IDeptTimmingService deptService
-            , IDocumentsTemplatesService docService)
+        public HomeController(IATCCodesService atcService, ICPTCodesService cptService, ILoginTrackingService ltService
+            , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService, IDenialService denService
+            , IDiagnosisCodeService diacService, IDrugService drugService, IOpenOrderService ooService, IRuleMasterService rmService)
         {
-            _atService = atService;
             _atcService = atcService;
-            _cptService = cptService; 
+            _cptService = cptService;
             _ltService = ltService;
-            
-            _rtService = rtService;
-            _stService = stService;
-            _gcService = gcService;
-            _roService = roService;
-            _gService = gService;
             _scService = scService;
             _drgService = drgService;
             _hcpcService = hcpcService;
@@ -84,13 +53,12 @@ namespace BillingSystem.Controllers
             _drugService = drugService;
             _ooService = ooService;
             _rmService = rmService;
-            //_baService = baService;
-            _urService = urService;
-            //_frService = frService;
-            //_phService = phService;
-            //_schService = schService;
-            //_deptService = deptService;
         }
+
+
+        #endregion
+
+
 
         ///// <summary>
         ///// Users the login.
@@ -1218,265 +1186,6 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the selected code parent.
-        /// </summary>
-        /// <param name="code">The code.</param>
-        /// <param name="Type">The type.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetSelectedCodeParent(string code, string Type)
-        {
-            if (code != null)
-            {
-
-                var fId = Helpers.GetDefaultFacilityId();
-                var tn = string.Empty;
-
-                switch (Type)
-                {
-                    case "3":
-                        tn = Helpers.DefaultCptTableNumber;
-                        break;
-                    case "4":
-                        tn = Helpers.DefaultHcPcsTableNumber;
-                        break;
-                    case "5":
-                        tn = Helpers.DefaultDrugTableNumber;
-                        break;
-                    default:
-                        break;
-                }
-
-                var vm = _gService.GetSelectedCodeParent1(code, Type, fId, tn);
-                return Json(vm, JsonRequestBehavior.AllowGet);
-            }
-            return null;
-        }
-
-        ///// <summary>
-        ///// Gets the selected code parent1.
-        ///// </summary>
-        ///// <param name="code">The code.</param>
-        ///// <returns></returns>
-        //[LogonAuthorize]
-        //public ActionResult GetSelectedCodeParent1(string code)
-        //{
-        //    if (code != null)
-        //    {
-        //        using (var bal = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-        //        {
-        //            var drugObj = bal.GetSelectedCodeParent(code);
-        //            return Json(drugObj, JsonRequestBehavior.AllowGet);
-        //        }
-        //    }
-        //    return null;
-        //}
-
-        /// <summary>
-        /// Gets the category labtest.
-        /// </summary>
-        /// <param name="labtrest">The labtrest.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetCategoryLabtest(string labtrest)
-        {
-            var golbalcodeObj = _gService.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(labtrest));
-            var list = _cptService.GetCodesByRange(Convert.ToInt32(golbalcodeObj.ExternalValue2), Convert.ToInt32(golbalcodeObj.ExternalValue3), Helpers.DefaultCptTableNumber);
-            return Json(list);
-        }
-
-        /// <summary>
-        /// Gets the users by default corporate identifier.
-        /// </summary>
-        /// <returns></returns>
-        //[CustomAuth]
-        //public ActionResult GetUsersByDefaultCorporateId()
-        //{
-        //    var list = new List<DropdownListData>();
-        //    var corporateId = Helpers.GetDefaultCorporateId();
-        //    var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-        //    var usersList = _uService.GetUsersByCorporateIdFacilityId(corporateId, facilityId);
-        //    list.AddRange(usersList.Select(item => new DropdownListData
-        //    {
-        //        Text = item.Name,
-        //        Value = item.CurrentUser.UserID.ToString(),
-        //    }));
-
-        //    return Json(list, JsonRequestBehavior.AllowGet);
-        //}
-
-
-        //public ActionResult GetUsersByCorporateId()
-        //{
-        //    var list = new List<DropdownListData>();
-        //    var corporateId = Helpers.GetDefaultCorporateId();
-        //    var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-        //    var usersList = _uService.GetUsersByCorporateandFacilityId(corporateId, facilityId).OrderBy(x => x.FirstName).ToList();
-        //    list.AddRange(usersList.Select(item => new DropdownListData
-        //    {
-        //        Text =
-        //                                                       item.FirstName + " " + item.LastName,
-        //        Value = item.UserID.ToString(),
-        //    }));
-
-        //    return Json(list, JsonRequestBehavior.AllowGet);
-        //}
-
-        /// <summary>
-        /// Gets the users detail by user identifier.
-        /// </summary>
-        /// <param name="userId">The user identifier.</param>
-        /// <added by="Shashank">ON 12/16/2014</added>
-        /// <returns></returns>
-        //[CustomAuth]
-        //public ActionResult GetUsersDetailByUserID(Int32 userId)
-        //{
-        //    var userObj = _uService.GetUserById(userId);
-        //    return Json(userObj, JsonRequestBehavior.AllowGet);
-        //}
-
-        /// <summary>
-        /// Gets the facilitiesby corporate.
-        /// </summary>
-        /// <param name="corporateid">The corporateid.</param>
-        /// <returns></returns>
-        //[AcceptVerbs(HttpVerbs.Post)]
-        //[CustomAuth]
-        //public ActionResult GetFacilitiesbyCorporate(int corporateid)
-        //{
-        //    var finalList = new List<DropdownListData>();
-        //    var list = _fService.GetFacilitiesByCorporateId(corporateid).ToList().OrderBy(x => x.FacilityName).ToList();
-        //    if (list.Count > 0)
-        //    {
-        //        var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-        //        if (facilityId > 0 && corporateid > 0)
-        //            list = list.Where(f => f.FacilityId == facilityId).ToList();
-
-        //        finalList.AddRange(list.Select(item => new DropdownListData
-        //        {
-        //            Text = item.FacilityName,
-        //            Value = Convert.ToString(item.FacilityId)
-        //        }));
-        //    }
-        //    return Json(finalList);
-        //}
-
-        /// <summary>
-        /// Gets the users.
-        /// </summary>
-        /// <returns></returns>
-        //[CustomAuth]
-        //public ActionResult GetUsers()
-        //{
-        //    var users = new List<DropdownListData>();
-
-        //    var result = _uService.GetUsersByCorporateIdFacilityId(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-        //    if (result.Count > 0)
-        //    {
-        //        users.AddRange(result.Select(item => new DropdownListData
-        //        {
-        //            Text = item.Name,
-        //            Value = Convert.ToString(item.CurrentUser.UserID),
-        //            //ExternalValue1 = Convert.ToString(item.CurrentUser.UserType)
-        //        }));
-        //    }
-
-        //    return Json(users, JsonRequestBehavior.AllowGet);
-        //}
-
-        /// <summary>
-        /// Gets the patient list.
-        /// </summary>
-        /// <returns></returns>
-        //[CustomAuth]
-        //public ActionResult GetPatientList()
-        //{
-        //    var list = new List<DropdownListData>();
-        //    var corporateId = Helpers.GetSysAdminCorporateID();
-        //    var facilityId = Helpers.GetDefaultFacilityId();
-        //    var result = _piService.GetPatientList(facilityId);
-        //    if (result.Count > 0)
-        //    {
-        //        list.AddRange(result.Select(item => new DropdownListData
-        //        {
-        //            Text = string.Format("{0} {1}", item.PersonFirstName, item.PersonLastName),
-        //            Value = Convert.ToString(item.PatientID),
-        //            ExternalValue1 = item.PersonEmiratesIDNumber,
-        //            ExternalValue2 = item.PersonMedicalRecordNumber
-        //        }));
-        //    }
-        //    return Json(list, JsonRequestBehavior.AllowGet);
-        //}
-
-        /// <summary>
-        /// Gets the encounters list by patient identifier.
-        /// </summary>
-        /// <param name="patientId">The patient identifier.</param>
-        /// <returns></returns>
-        //[CustomAuth]
-        //public ActionResult GetEncountersListByPatientId(int patientId)
-        //{
-        //    var list = new List<DropdownListData>();
-        //    var result = _eService.GetEncounterListByPatientId(patientId).ToList();
-        //    if (result.Any())
-        //    {
-        //        list.AddRange(result.Select(item => new DropdownListData
-        //        {
-        //            Text = item.EncounterNumber,
-        //            Value = Convert.ToString(item.EncounterID),
-        //            ExternalValue1 = item.EncounterTypeName,
-        //            ExternalValue2 = item.EncounterPatientTypeName
-        //        }));
-        //    }
-        //    return Json(list, JsonRequestBehavior.AllowGet);
-        //}
-
-        /// <summary>
-        /// Gets the bill header list by encounter identifier.
-        /// </summary>
-        /// <param name="encounterId">The encounter identifier.</param>
-        /// <returns></returns>
-        //[CustomAuth]
-        //public ActionResult GetBillHeaderListByEncounterId(int encounterId)
-        //{
-        //    var list = new List<DropdownListData>();
-        //    var result = _bhService.GetBillHeaderModelListByEncounterId(encounterId);
-        //    if (result.Any())
-        //    {
-        //        list.AddRange(result.Select(item => new DropdownListData
-        //        {
-        //            Text = item.BillNumber,
-        //            Value = Convert.ToString(item.BillHeaderID)
-        //        }));
-        //    }
-        //    return Json(list, JsonRequestBehavior.AllowGet);
-        //}
-
-        /// <summary>
-        /// Gets the users by facility identifier.
-        /// </summary>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <param name="userType">Type of the user.</param>
-        /// <returns></returns>
-        //[CustomAuth]
-        //public ActionResult GetUsersByFacilityId(int facilityId)
-        //{
-        //    var finalList = new List<DropdownListData>();
-        //    var list = _uService.GetAllUsersByFacilityId(facilityId);
-        //    if (list.Count > 0)
-        //    {
-        //        finalList.AddRange(list.Select(item => new DropdownListData
-        //        {
-
-        //            Text = item.Name,
-        //            Value = Convert.ToString(item.CurrentUser.UserID)
-        //        }));
-        //    }
-
-        //    return Json(finalList, JsonRequestBehavior.AllowGet);
-        //}
-
-        /// <summary>
         /// Gets the order codes by order type identifier.
         /// </summary>
         /// <param name="text">The text.</param>
@@ -2280,49 +1989,6 @@ namespace BillingSystem.Controllers
         //}
 
         /// <summary>
-        /// Gets the months data.
-        /// </summary>
-        /// <param name="categoryId">The category identifier.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetMonthsData(string categoryId, int facilityId)
-        {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
-            var cId = Helpers.GetDefaultCorporateId();
-            facilityId = facilityId > 0 ? facilityId : Helpers.GetDefaultFacilityId();
-            var defaultYear = currentDateTime.Year;
-            var defaultMonth = currentDateTime.Month - 1;
-
-            var list = new List<SelectListItem>();
-            var glist = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
-            if (glist.Any())
-            {
-                list.AddRange(glist.Select(item => new SelectListItem
-                {
-                    Text = item.GlobalCodeName,
-                    Value = item.GlobalCodeValue
-                }));
-            }
-
-            var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
-            if (defaults.Count > 0)
-            {
-                defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
-                defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
-            }
-
-            var jsonData = new
-            {
-                list,
-                defaultYear,
-                defaultMonth
-            };
-            return Json(jsonData, JsonRequestBehavior.AllowGet);
-        }
-
-        /// <summary>
         /// Gets the facility users.
         /// </summary>
         /// <param name="facilityId">The facility identifier.</param>
@@ -2822,61 +2488,6 @@ namespace BillingSystem.Controllers
                     return Json(string.Empty);
             }
         }
-
-        #region Table Numbers
-        //public JsonResult CreateNewCodeSet(string tableNumber, string[] selectedCodes, bool isAll, string typeId, bool forExisting)
-        //{
-        //    if (!string.IsNullOrEmpty(tableNumber))
-        //    {
-        //        var isExists = !forExisting && CheckIfDuplicateTableSet(tableNumber, typeId, 0);
-
-        //        if (!isExists)
-        //        {
-        //            selectedCodes = isAll ? new[] { "0" } : selectedCodes;
-
-        //            if (!isAll && (selectedCodes == null || selectedCodes.Length == 0))
-        //                return Json("-3", JsonRequestBehavior.AllowGet);
-
-        //            var saveserviceCodeData = _bspService.SaveRecordsFortableNumber(tableNumber, selectedCodes, typeId);
-        //            if (saveserviceCodeData && !forExisting)
-        //            {
-        //                _bspService.SaveTableNumber(new BillingCodeTableSet
-        //                {
-        //                    Id = 0,
-        //                    TableNumber = tableNumber,
-        //                    CodeTableType = typeId,
-        //                    CreatedBy = Helpers.GetLoggedInUserId(),
-        //                    CreatedDate = Helpers.GetInvariantCultureDateTime()
-        //                });
-        //            }
-        //            return Json(saveserviceCodeData);
-        //        }
-        //        return Json("-2", JsonRequestBehavior.AllowGet);
-
-        //    }
-        //    return Json("-1", JsonRequestBehavior.AllowGet);
-        //}
-
-        public JsonResult CheckForDuplicateTableSet(string tableNumber, string typeId, int id)
-        {
-            return Json(CheckIfDuplicateTableSet(tableNumber, typeId, id), JsonRequestBehavior.AllowGet);
-        }
-
-        private bool CheckIfDuplicateTableSet(string tableNumber, string typeId, int id)
-        {
-            var isExists = false;
-            isExists = _baService.CheckForDuplicateTableSet(id, tableNumber, typeId);
-
-            return isExists;
-        }
-
-        public JsonResult GetTableNumbers(string typeId)
-        {
-            var tn = _baService.GetTableNumbersList(typeId);
-            return Json(tn, JsonRequestBehavior.AllowGet);
-        }
-        #endregion
-
 
         /// <summary>
         /// Gets the facility deapartments.

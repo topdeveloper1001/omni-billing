@@ -356,19 +356,19 @@
                 });
             }
 
-            $.ajax({
-                type: "POST",
-                url: '/Home/GetSelectedLanguage',
-                async: true,
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                data: null,
-                success: function (data) {
-                    $("#ddlLanguage").val(data);
-                },
-                error: function (msg) {
-                }
-            });
+            //$.ajax({
+            //    type: "POST",
+            //    url: '/Home/GetSelectedLanguage',
+            //    async: true,
+            //    contentType: "application/json; charset=utf-8",
+            //    dataType: "json",
+            //    data: null,
+            //    success: function (data) {
+            //        $("#ddlLanguage").val(data);
+            //    },
+            //    error: function (msg) {
+            //    }
+            //});
 
             $("#ddlLanguage").change(function () {
                 var selectedLanguage = $("#ddlLanguage").val();
