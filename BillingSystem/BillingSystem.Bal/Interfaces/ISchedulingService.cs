@@ -37,7 +37,7 @@ namespace BillingSystem.Bal.Interfaces
         List<SchedulingCustomModel> GetSchedulingDataByRooms(List<int> roomsList, DateTime selectedDate);
         List<SchedulingCustomModel> GetSchedulingDataByType(List<string> phyList, DateTime selectedDate, string type, int facilityId);
         List<SchedulingCustomModel> GetSchedulingDeptDataByType(int deptId, DateTime selectedDate, string type, string facilityIdstr);
-        List<SchedulingCustomModel> GetSchedulingListByPatient(int patientId, string physicianId, string vToken);
+        List<SchedulingCustomModel> GetSchedulingListByPatient(int patientId, string physicianId, string vToken, out string patientEmail);
         List<Scheduling> MapVMToModel(List<SchedulingCustomModel> vm);
         bool RemoveJustDeletedSchedulings(string eventParentid, List<int> listSchIds, int schedulingType, string extValue3);
         List<SkippedHolidaysData> SaveHolidayScheduling(List<SchedulingCustomModel> model);

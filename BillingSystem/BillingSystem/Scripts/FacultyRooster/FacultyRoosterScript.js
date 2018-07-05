@@ -274,7 +274,7 @@ var GetFacilityPhycisian = function () {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilityPhycisian",
+        url: "/Physician/GetFacilityPhycisian",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

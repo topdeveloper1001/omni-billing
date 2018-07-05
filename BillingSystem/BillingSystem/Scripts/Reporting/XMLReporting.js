@@ -88,7 +88,7 @@ function BindXMLInitialClaimErrorReportData() {
 function BindClinicalIDNumber(ddlid) {
     $.ajax({
         type: "POST",
-        url: '/Home/GetClinicalIDNumber',
+        url: '/Physician/GetClinicalIDNumber',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

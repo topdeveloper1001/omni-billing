@@ -337,7 +337,7 @@ function BindAuthorizationType(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -631,28 +631,3 @@ function UploadDocsInAuthorization(sender) {
         }
     });
 }
-
-
-//function ViewPatientDocumentInAuth(id) {
-//    $("#divhidepopup1").hide();
-//    var jsonData = JSON.stringify({
-//        fileId: id,
-//    });
-//    $.ajax({
-//        type: "POST",
-//        url: '/Home/Download',
-//        async: false,
-//        contentType: "application/json; charset=utf-8",
-//        dataType: "File",
-//        data: jsonData,
-//        success: function (data) {
-//            if (data) {
-//                $("#viewDocWindow1").empty();
-//                $("#viewDocWindow1").html(data);
-//                $("#divhidepopup1").show();
-//            }
-//        },
-//        error: function (msg) {
-//        }
-//    });
-//}

@@ -6,6 +6,7 @@ using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
 using CaptchaMvc.HtmlHelpers;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Web.Mvc;
@@ -20,15 +21,20 @@ namespace BillingSystem.Controllers
         private readonly ILoginTrackingService _ltService;
         private readonly ITabsService _tService;
         private readonly IModuleAccessService _maService;
+        private readonly ISchedulingService _sService;
+        private readonly IAppointmentTypesService _atService;
 
         public LoginController(IUsersService uService, IPatientLoginDetailService pldService
-            , ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService)
+            , ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, ISchedulingService sService
+            , IAppointmentTypesService atService)
         {
             _uService = uService;
             _pldService = pldService;
             _ltService = ltService;
             _tService = tService;
             _maService = maService;
+            _sService = sService;
+            _atService = atService;
         }
 
         /// <summary>
@@ -262,6 +268,81 @@ namespace BillingSystem.Controllers
             }
 
             return View(new Users());
+        }
+
+
+        public async Task<ActionResult> ConfirmationView(string st, string vtoken, int patientId, string physicianId, bool bit)
+        {
+            //Check If Verification Token is there
+            var validRequest = !string.IsNullOrEmpty(vtoken);
+            var list = new List<SchedulingCustomModel>();
+            var email = string.Empty;
+            var patientEmail = string.Empty;
+            if (validRequest)
+            {
+                list = _sService.GetSchedulingListByPatient(patientId, physicianId, vtoken, out patientEmail);
+
+                //Check if list contains items.
+                validRequest = list.Count > 0;
+
+                if (validRequest)
+                {
+                    list.ForEach(a =>
+                    {
+                        a.Status = st;
+                        a.ExtValue4 = CommonConfig.GenerateLoginCode(8, false);
+                        a.ModifiedBy = patientId;
+                        a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+                    });
+                    validRequest = _sService.UpdateSchedulingEvents(list);
+
+                    if (st == "2" && bit)//After Patient Approval Mail Will Be sent to Physician
+                    {
+                        var appointmentType = string.Empty;
+                        foreach (var item in list)
+                        {
+                            var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                            appointmentType = app != null ? app.Name : string.Empty;
+                            item.AppointmentType = appointmentType;
+                        }
+
+                        var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
+                        var validRequest1 = objPhysician != null && objPhysician.UserId > 0;
+                        if (validRequest1)
+                        {
+                            email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
+                            await Helpers.SendAppointmentNotification(list, email,
+                                  Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
+                                  patientId, Convert.ToInt32(physicianId), 2);
+
+                        }
+                    }
+                    if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
+                    {
+                        await Helpers.SendAppointmentNotification(list, patientEmail,
+                                      Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
+                                      patientId, Convert.ToInt32(physicianId), 5);
+                    }
+                    if (st == "2" && bit != true)//After Physician Approvel Mail sent to Patient
+                    {
+                        var appointmentType = string.Empty;
+                        foreach (var item in list)
+                        {
+                            var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+                            appointmentType = app != null ? app.Name : string.Empty;
+                            item.AppointmentType = appointmentType;
+                        }
+                        await Helpers.SendAppointmentNotification(list, patientEmail,
+                                       Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
+                                       patientId, Convert.ToInt32(physicianId), 4);
+                    }
+                }
+            }
+
+            if (validRequest)
+                return View(list);
+
+            return Content("This page has been expired!");
         }
     }
 }

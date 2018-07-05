@@ -8,18 +8,19 @@ using BillingSystem.Model.CustomModel;
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Filters;
+using BillingSystem.Common.Common;
 
 namespace BillingSystem.Controllers
 {
     [CheckRolesAuthorize("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")]
     public class SchedulerController : BaseController
     {
+        private readonly ISchedulingService _service;
         private readonly ICountryService _cService;
         private readonly IAppointmentTypesService _atService;
         private readonly IPatientInfoService _piService;
         private readonly IFacilityStructureService _fsService;
         private readonly IPhysicianService _phService;
-        private readonly ISchedulingService _service;
         private readonly IUsersService _uService;
         private readonly IFacilityService _fService;
         private readonly IGlobalCodeService _gService;
@@ -41,8 +42,6 @@ namespace BillingSystem.Controllers
             _gService = gService;
             _spService = spService;
         }
-
-
 
 
         #region Public Methods and Operators
@@ -342,31 +341,6 @@ namespace BillingSystem.Controllers
                         }
                     }
                 }
-
-                // ............THis is the check for the case of Facility Holiday (in that case add the Data for each and indiviual user of the Facility)
-                /*if (!string.IsNullOrEmpty(model[0].ExtValue2))
-                {
-                    var isAdmin = Helpers.GetLoggedInUserIsAdmin();
-                    var userid = Helpers.GetLoggedInUserId();
-                    var corporateUsers = new PhysicianBal().GetCorporatePhysicians(
-                        Helpers.GetSysAdminCorporateID(),
-                        isAdmin,
-                        userid,
-                       Convert.ToInt32(model[0].ExtValue2));
-                    if (corporateUsers.Count > 0)
-                    {
-                        foreach (var item in corporateUsers)
-                        {
-                            model.Add(model[0]);
-                            var schedulingCustomModel = model.LastOrDefault();
-                            if (schedulingCustomModel != null)
-                            {
-                                schedulingCustomModel.AssociatedId = item.Physician.Id;
-                                schedulingCustomModel.ExtValue2 = string.Empty;
-                            }
-                        }
-                    }
-                }*/
 
                 list = _service.SaveHolidayScheduling(model);
             }

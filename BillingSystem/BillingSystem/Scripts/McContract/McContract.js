@@ -509,7 +509,7 @@ function BindAllDDLValues() {
             });
             $.ajax({
                 type: "POST",
-                url: '/Home/GetSelectedCodeParent',
+                url: '/GlobalCode/GetSelectedCodeParent',
                 async: false,
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",

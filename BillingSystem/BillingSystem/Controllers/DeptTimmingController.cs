@@ -2,6 +2,7 @@
 using BillingSystem.Common;
 using BillingSystem.Model;
 using BillingSystem.Models;
+using System.Linq;
 using System.Web.Mvc;
 
 namespace BillingSystem.Controllers
@@ -146,7 +147,16 @@ namespace BillingSystem.Controllers
             return Json(newId);
         }
 
-
+        public JsonResult GetDepartmentTiming(int deptId)
+        {
+            var deptTimingList = _service.GetDeptTimmingByDepartmentId(deptId);
+            var listToReturn = new
+            {
+                deptOpeningDays = string.Join(",", deptTimingList.Select(x => x.OpeningDayId)),
+                deptTimingList,
+            };
+            return Json(listToReturn, JsonRequestBehavior.AllowGet);
+        }
         #endregion
     }
 }

@@ -61,17 +61,17 @@ $(function () {
 
     $("#btnScheduleAppointment")
         .on("click",
-        function () {
-            $("#hidSchedulingType").val("1");
-            $("#divSchedularPopUpContent .modal-title").html("Appointments Scheduler");
-            ShowLightBoxStyle("1"); //1 means schedule appointment
-            var checkedBoxes = GetCheckedCheckBoxes("treeviewPhysician");
-            //if (checkedBoxes.length > 0) {
-            scheduler.addEventNow();
-            //} else {
-            // ShowMessage('Select Any Physician first!', "Error", "error", true);
-            //}
-        });
+            function () {
+                $("#hidSchedulingType").val("1");
+                $("#divSchedularPopUpContent .modal-title").html("Appointments Scheduler");
+                ShowLightBoxStyle("1"); //1 means schedule appointment
+                var checkedBoxes = GetCheckedCheckBoxes("treeviewPhysician");
+                //if (checkedBoxes.length > 0) {
+                scheduler.addEventNow();
+                //} else {
+                // ShowMessage('Select Any Physician first!', "Error", "error", true);
+                //}
+            });
 
     //$("#btnAddHoliday")
     //    .on("click", function () {
@@ -96,30 +96,30 @@ $(function () {
 
     $("#chkViewAvialableSlots")
         .on("change",
-        function (e) {
-            if ($("#chkViewAvialableSlots").prop("checked")) {
-                $("#chkViewVocationHolidays").prop("checked", false);
-                GetSchedularCustomData("1");
-            }
-        });
+            function (e) {
+                if ($("#chkViewAvialableSlots").prop("checked")) {
+                    $("#chkViewVocationHolidays").prop("checked", false);
+                    GetSchedularCustomData("1");
+                }
+            });
 
     $("#chkViewVocationHolidays")
         .on("change",
-        function (e) {
-            if ($("#chkViewVocationHolidays").prop("checked")) {
-                $("#chkViewAvialableSlots").prop("checked", false);
-                GetSchedularCustomData("3");
-            }
-        });
+            function (e) {
+                if ($("#chkViewVocationHolidays").prop("checked")) {
+                    $("#chkViewAvialableSlots").prop("checked", false);
+                    GetSchedularCustomData("3");
+                }
+            });
 
     $("input[name=rdbtnSelection]")
         .on("change",
-        function () {
-            //var selected = $('input[name=rdbtnSelection]:checked').val();
-            //if (selected == "2") {
-            //    $('#divTypeofProc').hide();
-            //} else { $('#divTypeofProc').show(); }
-        });
+            function () {
+                //var selected = $('input[name=rdbtnSelection]:checked').val();
+                //if (selected == "2") {
+                //    $('#divTypeofProc').hide();
+                //} else { $('#divTypeofProc').show(); }
+            });
 
     $("#ddPhysician").change(function () {
         clinicianUpdated = true;
@@ -171,32 +171,32 @@ $(function () {
 
     $("#btnCancelSchedulingData")
         .on("click",
-        function () {
-            blockRecurrenceDiv("Cancelling...");
-            //$("#loader_event").show();
-            $("#hfAppointmentTypes").val("");
-            scheduler.cancel_lightbox();
-            //$('.hidePopUp').hide();
-            $("#divReccurrencePopup .popup_frame").removeClass("moveLeft");
-            $.validationEngine.closePrompt(".formError", true);
-            firstTimeLoad = true;
-            firstTimeBind = true;
-            //onCheckFilters();
-            ClearSchedulingPopup();
-            //scheduler.endLightbox(false, html("my_form"));
-        });
+            function () {
+                blockRecurrenceDiv("Cancelling...");
+                //$("#loader_event").show();
+                $("#hfAppointmentTypes").val("");
+                scheduler.cancel_lightbox();
+                //$('.hidePopUp').hide();
+                $("#divReccurrencePopup .popup_frame").removeClass("moveLeft");
+                $.validationEngine.closePrompt(".formError", true);
+                firstTimeLoad = true;
+                firstTimeBind = true;
+                //onCheckFilters();
+                ClearSchedulingPopup();
+                //scheduler.endLightbox(false, html("my_form"));
+            });
     $("#btnDeleteSchedulingData")
         .on("click",
-        function () {
-            //$("#loader_event").show();
-            blockRecurrenceDiv("Deleting...");
-            firstTimeBind = true;
-            var eventParentId = $("#hidEventParentId").val();
-            var schedulingId = $("#hfSchedulingId").val();
-            var schType = $("#hidSchedulingType").val();
-            var externalValue3 = $("#hfExternalValue3").val();
-            DeleteSchduling(eventParentId, schedulingId, schType, externalValue3);
-        });
+            function () {
+                //$("#loader_event").show();
+                blockRecurrenceDiv("Deleting...");
+                firstTimeBind = true;
+                var eventParentId = $("#hidEventParentId").val();
+                var schedulingId = $("#hfSchedulingId").val();
+                var schType = $("#hidSchedulingType").val();
+                var externalValue3 = $("#hfExternalValue3").val();
+                DeleteSchduling(eventParentId, schedulingId, schType, externalValue3);
+            });
 
 
     $("#eventFromDate")
@@ -283,25 +283,25 @@ $(function () {
     //$("#txtRecEndByDate").val(new Date().format('mm/dd/yyyy'));
     $(".searchHitMe")
         .on("click",
-        function (e) { //function to toggle previous visit list in & out
-            //$('.searchSlide').toggleClass('moveLeft');
-        });
+            function (e) { //function to toggle previous visit list in & out
+                //$('.searchSlide').toggleClass('moveLeft');
+            });
     $("#spnPrevList")
         .on("click",
-        function (e) { //function to toggle previous visit list in & out
-            $(".searchSlide").removeClass("moveLeft");
-        });
+            function (e) { //function to toggle previous visit list in & out
+                $(".searchSlide").removeClass("moveLeft");
+            });
     $("#spnAvailTimeSlots")
         .on("click",
-        function (e) { //function to toggle previous visit list in & out
-            $("#divAvailableTimeSlots").removeClass("moveLeft2");
-        });
+            function (e) { //function to toggle previous visit list in & out
+                $("#divAvailableTimeSlots").removeClass("moveLeft2");
+            });
     $("#btnSearchPatient")
         .on("click",
-        function () {
-            PatientSearchPopupOpen();
-            $("#divSearchPatient").show();
-        });
+            function () {
+                PatientSearchPopupOpen();
+                $("#divSearchPatient").show();
+            });
 
     //$("#parentOfTextbox").on('keydown', function (e) {
     //    var keyCode = e.keyCode || e.which;
@@ -383,10 +383,10 @@ $(function () {
 
     $("#ddHolidayPhysician")
         .on("change",
-        function () {
-            BindPhyPreviousVacations();
+            function () {
+                BindPhyPreviousVacations();
 
-        });
+            });
 
 });
 
@@ -1321,7 +1321,7 @@ var BindAppointmentAvailability = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetGlobalCodesAvailability",
+        url: "/GlobalCode/GetGlobalCodesAvailability",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -5734,7 +5734,7 @@ var BindSchedulingStatus = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetGlobalCodesCheckListView",
+        url: "/GlobalCode/GetGlobalCodesCheckListView",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",
@@ -5755,7 +5755,7 @@ var BindCorporatePhysician = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetCorporatePhysicians",
+        url: "/Physician/GetCorporatePhysicians",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",

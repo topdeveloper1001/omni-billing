@@ -18,7 +18,7 @@ function BindGlobalCodesCustomWithValue(categoryIdval) {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

@@ -297,7 +297,7 @@ function BindGlobalCodesDDL(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -440,7 +440,7 @@ function BindSystemCodes() {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodesChilds",
+        url: "/GlobalCode/GetGlobalCodesChilds",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

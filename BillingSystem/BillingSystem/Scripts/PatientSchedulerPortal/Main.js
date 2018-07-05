@@ -393,7 +393,7 @@ var BindCorporatePhysician = function() {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetCorporatePhysicians",
+        url: "/Physician/GetCorporatePhysicians",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",
@@ -415,7 +415,7 @@ var BindPreSchedulingStatus = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetGlobalCodesCheckListViewPreScheduling",
+        url: "/GlobalCode/GetGlobalCodesCheckListViewPreScheduling",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",
@@ -1012,7 +1012,7 @@ var BindAppointmentAvailability = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetGlobalCodesAvailability",
+        url: "/GlobalCode/GetGlobalCodesAvailability",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1050,7 +1050,7 @@ function BindFacilityDepartmentspopup(facilityDDId) {
     $("#ddSpeciality").val("0");
     $.ajax({
         type: "POST",
-        url: "/Home/GetPhysicianByFacility",
+        url: "/Physician/GetPhysicianByFacility",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

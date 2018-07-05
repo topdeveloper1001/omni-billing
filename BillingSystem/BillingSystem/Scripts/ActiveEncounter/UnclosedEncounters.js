@@ -584,7 +584,7 @@ function BindCategories(ddlSelector, hdSelector) {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetGlobalCodeCatByExternalValue',   //GetGlobalCodeCategories
+        url: '/Home/GetGlobalCodeCatByExternalValue',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -927,7 +927,7 @@ function BindAllDDLValues() {
             });
             $.ajax({
                 type: "POST",
-                url: '/Home/GetSelectedCodeParent',
+                url: '/GlobalCode/GetSelectedCodeParent',
                 async: false,
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
@@ -953,7 +953,7 @@ function BindAllDDLValues() {
             });
             $.ajax({
                 type: "POST",
-                url: '/Home/GetSelectedCodeParent',
+                url: '/GlobalCode/GetSelectedCodeParent',
                 async: false,
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",

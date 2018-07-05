@@ -295,7 +295,7 @@ function OnChangeTableDropdown(ddlSelector, dropdownType) {
     if (value != null && value != '') {
         $.ajax({
             type: "POST",
-            url: '/Home/GetColumnForManagedCareTable',
+            url: '/GlobalCode/GetColumnForManagedCareTable',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

@@ -393,7 +393,7 @@ function BindPatientTypesDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -426,7 +426,7 @@ function BindEncounterTypesDropdownData(categoryId, codeId, pTypeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetEncounterTypes",
+        url: "/GlobalCode/GetEncounterTypes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -464,7 +464,7 @@ function BindPhysiciansTypeDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -497,7 +497,7 @@ function BindEncounterStartTypeDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -531,7 +531,7 @@ function BindConfidentialLevelDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -573,7 +573,7 @@ function OnChangeAccidentRelated(AccidentRelatedSelector, categoryId, codeId) {
         $.ajax({
             type: "POST",
             contentType: "application/json; charset=utf-8",
-            url: "/Home/GetGlobalCodes",
+            url: "/GlobalCode/GetGlobalCodes",
             data: jsonData,
             dataType: "json",
             beforeSend: function () { },
@@ -619,7 +619,7 @@ function ChooseBed() {
 //    $.ajax({
 //        type: "POST",
 //        contentType: "application/json; charset=utf-8",
-//        url: "/Home/GetGlobalCodes",
+//        url: "/GlobalCode/GetGlobalCodes",
 //        data: jsonData,
 //        dataType: "json",
 //        beforeSend: function () { },
@@ -652,7 +652,7 @@ function BindEncounterModeOfArrivalDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -685,7 +685,7 @@ function BindEncounterAdmitTypeDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -718,7 +718,7 @@ function BindEncounterAccidentRelatedDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -751,7 +751,7 @@ function BindEncounterEndTypeDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },
@@ -1052,7 +1052,7 @@ function BindServiceCategoryDropdownData(categoryId, codeId) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },

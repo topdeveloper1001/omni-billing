@@ -1150,7 +1150,7 @@ function BindGenericTypeDDL(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodes",
+        url: "/GlobalCode/GetGlobalCodes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1204,7 +1204,7 @@ function BindCategoriesInSummary(ddlSelector, hdSelector) {
     });
     $.ajax({
         type: "POST",
-        url: summaryPageUrl + "GetOrderTypeCategoriesInSummary",           //GetGlobalCodeCategories
+        url: summaryPageUrl + "GetOrderTypeCategoriesInSummary",  
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1658,7 +1658,7 @@ function BindGlobalCode(selector, categoryIdval, hidValueSelector) {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetGlobalCodesOrderBy",
+        url: "/GlobalCode/GetGlobalCodesOrderBy",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -2463,7 +2463,7 @@ function BindAllDDLValues() {
             });
             $.ajax({
                 type: "POST",
-                url: "/Home/GetSelectedCodeParent",
+                url: "/GlobalCode/GetSelectedCodeParent",
                 async: false,
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
@@ -2492,7 +2492,7 @@ function BindAllDDLValues() {
             });
             $.ajax({
                 type: "POST",
-                url: "/Home/GetSelectedCodeParent",
+                url: "/GlobalCode/GetSelectedCodeParent",
                 async: false,
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",

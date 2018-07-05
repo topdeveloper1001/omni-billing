@@ -1649,6 +1649,7 @@ namespace BillingSystem.Common
 
         public static async Task<bool> SendAppointmentNotification(List<SchedulingCustomModel> scheduling, string toEmailAddress, string emailTemplateId, int patientId, int physicianId, int viewType)
         {
+            var confirmationView = "/Login/ConfirmationView";
             if (scheduling.Count > 0)
             {
                 var proceTypesHtml = string.Empty;
@@ -1681,15 +1682,14 @@ namespace BillingSystem.Common
                 if (viewType == 2 && scheduling[0].SchedulingId == 0)
                 {
                     mainTemplate =
-                        ResourceKeyValues.GetFileText(
-                            Convert.ToString(SchedularNotificationTypes.fromschedulartopatientonnewbooking));
+                        ResourceKeyValues.GetFileText(Convert.ToString(SchedularNotificationTypes.fromschedulartopatientonnewbooking));
                     confirmLink =
-                   ResolveUrl2(string.Format("/Home/ConfirmationView?st=2&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=true",
-                       scheduling[0].ExtValue4, viewType, patientId, physicianId));
+                   ResolveUrl2(string.Format("{4}?st=2&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=true",
+                       scheduling[0].ExtValue4, viewType, patientId, physicianId, confirmationView));
 
                     cancelLink =
-                       ResolveUrl2(string.Format("/Home/ConfirmationView?st=4&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=false",
-                           scheduling[0].ExtValue4, viewType, patientId, physicianId));
+                       ResolveUrl2(string.Format("{4}?st=4&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=false",
+                           scheduling[0].ExtValue4, viewType, patientId, physicianId, confirmationView));
 
                     mainTemplate = mainTemplate.Replace("{imagesUrl}",
                         HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority));
@@ -1700,12 +1700,12 @@ namespace BillingSystem.Common
                        ResourceKeyValues.GetFileText(
                            Convert.ToString(SchedularNotificationTypes.physicianapporovelemail));
                     confirmLink =
-                   ResolveUrl2(string.Format("/Home/ConfirmationView?st=2&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=false",
-                       scheduling[0].ExtValue4, viewType, patientId, physicianId));
+                   ResolveUrl2(string.Format("{4}?st=2&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=false",
+                       scheduling[0].ExtValue4, viewType, patientId, physicianId, confirmationView));
 
                     cancelLink =
-                       ResolveUrl2(string.Format("/Home/ConfirmationView?st=4&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=true",
-                           scheduling[0].ExtValue4, viewType, patientId, physicianId));
+                       ResolveUrl2(string.Format("{4}?st=4&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=true",
+                           scheduling[0].ExtValue4, viewType, patientId, physicianId, confirmationView));
 
                     mainTemplate = mainTemplate.Replace("{imagesUrl}",
                         HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority));
@@ -1726,13 +1726,6 @@ namespace BillingSystem.Common
                     mainTemplate = mainTemplate.Replace("{imagesUrl}",
                     HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority));
                 }
-                //confirmLink =
-                //   ResolveUrl2(string.Format("/Home/ConfirmationView?st=2&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=true",
-                //       scheduling[0].ExtValue4, viewType, patientId, physicianId));
-
-                //cancelLink =
-                //   ResolveUrl2(string.Format("/Home/ConfirmationView?st=4&vtoken={0}&vType={1}&patientId={2}&physicianId={3}&bit=false",
-                //       scheduling[0].ExtValue4, viewType, patientId, physicianId));
 
                 mainTemplate = mainTemplate.Replace("{procedures}", proceTypesHtml)
                     .Replace("{confirmurl}", confirmLink)

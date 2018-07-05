@@ -190,7 +190,7 @@ function BindAllergyCategories(ddlSelector, hdSelector) {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetGlobalCodeCategories',
+        url: '/GlobalCode/GetGlobalCodeCategories',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -260,7 +260,7 @@ function OnChangeAllergyCategory(ddlselector) {
     if (value != '' && value > 0) {
         $.ajax({
             type: "POST",
-            url: "/Home/GetMaxGlobalCodeValueByCategory",
+            url: "/GlobalCode/GetMaxGlobalCodeValueByCategory",
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

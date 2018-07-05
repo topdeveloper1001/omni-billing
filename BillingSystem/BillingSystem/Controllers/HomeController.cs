@@ -25,11 +25,11 @@ using BillingSystem.Filters;
 namespace BillingSystem.Controllers
 {
     [OutputCache(NoStore = true, Duration = 0, VaryByParam = "*")]
+    [CustomAuth]
     public class HomeController : BaseController
     {
         #region Services
 
-        private readonly IAppointmentTypesService _atService;
         private readonly IAuditLogService _adService;
         private readonly IBillHeaderService _bhService;
         private readonly IATCCodesService _atcService;
@@ -54,7 +54,7 @@ namespace BillingSystem.Controllers
         private readonly IStateService _stService;
         private readonly IGlobalCodeCategoryService _gcService;
         private readonly IRoleService _roService;
-        private readonly IGlobalCodeService _gService;
+        //private readonly IGlobalCodeService _gService;
         private readonly IServiceCodeService _scService;
         private readonly IDRGCodesService _drgService;
         private readonly IHCPCSCodesService _hcpcService;
@@ -65,31 +65,91 @@ namespace BillingSystem.Controllers
         private readonly IRuleMasterService _rmService;
         private readonly IBillActivityService _baService;
         private readonly IUserRoleService _urService;
-        private readonly IFacilityRoleService _frService;
-        private readonly IPhysicianService _phService;
-        private readonly ISchedulingService _schService;
-        private readonly IDeptTimmingService _deptService;
-        private readonly IDocumentsTemplatesService _docService;
+        //private readonly IFacilityRoleService _frService;
+        //private readonly IPhysicianService _phService;
+        //private readonly ISchedulingService _schService;
+        //private readonly IAppointmentTypesService _atService;
+        //private readonly IDeptTimmingService _deptService;
+        //private readonly IDocumentsTemplatesService _docService;
         #endregion
 
-        public HomeController(IAppointmentTypesService atService, IAuditLogService adService
-            , IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service
-            , IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService
-            , IBillingSystemParametersService bspService, ICPTCodesService cptService
-            , IUsersService uService, ICountryService cService, ICorporateService coService
-            , ICityService ctService, IIndicatorDataCheckListService iService
-            , IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService
-            , IModuleAccessService maService, ISystemConfigurationService scsService
-            , IFacilityService fService, IRoleTabsService rtService, IStateService stService
-            , IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService
-            , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService
-            , IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService
-            , IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService
-            , IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService
-            , ISchedulingService schService, IDeptTimmingService deptService
-            , IDocumentsTemplatesService docService)
+        //public HomeController(IAppointmentTypesService atService, IAuditLogService adService
+        //    , IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service
+        //    , IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService
+        //    , IBillingSystemParametersService bspService, ICPTCodesService cptService
+        //    , IUsersService uService, ICountryService cService, ICorporateService coService
+        //    , ICityService ctService, IIndicatorDataCheckListService iService
+        //    , IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService
+        //    , IModuleAccessService maService, ISystemConfigurationService scsService
+        //    , IFacilityService fService, IRoleTabsService rtService, IStateService stService
+        //    , IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService
+        //    , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService
+        //    , IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService
+        //    , IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService
+        //    , IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService
+        //    , ISchedulingService schService, IDeptTimmingService deptService
+        //    , IDocumentsTemplatesService docService)
+        //{
+        //    _atService = atService;
+        //    _adService = adService;
+        //    _bhService = bhService;
+        //    _atcService = atcService;
+        //    _service = service;
+        //    _piService = piService;
+        //    _fsService = fsService;
+        //    _eService = eService;
+        //    _bspService = bspService;
+        //    _cptService = cptService;
+        //    _uService = uService;
+        //    _cService = cService;
+        //    _coService = coService;
+        //    _ctService = ctService;
+        //    _iService = iService;
+        //    _pldService = pldService;
+        //    _ltService = ltService;
+        //    _tService = tService;
+        //    _maService = maService;
+        //    _scsService = scsService;
+        //    _fService = fService;
+        //    _rtService = rtService;
+        //    _stService = stService;
+        //    _gcService = gcService;
+        //    _roService = roService;
+        //    _gService = gService;
+        //    _scService = scService;
+        //    _drgService = drgService;
+        //    _hcpcService = hcpcService;
+        //    _denService = denService;
+        //    _diacService = diacService;
+        //    _drugService = drugService;
+        //    _ooService = ooService;
+        //    _rmService = rmService;
+        //    _baService = baService;
+        //    _urService = urService;
+        //    _frService = frService;
+        //    _phService = phService;
+        //    _schService = schService;
+        //    _deptService = deptService;
+        //    _docService = docService;
+        //}
+
+        public HomeController(IAuditLogService adService
+        , IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service
+        , IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService
+        , IBillingSystemParametersService bspService, ICPTCodesService cptService
+        , IUsersService uService, ICountryService cService, ICorporateService coService
+        , ICityService ctService, IIndicatorDataCheckListService iService
+        , IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService
+        , IModuleAccessService maService, ISystemConfigurationService scsService
+        , IFacilityService fService, IRoleTabsService rtService, IStateService stService
+        , IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService
+        , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService
+        , IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService
+        , IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService
+        , IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService
+        )
         {
-            _atService = atService;
+            //_atService = atService;
             _adService = adService;
             _bhService = bhService;
             _atcService = atcService;
@@ -114,7 +174,7 @@ namespace BillingSystem.Controllers
             _stService = stService;
             _gcService = gcService;
             _roService = roService;
-            _gService = gService;
+            //_gService = gService;
             _scService = scService;
             _drgService = drgService;
             _hcpcService = hcpcService;
@@ -125,11 +185,10 @@ namespace BillingSystem.Controllers
             _rmService = rmService;
             _baService = baService;
             _urService = urService;
-            _frService = frService;
-            _phService = phService;
-            _schService = schService;
-            _deptService = deptService;
-            _docService = docService;
+            //_frService = frService;
+            //_phService = phService;
+            //_schService = schService;
+            //_deptService = deptService;
         }
 
         ///// <summary>
@@ -826,112 +885,6 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the global code categories.
-        /// </summary>
-        /// <param name="startRange">The start range.</param>
-        /// <param name="endRange">The end range.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetGlobalCodeCategories(string startRange, string endRange)
-        {
-            var list = _gcService.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
-            return Json(list);
-        }
-
-        /// <summary>
-        /// Gets the subcategort code.
-        /// </summary>
-        /// <param name="startRange">The start range.</param>
-        /// <param name="endRange">The end range.</param>
-        /// <returns></returns>
-        public ActionResult GetSubcategortCode(string startRange, string endRange)
-        {
-            var list = new List<SelectListItem>();
-            var finalList = _gcService.GetGlobalCodeCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
-            if (finalList.Count > 0)
-            {
-                list.AddRange(finalList.Select(item => new SelectListItem
-                {
-                    Text = string.Format("{0}", item.GlobalCodeCategoryName),
-                    Value = item.GlobalCodeCategoryValue.Trim()
-                }));
-            }
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
-
-        /// <summary>
-        /// Gets the global codes.
-        /// </summary>
-        /// <param name="categoryId">The category identifier.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public JsonResult GetGlobalCodes(string categoryId)
-        {
-            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeName);
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
-
-        [CustomAuth]
-        public ActionResult GetGlobalCodesOrderByGlobalCodeId(string categoryId)
-        {
-            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.GlobalCodeID);
-            return Json(list);
-        }
-        /// <summary>
-        /// Gets the global codes.
-        /// </summary>
-        /// <param name="categoryId">The category identifier.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetGlobalCodesOrderbyCode(string categoryId)
-        {
-            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => Convert.ToDecimal(x.GlobalCodeValue)).ToList();
-            return Json(list);
-        }
-
-        /// <summary>
-        /// Gets the global codes order by.
-        /// </summary>
-        /// <param name="categoryId">The category identifier.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetGlobalCodesOrderBy(string categoryId)
-        {
-            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => x.SortOrder).ToList();
-            return Json(list);
-        }
-
-        /// <summary>
-        /// Gets the name of the global codes orderby.
-        /// </summary>
-        /// <param name="categoryId">The category identifier.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetGlobalCodesOrderbyName(string categoryId)
-        {
-            var list = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => (x.GlobalCodeName)).ToList();
-            return Json(list);
-        }
-
-        /// <summary>
-        /// Gets the encounter types.
-        /// </summary>
-        /// <param name="categoryId">The category identifier.</param>
-        /// <param name="patientTypeId">The patient type identifier.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetEncounterTypes(string categoryId, string patientTypeId)
-        {
-            var list = _gService.GetEncounterTypesByPatientType(categoryId, patientTypeId);
-            return Json(list);
-        }
-
-        /// <summary>
         /// Gets the countries with code.
         /// </summary>
         /// <returns></returns>
@@ -1252,26 +1205,13 @@ namespace BillingSystem.Controllers
             return PartialView();
         }
 
-        /// <summary>
-        /// Gets the global codes by categories range.
-        /// </summary>
-        /// <param name="startRange">The start range.</param>
-        /// <param name="endRange">The end range.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetGlobalCodesByCategoriesRange(string startRange, string endRange)
-        {
-            var list = _gService.GetGlobalCodesByCategoriesRange(Convert.ToInt32(startRange), Convert.ToInt32(endRange));
-            return Json(list);
-        }
+
 
         /// <summary>
         /// Gets the order codes.
         /// </summary>
         /// <param name="codetypeid">The codetypeid.</param>
         /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
         public ActionResult GetOrderCodes(string codetypeid)
         {
             var orderType = (OrderType)Enum.Parse(typeof(OrderType), codetypeid);
@@ -1294,23 +1234,10 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the maximum global code value by category.
-        /// </summary>
-        /// <param name="categoryValue">The category value.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetMaxGlobalCodeValueByCategory(string categoryValue)
-        {
-            var maxId = _gService.GetMaxGlobalCodeValueByCategory(categoryValue);
-            return Json(maxId);
-        }
-
-        /// <summary>
         /// Gets the old encounter list.
         /// </summary>
         /// <param name="pid">The pid.</param>
         /// <returns></returns>
-        [CustomAuth]
         public ActionResult GetOldEncounterList(int pid)
         {
             var patientEncounterlist = _eService.GetEncounterListByPatientId(pid);
@@ -1322,7 +1249,6 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="searchType">Type of the search.</param>
         /// <returns></returns>
-        [CustomAuth]
         public ActionResult GetSerachList(string searchType)
         {
             if (!string.IsNullOrEmpty(searchType))
@@ -1402,7 +1328,6 @@ namespace BillingSystem.Controllers
         /// <param name="subCategoryId">The sub category identifier.</param>
         /// <param name="categoryId">The category identifier.</param>
         /// <returns></returns>
-        [CustomAuth]
         public ActionResult GetOrderingCodes(string text, int subCategoryId, int categoryId)
         {
             var finalList = new List<GeneralCodesCustomModel>();
@@ -1410,6 +1335,7 @@ namespace BillingSystem.Controllers
             largedata.MaxJsonLength = int.MaxValue;
             return largedata;
         }
+
         public List<string> GetColumnsByTableNameb(string tableName)
         {
             var list = new List<string>();
@@ -1486,70 +1412,6 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the name of the columns by table.
-        /// </summary>
-        /// <param name="tableName">Name of the table.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetColumnsByTableName(string tableName)
-        {
-            var list = new List<DropdownListData>();
-            var keyColumn = string.Empty;
-            var result = GetColumnsByTableNameb(tableName);
-            keyColumn = _gService.GetKeyColmnNameByTableName(tableName);
-            if (result.Count > 0)
-            {
-                list.AddRange(result.Select(item => new DropdownListData
-                {
-                    Text = item,
-                    Value = item,
-                }));
-                list = list.OrderBy(a => a.Text).ToList();
-            }
-            var jsonResult = new { List = list, KeyColumn = keyColumn };
-            return Json(jsonResult, JsonRequestBehavior.AllowGet);
-        }
-
-
-        /// <summary>
-        /// Gets the columns for table.
-        /// </summary>
-        /// <param name="tableid">The tableid.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetColumnsForTable(string tableid)
-        {
-            var list = new List<DropdownListData>();
-            var kColumnlist = new List<DropdownListData>();
-            var keyColumn = string.Empty;
-            var result = _gService.GetTableStruturebyTableId(tableid).OrderBy(x => Convert.ToInt32(x.SortOrder)).ToList();
-            var firstOrDefault = result.FirstOrDefault(x => x.ExternalValue2 == "1");
-            if (firstOrDefault != null)
-                keyColumn = result.Any() ? firstOrDefault.GlobalCodeName : "";
-            if (result.Count > 0)
-            {
-                list.AddRange(result.Select(item => new DropdownListData
-                {
-                    Text = item.GlobalCodeName,
-                    Value = item.GlobalCodeValue,
-                }));
-                list = list.OrderBy(a => a.Text).ToList();
-            }
-            var keyColumnList = result.Where(x => x.ExternalValue3 == "1").ToList();
-            if (keyColumnList.Count > 0)
-            {
-                kColumnlist.AddRange(keyColumnList.Select(item => new DropdownListData
-                {
-                    Text = item.GlobalCodeName,
-                    Value = item.GlobalCodeName,
-                }));
-                kColumnlist = kColumnlist.OrderBy(a => a.Text).ToList();
-            }
-            var jsonResult = new { List = list, KeyColumnList = kColumnlist, KeyColumn = keyColumn };
-            return Json(jsonResult, JsonRequestBehavior.AllowGet);
-        }
-
-        /// <summary>
         /// Gets the drug details by drug code.
         /// </summary>
         /// <param name="drugCode">The drug code.</param>
@@ -1562,79 +1424,6 @@ namespace BillingSystem.Controllers
 
         }
 
-        /// <summary>
-        /// Gets the selected code parent.
-        /// </summary>
-        /// <param name="code">The code.</param>
-        /// <param name="Type">The type.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetSelectedCodeParent(string code, string Type)
-        {
-            if (code != null)
-            {
-
-                var fId = Helpers.GetDefaultFacilityId();
-                var tn = string.Empty;
-
-                switch (Type)
-                {
-                    case "3":
-                        tn = Helpers.DefaultCptTableNumber;
-                        break;
-                    case "4":
-                        tn = Helpers.DefaultHcPcsTableNumber;
-                        break;
-                    case "5":
-                        tn = Helpers.DefaultDrugTableNumber;
-                        break;
-                    default:
-                        break;
-                }
-
-                var vm = _gService.GetSelectedCodeParent1(code, Type, fId, tn);
-                return Json(vm, JsonRequestBehavior.AllowGet);
-            }
-            return null;
-        }
-
-        ///// <summary>
-        ///// Gets the selected code parent1.
-        ///// </summary>
-        ///// <param name="code">The code.</param>
-        ///// <returns></returns>
-        //[LogonAuthorize]
-        //public ActionResult GetSelectedCodeParent1(string code)
-        //{
-        //    if (code != null)
-        //    {
-        //        using (var bal = new BaseBal(Helpers.DefaultCptTableNumber, Helpers.DefaultServiceCodeTableNumber, Helpers.DefaultDrgTableNumber, Helpers.DefaultDrugTableNumber, Helpers.DefaultHcPcsTableNumber, Helpers.DefaultDiagnosisTableNumber))
-        //        {
-        //            var drugObj = bal.GetSelectedCodeParent(code);
-        //            return Json(drugObj, JsonRequestBehavior.AllowGet);
-        //        }
-        //    }
-        //    return null;
-        //}
-
-        /// <summary>
-        /// Gets the category labtest.
-        /// </summary>
-        /// <param name="labtrest">The labtrest.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetCategoryLabtest(string labtrest)
-        {
-            var golbalcodeObj = _gService.GetGlobalCodeByGlobalCodeId(Convert.ToInt32(labtrest));
-            var list = _cptService.GetCodesByRange(Convert.ToInt32(golbalcodeObj.ExternalValue2), Convert.ToInt32(golbalcodeObj.ExternalValue3), Helpers.DefaultCptTableNumber);
-            return Json(list);
-        }
-
-        /// <summary>
-        /// Gets the users by default corporate identifier.
-        /// </summary>
-        /// <returns></returns>
-        [CustomAuth]
         public ActionResult GetUsersByDefaultCorporateId()
         {
             var list = new List<DropdownListData>();
@@ -1673,7 +1462,6 @@ namespace BillingSystem.Controllers
         /// <param name="userId">The user identifier.</param>
         /// <added by="Shashank">ON 12/16/2014</added>
         /// <returns></returns>
-        [CustomAuth]
         public ActionResult GetUsersDetailByUserID(Int32 userId)
         {
             var userObj = _uService.GetUserById(userId);
@@ -1681,25 +1469,10 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the global codes childs.
-        /// </summary>
-        /// <param name="globalcodeId">The globalcode identifier.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetGlobalCodesChilds(string globalcodeId)
-        {
-            var list = _gService.GetGlobalCodesByCategoryValue(globalcodeId).OrderBy(x => x.GlobalCodeID);
-            return Json(list);
-        }
-
-        /// <summary>
         /// Gets the facilitiesby corporate.
         /// </summary>
         /// <param name="corporateid">The corporateid.</param>
         /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
         public ActionResult GetFacilitiesbyCorporate(int corporateid)
         {
             var finalList = new List<DropdownListData>();
@@ -1947,30 +1720,6 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the security parameters.
-        /// </summary>
-        /// <param name="globalCodeCategoryValue">The global code category value.</param>
-        /// <returns></returns>
-        //[LogonAuthorize]
-        public JsonResult GetSecurityParameters(string globalCodeCategoryValue)
-        {
-            decimal value = 0;
-
-            var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-            if (objSession != null)
-                value = objSession.AutoLogOffMinutes;
-
-            if (value <= 0)
-            {
-                var result = _gService.GetGlobalCodeByFacilityAndCategory(globalCodeCategoryValue, Helpers.GetDefaultFacilityNumber());
-                value = result == null ? Convert.ToDecimal(0) : Convert.ToDecimal(result.GlobalCodeName);
-                if (objSession != null)
-                    objSession.AutoLogOffMinutes = value;
-            }
-            return Json(value, JsonRequestBehavior.AllowGet);
-        }
-
-        /// <summary>
         /// Gets the type of the column data.
         /// </summary>
         /// <param name="tableName">Name of the table.</param>
@@ -2204,30 +1953,6 @@ namespace BillingSystem.Controllers
                 }
             }
             return Json(string.Empty);
-        }
-
-        /// <summary>
-        /// Gets the column for managed care table.
-        /// </summary>
-        /// <param name="tableId">The table identifier.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetColumnForManagedCareTable(string tableId)
-        {
-            var globalcodelist = _gService.GetGlobalCodesByCategoryValue("1017").Where(x => x.ExternalValue1 == tableId).OrderBy(x => x.GlobalCodeID).ToList();
-            var globalcodeKeyColumnList = _gService.GetGlobalCodesByCategoryValue("1016").FirstOrDefault(x => x.GlobalCodeValue == tableId);
-            var list = new List<DropdownListData>();
-            if (globalcodelist.Count > 0)
-            {
-                list.AddRange(globalcodelist.Select(item => new DropdownListData
-                {
-                    Text = item.GlobalCodeName,
-                    Value = item.GlobalCodeName,
-                }));
-                list = list.OrderBy(a => a.Text).ToList();
-            }
-            var jsonResult = new { List = list, KeyColumn = globalcodeKeyColumnList != null ? globalcodeKeyColumnList.ExternalValue1 : "" };
-            return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
 
         //Language Selection
@@ -2695,49 +2420,6 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the months data.
-        /// </summary>
-        /// <param name="categoryId">The category identifier.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetMonthsData(string categoryId, int facilityId)
-        {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
-            var cId = Helpers.GetDefaultCorporateId();
-            facilityId = facilityId > 0 ? facilityId : Helpers.GetDefaultFacilityId();
-            var defaultYear = currentDateTime.Year;
-            var defaultMonth = currentDateTime.Month - 1;
-
-            var list = new List<SelectListItem>();
-            var glist = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
-            if (glist.Any())
-            {
-                list.AddRange(glist.Select(item => new SelectListItem
-                {
-                    Text = item.GlobalCodeName,
-                    Value = item.GlobalCodeValue
-                }));
-            }
-
-            var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
-            if (defaults.Count > 0)
-            {
-                defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
-                defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
-            }
-
-            var jsonData = new
-            {
-                list,
-                defaultYear,
-                defaultMonth
-            };
-            return Json(jsonData, JsonRequestBehavior.AllowGet);
-        }
-
-        /// <summary>
         /// Gets the facility users.
         /// </summary>
         /// <param name="facilityId">The facility identifier.</param>
@@ -2752,7 +2434,6 @@ namespace BillingSystem.Controllers
             {
                 list.AddRange(users.Select(item => new SelectListItem
                 {
-
                     Text = string.Format("{0} {1}", item.FirstName, item.LastName),
                     Value = Convert.ToString(item.UserID)
                 }));
@@ -3335,31 +3016,6 @@ namespace BillingSystem.Controllers
         }
 
         /// <summary>
-        /// Gets the user roles.
-        /// </summary>
-        /// <param name="userid">The userid.</param>
-        /// <returns></returns>
-        private List<RoleSelectionCustomModel> GetUserRoles(int userid)
-        {
-            var userroleList = new List<RoleSelectionCustomModel>();
-            var roles = _urService.GetUserRolesByUserId(userid);
-            foreach (var role in roles)
-            {
-                var roleFacilityIds = _frService.GetFacilityRolesByRoleId(role.RoleID);
-                userroleList.AddRange(roleFacilityIds.Select(rolefacility => new RoleSelectionCustomModel
-                {
-                    RoleId = role.RoleID,
-                    RoleName = _roService.GetRoleNameById(role.RoleID),
-                    FacilityName = _fService.GetFacilityNameById(rolefacility.FacilityId),
-                    FacilityId = rolefacility.FacilityId,
-                    CorporateId = rolefacility.CorporateId
-                }));
-            }
-            userroleList = userroleList.DistinctBy(r => r.RoleId).ToList();
-            return userroleList;
-        }
-
-        /// <summary>
         /// Updates the failed log.
         /// </summary>
         /// <param name="userId">The user identifier.</param>
@@ -3372,119 +3028,7 @@ namespace BillingSystem.Controllers
             _uService.AddUpdateUser(objUsersViewModel, 0);
         }
 
-        /// <summary>
-        /// Method is used to bind the user type drop down
-        /// </summary>
-        /// <param name="corporateId"></param>
-        /// <param name="facilityId"></param>
-        /// <returns></returns>
-        public JsonResult BindUsersType(string corporateId, string facilityId)
-        {
-            var list = new List<DropdownListData>();
-            var roleList = _frService.GetUserTypeRoleDropDown(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId), true);
-            if (roleList.Count > 0)
-            {
-                list.AddRange(roleList.Select(item => new DropdownListData
-                {
-                    Text = string.Format("{0}", item.RoleName),
-                    Value = Convert.ToString(item.RoleId)
-                }));
-            }
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
 
-        /// <summary>
-        /// Gets the corporate physicians.
-        /// </summary>
-        /// <param name="corporateId">The corporate identifier.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        public ActionResult GetCorporatePhysicians(string corporateId, string facilityId)
-        {
-            var cId = string.IsNullOrEmpty(corporateId) ? Helpers.GetSysAdminCorporateID().ToString() : corporateId;
-            cId = string.IsNullOrEmpty(facilityId)
-                      ? cId
-                      : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
-            var userid = Helpers.GetLoggedInUserId();
-            var corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.PhysicianCheckBoxList);
-            return PartialView(viewpath, corporateUsers);
-        }
-
-        /// <summary>
-        /// Gets the global codes check ListView.
-        /// </summary>
-        /// <param name="ggcValue">The GGC value.</param>
-        /// <returns></returns>
-        public ActionResult GetGlobalCodesCheckListView(string ggcValue)
-        {
-            var globalCodelist = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "3").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.StatusCheckBoxList);
-            return PartialView(viewpath, globalCodelist);
-        }
-
-        /// <summary>
-        /// Gets the global codes availability.
-        /// </summary>
-        /// <param name="ggcValue">The GGC value.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        public ActionResult GetGlobalCodesAvailability(string ggcValue, string facilityId)
-        {
-            var globalCodelist = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "1").ToList();
-            var holidayStatus = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "4").ToList();
-            var holidayTypes = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 == "3").ToList();
-            var cId = Helpers.GetSysAdminCorporateID().ToString();
-            cId = string.IsNullOrEmpty(facilityId)
-                      ? cId
-                      : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
-            var userid = Helpers.GetLoggedInUserId();
-            var corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
-            var list = new
-            {
-                gClist = globalCodelist,
-                physicians = corporateUsers,
-                hStatus = holidayStatus,
-                hTypes = holidayTypes
-            };
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
-        /// <summary>
-        /// Method is used to get department by passing facility id
-        /// </summary>
-        /// <param name="facilityId"></param>
-        /// <returns></returns>
-        public ActionResult GetDepartmentsByFacility(int facilityId)
-        {
-            var list = new List<SelectListItem>();
-            var corporateUsers = new List<PhysicianCustomModel>();
-
-            var facilityDepartments = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), facilityId.ToString());
-            if (facilityDepartments.Any())
-            {
-                list.AddRange(facilityDepartments.Select(item => new SelectListItem
-                {
-                    Text = string.Format(" {0} ", item.FacilityStructureName),
-                    Value = Convert.ToString(item.FacilityStructureId)
-                }));
-            }
-            var cId = Helpers.GetSysAdminCorporateID().ToString();
-            cId = facilityId == 0
-                ? cId
-                : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
-            var userid = Helpers.GetLoggedInUserId();
-            corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
-
-            var updatedList = new
-            {
-                deptList = list,
-                phyList = corporateUsers
-            };
-            return Json(updatedList, JsonRequestBehavior.AllowGet);
-        }
 
         /// <summary>
         /// Get Facilities list
@@ -3609,123 +3153,6 @@ namespace BillingSystem.Controllers
 
 
 
-        //[AllowAnonymous]
-        //public ActionResult ConfirmationView()
-        //{
-        //    return View();
-        //}
-        [AllowAnonymous]
-        public async Task<ActionResult> ConfirmationView(string st, string vtoken, int patientId, string physicianId, bool bit)
-        {
-            //Check If Verification Token is there
-            var validRequest = !string.IsNullOrEmpty(vtoken);
-            var list = new List<SchedulingCustomModel>();
-            if (validRequest)
-            {
-                list = _schService.GetSchedulingListByPatient(patientId, physicianId, vtoken);
-
-                //Check if list contains items.
-                validRequest = list.Count > 0;
-
-                if (validRequest)
-                {
-                    list.ForEach(a =>
-                    {
-                        a.Status = st;
-                        a.ExtValue4 = CommonConfig.GenerateLoginCode(8, false);
-                        a.ModifiedBy = patientId;
-                        a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    });
-                    validRequest = _schService.UpdateSchedulingEvents(list);
-
-                    if (st == "2" && bit)//After Patient Approval Mail Will Be sent to Physician
-                    {
-                        var appointmentType = string.Empty;
-                        foreach (var item in list)
-                        {
-                            var app =
-           _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
-                            appointmentType = app != null ? app.Name : string.Empty;
-                            item.AppointmentType = appointmentType;
-                        }
-
-
-
-                        var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
-                        var validRequest1 = objPhysician != null && objPhysician.UserId > 0;
-                        if (validRequest1)
-                        {
-
-                            var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
-                            await Helpers.SendAppointmentNotification(list, email,
-                                  Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
-                                  patientId, Convert.ToInt32(physicianId), 2);
-
-                        }
-
-                    }
-                    if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
-                    {
-                        var email = _pldService.GetPatientEmail(patientId);
-                        await Helpers.SendAppointmentNotification(list, email,
-                                      Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
-                                      patientId, Convert.ToInt32(physicianId), 5);
-                    }
-                    if (st == "2" && bit != true)//After Physician Approvel Mail sent to Patient
-                    {
-                        var appointmentType = string.Empty;
-                        foreach (var item in list)
-                        {
-                            var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
-                            appointmentType = app != null ? app.Name : string.Empty;
-                            item.AppointmentType = appointmentType;
-                        }
-                        var email = _pldService.GetPatientEmail(patientId);
-                        await Helpers.SendAppointmentNotification(list, email,
-                                       Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
-                                       patientId, Convert.ToInt32(physicianId), 4);
-                    }
-                }
-            }
-
-            if (validRequest)
-                return View(list);
-
-            return Content("This page has been expired!");
-
-        }
-
-        public async Task<ActionResult> PatientAction(List<SchedulingCustomModel> list, int actionId, string status, int patientId, int physicianId)
-        {
-            var success = false;
-            //get the Physician Details by Current Physician ID.
-            var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
-            var validRequest = objPhysician != null && objPhysician.UserId > 0;
-            if (validRequest)
-            {
-                //get the Sender's mail address of current User.
-                var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
-
-                success = await Helpers.SendAppointmentNotification(list, email,
-                    Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician), patientId, Convert.ToInt32(physicianId), 2);
-
-                //If Success, Update the Scheduling list with the status 'Confirmed' and delete the verification token.
-                if (success)
-                {
-                    list.ForEach(a =>
-                    {
-                        a.Status = status;
-                        a.ExtValue4 = string.Empty;
-                        a.ModifiedBy = patientId;
-                        a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    });
-
-                    success = _schService.UpdateSchedulingEvents(list);
-                }
-            }
-            return Json(success ? 1 : 0, JsonRequestBehavior.AllowGet);
-        }
-
         #region Telerik Schedular Methods ---Just for testing Purposes
         [AllowAnonymous]
         public ViewResult Temp()
@@ -3829,33 +3256,8 @@ namespace BillingSystem.Controllers
             return Json(facilityDepartmentList, JsonRequestBehavior.AllowGet);
         }
 
-        /// <summary>
-        /// Gets the facility phycisian.
-        /// </summary>
-        /// <param name="coporateId">The coporate identifier.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        public JsonResult GetFacilityPhycisian(int coporateId, int facilityId)
-        {
-            var lst = _phService.GetFacilityPhysicians(facilityId);
-            return Json(lst, JsonRequestBehavior.AllowGet);
-        }
 
-        /// <summary>
-        /// Gets the department timing.
-        /// </summary>
-        /// <param name="deptId">The dept identifier.</param>
-        /// <returns></returns>
-        public JsonResult GetDepartmentTiming(int deptId)
-        {
-            var deptTimingList = _deptService.GetDeptTimmingByDepartmentId(deptId);
-            var listToReturn = new
-            {
-                deptOpeningDays = string.Join(",", deptTimingList.Select(x => x.OpeningDayId)),
-                deptTimingList,
-            };
-            return Json(listToReturn, JsonRequestBehavior.AllowGet);
-        }
+
 
         /// <summary>
         /// Validates the department rooms.
@@ -3879,41 +3281,6 @@ namespace BillingSystem.Controllers
         {
             var lst = _fsService.GetDepartmentAppointmentTypes(deptid, facilityid);
             return Json(lst, JsonRequestBehavior.AllowGet);
-        }
-
-        /// <summary>
-        /// Gets the physician by facility.
-        /// </summary>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        public ActionResult GetPhysicianByFacility(int facilityId)
-        {
-            var list = new List<SelectListItem>();
-            var corporateUsers = new List<PhysicianCustomModel>();
-            var cId = Helpers.GetSysAdminCorporateID().ToString();
-            cId = facilityId == 0
-                ? cId
-                : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-            corporateUsers = _phService.GetCorporatePhysiciansPreScheduling(Convert.ToInt32(cId), Convert.ToInt32(facilityId));
-
-
-            var updatedList = new
-            {
-                phyList = corporateUsers
-            };
-            return Json(updatedList, JsonRequestBehavior.AllowGet);
-        }
-
-        /// <summary>
-        /// Gets the global codes check ListView pre scheduling.
-        /// </summary>
-        /// <param name="ggcValue">The GGC value.</param>
-        /// <returns></returns>
-        public ActionResult GetGlobalCodesCheckListViewPreScheduling(string ggcValue)
-        {
-            var globalCodelist = _gService.GetGCodesListByCategoryValue(ggcValue).Where(x => x.ExternalValue1 != "2" && x.ExternalValue1 != "3" && x.ExternalValue1 != "4").ToList().OrderBy(x => Convert.ToInt32(x.GlobalCodeValue));
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.StatusCheckBoxList);
-            return PartialView(viewpath, globalCodelist);
         }
 
         public ActionResult GetFilteredCodesInFav(string text, string searchType, string blockNumber = null)
@@ -4054,27 +3421,6 @@ namespace BillingSystem.Controllers
         }
 
 
-        /// <summary>
-        /// Gets the clinical identifier number.
-        /// </summary>
-        /// <returns></returns>
-        public ActionResult GetClinicalIDNumber()
-        {
-            var physicians = _phService.GetPhysiciansListByFacilityId(Helpers.GetDefaultFacilityId());
-            if (physicians.Count > 0)
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(physicians.Select(item => new SelectListItem
-                {
-                    Text = item.Physician.PhysicianLicenseNumber,
-                    Value = item.Physician.PhysicianLicenseNumber
-                }));
-                list = list.OrderBy(x => x.Text).ToList();
-                return Json(list);
-            }
-            return Json(0);
-        }
-
         public ActionResult GetGlobalCodeCatByExternalValue(string startRange, string endRange)
         {
             var list = _gcService.GetGlobalCodeCategoriesByExternalValue();
@@ -4101,33 +3447,6 @@ namespace BillingSystem.Controllers
         }
 
 
-        public ActionResult Download(int fileId)
-        {
-            var file = _docService.GetDocumentById(fileId);
-            if (file != null)
-            {
-                var fullPath = Server.MapPath("~" + file.FilePath);
-                if (System.IO.File.Exists(fullPath))
-                {
-                    var cd = new ContentDisposition
-                    {
-                        FileName = file.FileName,
-                        // always prompt the user for downloading, set to true if you want 
-                        // the browser to try to show the file inline
-                        Inline = false,
-                    };
-                    var contentType = MimeMapping.GetMimeMapping(fileName: file.FileName);
-                    Response.AppendHeader("Content-Disposition", cd.ToString());
-                    //var ext = Path.GetExtension(file.FileName);
-                    //var fileType = (MimeTypes)Enum.Parse(typeof(MimeTypes), ext);
-                    //var contentType = fileType.GetEnumDescription();
-                    return File(fullPath, contentType, file.FileName);
-                }
-            }
-            return Content("File No Found");
-        }
-
-
         public ActionResult ExportCodesToExcel(string searchText, string codeType, string tn)
         {
             var excelData = new ExcelData { FreezeTopRow = true, AreCustomColumns = false, SheetName = $"{codeType} Codes", FileName = $"{codeType}CodesFile-{DateTime.Now.ToString("yyyy-MM-dd")}.xls" };
@@ -4137,6 +3456,7 @@ namespace BillingSystem.Controllers
             var result = ExcelExportHelper.ExportExcel(excelData);
             return result;
         }
+
         private DataTable GetBillingCodesToExport(string codeType, string sText, string tn, out string columns)
         {
             var codeTableNo = string.Empty;
@@ -4284,6 +3604,120 @@ namespace BillingSystem.Controllers
             //return String.Format("Age: {0} Year(s) {1} Month(s) {2} Day(s) {3} Hour(s) {4} Second(s)",
             //Years, Months, Days, Hours, Seconds);
         }
+
+
+        #region Not in Use
+
+
+        ///// <summary>
+        ///// Method is used to bind the user type drop down
+        ///// </summary>
+        ///// <param name="corporateId"></param>
+        ///// <param name="facilityId"></param>
+        ///// <returns></returns>
+        //public JsonResult BindUsersType(string corporateId, string facilityId)
+        //{
+        //    var list = new List<DropdownListData>();
+        //    var roleList = _frService.GetUserTypeRoleDropDown(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId), true);
+        //    if (roleList.Count > 0)
+        //    {
+        //        list.AddRange(roleList.Select(item => new DropdownListData
+        //        {
+        //            Text = string.Format("{0}", item.RoleName),
+        //            Value = Convert.ToString(item.RoleId)
+        //        }));
+        //    }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
+
+        //public ActionResult Download(int fileId)
+        //{
+        //    var file = _docService.GetDocumentById(fileId);
+        //    if (file != null)
+        //    {
+        //        var fullPath = Server.MapPath("~" + file.FilePath);
+        //        if (System.IO.File.Exists(fullPath))
+        //        {
+        //            var cd = new ContentDisposition
+        //            {
+        //                FileName = file.FileName,
+        //                // always prompt the user for downloading, set to true if you want 
+        //                // the browser to try to show the file inline
+        //                Inline = false,
+        //            };
+        //            var contentType = MimeMapping.GetMimeMapping(fileName: file.FileName);
+        //            Response.AppendHeader("Content-Disposition", cd.ToString());
+        //            //var ext = Path.GetExtension(file.FileName);
+        //            //var fileType = (MimeTypes)Enum.Parse(typeof(MimeTypes), ext);
+        //            //var contentType = fileType.GetEnumDescription();
+        //            return File(fullPath, contentType, file.FileName);
+        //        }
+        //    }
+        //    return Content("File No Found");
+        //}
+
+        //public JsonResult GetDepartmentTiming(int deptId)
+        //{
+        //    var deptTimingList = _deptService.GetDeptTimmingByDepartmentId(deptId);
+        //    var listToReturn = new
+        //    {
+        //        deptOpeningDays = string.Join(",", deptTimingList.Select(x => x.OpeningDayId)),
+        //        deptTimingList,
+        //    };
+        //    return Json(listToReturn, JsonRequestBehavior.AllowGet);
+        //}
+
+
+        ///// <summary>
+        ///// Gets the corporate physicians.
+        ///// </summary>
+        ///// <param name="corporateId">The corporate identifier.</param>
+        ///// <param name="facilityId">The facility identifier.</param>
+        ///// <returns></returns>
+        //public ActionResult GetCorporatePhysicians(string corporateId, string facilityId)
+        //{
+        //    var cId = string.IsNullOrEmpty(corporateId) ? Helpers.GetSysAdminCorporateID().ToString() : corporateId;
+        //    cId = string.IsNullOrEmpty(facilityId)
+        //              ? cId
+        //              : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+        //    var isAdmin = Helpers.GetLoggedInUserIsAdmin();
+        //    var userid = Helpers.GetLoggedInUserId();
+        //    var corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+        //    var viewpath = string.Format("../Scheduler/{0}", PartialViews.PhysicianCheckBoxList);
+        //    return PartialView(viewpath, corporateUsers);
+        //}
+
+        //public async Task<ActionResult> PatientAction(List<SchedulingCustomModel> list, int actionId, string status, int patientId, int physicianId)
+        //{
+        //    var success = false;
+        //    //get the Physician Details by Current Physician ID.
+        //    var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
+        //    var validRequest = objPhysician != null && objPhysician.UserId > 0;
+        //    if (validRequest)
+        //    {
+        //        //get the Sender's mail address of current User.
+        //        var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
+
+        //        success = await Helpers.SendAppointmentNotification(list, email,
+        //            Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician), patientId, Convert.ToInt32(physicianId), 2);
+
+        //        //If Success, Update the Scheduling list with the status 'Confirmed' and delete the verification token.
+        //        if (success)
+        //        {
+        //            list.ForEach(a =>
+        //            {
+        //                a.Status = status;
+        //                a.ExtValue4 = string.Empty;
+        //                a.ModifiedBy = patientId;
+        //                a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+        //            });
+
+        //            success = _schService.UpdateSchedulingEvents(list);
+        //        }
+        //    }
+        //    return Json(success ? 1 : 0, JsonRequestBehavior.AllowGet);
+        //}
+        #endregion
     }
 
     public class TaskViewModel : ISchedulerEvent
