@@ -114,7 +114,7 @@ function BindCorporatesDataInUserRole(selector) {
     //Bind Corporates
     $.ajax({
         type: "POST",
-        url: "/Home/GetCorporatesDropdownData",
+        url: "/RoleSelection/GetCorporatesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -146,7 +146,7 @@ function BindFacilityDropdownData() {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesbyCorporate",
+        url: "/Facility/GetFacilitiesbyCorporate",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -216,7 +216,7 @@ function BindUsersByFacilityId() {
         var jsonData = JSON.stringify({ facilityId: facilityId });
         $.ajax({
             type: "POST",
-            url: "/Home/GetUsersByFacilityId",
+            url: "/Security/GetUsersByFacilityId",
             async: true,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

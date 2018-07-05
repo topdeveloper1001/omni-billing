@@ -436,7 +436,7 @@ var BindLocations = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetFaciltyListTreeView",
+        url: "/Facility/GetFaciltyListTreeView",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",
@@ -985,7 +985,7 @@ var LoadPatientDetails = function() {
 function BindFacility(selector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesDropdownDataOnScheduler",
+        url: "/Facility/GetFacilitiesDropdownDataOnScheduler",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

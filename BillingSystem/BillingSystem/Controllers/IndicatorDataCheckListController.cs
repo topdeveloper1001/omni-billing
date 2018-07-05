@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Web.Mvc;
-    using BillingSystem.Bal.BusinessAccess;
     using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common;
     using BillingSystem.Model;
@@ -320,5 +319,42 @@
         }
 
         #endregion
+
+        [AcceptVerbs(HttpVerbs.Post)]
+        public ActionResult GetMonthsData(string categoryId, int facilityId)
+        {
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            var cId = Helpers.GetDefaultCorporateId();
+            facilityId = facilityId > 0 ? facilityId : Helpers.GetDefaultFacilityId();
+            var defaultYear = currentDateTime.Year;
+            var defaultMonth = currentDateTime.Month - 1;
+
+            var list = new List<SelectListItem>();
+            var glist = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
+            if (glist.Any())
+            {
+                list.AddRange(glist.Select(item => new SelectListItem
+                {
+                    Text = item.GlobalCodeName,
+                    Value = item.GlobalCodeValue
+                }));
+            }
+
+            var defaults = _service.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
+            if (defaults.Count > 0)
+            {
+                defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
+                defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
+            }
+
+            var jsonData = new
+            {
+                list,
+                defaultYear,
+                defaultMonth
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
+        }
+
     }
 }

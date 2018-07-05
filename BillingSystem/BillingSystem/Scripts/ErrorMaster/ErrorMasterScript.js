@@ -192,7 +192,7 @@ function ClearAll() {
 function BindCorporates() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetCorporatesDropdownData',
+        url: '/RoleSelection/GetCorporatesDropdownData',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -208,7 +208,7 @@ function BindCorporates() {
 function BindFacilities() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetFacilitiesDropdownData',
+        url: '/Facility/GetFacilitiesDropdownData',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

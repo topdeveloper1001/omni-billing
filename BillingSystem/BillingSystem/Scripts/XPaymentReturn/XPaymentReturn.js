@@ -7,7 +7,7 @@
 function BindPatients() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetPatientList',
+        url: '/Login/GetPatientList',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -310,7 +310,7 @@ function GenerateXMLFile() {
 function BindPatients() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetPatientList',
+        url: '/Login/GetPatientList',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -367,7 +367,7 @@ function GetBillHeaderListByEncounterId() {
     if (encounterId > 0) {
         $.ajax({
             type: "POST",
-            url: '/Home/GetBillHeaderListByEncounterId',
+            url: '/BillHeader/GetBillHeaderListByEncounterId',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

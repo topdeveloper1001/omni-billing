@@ -11,6 +11,7 @@ namespace BillingSystem.Controllers
 {
     using System.Linq;
     using BillingSystem.Bal.Interfaces;
+    using BillingSystem.Common.Common;
     using Hangfire;
 
     public class FacilityController : BaseController
@@ -249,5 +250,122 @@ namespace BillingSystem.Controllers
             var service = container.Resolve<IFacilityService>();
             service.CreateDefaultFacilityItems(fId, fName, userId);
         }
+        [AcceptVerbs(HttpVerbs.Post)]
+         public ActionResult GetFacilityNameById(string facilityNumber)
+        {
+            if (string.IsNullOrEmpty(facilityNumber))
+            {
+                if (Session[SessionNames.SessionClass.ToString()] != null)
+                {
+                    var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+                    facilityNumber = session.FacilityNumber;
+                }
+            }
+            var name = _service.GetFacilityNameByNumber(facilityNumber);
+            return Json(name);
+        }
+        [AcceptVerbs(HttpVerbs.Post)]
+        public ActionResult GetFacilitiesbyCorporate(int corporateid)
+        {
+            var finalList = new List<DropdownListData>();
+            var list = _service.GetFacilitiesByCorporateId(corporateid).ToList().OrderBy(x => x.FacilityName).ToList();
+            if (list.Count > 0)
+            {
+                var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+                if (facilityId > 0 && corporateid > 0)
+                    list = list.Where(f => f.FacilityId == facilityId).ToList();
+
+                finalList.AddRange(list.Select(item => new DropdownListData
+                {
+                    Text = item.FacilityName,
+                    Value = Convert.ToString(item.FacilityId)
+                }));
+            }
+            return Json(finalList);
+        }
+        public ActionResult GetFacilitiesDropdownDataWithFacilityNumber(int? corporateId)
+        {
+            var facilities = _service.GetFacilities(Convert.ToInt32(corporateId));
+            if (facilities.Count > 0)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
+                {
+                    Text = item.FacilityName,
+                    Value = item.FacilityNumber,
+                }));
+                return Json(list);
+            }
+            return Json(null);
+        }
+        public ActionResult GetFacilitiesWithoutCorporateDropdownData()
+        {
+            var cId = Helpers.GetDefaultCorporateId();
+            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var facilities = userisAdmin ? _service.GetFacilitiesWithoutCorporateFacility(cId) : _service.GetFacilitiesWithoutCorporateFacility(cId, Helpers.GetDefaultFacilityId());
+            if (facilities.Any())
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
+                {
+                    Text = item.FacilityName,
+                    Value = Convert.ToString(item.FacilityId),
+                }));
+                return Json(list);
+            }
+
+            return Json(null);
+        }
+        public ActionResult GetFacilitiesDropdownData()
+        {
+            var cId = Helpers.GetDefaultCorporateId();
+            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var facilities = userisAdmin ? _service.GetFacilities(cId) : _service.GetFacilities(cId, Helpers.GetDefaultFacilityId());
+            if (facilities.Any())
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
+                {
+                    Text = item.FacilityName,
+                    Value = Convert.ToString(item.FacilityId),
+                }));
+
+                list = list.OrderBy(f => f.Text).ToList();
+                return Json(list);
+            }
+            return Json(null);
+        }
+        public ActionResult GetFacilitiesDropdownDataOnScheduler()
+        {
+            var cId = Helpers.GetSysAdminCorporateID();
+            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var facilities = userisAdmin ? _service.GetFacilities(cId) : _service.GetFacilities(cId, Helpers.GetDefaultFacilityId());
+            if (facilities.Any())
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(facilities.Select(item => new SelectListItem
+                {
+                    Text = item.FacilityName,
+                    Value = Convert.ToString(item.FacilityId),
+                }));
+
+                list = list.OrderBy(f => f.Text).ToList();
+                return Json(list);
+            }
+            return Json(null);
+        }
+        /// <summary>
+        /// Gets the facilty list.
+        /// </summary>
+        /// <returns></returns>
+        public ActionResult GetFaciltyListTreeView()
+        {
+            // Get the facilities list
+            var cId = Helpers.GetSysAdminCorporateID();
+            var facilityList = _service.GetFacilityList(cId);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.LocationListView);
+            return PartialView(viewpath, facilityList);
+        }
+
     }
 }

@@ -254,7 +254,6 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public int AddUpdatePhysicianOpenOrder(OpenOrder model)
         {
-            var updateStatus = 0;
             if (model.OpenOrderID > 0)
                 ChangeOrderDetail(model);
             else

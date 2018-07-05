@@ -1,12 +1,15 @@
 ﻿using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
+using BillingSystem.Filters;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Models;
 using CaptchaMvc.HtmlHelpers;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 
@@ -20,15 +23,22 @@ namespace BillingSystem.Controllers
         private readonly ILoginTrackingService _ltService;
         private readonly ITabsService _tService;
         private readonly IModuleAccessService _maService;
+        private readonly IPatientInfoService _piService;
+        private readonly IFacilityStructureService _fsService;
+        private readonly IEncounterService _eService;
+        private readonly IFacilityService _fService;
 
-        public LoginController(IUsersService uService, IPatientLoginDetailService pldService
-            , ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService)
+        public LoginController(IUsersService uService, IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService, IFacilityService fService)
         {
             _uService = uService;
             _pldService = pldService;
             _ltService = ltService;
             _tService = tService;
             _maService = maService;
+            _piService = piService;
+            _fsService = fsService;
+            _eService = eService;
+            _fService = fService;
         }
 
         /// <summary>
@@ -263,5 +273,381 @@ namespace BillingSystem.Controllers
 
             return View(new Users());
         }
+
+        [CustomAuth]
+        public ActionResult GetPatientList()
+        {
+            var list = new List<DropdownListData>();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+            var result = _piService.GetPatientList(facilityId);
+            if (result.Count > 0)
+            {
+                list.AddRange(result.Select(item => new DropdownListData
+                {
+                    Text = string.Format("{0} {1}", item.PersonFirstName, item.PersonLastName),
+                    Value = Convert.ToString(item.PatientID),
+                    ExternalValue1 = item.PersonEmiratesIDNumber,
+                    ExternalValue2 = item.PersonMedicalRecordNumber
+                }));
+            }
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+        [AllowAnonymous]
+        public async Task<JsonResult> IsPatientEmailValid(string emailid)
+        {
+            var status = ResourceKeyValues.GetKeyValue("invalidemailid");
+            if (_piService.CheckIfEmailExists(emailid))
+            {
+                var statusobj = await SendForgotPasswordEmail(emailid);
+                status = statusobj
+                    ? ResourceKeyValues.GetKeyValue("resetpasswordemailsuccess")
+                    : ResourceKeyValues.GetKeyValue("resetpasswordemailfailure");
+            }
+            var jsonStatus = new { status };
+            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        }
+        [AllowAnonymous]
+        private async Task<bool> SendForgotPasswordEmail(string emailid)
+        {
+            var msgBody = ResourceKeyValues.GetFileText("patientforgotpasswordemail");
+            PatientInfo patientm = null;
+            PatientInfoCustomModel patientVm = null;
+            var verficationTokenId = CommonConfig.GeneratePasswordResetToken(14, false);
+            var patientlogindetailcustomModel = _pldService.GetPatientLoginDetailsByEmail(emailid);
+
+            patientm = _piService.GetPatientDetailByEmailid(emailid);
+            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientm.PatientID));
+
+
+            patientlogindetailcustomModel.TokenId = verficationTokenId;
+            var updatedId = _pldService.SavePatientLoginDetails(patientlogindetailcustomModel);
+            if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
+            {
+                msgBody = msgBody.Replace("{Patient}", patientVm.PatientName)
+                    .Replace("{Facility-Name}", patientVm.FacilityName);
+            }
+            var emailInfo = new EmailInfo
+            {
+                VerificationTokenId = verficationTokenId,
+                PatientId = patientm.PatientID,
+                Email = emailid,
+                Subject = ResourceKeyValues.GetKeyValue("verificationemailsubject"),
+                VerificationLink = "/Login/ResetPassword",
+                MessageBody = msgBody
+            };
+            var status = await MailHelper.SendEmailAsync(emailInfo);
+            return status;
+        }
+        private async Task<bool> SendNewPasswordForPatientLoginPortal(int patientId, string email, string newPassword)
+        {
+            var msgBody = ResourceKeyValues.GetFileText("newpasswordemail");
+            PatientInfoCustomModel patientVm = null;
+            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
+
+            if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
+            {
+                msgBody = msgBody.Replace("{Patient}", patientVm.PatientName)
+                    .Replace("{Facility-Name}", patientVm.FacilityName).Replace("{Passwordval}", newPassword);
+            }
+            var emailInfo = new EmailInfo
+            {
+                VerificationTokenId = "",
+                PatientId = patientId,
+                Email = email,
+                Subject = ResourceKeyValues.GetKeyValue("newpasswordemailsubject"),
+                VerificationLink = "",
+                MessageBody = msgBody
+            };
+            var status = await MailHelper.SendEmailAsync(emailInfo);
+            return status;
+        }
+        private bool IsPatientDataValid(int patientId, DateTime? birthdate, string emirateid)
+        {
+            var patientInfoObj = _piService.GetPatientInfoById(patientId);
+            var emirateidLastDigits = GetLastFourDigits(patientInfoObj.PersonEmiratesIDNumber);
+            return (patientInfoObj.PersonBirthDate == birthdate &&
+                    emirateidLastDigits == emirateid);
+        }
+
+
+        private string GetLastFourDigits(string idnumber)
+        {
+            var lastFourdigits = idnumber.Length == 18 ? idnumber.Replace("-", string.Empty).Substring(11, 4) : "";
+            return lastFourdigits;
+        }
+        [AllowAnonymous]
+        public async Task<JsonResult> ResetUserPassword(PatientLoginDetailCustomModel vm)
+        {
+            var message = string.Empty;
+            var error = string.Empty;
+            var userId = Helpers.GetLoggedInUserId();
+            var patinetlogindetailObj = _pldService.GetPatientLoginDetailByPatientId(Convert.ToInt32(vm.PatientId));
+            var newPassword = CommonConfig.GeneratePasswordResetToken(8, true);
+            if (vm.PatientPortalAccess)
+            {
+                if (!IsPatientDataValid(Convert.ToInt32(vm.PatientId), vm.BirthDate, vm.EmriateId.Trim()))
+                {
+                    error = "1";
+                    message = "Invalid data!";
+                    var jsonStatus1 = new { message, error };
+                    return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
+                }
+                patinetlogindetailObj.Password = EncryptDecrypt.Encrypt(newPassword).ToLower().Trim();
+                patinetlogindetailObj.TokenId = string.Empty;
+                //Generate the 8-Digit Code
+                var emailSentStatus = await SendNewPasswordForPatientLoginPortal(Convert.ToInt32(vm.PatientId),
+                    vm.Email, newPassword);
+
+                //Is Email Sent Now
+                vm.ExternalValue1 = emailSentStatus ? "1" : "0";
+                error = emailSentStatus ? "" : "0";
+                message = emailSentStatus
+                    ? ResourceKeyValues.GetKeyValue("newpasswordemailsuccess")
+                    : ResourceKeyValues.GetKeyValue("newpasswordemailfailure");
+            }
+
+            var updatedId = _pldService.SavePatientLoginDetails(patinetlogindetailObj);
+            if (updatedId <= 0)
+                message = ResourceKeyValues.GetKeyValue("msgrecordsnotsaved");
+
+            var jsonStatus = new { message, updatedId, vm.ExternalValue1, error };
+            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        }
+        [AcceptVerbs(HttpVerbs.Post)]
+        [CustomAuth]
+        public ActionResult GetFacilityDeapartments()
+        {
+            var loggedinFacility = Helpers.GetDefaultFacilityId();
+            var list = new List<SelectListItem>();
+
+            var facilityDepartments = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), loggedinFacility.ToString());
+            if (facilityDepartments.Any())
+            {
+                list.AddRange(facilityDepartments.Select(item => new SelectListItem
+                {
+                    Text = string.Format(" {0} ", item.FacilityStructureName),
+                    Value = Convert.ToString(item.FacilityStructureId)
+                }));
+            }
+
+
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+        [CustomAuth]
+        public ActionResult GetOldEncounterList(int pid)
+        {
+            var patientEncounterlist = _eService.GetEncounterListByPatientId(pid);
+            return Json(patientEncounterlist);
+        }
+        [CustomAuth]
+        public ActionResult GetEncountersListByPatientId(int patientId)
+        {
+            var list = new List<DropdownListData>();
+            var result = _eService.GetEncounterListByPatientId(patientId).ToList();
+            if (result.Any())
+            {
+                list.AddRange(result.Select(item => new DropdownListData
+                {
+                    Text = item.EncounterNumber,
+                    Value = Convert.ToString(item.EncounterID),
+                    ExternalValue1 = item.EncounterTypeName,
+                    ExternalValue2 = item.EncounterPatientTypeName
+                }));
+            }
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
+        /// <summary>
+        /// User Service Calls
+        /// </summary>
+        /// <returns></returns>
+
+        public ActionResult UserResetPassword(string e, string vtoken)
+        {
+            var usersObj = _uService.GetUserByEmailAndToken(e, vtoken);
+            usersObj.CodeValue = vtoken;
+            usersObj.OldPassword = usersObj.Password;
+            return View(usersObj);
+        }
+        [AllowAnonymous]
+        public ActionResult ForgotPassword(string e, string vtoken)
+        {
+            var usersObj = _uService.GetUserByEmail(e);
+            e = !string.IsNullOrEmpty(e) ? e.ToLower().Trim() : string.Empty;
+            if (usersObj.ResetToken == vtoken && usersObj.Email.ToLower().Equals(e))
+            {
+                return View(usersObj);
+            }
+            return Content("This page is invalid. Please try again later!");
+
+        }
+        [AllowAnonymous]
+        [OutputCache(NoStore = true, Duration = 0, VaryByParam = "*")]
+        public async Task<ActionResult> SendForgotPasswordLink(string email)
+        {
+            string result;
+            var msgBody = ResourceKeyValues.GetFileText("forgotpwdtemplate");
+
+            var userDetail = _uService.GetUserByEmailWithoutDecryption(email);
+            if (userDetail != null && !string.IsNullOrEmpty(userDetail.Email) && userDetail.Email.ToLower().Trim().Equals(email.ToLower().Trim()))
+            {
+                result = "1";
+                userDetail.ResetToken = CommonConfig.GenerateLoginCode(8, false);
+                if (!string.IsNullOrEmpty(msgBody))
+                    msgBody = msgBody.Replace("{Patient}",
+                        string.Format("{0} {1}", userDetail.FirstName, userDetail.LastName))
+                        .Replace("{CodeValue}", userDetail.ResetToken);
+
+                var emailInfo = new EmailInfo
+                {
+                    VerificationTokenId = userDetail.ResetToken,
+                    PatientId = userDetail.UserID,
+                    Email = email,
+                    Subject = ResourceKeyValues.GetKeyValue("resetpasswordsubject"),
+                    VerificationLink = "/Login/ForgotPassword",
+                    MessageBody = msgBody
+                };
+
+                if (result == "1")
+                {
+                    var status = await MailHelper.SendEmailAsync(emailInfo);
+                    result = status ? "1" : "-2";
+                }
+
+                if (result == "1")
+                {
+                    var updatedId = _uService.UpdateUser(userDetail);
+                    result = updatedId == userDetail.UserID ? "1" : "-3";
+                }
+            }
+            else
+                result = "-1";
+
+            var jsonStatus = new { result };
+            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        }
+        public async Task<ActionResult> SendResetPasswordLink(string email)
+        {
+            var msgBody = ResourceKeyValues.GetFileText("ResetPasswordTemplate");
+            var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+            var oUsers = new Users
+            {
+                ResetToken = CommonConfig.GenerateLoginCode(8, false)
+            };
+            if (session != null)
+            {
+                oUsers.UserID = session.UserId;
+                oUsers.FacilityId = session.FacilityId;
+                oUsers.UserName = session.UserName;
+            }
+            if (!string.IsNullOrEmpty(msgBody))
+            {
+                if (session != null)
+                {
+                    var facilityName = _fService.GetFacilityNameByNumber(session.FacilityNumber);
+                    msgBody = msgBody.Replace("{Patient}", oUsers.UserName)
+                        .Replace("{Facility-Name}", Convert.ToString(facilityName)).Replace("{CodeValue}", oUsers.ResetToken);
+                }
+            }
+            var emailInfo = new EmailInfo
+            {
+                VerificationTokenId = oUsers.ResetToken,
+                PatientId = oUsers.UserID,
+                Email = email,
+                Subject = ResourceKeyValues.GetKeyValue("resetpasswordsubject"),
+                VerificationLink = "/Security/UserResetPassword",
+                MessageBody = msgBody
+            };
+            var status = await MailHelper.SendEmailAsync(emailInfo);
+            var message = status
+                        ? ResourceKeyValues.GetKeyValue("resetpasswordemailsuccess")
+                        : ResourceKeyValues.GetKeyValue("resetpasswordemailfailure");
+
+            var userObj = _uService.GetUserById(oUsers.UserID);
+            userObj.ResetToken = oUsers.ResetToken;
+            userObj.Password = EncryptDecrypt.GetEncryptedData(userObj.Password, "");
+            var updatedId = _uService.UpdateUser(userObj);
+            var jsonStatus = new { message };
+            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        }
+
+        [AllowAnonymous]
+        public string ResetNewPassword(UsersViewModel oUsersViewModel)
+        {
+            var userObj = _uService.GetUserById(oUsersViewModel.UserID);
+            userObj.ResetToken = string.Empty;
+            userObj.Password = EncryptDecrypt.GetEncryptedData(oUsersViewModel.NewPassword, "");
+            _uService.UpdateUser(userObj);
+            return "Password reset successfully";
+        }
+        [AllowAnonymous]
+        public JsonResult SavePatientLoginDetails(PatientLoginDetailCustomModel vm)
+        {
+            int updatedId;
+            var currentDateTime = Helpers.GetInvariantCultureDateTime();
+            vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
+            vm.ModifiedBy = vm.PatientId;
+            vm.ModifiedDate = currentDateTime;
+            vm.PatientPortalAccess = true;
+            vm.Password = EncryptDecrypt.Encrypt(vm.Password).ToLower().Trim();
+            if (vm.DeleteVerificationToken)
+                vm.TokenId = string.Empty;
+
+            if (!vm.NewCodeValue.Equals(vm.CodeValue))
+            {
+                var re = new
+                {
+                    Status = -1
+                };
+                return Json(re, JsonRequestBehavior.AllowGet);
+            }
+
+            updatedId = _pldService.SavePatientLoginDetails(vm);
+
+            var jsonStatus1 = new
+            {
+                Message = ResourceKeyValues.GetKeyValue("patientportalisaccessiblemessage"),
+                UpdatedId = updatedId,
+                Status = 2
+            };
+            return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
+        }
+
+        /// <summary>
+        /// Verifies the specified e.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="vtoken">The vtoken.</param>
+        /// <returns></returns>
+        [AllowAnonymous]
+        public ActionResult Verify(string e, string vtoken)
+        {
+            var message = ResourceKeyValues.GetKeyValue("invalidverificationtokenid");
+            if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
+                return Content(message);
+
+            vtoken = vtoken.ToLower().Trim();
+            var result = _pldService.GetPatientLoginDetailsByEmail(e);
+            if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
+                result.TokenId.ToLower().Trim().Equals(vtoken))
+                return View("Verify", result);
+            return Content(message);
+        }
+        [AllowAnonymous]
+        public ActionResult ResetPassword(string e, string vtoken)
+        {
+            var message = ResourceKeyValues.GetKeyValue("invalidverificationtokenid");
+            if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
+                return Content(message);
+
+            vtoken = vtoken.ToLower().Trim();
+            var result = _pldService.GetPatientLoginDetailsByEmail(e);
+            if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
+                result.TokenId.ToLower().Trim().Equals(vtoken))
+                return View("ResetPassword", result);
+            return Content(message);
+        }
+
     }
 }

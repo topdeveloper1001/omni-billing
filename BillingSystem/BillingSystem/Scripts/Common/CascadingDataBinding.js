@@ -22,7 +22,7 @@ function getCountryByID(countryId) {
     var id = countryId;
     $.ajax({
         type: "POST",
-        url: "/Home/GetCountryInfoByCountryID",
+        url: "/Insurance/GetCountryInfoByCountryID",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

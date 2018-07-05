@@ -231,7 +231,7 @@ function BindFacilitiesInTargets(facilityId, roleId) {
         });
         $.ajax({
             type: "POST",
-            url: "/Home/GetFacilitiesbyCorporate",
+            url: "/Facility/GetFacilitiesbyCorporate",
             async: true,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

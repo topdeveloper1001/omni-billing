@@ -55,6 +55,15 @@ namespace BillingSystem.Controllers
             return View(view);
         }
 
+
+        [AcceptVerbs(HttpVerbs.Post)]
+        public ActionResult GetCountryInfoByCountryID(string countryId)
+        {
+            var objCountry = _cService.GetCountryInfoByCountryID(Convert.ToInt32(countryId));
+            return Json(objCountry);
+
+        }
+
         /// <summary>
         /// Bind all the InsuranceCompany list
         /// </summary>
@@ -281,6 +290,16 @@ namespace BillingSystem.Controllers
             }
         }
 
+        public ActionResult GetCountriesWithDefault()
+        {
+            var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
+            var defaultCountry = Helpers.GetDefaultCountryCode;
+
+            //var countryId = defaultCountry > 0 ? list.Where(a => a.CodeValue == Convert.ToString(defaultCountry))
+            //    .Select(s => s.CountryID).FirstOrDefault() : 0;
+            var jsonData = new { list, defaultCountry };
+            return Json(jsonData);
+        }
 
         #endregion
     }

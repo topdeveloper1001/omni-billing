@@ -123,7 +123,7 @@ function BindCorporateDataInParametersSection() {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: "/Home/GetCorporatesDropdownData",
+        url: "/RoleSelection/GetCorporatesDropdownData",
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         data: null,
@@ -143,7 +143,7 @@ function BindCorporateDataInParametersSection() {
 function BindFacilitiesDropdownDataWithFacilityNumber(ddlSelector, hdSelector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesDropdownDataWithFacilityNumber",
+        url: "/Facility/GetFacilitiesDropdownDataWithFacilityNumber",
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         data: JSON.stringify({ corporateId: $("#CorporateId").val() }),

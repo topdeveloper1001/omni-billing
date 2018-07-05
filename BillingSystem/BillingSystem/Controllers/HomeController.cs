@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Web.Mvc;
 using BillingSystem.Models;
-using CaptchaMvc.HtmlHelpers;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Model;
@@ -30,27 +29,10 @@ namespace BillingSystem.Controllers
         #region Services
 
         private readonly IAppointmentTypesService _atService;
-        private readonly IAuditLogService _adService;
-        private readonly IBillHeaderService _bhService;
         private readonly IATCCodesService _atcService;
-        private readonly IBedRateCardService _service;
-        private readonly IPatientInfoService _piService;
-        private readonly IFacilityStructureService _fsService;
-        private readonly IEncounterService _eService;
-        private readonly IBillingSystemParametersService _bspService;
         private readonly ICPTCodesService _cptService;
-        private readonly IUsersService _uService;
-        private readonly ICountryService _cService;
-        private readonly ICorporateService _coService;
-        private readonly ICityService _ctService;
-        private readonly IIndicatorDataCheckListService _iService;
-        private readonly IPatientLoginDetailService _pldService;
-        private readonly ILoginTrackingService _ltService;
-        private readonly ITabsService _tService;
-        private readonly IModuleAccessService _maService;
-        private readonly ISystemConfigurationService _scsService;
-        private readonly IFacilityService _fService;
-        private readonly IRoleTabsService _rtService;
+         private readonly ILoginTrackingService _ltService;
+         private readonly IRoleTabsService _rtService;
         private readonly IStateService _stService;
         private readonly IGlobalCodeCategoryService _gcService;
         private readonly IRoleService _roService;
@@ -72,15 +54,8 @@ namespace BillingSystem.Controllers
         private readonly IDocumentsTemplatesService _docService;
         #endregion
 
-        public HomeController(IAppointmentTypesService atService, IAuditLogService adService
-            , IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service
-            , IPatientInfoService piService, IFacilityStructureService fsService, IEncounterService eService
-            , IBillingSystemParametersService bspService, ICPTCodesService cptService
-            , IUsersService uService, ICountryService cService, ICorporateService coService
-            , ICityService ctService, IIndicatorDataCheckListService iService
-            , IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService
-            , IModuleAccessService maService, ISystemConfigurationService scsService
-            , IFacilityService fService, IRoleTabsService rtService, IStateService stService
+        public HomeController(IAppointmentTypesService atService, IATCCodesService atcService, ICPTCodesService cptService
+            , ILoginTrackingService ltService, IRoleTabsService rtService, IStateService stService
             , IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService
             , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService
             , IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService
@@ -90,26 +65,10 @@ namespace BillingSystem.Controllers
             , IDocumentsTemplatesService docService)
         {
             _atService = atService;
-            _adService = adService;
-            _bhService = bhService;
             _atcService = atcService;
-            _service = service;
-            _piService = piService;
-            _fsService = fsService;
-            _eService = eService;
-            _bspService = bspService;
-            _cptService = cptService;
-            _uService = uService;
-            _cService = cService;
-            _coService = coService;
-            _ctService = ctService;
-            _iService = iService;
-            _pldService = pldService;
+            _cptService = cptService; 
             _ltService = ltService;
-            _tService = tService;
-            _maService = maService;
-            _scsService = scsService;
-            _fService = fService;
+            
             _rtService = rtService;
             _stService = stService;
             _gcService = gcService;
@@ -715,33 +674,33 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="newPassword">The new password.</param>
         /// <returns></returns>
-        public ActionResult ChangeNewPassword(String newPassword)
-        {
-            var userid = Helpers.GetLoggedInUserId();
+        //public ActionResult ChangeNewPassword(String newPassword)
+        //{
+        //    var userid = Helpers.GetLoggedInUserId();
 
-            var isExists = _uService.CheckExistsPassword(newPassword, userid);
-            if (isExists)
-                return Json("-1");
+        //    var isExists = _uService.CheckExistsPassword(newPassword, userid);
+        //    if (isExists)
+        //        return Json("-1");
 
-            var currentUser = _uService.GetUserById(userid);
-            currentUser.Password = newPassword;
-            var isupdated = _uService.AddUpdateUser(currentUser, 0);
-            var auditlogObj = new AuditLog
-            {
-                AuditLogID = 0,
-                UserId = userid,
-                CreatedDate = Helpers.GetInvariantCultureDateTime(),
-                TableName = "Users",
-                FieldName = "Password",
-                PrimaryKey = 0,
-                OldValue = string.Empty,
-                NewValue = string.Empty,
-                CorporateId = Helpers.GetSysAdminCorporateID(),
-                FacilityId = Helpers.GetDefaultFacilityId()
-            };
-            _adService.AddUptdateAuditLog(auditlogObj);
-            return Json(isupdated > 0);
-        }
+        //    var currentUser = _uService.GetUserById(userid);
+        //    currentUser.Password = newPassword;
+        //    var isupdated = _uService.AddUpdateUser(currentUser, 0);
+        //    var auditlogObj = new AuditLog
+        //    {
+        //        AuditLogID = 0,
+        //        UserId = userid,
+        //        CreatedDate = Helpers.GetInvariantCultureDateTime(),
+        //        TableName = "Users",
+        //        FieldName = "Password",
+        //        PrimaryKey = 0,
+        //        OldValue = string.Empty,
+        //        NewValue = string.Empty,
+        //        CorporateId = Helpers.GetSysAdminCorporateID(),
+        //        FacilityId = Helpers.GetDefaultFacilityId()
+        //    };
+        //    _adService.AddUptdateAuditLog(auditlogObj);
+        //    return Json(isupdated > 0);
+        //}
 
         /// <summary>
         /// Logs the off.
@@ -780,22 +739,22 @@ namespace BillingSystem.Controllers
             return Json(stateList);
         }
 
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult GetCitiesByStateId(string stateId)
-        {
-            var list = _ctService.GetCityListByStateId(Convert.ToInt32(stateId));
-            return Json(list);
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //public ActionResult GetCitiesByStateId(string stateId)
+        //{
+        //    var list = _ctService.GetCityListByStateId(Convert.ToInt32(stateId));
+        //    return Json(list);
 
-        }
+        //}
 
 
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult GetCountryInfoByCountryID(string countryId)
-        {
-            var objCountry = _cService.GetCountryInfoByCountryID(Convert.ToInt32(countryId));
-            return Json(objCountry);
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //public ActionResult GetCountryInfoByCountryID(string countryId)
+        //{
+        //    var objCountry = _cService.GetCountryInfoByCountryID(Convert.ToInt32(countryId));
+        //    return Json(objCountry);
 
-        }
+        //}
 
 
         #endregion
@@ -935,34 +894,34 @@ namespace BillingSystem.Controllers
         /// Gets the countries with code.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetCountriesWithCode()
-        {
-            var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
-            return Json(list);
+        //[CustomAuth]
+        //public ActionResult GetCountriesWithCode()
+        //{
+        //    var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
+        //    return Json(list);
 
-        }
+        //}
 
         /// <summary>
         /// Gets the facility name by identifier.
         /// </summary>
         /// <param name="facilityNumber">The facility number.</param>
         /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetFacilityNameById(string facilityNumber)
-        {
-            if (string.IsNullOrEmpty(facilityNumber))
-            {
-                if (Session[SessionNames.SessionClass.ToString()] != null)
-                {
-                    var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-                    facilityNumber = session.FacilityNumber;
-                }
-            }
-            var name = _fService.GetFacilityNameByNumber(facilityNumber);
-            return Json(name);
-        }
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //[CustomAuth]
+        //public ActionResult GetFacilityNameById(string facilityNumber)
+        //{
+        //    if (string.IsNullOrEmpty(facilityNumber))
+        //    {
+        //        if (Session[SessionNames.SessionClass.ToString()] != null)
+        //        {
+        //            var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+        //            facilityNumber = session.FacilityNumber;
+        //        }
+        //    }
+        //    var name = _fService.GetFacilityNameByNumber(facilityNumber);
+        //    return Json(name);
+        //}
 
         /// <summary>
         /// Binds the generic enitity DDL.
@@ -981,39 +940,39 @@ namespace BillingSystem.Controllers
         /// Binds the corporate DDL.
         /// </summary>
         /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult BindCorporateDDL()
-        {
-            var corporatId = Helpers.GetDefaultCorporateId();
-            var list = _coService.GetCorporateDDL(corporatId);
-            return Json(list);
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //[CustomAuth]
+        //public ActionResult BindCorporateDDL()
+        //{
+        //    var corporatId = Helpers.GetDefaultCorporateId();
+        //    var list = _coService.GetCorporateDDL(corporatId);
+        //    return Json(list);
 
-        }
+        //}
 
 
         /// <summary>
         /// Gets the corporates dropdown data.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetCorporatesDropdownData()
-        {
-            var cId = Helpers.GetDefaultCorporateId();
-            var corpList = _coService.GetCorporateDDL(cId);
-            if (corpList != null)
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(corpList.Select(item => new SelectListItem
-                {
-                    Text = item.CorporateName,
-                    Value = item.CorporateID.ToString()
-                }));
-                return Json(list.OrderBy(x => x.Text));
-            }
+        //[CustomAuth]
+        //public ActionResult GetCorporatesDropdownData()
+        //{
+        //    var cId = Helpers.GetDefaultCorporateId();
+        //    var corpList = _coService.GetCorporateDDL(cId);
+        //    if (corpList != null)
+        //    {
+        //        var list = new List<SelectListItem>();
+        //        list.AddRange(corpList.Select(item => new SelectListItem
+        //        {
+        //            Text = item.CorporateName,
+        //            Value = item.CorporateID.ToString()
+        //        }));
+        //        return Json(list.OrderBy(x => x.Text));
+        //    }
 
-            return Json(null);
-        }
+        //    return Json(null);
+        //}
 
         /// <summary>
         /// Gets the roles dropdown data.
@@ -1310,12 +1269,12 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="pid">The pid.</param>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetOldEncounterList(int pid)
-        {
-            var patientEncounterlist = _eService.GetEncounterListByPatientId(pid);
-            return Json(patientEncounterlist);
-        }
+        //[CustomAuth]
+        //public ActionResult GetOldEncounterList(int pid)
+        //{
+        //    var patientEncounterlist = _eService.GetEncounterListByPatientId(pid);
+        //    return Json(patientEncounterlist);
+        //}
 
         /// <summary>
         /// Gets the serach list.
@@ -1634,38 +1593,38 @@ namespace BillingSystem.Controllers
         /// Gets the users by default corporate identifier.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetUsersByDefaultCorporateId()
-        {
-            var list = new List<DropdownListData>();
-            var corporateId = Helpers.GetDefaultCorporateId();
-            var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-            var usersList = _uService.GetUsersByCorporateIdFacilityId(corporateId, facilityId);
-            list.AddRange(usersList.Select(item => new DropdownListData
-            {
-                Text = item.Name,
-                Value = item.CurrentUser.UserID.ToString(),
-            }));
+        //[CustomAuth]
+        //public ActionResult GetUsersByDefaultCorporateId()
+        //{
+        //    var list = new List<DropdownListData>();
+        //    var corporateId = Helpers.GetDefaultCorporateId();
+        //    var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+        //    var usersList = _uService.GetUsersByCorporateIdFacilityId(corporateId, facilityId);
+        //    list.AddRange(usersList.Select(item => new DropdownListData
+        //    {
+        //        Text = item.Name,
+        //        Value = item.CurrentUser.UserID.ToString(),
+        //    }));
 
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
 
-        public ActionResult GetUsersByCorporateId()
-        {
-            var list = new List<DropdownListData>();
-            var corporateId = Helpers.GetDefaultCorporateId();
-            var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-            var usersList = _uService.GetUsersByCorporateandFacilityId(corporateId, facilityId).OrderBy(x => x.FirstName).ToList();
-            list.AddRange(usersList.Select(item => new DropdownListData
-            {
-                Text =
-                                                               item.FirstName + " " + item.LastName,
-                Value = item.UserID.ToString(),
-            }));
+        //public ActionResult GetUsersByCorporateId()
+        //{
+        //    var list = new List<DropdownListData>();
+        //    var corporateId = Helpers.GetDefaultCorporateId();
+        //    var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+        //    var usersList = _uService.GetUsersByCorporateandFacilityId(corporateId, facilityId).OrderBy(x => x.FirstName).ToList();
+        //    list.AddRange(usersList.Select(item => new DropdownListData
+        //    {
+        //        Text =
+        //                                                       item.FirstName + " " + item.LastName,
+        //        Value = item.UserID.ToString(),
+        //    }));
 
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the users detail by user identifier.
@@ -1673,12 +1632,12 @@ namespace BillingSystem.Controllers
         /// <param name="userId">The user identifier.</param>
         /// <added by="Shashank">ON 12/16/2014</added>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetUsersDetailByUserID(Int32 userId)
-        {
-            var userObj = _uService.GetUserById(userId);
-            return Json(userObj, JsonRequestBehavior.AllowGet);
-        }
+        //[CustomAuth]
+        //public ActionResult GetUsersDetailByUserID(Int32 userId)
+        //{
+        //    var userObj = _uService.GetUserById(userId);
+        //    return Json(userObj, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the global codes childs.
@@ -1698,117 +1657,117 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="corporateid">The corporateid.</param>
         /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetFacilitiesbyCorporate(int corporateid)
-        {
-            var finalList = new List<DropdownListData>();
-            var list = _fService.GetFacilitiesByCorporateId(corporateid).ToList().OrderBy(x => x.FacilityName).ToList();
-            if (list.Count > 0)
-            {
-                var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
-                if (facilityId > 0 && corporateid > 0)
-                    list = list.Where(f => f.FacilityId == facilityId).ToList();
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //[CustomAuth]
+        //public ActionResult GetFacilitiesbyCorporate(int corporateid)
+        //{
+        //    var finalList = new List<DropdownListData>();
+        //    var list = _fService.GetFacilitiesByCorporateId(corporateid).ToList().OrderBy(x => x.FacilityName).ToList();
+        //    if (list.Count > 0)
+        //    {
+        //        var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+        //        if (facilityId > 0 && corporateid > 0)
+        //            list = list.Where(f => f.FacilityId == facilityId).ToList();
 
-                finalList.AddRange(list.Select(item => new DropdownListData
-                {
-                    Text = item.FacilityName,
-                    Value = Convert.ToString(item.FacilityId)
-                }));
-            }
-            return Json(finalList);
-        }
+        //        finalList.AddRange(list.Select(item => new DropdownListData
+        //        {
+        //            Text = item.FacilityName,
+        //            Value = Convert.ToString(item.FacilityId)
+        //        }));
+        //    }
+        //    return Json(finalList);
+        //}
 
         /// <summary>
         /// Gets the users.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetUsers()
-        {
-            var users = new List<DropdownListData>();
+        //[CustomAuth]
+        //public ActionResult GetUsers()
+        //{
+        //    var users = new List<DropdownListData>();
 
-            var result = _uService.GetUsersByCorporateIdFacilityId(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
-            if (result.Count > 0)
-            {
-                users.AddRange(result.Select(item => new DropdownListData
-                {
-                    Text = item.Name,
-                    Value = Convert.ToString(item.CurrentUser.UserID),
-                    //ExternalValue1 = Convert.ToString(item.CurrentUser.UserType)
-                }));
-            }
+        //    var result = _uService.GetUsersByCorporateIdFacilityId(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
+        //    if (result.Count > 0)
+        //    {
+        //        users.AddRange(result.Select(item => new DropdownListData
+        //        {
+        //            Text = item.Name,
+        //            Value = Convert.ToString(item.CurrentUser.UserID),
+        //            //ExternalValue1 = Convert.ToString(item.CurrentUser.UserType)
+        //        }));
+        //    }
 
-            return Json(users, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(users, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the patient list.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetPatientList()
-        {
-            var list = new List<DropdownListData>();
-            var corporateId = Helpers.GetSysAdminCorporateID();
-            var facilityId = Helpers.GetDefaultFacilityId();
-            var result = _piService.GetPatientList(facilityId);
-            if (result.Count > 0)
-            {
-                list.AddRange(result.Select(item => new DropdownListData
-                {
-                    Text = string.Format("{0} {1}", item.PersonFirstName, item.PersonLastName),
-                    Value = Convert.ToString(item.PatientID),
-                    ExternalValue1 = item.PersonEmiratesIDNumber,
-                    ExternalValue2 = item.PersonMedicalRecordNumber
-                }));
-            }
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //[CustomAuth]
+        //public ActionResult GetPatientList()
+        //{
+        //    var list = new List<DropdownListData>();
+        //    var corporateId = Helpers.GetSysAdminCorporateID();
+        //    var facilityId = Helpers.GetDefaultFacilityId();
+        //    var result = _piService.GetPatientList(facilityId);
+        //    if (result.Count > 0)
+        //    {
+        //        list.AddRange(result.Select(item => new DropdownListData
+        //        {
+        //            Text = string.Format("{0} {1}", item.PersonFirstName, item.PersonLastName),
+        //            Value = Convert.ToString(item.PatientID),
+        //            ExternalValue1 = item.PersonEmiratesIDNumber,
+        //            ExternalValue2 = item.PersonMedicalRecordNumber
+        //        }));
+        //    }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the encounters list by patient identifier.
         /// </summary>
         /// <param name="patientId">The patient identifier.</param>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetEncountersListByPatientId(int patientId)
-        {
-            var list = new List<DropdownListData>();
-            var result = _eService.GetEncounterListByPatientId(patientId).ToList();
-            if (result.Any())
-            {
-                list.AddRange(result.Select(item => new DropdownListData
-                {
-                    Text = item.EncounterNumber,
-                    Value = Convert.ToString(item.EncounterID),
-                    ExternalValue1 = item.EncounterTypeName,
-                    ExternalValue2 = item.EncounterPatientTypeName
-                }));
-            }
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //[CustomAuth]
+        //public ActionResult GetEncountersListByPatientId(int patientId)
+        //{
+        //    var list = new List<DropdownListData>();
+        //    var result = _eService.GetEncounterListByPatientId(patientId).ToList();
+        //    if (result.Any())
+        //    {
+        //        list.AddRange(result.Select(item => new DropdownListData
+        //        {
+        //            Text = item.EncounterNumber,
+        //            Value = Convert.ToString(item.EncounterID),
+        //            ExternalValue1 = item.EncounterTypeName,
+        //            ExternalValue2 = item.EncounterPatientTypeName
+        //        }));
+        //    }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the bill header list by encounter identifier.
         /// </summary>
         /// <param name="encounterId">The encounter identifier.</param>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetBillHeaderListByEncounterId(int encounterId)
-        {
-            var list = new List<DropdownListData>();
-            var result = _bhService.GetBillHeaderModelListByEncounterId(encounterId);
-            if (result.Any())
-            {
-                list.AddRange(result.Select(item => new DropdownListData
-                {
-                    Text = item.BillNumber,
-                    Value = Convert.ToString(item.BillHeaderID)
-                }));
-            }
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //[CustomAuth]
+        //public ActionResult GetBillHeaderListByEncounterId(int encounterId)
+        //{
+        //    var list = new List<DropdownListData>();
+        //    var result = _bhService.GetBillHeaderModelListByEncounterId(encounterId);
+        //    if (result.Any())
+        //    {
+        //        list.AddRange(result.Select(item => new DropdownListData
+        //        {
+        //            Text = item.BillNumber,
+        //            Value = Convert.ToString(item.BillHeaderID)
+        //        }));
+        //    }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the users by facility identifier.
@@ -1816,23 +1775,23 @@ namespace BillingSystem.Controllers
         /// <param name="facilityId">The facility identifier.</param>
         /// <param name="userType">Type of the user.</param>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetUsersByFacilityId(int facilityId)
-        {
-            var finalList = new List<DropdownListData>();
-            var list = _uService.GetAllUsersByFacilityId(facilityId);
-            if (list.Count > 0)
-            {
-                finalList.AddRange(list.Select(item => new DropdownListData
-                {
+        //[CustomAuth]
+        //public ActionResult GetUsersByFacilityId(int facilityId)
+        //{
+        //    var finalList = new List<DropdownListData>();
+        //    var list = _uService.GetAllUsersByFacilityId(facilityId);
+        //    if (list.Count > 0)
+        //    {
+        //        finalList.AddRange(list.Select(item => new DropdownListData
+        //        {
 
-                    Text = item.Name,
-                    Value = Convert.ToString(item.CurrentUser.UserID)
-                }));
-            }
+        //            Text = item.Name,
+        //            Value = Convert.ToString(item.CurrentUser.UserID)
+        //        }));
+        //    }
 
-            return Json(finalList, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(finalList, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the order codes by order type identifier.
@@ -2312,22 +2271,22 @@ namespace BillingSystem.Controllers
         /// Gets the facilities dropdown data with facility number.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetFacilitiesDropdownDataWithFacilityNumber(int? corporateId)
-        {
-            var facilities = _fService.GetFacilities(Convert.ToInt32(corporateId));
-            if (facilities.Count > 0)
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(facilities.Select(item => new SelectListItem
-                {
-                    Text = item.FacilityName,
-                    Value = item.FacilityNumber,
-                }));
-                return Json(list);
-            }
-            return Json(null);
-        }
+        //[CustomAuth]
+        //public ActionResult GetFacilitiesDropdownDataWithFacilityNumber(int? corporateId)
+        //{
+        //    var facilities = _fService.GetFacilities(Convert.ToInt32(corporateId));
+        //    if (facilities.Count > 0)
+        //    {
+        //        var list = new List<SelectListItem>();
+        //        list.AddRange(facilities.Select(item => new SelectListItem
+        //        {
+        //            Text = item.FacilityName,
+        //            Value = item.FacilityNumber,
+        //        }));
+        //        return Json(list);
+        //    }
+        //    return Json(null);
+        //}
 
         /// <summary>
         /// Gets the service codes.
@@ -2434,59 +2393,59 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="vm">The vm.</param>
         /// <returns></returns>
-        [AllowAnonymous]
-        public JsonResult SavePatientLoginDetails(PatientLoginDetailCustomModel vm)
-        {
-            int updatedId;
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
-            vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
-            vm.ModifiedBy = vm.PatientId;
-            vm.ModifiedDate = currentDateTime;
-            vm.PatientPortalAccess = true;
-            vm.Password = EncryptDecrypt.Encrypt(vm.Password).ToLower().Trim();
-            if (vm.DeleteVerificationToken)
-                vm.TokenId = string.Empty;
+        //[AllowAnonymous]
+        //public JsonResult SavePatientLoginDetails(PatientLoginDetailCustomModel vm)
+        //{
+        //    int updatedId;
+        //    var currentDateTime = Helpers.GetInvariantCultureDateTime();
+        //    vm.TokenId = CommonConfig.GeneratePasswordResetToken(14, false);
+        //    vm.ModifiedBy = vm.PatientId;
+        //    vm.ModifiedDate = currentDateTime;
+        //    vm.PatientPortalAccess = true;
+        //    vm.Password = EncryptDecrypt.Encrypt(vm.Password).ToLower().Trim();
+        //    if (vm.DeleteVerificationToken)
+        //        vm.TokenId = string.Empty;
 
-            if (!vm.NewCodeValue.Equals(vm.CodeValue))
-            {
-                var re = new
-                {
-                    Status = -1
-                };
-                return Json(re, JsonRequestBehavior.AllowGet);
-            }
+        //    if (!vm.NewCodeValue.Equals(vm.CodeValue))
+        //    {
+        //        var re = new
+        //        {
+        //            Status = -1
+        //        };
+        //        return Json(re, JsonRequestBehavior.AllowGet);
+        //    }
 
-            updatedId = _pldService.SavePatientLoginDetails(vm);
+        //    updatedId = _pldService.SavePatientLoginDetails(vm);
 
-            var jsonStatus1 = new
-            {
-                Message = ResourceKeyValues.GetKeyValue("patientportalisaccessiblemessage"),
-                UpdatedId = updatedId,
-                Status = 2
-            };
-            return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
-        }
+        //    var jsonStatus1 = new
+        //    {
+        //        Message = ResourceKeyValues.GetKeyValue("patientportalisaccessiblemessage"),
+        //        UpdatedId = updatedId,
+        //        Status = 2
+        //    };
+        //    return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
+        //}
 
-        /// <summary>
-        /// Verifies the specified e.
-        /// </summary>
-        /// <param name="e">The e.</param>
-        /// <param name="vtoken">The vtoken.</param>
-        /// <returns></returns>
-        [AllowAnonymous]
-        public ActionResult Verify(string e, string vtoken)
-        {
-            var message = ResourceKeyValues.GetKeyValue("invalidverificationtokenid");
-            if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
-                return Content(message);
+        ///// <summary>
+        ///// Verifies the specified e.
+        ///// </summary>
+        ///// <param name="e">The e.</param>
+        ///// <param name="vtoken">The vtoken.</param>
+        ///// <returns></returns>
+        //[AllowAnonymous]
+        //public ActionResult Verify(string e, string vtoken)
+        //{
+        //    var message = ResourceKeyValues.GetKeyValue("invalidverificationtokenid");
+        //    if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
+        //        return Content(message);
 
-            vtoken = vtoken.ToLower().Trim();
-            var result = _pldService.GetPatientLoginDetailsByEmail(e);
-            if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
-                result.TokenId.ToLower().Trim().Equals(vtoken))
-                return View("Verify", result);
-            return Content(message);
-        }
+        //    vtoken = vtoken.ToLower().Trim();
+        //    var result = _pldService.GetPatientLoginDetailsByEmail(e);
+        //    if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
+        //        result.TokenId.ToLower().Trim().Equals(vtoken))
+        //        return View("Verify", result);
+        //    return Content(message);
+        //}
 
 
         /// <summary>
@@ -2494,73 +2453,73 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="emailid">The emailid.</param>
         /// <returns></returns>
-        [AllowAnonymous]
-        public async Task<JsonResult> IsPatientEmailValid(string emailid)
-        {
-            var status = ResourceKeyValues.GetKeyValue("invalidemailid");
-            if (_piService.CheckIfEmailExists(emailid))
-            {
-                var statusobj = await SendForgotPasswordEmail(emailid);
-                status = statusobj
-                    ? ResourceKeyValues.GetKeyValue("resetpasswordemailsuccess")
-                    : ResourceKeyValues.GetKeyValue("resetpasswordemailfailure");
-            }
-            var jsonStatus = new { status };
-            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
-        }
+        //[AllowAnonymous]
+        //public async Task<JsonResult> IsPatientEmailValid(string emailid)
+        //{
+        //    var status = ResourceKeyValues.GetKeyValue("invalidemailid");
+        //    if (_piService.CheckIfEmailExists(emailid))
+        //    {
+        //        var statusobj = await SendForgotPasswordEmail(emailid);
+        //        status = statusobj
+        //            ? ResourceKeyValues.GetKeyValue("resetpasswordemailsuccess")
+        //            : ResourceKeyValues.GetKeyValue("resetpasswordemailfailure");
+        //    }
+        //    var jsonStatus = new { status };
+        //    return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Sends the forgot password email.
         /// </summary>
         /// <param name="emailid">The emailid.</param>
         /// <returns></returns>
-        [AllowAnonymous]
-        private async Task<bool> SendForgotPasswordEmail(string emailid)
-        {
-            var msgBody = ResourceKeyValues.GetFileText("patientforgotpasswordemail");
-            PatientInfo patientm = null;
-            PatientInfoCustomModel patientVm = null;
-            var verficationTokenId = CommonConfig.GeneratePasswordResetToken(14, false);
-            var patientlogindetailcustomModel = _pldService.GetPatientLoginDetailsByEmail(emailid);
+        //[AllowAnonymous]
+        //private async Task<bool> SendForgotPasswordEmail(string emailid)
+        //{
+        //    var msgBody = ResourceKeyValues.GetFileText("patientforgotpasswordemail");
+        //    PatientInfo patientm = null;
+        //    PatientInfoCustomModel patientVm = null;
+        //    var verficationTokenId = CommonConfig.GeneratePasswordResetToken(14, false);
+        //    var patientlogindetailcustomModel = _pldService.GetPatientLoginDetailsByEmail(emailid);
 
-            patientm = _piService.GetPatientDetailByEmailid(emailid);
-            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientm.PatientID));
+        //    patientm = _piService.GetPatientDetailByEmailid(emailid);
+        //    patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientm.PatientID));
 
 
-            patientlogindetailcustomModel.TokenId = verficationTokenId;
-            var updatedId = _pldService.SavePatientLoginDetails(patientlogindetailcustomModel);
-            if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
-            {
-                msgBody = msgBody.Replace("{Patient}", patientVm.PatientName)
-                    .Replace("{Facility-Name}", patientVm.FacilityName);
-            }
-            var emailInfo = new EmailInfo
-            {
-                VerificationTokenId = verficationTokenId,
-                PatientId = patientm.PatientID,
-                Email = emailid,
-                Subject = ResourceKeyValues.GetKeyValue("verificationemailsubject"),
-                VerificationLink = "/Home/ResetPassword",
-                MessageBody = msgBody
-            };
-            var status = await MailHelper.SendEmailAsync(emailInfo);
-            return status;
-        }
+        //    patientlogindetailcustomModel.TokenId = verficationTokenId;
+        //    var updatedId = _pldService.SavePatientLoginDetails(patientlogindetailcustomModel);
+        //    if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
+        //    {
+        //        msgBody = msgBody.Replace("{Patient}", patientVm.PatientName)
+        //            .Replace("{Facility-Name}", patientVm.FacilityName);
+        //    }
+        //    var emailInfo = new EmailInfo
+        //    {
+        //        VerificationTokenId = verficationTokenId,
+        //        PatientId = patientm.PatientID,
+        //        Email = emailid,
+        //        Subject = ResourceKeyValues.GetKeyValue("verificationemailsubject"),
+        //        VerificationLink = "/Home/ResetPassword",
+        //        MessageBody = msgBody
+        //    };
+        //    var status = await MailHelper.SendEmailAsync(emailInfo);
+        //    return status;
+        //}
 
-        [AllowAnonymous]
-        public ActionResult ResetPassword(string e, string vtoken)
-        {
-            var message = ResourceKeyValues.GetKeyValue("invalidverificationtokenid");
-            if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
-                return Content(message);
+        //[AllowAnonymous]
+        //public ActionResult ResetPassword(string e, string vtoken)
+        //{
+        //    var message = ResourceKeyValues.GetKeyValue("invalidverificationtokenid");
+        //    if (!string.IsNullOrEmpty(e) && string.IsNullOrEmpty(vtoken))
+        //        return Content(message);
 
-            vtoken = vtoken.ToLower().Trim();
-            var result = _pldService.GetPatientLoginDetailsByEmail(e);
-            if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
-                result.TokenId.ToLower().Trim().Equals(vtoken))
-                return View("ResetPassword", result);
-            return Content(message);
-        }
+        //    vtoken = vtoken.ToLower().Trim();
+        //    var result = _pldService.GetPatientLoginDetailsByEmail(e);
+        //    if (result != null && !string.IsNullOrEmpty(result.TokenId) &&
+        //        result.TokenId.ToLower().Trim().Equals(vtoken))
+        //        return View("ResetPassword", result);
+        //    return Content(message);
+        //}
 
 
         /// <summary>
@@ -2568,44 +2527,44 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="vm">The vm.</param>
         /// <returns></returns>
-        [AllowAnonymous]
-        public async Task<JsonResult> ResetUserPassword(PatientLoginDetailCustomModel vm)
-        {
-            var message = string.Empty;
-            var error = string.Empty;
-            var userId = Helpers.GetLoggedInUserId();
-            var patinetlogindetailObj = _pldService.GetPatientLoginDetailByPatientId(Convert.ToInt32(vm.PatientId));
-            var newPassword = CommonConfig.GeneratePasswordResetToken(8, true);
-            if (vm.PatientPortalAccess)
-            {
-                if (!IsPatientDataValid(Convert.ToInt32(vm.PatientId), vm.BirthDate, vm.EmriateId.Trim()))
-                {
-                    error = "1";
-                    message = "Invalid data!";
-                    var jsonStatus1 = new { message, error };
-                    return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
-                }
-                patinetlogindetailObj.Password = EncryptDecrypt.Encrypt(newPassword).ToLower().Trim();
-                patinetlogindetailObj.TokenId = string.Empty;
-                //Generate the 8-Digit Code
-                var emailSentStatus = await SendNewPasswordForPatientLoginPortal(Convert.ToInt32(vm.PatientId),
-                    vm.Email, newPassword);
+        //[AllowAnonymous]
+        //public async Task<JsonResult> ResetUserPassword(PatientLoginDetailCustomModel vm)
+        //{
+        //    var message = string.Empty;
+        //    var error = string.Empty;
+        //    var userId = Helpers.GetLoggedInUserId();
+        //    var patinetlogindetailObj = _pldService.GetPatientLoginDetailByPatientId(Convert.ToInt32(vm.PatientId));
+        //    var newPassword = CommonConfig.GeneratePasswordResetToken(8, true);
+        //    if (vm.PatientPortalAccess)
+        //    {
+        //        if (!IsPatientDataValid(Convert.ToInt32(vm.PatientId), vm.BirthDate, vm.EmriateId.Trim()))
+        //        {
+        //            error = "1";
+        //            message = "Invalid data!";
+        //            var jsonStatus1 = new { message, error };
+        //            return Json(jsonStatus1, JsonRequestBehavior.AllowGet);
+        //        }
+        //        patinetlogindetailObj.Password = EncryptDecrypt.Encrypt(newPassword).ToLower().Trim();
+        //        patinetlogindetailObj.TokenId = string.Empty;
+        //        //Generate the 8-Digit Code
+        //        var emailSentStatus = await SendNewPasswordForPatientLoginPortal(Convert.ToInt32(vm.PatientId),
+        //            vm.Email, newPassword);
 
-                //Is Email Sent Now
-                vm.ExternalValue1 = emailSentStatus ? "1" : "0";
-                error = emailSentStatus ? "" : "0";
-                message = emailSentStatus
-                    ? ResourceKeyValues.GetKeyValue("newpasswordemailsuccess")
-                    : ResourceKeyValues.GetKeyValue("newpasswordemailfailure");
-            }
+        //        //Is Email Sent Now
+        //        vm.ExternalValue1 = emailSentStatus ? "1" : "0";
+        //        error = emailSentStatus ? "" : "0";
+        //        message = emailSentStatus
+        //            ? ResourceKeyValues.GetKeyValue("newpasswordemailsuccess")
+        //            : ResourceKeyValues.GetKeyValue("newpasswordemailfailure");
+        //    }
 
-            var updatedId = _pldService.SavePatientLoginDetails(patinetlogindetailObj);
-            if (updatedId <= 0)
-                message = ResourceKeyValues.GetKeyValue("msgrecordsnotsaved");
+        //    var updatedId = _pldService.SavePatientLoginDetails(patinetlogindetailObj);
+        //    if (updatedId <= 0)
+        //        message = ResourceKeyValues.GetKeyValue("msgrecordsnotsaved");
 
-            var jsonStatus = new { message, updatedId, vm.ExternalValue1, error };
-            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
-        }
+        //    var jsonStatus = new { message, updatedId, vm.ExternalValue1, error };
+        //    return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Sends the new password for patient login portal.
@@ -2614,29 +2573,29 @@ namespace BillingSystem.Controllers
         /// <param name="email">The email.</param>
         /// <param name="newPassword">The new password.</param>
         /// <returns></returns>
-        private async Task<bool> SendNewPasswordForPatientLoginPortal(int patientId, string email, string newPassword)
-        {
-            var msgBody = ResourceKeyValues.GetFileText("newpasswordemail");
-            PatientInfoCustomModel patientVm = null;
-            patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
+        //private async Task<bool> SendNewPasswordForPatientLoginPortal(int patientId, string email, string newPassword)
+        //{
+        //    var msgBody = ResourceKeyValues.GetFileText("newpasswordemail");
+        //    PatientInfoCustomModel patientVm = null;
+        //    patientVm = _piService.GetPatientDetailsByPatientId(Convert.ToInt32(patientId));
 
-            if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
-            {
-                msgBody = msgBody.Replace("{Patient}", patientVm.PatientName)
-                    .Replace("{Facility-Name}", patientVm.FacilityName).Replace("{Passwordval}", newPassword);
-            }
-            var emailInfo = new EmailInfo
-            {
-                VerificationTokenId = "",
-                PatientId = patientId,
-                Email = email,
-                Subject = ResourceKeyValues.GetKeyValue("newpasswordemailsubject"),
-                VerificationLink = "",
-                MessageBody = msgBody
-            };
-            var status = await MailHelper.SendEmailAsync(emailInfo);
-            return status;
-        }
+        //    if (!string.IsNullOrEmpty(msgBody) && patientVm != null)
+        //    {
+        //        msgBody = msgBody.Replace("{Patient}", patientVm.PatientName)
+        //            .Replace("{Facility-Name}", patientVm.FacilityName).Replace("{Passwordval}", newPassword);
+        //    }
+        //    var emailInfo = new EmailInfo
+        //    {
+        //        VerificationTokenId = "",
+        //        PatientId = patientId,
+        //        Email = email,
+        //        Subject = ResourceKeyValues.GetKeyValue("newpasswordemailsubject"),
+        //        VerificationLink = "",
+        //        MessageBody = msgBody
+        //    };
+        //    var status = await MailHelper.SendEmailAsync(emailInfo);
+        //    return status;
+        //}
 
         /// <summary>
         /// Determines whether [is patient data valid] [the specified patient identifier].
@@ -2645,20 +2604,20 @@ namespace BillingSystem.Controllers
         /// <param name="birthdate">The birthdate.</param>
         /// <param name="emirateid">The emirateid.</param>
         /// <returns></returns>
-        private bool IsPatientDataValid(int patientId, DateTime? birthdate, string emirateid)
-        {
-            var patientInfoObj = _piService.GetPatientInfoById(patientId);
-            var emirateidLastDigits = GetLastFourDigits(patientInfoObj.PersonEmiratesIDNumber);
-            return (patientInfoObj.PersonBirthDate == birthdate &&
-                    emirateidLastDigits == emirateid);
-        }
+        //private bool IsPatientDataValid(int patientId, DateTime? birthdate, string emirateid)
+        //{
+        //    var patientInfoObj = _piService.GetPatientInfoById(patientId);
+        //    var emirateidLastDigits = GetLastFourDigits(patientInfoObj.PersonEmiratesIDNumber);
+        //    return (patientInfoObj.PersonBirthDate == birthdate &&
+        //            emirateidLastDigits == emirateid);
+        //}
 
 
-        private string GetLastFourDigits(string idnumber)
-        {
-            var lastFourdigits = idnumber.Length == 18 ? idnumber.Replace("-", string.Empty).Substring(11, 4) : "";
-            return lastFourdigits;
-        }
+        //private string GetLastFourDigits(string idnumber)
+        //{
+        //    var lastFourdigits = idnumber.Length == 18 ? idnumber.Replace("-", string.Empty).Substring(11, 4) : "";
+        //    return lastFourdigits;
+        //}
         #endregion
 
         /// <summary>
@@ -2674,25 +2633,25 @@ namespace BillingSystem.Controllers
         /// Get Facilities list
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetFacilitiesWithoutCorporateDropdownData()
-        {
-            var cId = Helpers.GetDefaultCorporateId();
-            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            var facilities = userisAdmin ? _fService.GetFacilitiesWithoutCorporateFacility(cId) : _fService.GetFacilitiesWithoutCorporateFacility(cId, Helpers.GetDefaultFacilityId());
-            if (facilities.Any())
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(facilities.Select(item => new SelectListItem
-                {
-                    Text = item.FacilityName,
-                    Value = Convert.ToString(item.FacilityId),
-                }));
-                return Json(list);
-            }
+        //[CustomAuth]
+        //public ActionResult GetFacilitiesWithoutCorporateDropdownData()
+        //{
+        //    var cId = Helpers.GetDefaultCorporateId();
+        //    var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+        //    var facilities = userisAdmin ? _fService.GetFacilitiesWithoutCorporateFacility(cId) : _fService.GetFacilitiesWithoutCorporateFacility(cId, Helpers.GetDefaultFacilityId());
+        //    if (facilities.Any())
+        //    {
+        //        var list = new List<SelectListItem>();
+        //        list.AddRange(facilities.Select(item => new SelectListItem
+        //        {
+        //            Text = item.FacilityName,
+        //            Value = Convert.ToString(item.FacilityId),
+        //        }));
+        //        return Json(list);
+        //    }
 
-            return Json(null);
-        }
+        //    return Json(null);
+        //}
 
         /// <summary>
         /// Gets the months data.
@@ -2700,88 +2659,88 @@ namespace BillingSystem.Controllers
         /// <param name="categoryId">The category identifier.</param>
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetMonthsData(string categoryId, int facilityId)
-        {
-            var currentDateTime = Helpers.GetInvariantCultureDateTime();
-            var cId = Helpers.GetDefaultCorporateId();
-            facilityId = facilityId > 0 ? facilityId : Helpers.GetDefaultFacilityId();
-            var defaultYear = currentDateTime.Year;
-            var defaultMonth = currentDateTime.Month - 1;
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //[CustomAuth]
+        //public ActionResult GetMonthsData(string categoryId, int facilityId)
+        //{
+        //    var currentDateTime = Helpers.GetInvariantCultureDateTime();
+        //    var cId = Helpers.GetDefaultCorporateId();
+        //    facilityId = facilityId > 0 ? facilityId : Helpers.GetDefaultFacilityId();
+        //    var defaultYear = currentDateTime.Year;
+        //    var defaultMonth = currentDateTime.Month - 1;
 
-            var list = new List<SelectListItem>();
-            var glist = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
-            if (glist.Any())
-            {
-                list.AddRange(glist.Select(item => new SelectListItem
-                {
-                    Text = item.GlobalCodeName,
-                    Value = item.GlobalCodeValue
-                }));
-            }
+        //    var list = new List<SelectListItem>();
+        //    var glist = _gService.GetGlobalCodesByCategoryValue(categoryId).OrderBy(x => int.Parse(x.GlobalCodeValue)).ToList();
+        //    if (glist.Any())
+        //    {
+        //        list.AddRange(glist.Select(item => new SelectListItem
+        //        {
+        //            Text = item.GlobalCodeName,
+        //            Value = item.GlobalCodeValue
+        //        }));
+        //    }
 
-            var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
-            if (defaults.Count > 0)
-            {
-                defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
-                defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
-            }
+        //    var defaults = _iService.GetDefaultMonthAndYearByFacilityId(facilityId, cId);
+        //    if (defaults.Count > 0)
+        //    {
+        //        defaultYear = defaults[0] > 0 ? defaults[0] : defaultYear;
+        //        defaultMonth = defaults[1] > 0 ? defaults[1] : defaultMonth;
+        //    }
 
-            var jsonData = new
-            {
-                list,
-                defaultYear,
-                defaultMonth
-            };
-            return Json(jsonData, JsonRequestBehavior.AllowGet);
-        }
+        //    var jsonData = new
+        //    {
+        //        list,
+        //        defaultYear,
+        //        defaultMonth
+        //    };
+        //    return Json(jsonData, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the facility users.
         /// </summary>
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetFacilityUsers(int facilityId)
-        {
-            var list = new List<SelectListItem>();
-            var users = _uService.GetFacilityUsers(facilityId);
-            if (users.Any())
-            {
-                list.AddRange(users.Select(item => new SelectListItem
-                {
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //[CustomAuth]
+        //public ActionResult GetFacilityUsers(int facilityId)
+        //{
+        //    var list = new List<SelectListItem>();
+        //    var users = _uService.GetFacilityUsers(facilityId);
+        //    if (users.Any())
+        //    {
+        //        list.AddRange(users.Select(item => new SelectListItem
+        //        {
 
-                    Text = string.Format("{0} {1}", item.FirstName, item.LastName),
-                    Value = Convert.ToString(item.UserID)
-                }));
-            }
+        //            Text = string.Format("{0} {1}", item.FirstName, item.LastName),
+        //            Value = Convert.ToString(item.UserID)
+        //        }));
+        //    }
 
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the non admin users by corporate.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetNonAdminUsersByCorporate()
-        {
-            var cId = Helpers.GetSysAdminCorporateID();
-            var list = new List<SelectListItem>();
-            var users = _uService.GetNonAdminUsersByCorporate(cId);
-            if (users.Any())
-            {
-                list.AddRange(users.Select(item => new SelectListItem
-                {
-                    Text = string.Format("{0} {1}", item.FirstName, item.LastName),
-                    Value = Convert.ToString(item.UserID)
-                }));
-            }
+        //[CustomAuth]
+        //public ActionResult GetNonAdminUsersByCorporate()
+        //{
+        //    var cId = Helpers.GetSysAdminCorporateID();
+        //    var list = new List<SelectListItem>();
+        //    var users = _uService.GetNonAdminUsersByCorporate(cId);
+        //    if (users.Any())
+        //    {
+        //        list.AddRange(users.Select(item => new SelectListItem
+        //        {
+        //            Text = string.Format("{0} {1}", item.FirstName, item.LastName),
+        //            Value = Convert.ToString(item.UserID)
+        //        }));
+        //    }
 
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Saves the snapshot.
@@ -2834,149 +2793,149 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="email">The email.</param>
         /// <returns></returns>
-        public async Task<ActionResult> SendResetPasswordLink(string email)
-        {
-            var msgBody = ResourceKeyValues.GetFileText("ResetPasswordTemplate");
-            var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
-            var oUsers = new Users
-            {
-                ResetToken = CommonConfig.GenerateLoginCode(8, false)
-            };
-            if (session != null)
-            {
-                oUsers.UserID = session.UserId;
-                oUsers.FacilityId = session.FacilityId;
-                oUsers.UserName = session.UserName;
-            }
-            if (!string.IsNullOrEmpty(msgBody))
-            {
-                if (session != null)
-                {
-                    var facilityName = _fService.GetFacilityNameByNumber(session.FacilityNumber);
-                    msgBody = msgBody.Replace("{Patient}", oUsers.UserName)
-                        .Replace("{Facility-Name}", Convert.ToString(facilityName)).Replace("{CodeValue}", oUsers.ResetToken);
-                }
-            }
-            var emailInfo = new EmailInfo
-            {
-                VerificationTokenId = oUsers.ResetToken,
-                PatientId = oUsers.UserID,
-                Email = email,
-                Subject = ResourceKeyValues.GetKeyValue("resetpasswordsubject"),
-                VerificationLink = "/Home/UserResetPassword",
-                MessageBody = msgBody
-            };
-            var status = await MailHelper.SendEmailAsync(emailInfo);
-            var message = status
-                        ? ResourceKeyValues.GetKeyValue("resetpasswordemailsuccess")
-                        : ResourceKeyValues.GetKeyValue("resetpasswordemailfailure");
+        //public async Task<ActionResult> SendResetPasswordLink(string email)
+        //{
+        //    var msgBody = ResourceKeyValues.GetFileText("ResetPasswordTemplate");
+        //    var session = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+        //    var oUsers = new Users
+        //    {
+        //        ResetToken = CommonConfig.GenerateLoginCode(8, false)
+        //    };
+        //    if (session != null)
+        //    {
+        //        oUsers.UserID = session.UserId;
+        //        oUsers.FacilityId = session.FacilityId;
+        //        oUsers.UserName = session.UserName;
+        //    }
+        //    if (!string.IsNullOrEmpty(msgBody))
+        //    {
+        //        if (session != null)
+        //        {
+        //            var facilityName = _fService.GetFacilityNameByNumber(session.FacilityNumber);
+        //            msgBody = msgBody.Replace("{Patient}", oUsers.UserName)
+        //                .Replace("{Facility-Name}", Convert.ToString(facilityName)).Replace("{CodeValue}", oUsers.ResetToken);
+        //        }
+        //    }
+        //    var emailInfo = new EmailInfo
+        //    {
+        //        VerificationTokenId = oUsers.ResetToken,
+        //        PatientId = oUsers.UserID,
+        //        Email = email,
+        //        Subject = ResourceKeyValues.GetKeyValue("resetpasswordsubject"),
+        //        VerificationLink = "/Home/UserResetPassword",
+        //        MessageBody = msgBody
+        //    };
+        //    var status = await MailHelper.SendEmailAsync(emailInfo);
+        //    var message = status
+        //                ? ResourceKeyValues.GetKeyValue("resetpasswordemailsuccess")
+        //                : ResourceKeyValues.GetKeyValue("resetpasswordemailfailure");
 
-            var userObj = _uService.GetUserById(oUsers.UserID);
-            userObj.ResetToken = oUsers.ResetToken;
-            userObj.Password = EncryptDecrypt.GetEncryptedData(userObj.Password, "");
-            var updatedId = _uService.UpdateUser(userObj);
-            var jsonStatus = new { message };
-            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
-        }
+        //    var userObj = _uService.GetUserById(oUsers.UserID);
+        //    userObj.ResetToken = oUsers.ResetToken;
+        //    userObj.Password = EncryptDecrypt.GetEncryptedData(userObj.Password, "");
+        //    var updatedId = _uService.UpdateUser(userObj);
+        //    var jsonStatus = new { message };
+        //    return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Users the reset password.
         /// </summary>
         /// <param name="e">The e.</param>
         /// <param name="vtoken">The vtoken.</param>
-        /// <returns></returns>
-        public ActionResult UserResetPassword(string e, string vtoken)
-        {
-            var usersObj = _uService.GetUserByEmailAndToken(e, vtoken);
-            usersObj.CodeValue = vtoken;
-            usersObj.OldPassword = usersObj.Password;
-            return View(usersObj);
-        }
+        ///// <returns></returns>
+        //public ActionResult UserResetPassword(string e, string vtoken)
+        //{
+        //    var usersObj = _uService.GetUserByEmailAndToken(e, vtoken);
+        //    usersObj.CodeValue = vtoken;
+        //    usersObj.OldPassword = usersObj.Password;
+        //    return View(usersObj);
+        //}
 
         /// <summary>
         /// Forgots the password.
         /// </summary>
         /// <param name="e">The e.</param>
         /// <param name="vtoken">The vtoken.</param>
-        /// <returns></returns>
-        [AllowAnonymous]
-        public ActionResult ForgotPassword(string e, string vtoken)
-        {
-            var usersObj = _uService.GetUserByEmail(e);
-            e = !string.IsNullOrEmpty(e) ? e.ToLower().Trim() : string.Empty;
-            if (usersObj.ResetToken == vtoken && usersObj.Email.ToLower().Equals(e))
-            {
-                return View(usersObj);
-            }
-            return Content("This page is invalid. Please try again later!");
+        ///// <returns></returns>
+        //[AllowAnonymous]
+        //public ActionResult ForgotPassword(string e, string vtoken)
+        //{
+        //    var usersObj = _uService.GetUserByEmail(e);
+        //    e = !string.IsNullOrEmpty(e) ? e.ToLower().Trim() : string.Empty;
+        //    if (usersObj.ResetToken == vtoken && usersObj.Email.ToLower().Equals(e))
+        //    {
+        //        return View(usersObj);
+        //    }
+        //    return Content("This page is invalid. Please try again later!");
 
-        }
+        //}
 
         /// <summary>
         /// Resets the new password.
         /// </summary>
         /// <param name="oUsersViewModel">The o users view model.</param>
         /// <returns></returns>
-        [AllowAnonymous]
-        public string ResetNewPassword(UsersViewModel oUsersViewModel)
-        {
-            var userObj = _uService.GetUserById(oUsersViewModel.UserID);
-            userObj.ResetToken = string.Empty;
-            userObj.Password = EncryptDecrypt.GetEncryptedData(oUsersViewModel.NewPassword, "");
-            _uService.UpdateUser(userObj);
-            return "Password reset successfully";
-        }
+        //[AllowAnonymous]
+        //public string ResetNewPassword(UsersViewModel oUsersViewModel)
+        //{
+        //    var userObj = _uService.GetUserById(oUsersViewModel.UserID);
+        //    userObj.ResetToken = string.Empty;
+        //    userObj.Password = EncryptDecrypt.GetEncryptedData(oUsersViewModel.NewPassword, "");
+        //    _uService.UpdateUser(userObj);
+        //    return "Password reset successfully";
+        //}
 
-        /// <summary>
+        ///// <summary>
         /// Sends the forgot password link.
         /// </summary>
         /// <param name="email">The email.</param>
-        /// <returns></returns>
-        [AllowAnonymous]
-        [OutputCache(NoStore = true, Duration = 0, VaryByParam = "*")]
-        public async Task<ActionResult> SendForgotPasswordLink(string email)
-        {
-            string result;
-            var msgBody = ResourceKeyValues.GetFileText("forgotpwdtemplate");
+        ///// <returns></returns>
+        //[AllowAnonymous]
+        //[OutputCache(NoStore = true, Duration = 0, VaryByParam = "*")]
+        //public async Task<ActionResult> SendForgotPasswordLink(string email)
+        //{
+        //    string result;
+        //    var msgBody = ResourceKeyValues.GetFileText("forgotpwdtemplate");
 
-            var userDetail = _uService.GetUserByEmailWithoutDecryption(email);
-            if (userDetail != null && !string.IsNullOrEmpty(userDetail.Email) && userDetail.Email.ToLower().Trim().Equals(email.ToLower().Trim()))
-            {
-                result = "1";
-                userDetail.ResetToken = CommonConfig.GenerateLoginCode(8, false);
-                if (!string.IsNullOrEmpty(msgBody))
-                    msgBody = msgBody.Replace("{Patient}",
-                        string.Format("{0} {1}", userDetail.FirstName, userDetail.LastName))
-                        .Replace("{CodeValue}", userDetail.ResetToken);
+        //    var userDetail = _uService.GetUserByEmailWithoutDecryption(email);
+        //    if (userDetail != null && !string.IsNullOrEmpty(userDetail.Email) && userDetail.Email.ToLower().Trim().Equals(email.ToLower().Trim()))
+        //    {
+        //        result = "1";
+        //        userDetail.ResetToken = CommonConfig.GenerateLoginCode(8, false);
+        //        if (!string.IsNullOrEmpty(msgBody))
+        //            msgBody = msgBody.Replace("{Patient}",
+        //                string.Format("{0} {1}", userDetail.FirstName, userDetail.LastName))
+        //                .Replace("{CodeValue}", userDetail.ResetToken);
 
-                var emailInfo = new EmailInfo
-                {
-                    VerificationTokenId = userDetail.ResetToken,
-                    PatientId = userDetail.UserID,
-                    Email = email,
-                    Subject = ResourceKeyValues.GetKeyValue("resetpasswordsubject"),
-                    VerificationLink = "/Home/ForgotPassword",
-                    MessageBody = msgBody
-                };
+        //        var emailInfo = new EmailInfo
+        //        {
+        //            VerificationTokenId = userDetail.ResetToken,
+        //            PatientId = userDetail.UserID,
+        //            Email = email,
+        //            Subject = ResourceKeyValues.GetKeyValue("resetpasswordsubject"),
+        //            VerificationLink = "/Home/ForgotPassword",
+        //            MessageBody = msgBody
+        //        };
 
-                if (result == "1")
-                {
-                    var status = await MailHelper.SendEmailAsync(emailInfo);
-                    result = status ? "1" : "-2";
-                }
+        //        if (result == "1")
+        //        {
+        //            var status = await MailHelper.SendEmailAsync(emailInfo);
+        //            result = status ? "1" : "-2";
+        //        }
 
-                if (result == "1")
-                {
-                    var updatedId = _uService.UpdateUser(userDetail);
-                    result = updatedId == userDetail.UserID ? "1" : "-3";
-                }
-            }
-            else
-                result = "-1";
+        //        if (result == "1")
+        //        {
+        //            var updatedId = _uService.UpdateUser(userDetail);
+        //            result = updatedId == userDetail.UserID ? "1" : "-3";
+        //        }
+        //    }
+        //    else
+        //        result = "-1";
 
-            var jsonStatus = new { result };
-            return Json(jsonStatus, JsonRequestBehavior.AllowGet);
-        }
+        //    var jsonStatus = new { result };
+        //    return Json(jsonStatus, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Sessions the timeout.
@@ -3042,22 +3001,22 @@ namespace BillingSystem.Controllers
         /// Gets the rule editor users.
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetRuleEditorUsers()
-        {
-            var list = new List<DropdownListData>();
-            var corporateId = Helpers.GetSysAdminCorporateID();
-            var facilityId = Helpers.GetDefaultFacilityId();
+        //[CustomAuth]
+        //public ActionResult GetRuleEditorUsers()
+        //{
+        //    var list = new List<DropdownListData>();
+        //    var corporateId = Helpers.GetSysAdminCorporateID();
+        //    var facilityId = Helpers.GetDefaultFacilityId();
 
-            var usersList = _uService.GetBillEditorUsers(corporateId, facilityId);
-            list.AddRange(usersList.Select(item => new DropdownListData
-            {
-                Text = item.Name + " (" + item.RoleName + ")",
-                Value = item.UserId.ToString(),
-            }));
+        //    var usersList = _uService.GetBillEditorUsers(corporateId, facilityId);
+        //    list.AddRange(usersList.Select(item => new DropdownListData
+        //    {
+        //        Text = item.Name + " (" + item.RoleName + ")",
+        //        Value = item.UserId.ToString(),
+        //    }));
 
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the codes by facility.
@@ -3239,38 +3198,38 @@ namespace BillingSystem.Controllers
         }
 
         #region Table Numbers
-        public JsonResult CreateNewCodeSet(string tableNumber, string[] selectedCodes, bool isAll, string typeId, bool forExisting)
-        {
-            if (!string.IsNullOrEmpty(tableNumber))
-            {
-                var isExists = !forExisting && CheckIfDuplicateTableSet(tableNumber, typeId, 0);
+        //public JsonResult CreateNewCodeSet(string tableNumber, string[] selectedCodes, bool isAll, string typeId, bool forExisting)
+        //{
+        //    if (!string.IsNullOrEmpty(tableNumber))
+        //    {
+        //        var isExists = !forExisting && CheckIfDuplicateTableSet(tableNumber, typeId, 0);
 
-                if (!isExists)
-                {
-                    selectedCodes = isAll ? new[] { "0" } : selectedCodes;
+        //        if (!isExists)
+        //        {
+        //            selectedCodes = isAll ? new[] { "0" } : selectedCodes;
 
-                    if (!isAll && (selectedCodes == null || selectedCodes.Length == 0))
-                        return Json("-3", JsonRequestBehavior.AllowGet);
+        //            if (!isAll && (selectedCodes == null || selectedCodes.Length == 0))
+        //                return Json("-3", JsonRequestBehavior.AllowGet);
 
-                    var saveserviceCodeData = _bspService.SaveRecordsFortableNumber(tableNumber, selectedCodes, typeId);
-                    if (saveserviceCodeData && !forExisting)
-                    {
-                        _bspService.SaveTableNumber(new BillingCodeTableSet
-                        {
-                            Id = 0,
-                            TableNumber = tableNumber,
-                            CodeTableType = typeId,
-                            CreatedBy = Helpers.GetLoggedInUserId(),
-                            CreatedDate = Helpers.GetInvariantCultureDateTime()
-                        });
-                    }
-                    return Json(saveserviceCodeData);
-                }
-                return Json("-2", JsonRequestBehavior.AllowGet);
+        //            var saveserviceCodeData = _bspService.SaveRecordsFortableNumber(tableNumber, selectedCodes, typeId);
+        //            if (saveserviceCodeData && !forExisting)
+        //            {
+        //                _bspService.SaveTableNumber(new BillingCodeTableSet
+        //                {
+        //                    Id = 0,
+        //                    TableNumber = tableNumber,
+        //                    CodeTableType = typeId,
+        //                    CreatedBy = Helpers.GetLoggedInUserId(),
+        //                    CreatedDate = Helpers.GetInvariantCultureDateTime()
+        //                });
+        //            }
+        //            return Json(saveserviceCodeData);
+        //        }
+        //        return Json("-2", JsonRequestBehavior.AllowGet);
 
-            }
-            return Json("-1", JsonRequestBehavior.AllowGet);
-        }
+        //    }
+        //    return Json("-1", JsonRequestBehavior.AllowGet);
+        //}
 
         public JsonResult CheckForDuplicateTableSet(string tableNumber, string typeId, int id)
         {
@@ -3297,26 +3256,26 @@ namespace BillingSystem.Controllers
         /// Gets the facility deapartments.
         /// </summary>
         /// <returns>Json List</returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetFacilityDeapartments()
-        {
-            var loggedinFacility = Helpers.GetDefaultFacilityId();
-            var list = new List<SelectListItem>();
+        //[AcceptVerbs(HttpVerbs.Post)]
+        //[CustomAuth]
+        //public ActionResult GetFacilityDeapartments()
+        //{
+        //    var loggedinFacility = Helpers.GetDefaultFacilityId();
+        //    var list = new List<SelectListItem>();
 
-            var facilityDepartments = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), loggedinFacility.ToString());
-            if (facilityDepartments.Any())
-            {
-                list.AddRange(facilityDepartments.Select(item => new SelectListItem
-                {
-                    Text = string.Format(" {0} ", item.FacilityStructureName),
-                    Value = Convert.ToString(item.FacilityStructureId)
-                }));
-            }
+        //    var facilityDepartments = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), loggedinFacility.ToString());
+        //    if (facilityDepartments.Any())
+        //    {
+        //        list.AddRange(facilityDepartments.Select(item => new SelectListItem
+        //        {
+        //            Text = string.Format(" {0} ", item.FacilityStructureName),
+        //            Value = Convert.ToString(item.FacilityStructureId)
+        //        }));
+        //    }
 
 
-            return Json(list, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(list, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Determines whether [is in range] [the specified start time].
@@ -3338,39 +3297,39 @@ namespace BillingSystem.Controllers
         /// Gets the user roles.
         /// </summary>
         /// <param name="userid">The userid.</param>
-        /// <returns></returns>
-        private List<RoleSelectionCustomModel> GetUserRoles(int userid)
-        {
-            var userroleList = new List<RoleSelectionCustomModel>();
-            var roles = _urService.GetUserRolesByUserId(userid);
-            foreach (var role in roles)
-            {
-                var roleFacilityIds = _frService.GetFacilityRolesByRoleId(role.RoleID);
-                userroleList.AddRange(roleFacilityIds.Select(rolefacility => new RoleSelectionCustomModel
-                {
-                    RoleId = role.RoleID,
-                    RoleName = _roService.GetRoleNameById(role.RoleID),
-                    FacilityName = _fService.GetFacilityNameById(rolefacility.FacilityId),
-                    FacilityId = rolefacility.FacilityId,
-                    CorporateId = rolefacility.CorporateId
-                }));
-            }
-            userroleList = userroleList.DistinctBy(r => r.RoleId).ToList();
-            return userroleList;
-        }
+        ///// <returns></returns>
+        //private List<RoleSelectionCustomModel> GetUserRoles(int userid)
+        //{
+        //    var userroleList = new List<RoleSelectionCustomModel>();
+        //    var roles = _urService.GetUserRolesByUserId(userid);
+        //    foreach (var role in roles)
+        //    {
+        //        var roleFacilityIds = _frService.GetFacilityRolesByRoleId(role.RoleID);
+        //        userroleList.AddRange(roleFacilityIds.Select(rolefacility => new RoleSelectionCustomModel
+        //        {
+        //            RoleId = role.RoleID,
+        //            RoleName = _roService.GetRoleNameById(role.RoleID),
+        //            FacilityName = _fService.GetFacilityNameById(rolefacility.FacilityId),
+        //            FacilityId = rolefacility.FacilityId,
+        //            CorporateId = rolefacility.CorporateId
+        //        }));
+        //    }
+        //    userroleList = userroleList.DistinctBy(r => r.RoleId).ToList();
+        //    return userroleList;
+        //}
 
         /// <summary>
         /// Updates the failed log.
         /// </summary>
         /// <param name="userId">The user identifier.</param>
         /// <param name="failedLoginAttempt">The failed login attempt.</param>
-        private void UpdateFailedLog(int userId, int failedLoginAttempt)
-        {
-            var objUsersViewModel = _uService.GetUserById(userId);
-            objUsersViewModel.FailedLoginAttempts = failedLoginAttempt;
-            objUsersViewModel.LastInvalidLogin = Helpers.GetInvariantCultureDateTime();
-            _uService.AddUpdateUser(objUsersViewModel, 0);
-        }
+        //private void UpdateFailedLog(int userId, int failedLoginAttempt)
+        //{
+        //    var objUsersViewModel = _uService.GetUserById(userId);
+        //    objUsersViewModel.FailedLoginAttempts = failedLoginAttempt;
+        //    objUsersViewModel.LastInvalidLogin = Helpers.GetInvariantCultureDateTime();
+        //    _uService.AddUpdateUser(objUsersViewModel, 0);
+        //}
 
         /// <summary>
         /// Method is used to bind the user type drop down
@@ -3456,156 +3415,156 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="facilityId"></param>
         /// <returns></returns>
-        public ActionResult GetDepartmentsByFacility(int facilityId)
-        {
-            var list = new List<SelectListItem>();
-            var corporateUsers = new List<PhysicianCustomModel>();
+        //public ActionResult GetDepartmentsByFacility(int facilityId)
+        //{
+        //    var list = new List<SelectListItem>();
+        //    var corporateUsers = new List<PhysicianCustomModel>();
 
-            var facilityDepartments = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), facilityId.ToString());
-            if (facilityDepartments.Any())
-            {
-                list.AddRange(facilityDepartments.Select(item => new SelectListItem
-                {
-                    Text = string.Format(" {0} ", item.FacilityStructureName),
-                    Value = Convert.ToString(item.FacilityStructureId)
-                }));
-            }
-            var cId = Helpers.GetSysAdminCorporateID().ToString();
-            cId = facilityId == 0
-                ? cId
-                : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
-            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
-            var userid = Helpers.GetLoggedInUserId();
-            corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+        //    var facilityDepartments = _fsService.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), facilityId.ToString());
+        //    if (facilityDepartments.Any())
+        //    {
+        //        list.AddRange(facilityDepartments.Select(item => new SelectListItem
+        //        {
+        //            Text = string.Format(" {0} ", item.FacilityStructureName),
+        //            Value = Convert.ToString(item.FacilityStructureId)
+        //        }));
+        //    }
+        //    var cId = Helpers.GetSysAdminCorporateID().ToString();
+        //    cId = facilityId == 0
+        //        ? cId
+        //        : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+        //    var isAdmin = Helpers.GetLoggedInUserIsAdmin();
+        //    var userid = Helpers.GetLoggedInUserId();
+        //    corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
 
-            var updatedList = new
-            {
-                deptList = list,
-                phyList = corporateUsers
-            };
-            return Json(updatedList, JsonRequestBehavior.AllowGet);
-        }
+        //    var updatedList = new
+        //    {
+        //        deptList = list,
+        //        phyList = corporateUsers
+        //    };
+        //    return Json(updatedList, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Get Facilities list
         /// </summary>
         /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetFacilitiesDropdownData()
-        {
-            var cId = Helpers.GetDefaultCorporateId();
-            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            var facilities = userisAdmin ? _fService.GetFacilities(cId) : _fService.GetFacilities(cId, Helpers.GetDefaultFacilityId());
-            if (facilities.Any())
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(facilities.Select(item => new SelectListItem
-                {
-                    Text = item.FacilityName,
-                    Value = Convert.ToString(item.FacilityId),
-                }));
+        //[CustomAuth]
+        //public ActionResult GetFacilitiesDropdownData()
+        //{
+        //    var cId = Helpers.GetDefaultCorporateId();
+        //    var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+        //    var facilities = userisAdmin ? _fService.GetFacilities(cId) : _fService.GetFacilities(cId, Helpers.GetDefaultFacilityId());
+        //    if (facilities.Any())
+        //    {
+        //        var list = new List<SelectListItem>();
+        //        list.AddRange(facilities.Select(item => new SelectListItem
+        //        {
+        //            Text = item.FacilityName,
+        //            Value = Convert.ToString(item.FacilityId),
+        //        }));
 
-                list = list.OrderBy(f => f.Text).ToList();
-                return Json(list);
-            }
-            return Json(null);
-        }
+        //        list = list.OrderBy(f => f.Text).ToList();
+        //        return Json(list);
+        //    }
+        //    return Json(null);
+        //}
 
 
         /// <summary>
         /// Method to get facilities on scheduler
         /// </summary>
         /// <returns></returns>
-        public ActionResult GetFacilitiesDropdownDataOnScheduler()
-        {
-            var cId = Helpers.GetSysAdminCorporateID();
-            var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
-            var facilities = userisAdmin ? _fService.GetFacilities(cId) : _fService.GetFacilities(cId, Helpers.GetDefaultFacilityId());
-            if (facilities.Any())
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(facilities.Select(item => new SelectListItem
-                {
-                    Text = item.FacilityName,
-                    Value = Convert.ToString(item.FacilityId),
-                }));
+        //public ActionResult GetFacilitiesDropdownDataOnScheduler()
+        //{
+        //    var cId = Helpers.GetSysAdminCorporateID();
+        //    var userisAdmin = Helpers.GetLoggedInUserIsAdmin();
+        //    var facilities = userisAdmin ? _fService.GetFacilities(cId) : _fService.GetFacilities(cId, Helpers.GetDefaultFacilityId());
+        //    if (facilities.Any())
+        //    {
+        //        var list = new List<SelectListItem>();
+        //        list.AddRange(facilities.Select(item => new SelectListItem
+        //        {
+        //            Text = item.FacilityName,
+        //            Value = Convert.ToString(item.FacilityId),
+        //        }));
 
-                list = list.OrderBy(f => f.Text).ToList();
-                return Json(list);
-            }
-            return Json(null);
-        }
-        /// <summary>
-        /// Gets the facilty list.
-        /// </summary>
-        /// <returns></returns>
-        public ActionResult GetFaciltyListTreeView()
-        {
-            // Get the facilities list
-            var cId = Helpers.GetSysAdminCorporateID();
-            var facilityList = _fService.GetFacilityList(cId);
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.LocationListView);
-            return PartialView(viewpath, facilityList);
-        }
+        //        list = list.OrderBy(f => f.Text).ToList();
+        //        return Json(list);
+        //    }
+        //    return Json(null);
+        //}
+        ///// <summary>
+        ///// Gets the facilty list.
+        ///// </summary>
+        ///// <returns></returns>
+        //public ActionResult GetFaciltyListTreeView()
+        //{
+        //    // Get the facilities list
+        //    var cId = Helpers.GetSysAdminCorporateID();
+        //    var facilityList = _fService.GetFacilityList(cId);
+        //    var viewpath = string.Format("../Scheduler/{0}", PartialViews.LocationListView);
+        //    return PartialView(viewpath, facilityList);
+        //}
 
         /// <summary>
         /// Loads the facility department data.
         /// </summary>
         /// <param name="facilityid">The facilityid.</param>
         /// <returns></returns>
-        public ActionResult LoadFacilityDepartmentData(string facilityid)
-        {
-            // Get the facilities list
-            var cId = Helpers.GetSysAdminCorporateID();
-            var facilityDepartmentList = _fsService.GetFacilityDepartments(cId, facilityid);
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityDepartmentListView);
-            return PartialView(viewpath, facilityDepartmentList);
+        //public ActionResult LoadFacilityDepartmentData(string facilityid)
+        //{
+        //    // Get the facilities list
+        //    var cId = Helpers.GetSysAdminCorporateID();
+        //    var facilityDepartmentList = _fsService.GetFacilityDepartments(cId, facilityid);
+        //    var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityDepartmentListView);
+        //    return PartialView(viewpath, facilityDepartmentList);
 
-        }
+        //}
 
-        /// <summary>
-        /// Loads the facility rooms data.
-        /// </summary>
-        /// <param name="facilityid">The facilityid.</param>
-        /// <returns></returns>
-        public ActionResult LoadFacilityRoomsData(string facilityid)
-        {
-            // Get the facilities list
-            var cId = Helpers.GetSysAdminCorporateID();
-            var lst = _fsService.GetFacilityRooms(cId, facilityid);
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
-            return PartialView(viewpath, lst);
-        }
+        ///// <summary>
+        ///// Loads the facility rooms data.
+        ///// </summary>
+        ///// <param name="facilityid">The facilityid.</param>
+        ///// <returns></returns>
+        //public ActionResult LoadFacilityRoomsData(string facilityid)
+        //{
+        //    // Get the facilities list
+        //    var cId = Helpers.GetSysAdminCorporateID();
+        //    var lst = _fsService.GetFacilityRooms(cId, facilityid);
+        //    var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
+        //    return PartialView(viewpath, lst);
+        //}
 
 
-        /// <summary>
-        /// Loads the facility rooms data custom.
-        /// </summary>
-        /// <param name="facilityid">The facilityid.</param>
-        /// <returns></returns>
-        public ActionResult LoadFacilityRoomsDataCustom(string facilityid)
-        {
-            // Get the facilities list
-            var cId = Helpers.GetSysAdminCorporateID();
-            var facilityDepartmentList = _fsService.GetFacilityRoomsCustomModel(cId, facilityid);
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
-            return PartialView(viewpath, facilityDepartmentList);
-        }
+        ///// <summary>
+        ///// Loads the facility rooms data custom.
+        ///// </summary>
+        ///// <param name="facilityid">The facilityid.</param>
+        ///// <returns></returns>
+        //public ActionResult LoadFacilityRoomsDataCustom(string facilityid)
+        //{
+        //    // Get the facilities list
+        //    var cId = Helpers.GetSysAdminCorporateID();
+        //    var facilityDepartmentList = _fsService.GetFacilityRoomsCustomModel(cId, facilityid);
+        //    var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
+        //    return PartialView(viewpath, facilityDepartmentList);
+        //}
 
-        /// <summary>
-        /// Gets the department rooms.
-        /// </summary>
-        /// <param name="filters">The filters.</param>
-        /// <returns></returns>
-        public ActionResult GetDepartmentRooms(List<SchedularTypeCustomModel> filters)
-        {
-            var selectedDepartmentList = filters[0].DeptData;
-            var facilityid = filters[0].Facility;
-            //var deptIds = string.Join(",", selectedDepartmentList.Select(x => x.Id));
-            var facilityDepartmentList = _fsService.GetDepartmentRooms(selectedDepartmentList, facilityid);
-            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
-            return PartialView(viewpath, facilityDepartmentList);
-        }
+        ///// <summary>
+        ///// Gets the department rooms.
+        ///// </summary>
+        ///// <param name="filters">The filters.</param>
+        ///// <returns></returns>
+        //public ActionResult GetDepartmentRooms(List<SchedularTypeCustomModel> filters)
+        //{
+        //    var selectedDepartmentList = filters[0].DeptData;
+        //    var facilityid = filters[0].Facility;
+        //    //var deptIds = string.Join(",", selectedDepartmentList.Select(x => x.Id));
+        //    var facilityDepartmentList = _fsService.GetDepartmentRooms(selectedDepartmentList, facilityid);
+        //    var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
+        //    return PartialView(viewpath, facilityDepartmentList);
+        //}
 
 
 
@@ -3614,117 +3573,117 @@ namespace BillingSystem.Controllers
         //{
         //    return View();
         //}
-        [AllowAnonymous]
-        public async Task<ActionResult> ConfirmationView(string st, string vtoken, int patientId, string physicianId, bool bit)
-        {
-            //Check If Verification Token is there
-            var validRequest = !string.IsNullOrEmpty(vtoken);
-            var list = new List<SchedulingCustomModel>();
-            if (validRequest)
-            {
-                list = _schService.GetSchedulingListByPatient(patientId, physicianId, vtoken);
+        //[AllowAnonymous]
+        //public async Task<ActionResult> ConfirmationView(string st, string vtoken, int patientId, string physicianId, bool bit)
+        //{
+        //    //Check If Verification Token is there
+        //    var validRequest = !string.IsNullOrEmpty(vtoken);
+        //    var list = new List<SchedulingCustomModel>();
+        //    if (validRequest)
+        //    {
+        //        list = _schService.GetSchedulingListByPatient(patientId, physicianId, vtoken);
 
-                //Check if list contains items.
-                validRequest = list.Count > 0;
+        //        //Check if list contains items.
+        //        validRequest = list.Count > 0;
 
-                if (validRequest)
-                {
-                    list.ForEach(a =>
-                    {
-                        a.Status = st;
-                        a.ExtValue4 = CommonConfig.GenerateLoginCode(8, false);
-                        a.ModifiedBy = patientId;
-                        a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    });
-                    validRequest = _schService.UpdateSchedulingEvents(list);
+        //        if (validRequest)
+        //        {
+        //            list.ForEach(a =>
+        //            {
+        //                a.Status = st;
+        //                a.ExtValue4 = CommonConfig.GenerateLoginCode(8, false);
+        //                a.ModifiedBy = patientId;
+        //                a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+        //            });
+        //            validRequest = _schService.UpdateSchedulingEvents(list);
 
-                    if (st == "2" && bit)//After Patient Approval Mail Will Be sent to Physician
-                    {
-                        var appointmentType = string.Empty;
-                        foreach (var item in list)
-                        {
-                            var app =
-           _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
-                            appointmentType = app != null ? app.Name : string.Empty;
-                            item.AppointmentType = appointmentType;
-                        }
+        //            if (st == "2" && bit)//After Patient Approval Mail Will Be sent to Physician
+        //            {
+        //                var appointmentType = string.Empty;
+        //                foreach (var item in list)
+        //                {
+        //                    var app =
+        //   _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+        //                    appointmentType = app != null ? app.Name : string.Empty;
+        //                    item.AppointmentType = appointmentType;
+        //                }
 
 
 
-                        var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
-                        var validRequest1 = objPhysician != null && objPhysician.UserId > 0;
-                        if (validRequest1)
-                        {
+        //                var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
+        //                var validRequest1 = objPhysician != null && objPhysician.UserId > 0;
+        //                if (validRequest1)
+        //                {
 
-                            var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
-                            await Helpers.SendAppointmentNotification(list, email,
-                                  Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
-                                  patientId, Convert.ToInt32(physicianId), 2);
+        //                    var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
+        //                    await Helpers.SendAppointmentNotification(list, email,
+        //                          Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician),
+        //                          patientId, Convert.ToInt32(physicianId), 2);
 
-                        }
+        //                }
 
-                    }
-                    if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
-                    {
-                        var email = _pldService.GetPatientEmail(patientId);
-                        await Helpers.SendAppointmentNotification(list, email,
-                                      Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
-                                      patientId, Convert.ToInt32(physicianId), 5);
-                    }
-                    if (st == "2" && bit != true)//After Physician Approvel Mail sent to Patient
-                    {
-                        var appointmentType = string.Empty;
-                        foreach (var item in list)
-                        {
-                            var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
-                            appointmentType = app != null ? app.Name : string.Empty;
-                            item.AppointmentType = appointmentType;
-                        }
-                        var email = _pldService.GetPatientEmail(patientId);
-                        await Helpers.SendAppointmentNotification(list, email,
-                                       Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
-                                       patientId, Convert.ToInt32(physicianId), 4);
-                    }
-                }
-            }
+        //            }
+        //            if (st == "4" && bit)//After Physician Cancel mail will be sent to Patient
+        //            {
+        //                var email = _pldService.GetPatientEmail(patientId);
+        //                await Helpers.SendAppointmentNotification(list, email,
+        //                              Convert.ToString((int)SchedularNotificationTypes.physiciancancelappointment),
+        //                              patientId, Convert.ToInt32(physicianId), 5);
+        //            }
+        //            if (st == "2" && bit != true)//After Physician Approvel Mail sent to Patient
+        //            {
+        //                var appointmentType = string.Empty;
+        //                foreach (var item in list)
+        //                {
+        //                    var app = _atService.GetAppointmentTypesById(Convert.ToInt32(item.TypeOfProcedure));
+        //                    appointmentType = app != null ? app.Name : string.Empty;
+        //                    item.AppointmentType = appointmentType;
+        //                }
+        //                var email = _pldService.GetPatientEmail(patientId);
+        //                await Helpers.SendAppointmentNotification(list, email,
+        //                               Convert.ToString((int)SchedularNotificationTypes.physicianapporovelemail),
+        //                               patientId, Convert.ToInt32(physicianId), 4);
+        //            }
+        //        }
+        //    }
 
-            if (validRequest)
-                return View(list);
+        //    if (validRequest)
+        //        return View(list);
 
-            return Content("This page has been expired!");
+        //    return Content("This page has been expired!");
 
-        }
+        //}
 
-        public async Task<ActionResult> PatientAction(List<SchedulingCustomModel> list, int actionId, string status, int patientId, int physicianId)
-        {
-            var success = false;
-            //get the Physician Details by Current Physician ID.
-            var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
-            var validRequest = objPhysician != null && objPhysician.UserId > 0;
-            if (validRequest)
-            {
-                //get the Sender's mail address of current User.
-                var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
+        //public async Task<ActionResult> PatientAction(List<SchedulingCustomModel> list, int actionId, string status, int patientId, int physicianId)
+        //{
+        //    var success = false;
+        //    //get the Physician Details by Current Physician ID.
+        //    var objPhysician = _uService.GetPhysicianById(Convert.ToInt32(physicianId));
+        //    var validRequest = objPhysician != null && objPhysician.UserId > 0;
+        //    if (validRequest)
+        //    {
+        //        //get the Sender's mail address of current User.
+        //        var email = _uService.GetUserEmailByUserId(Convert.ToInt32(objPhysician.UserId));
 
-                success = await Helpers.SendAppointmentNotification(list, email,
-                    Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician), patientId, Convert.ToInt32(physicianId), 2);
+        //        success = await Helpers.SendAppointmentNotification(list, email,
+        //            Convert.ToString((int)SchedularNotificationTypes.appointmentapprovaltophysician), patientId, Convert.ToInt32(physicianId), 2);
 
-                //If Success, Update the Scheduling list with the status 'Confirmed' and delete the verification token.
-                if (success)
-                {
-                    list.ForEach(a =>
-                    {
-                        a.Status = status;
-                        a.ExtValue4 = string.Empty;
-                        a.ModifiedBy = patientId;
-                        a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
-                    });
+        //        //If Success, Update the Scheduling list with the status 'Confirmed' and delete the verification token.
+        //        if (success)
+        //        {
+        //            list.ForEach(a =>
+        //            {
+        //                a.Status = status;
+        //                a.ExtValue4 = string.Empty;
+        //                a.ModifiedBy = patientId;
+        //                a.ModifiedDate = Helpers.GetInvariantCultureDateTime();
+        //            });
 
-                    success = _schService.UpdateSchedulingEvents(list);
-                }
-            }
-            return Json(success ? 1 : 0, JsonRequestBehavior.AllowGet);
-        }
+        //            success = _schService.UpdateSchedulingEvents(list);
+        //        }
+        //    }
+        //    return Json(success ? 1 : 0, JsonRequestBehavior.AllowGet);
+        //}
 
         #region Telerik Schedular Methods ---Just for testing Purposes
         [AllowAnonymous]
@@ -3811,23 +3770,23 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="roomId">The room identifier.</param>
         /// <returns></returns>
-        public JsonResult GetDepartmentNameByRoomId(int roomId)
-        {
-            var departmentName = _fsService.GetParentNameByFacilityStructureId(roomId);
-            return Json(departmentName, JsonRequestBehavior.AllowGet);
-        }
+        //public JsonResult GetDepartmentNameByRoomId(int roomId)
+        //{
+        //    var departmentName = _fsService.GetParentNameByFacilityStructureId(roomId);
+        //    return Json(departmentName, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the facility rooms.
         /// </summary>
         /// <param name="coporateId">The coporate identifier.</param>
         /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        public JsonResult GetFacilityRooms(int coporateId, int facilityId)
-        {
-            var facilityDepartmentList = _fsService.GetFacilityRooms(coporateId, facilityId.ToString());
-            return Json(facilityDepartmentList, JsonRequestBehavior.AllowGet);
-        }
+        ///// <returns></returns>
+        //public JsonResult GetFacilityRooms(int coporateId, int facilityId)
+        //{
+        //    var facilityDepartmentList = _fsService.GetFacilityRooms(coporateId, facilityId.ToString());
+        //    return Json(facilityDepartmentList, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the facility phycisian.
@@ -3863,11 +3822,11 @@ namespace BillingSystem.Controllers
         /// <param name="facilityid">The facilityid.</param>
         /// <param name="deptid">The deptid.</param>
         /// <returns></returns>
-        public ActionResult ValidateDepartmentRooms(string facilityid, int deptid)
-        {
-            var lst = _fsService.GetDepartmentRooms(deptid, facilityid);
-            return Json(lst.Count > 0, JsonRequestBehavior.AllowGet);
-        }
+        //public ActionResult ValidateDepartmentRooms(string facilityid, int deptid)
+        //{
+        //    var lst = _fsService.GetDepartmentRooms(deptid, facilityid);
+        //    return Json(lst.Count > 0, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the physicians appt types.
@@ -3875,11 +3834,11 @@ namespace BillingSystem.Controllers
         /// <param name="facilityid">The facilityid.</param>
         /// <param name="deptid">The deptid.</param>
         /// <returns></returns>
-        public ActionResult GetPhysiciansApptTypes(string facilityid, int deptid)
-        {
-            var lst = _fsService.GetDepartmentAppointmentTypes(deptid, facilityid);
-            return Json(lst, JsonRequestBehavior.AllowGet);
-        }
+        //public ActionResult GetPhysiciansApptTypes(string facilityid, int deptid)
+        //{
+        //    var lst = _fsService.GetDepartmentAppointmentTypes(deptid, facilityid);
+        //    return Json(lst, JsonRequestBehavior.AllowGet);
+        //}
 
         /// <summary>
         /// Gets the physician by facility.
@@ -4231,17 +4190,17 @@ namespace BillingSystem.Controllers
             return result ? 1 : 0;
         }
 
-        [CustomAuth]
-        public ActionResult GetCountriesWithDefault()
-        {
-            var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
-            var defaultCountry = Helpers.GetDefaultCountryCode;
+        //[CustomAuth]
+        //public ActionResult GetCountriesWithDefault()
+        //{
+        //    var list = _cService.GetCountryWithCode().OrderBy(x => x.CountryName);
+        //    var defaultCountry = Helpers.GetDefaultCountryCode;
 
-            //var countryId = defaultCountry > 0 ? list.Where(a => a.CodeValue == Convert.ToString(defaultCountry))
-            //    .Select(s => s.CountryID).FirstOrDefault() : 0;
-            var jsonData = new { list, defaultCountry };
-            return Json(jsonData);
-        }
+        //    //var countryId = defaultCountry > 0 ? list.Where(a => a.CodeValue == Convert.ToString(defaultCountry))
+        //    //    .Select(s => s.CountryID).FirstOrDefault() : 0;
+        //    var jsonData = new { list, defaultCountry };
+        //    return Json(jsonData);
+        //}
 
 
         public JsonResult CalculateAgeInYears(DateTime dValue)

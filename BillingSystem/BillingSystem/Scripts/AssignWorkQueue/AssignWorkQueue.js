@@ -10,7 +10,7 @@ function BindRuleEditorUsersDropdown() {
     var selector = $(".ddlUsers");
     $.ajax({
         type: "POST",
-        url: '/Home/GetRuleEditorUsers',
+        url: '/Security/GetRuleEditorUsers',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

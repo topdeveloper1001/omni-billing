@@ -571,7 +571,7 @@ function BindCountryData(ddlSelector, hdSelector) {
     $.ajax({
         cache: false,
         type: "POST",
-        url: homeUrl + "GetCountriesWithDefault",
+        url: "/Insurance/GetCountriesWithDefault",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -649,7 +649,7 @@ function GetCities(id, ddlSelector, hdSelector) {
     if (id != '') {
         $.ajax({
             type: "POST",
-            url: homeUrl + "GetCitiesByStateId",
+            url: "/BillingSystemParameters/GetCitiesByStateId",
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -693,7 +693,7 @@ function BindCountryDataWithCountryCode(selector, hiddenFieldSelector, lblSelect
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetCountriesWithDefault",
+        url: "/Insurance/GetCountriesWithDefault",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1017,7 +1017,7 @@ function BindFacilities(selector, selectedId) {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetFacilitiesDropdownData",
+        url: "/Facility/GetFacilitiesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1166,7 +1166,7 @@ function BindCorporates(selector, selectedId) {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetCorporatesDropdownData",
+        url: "/RoleSelection/GetCorporatesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -3250,7 +3250,7 @@ function BindDashboardFacilities(selector, selectedId) {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetFacilitiesDropdownData",
+        url:  "/Facility/GetFacilitiesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -6916,7 +6916,7 @@ function BindFacilitiesWithoutCorporate(selector, selectedId) {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetFacilitiesWithoutCorporateDropdownData",
+        url: "/Facility/GetFacilitiesWithoutCorporateDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7162,7 +7162,7 @@ function BindAndSetDefaultMonth(category, fId, ddlYearSelector, ddlMonthSelector
     });
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetMonthsData",
+        url: "/IndicatorDataCheckList/GetMonthsData",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7441,7 +7441,7 @@ function BindFacilitiesDropdownDataWithFacilityNumbers(ddlSelector, hdSelector) 
     var corporateid = $("#ddlCorporate").val() == null ? '6' : $("#ddlCorporate").val();
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetFacilitiesDropdownDataWithFacilityNumber",
+        url: "/Facility/GetFacilitiesDropdownDataWithFacilityNumber",
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         data: JSON.stringify({ corporateId: corporateid }),
@@ -7615,7 +7615,7 @@ function SaveTableSet(typeId, allSelected) {
         });
         $.ajax({
             type: "POST",
-            url: '/Home/CreateNewCodeSet',
+            url: '/BillingSystemParameters/CreateNewCodeSet',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

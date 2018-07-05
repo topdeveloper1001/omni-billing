@@ -666,7 +666,7 @@ namespace BillingSystem.Controllers
                 PatientId = patientId,
                 Email = email,
                 Subject = ResourceKeyValues.GetKeyValue("verificationemailsubject"),
-                VerificationLink = "/Home/Verify",
+                VerificationLink = "/Login/Verify",
                 MessageBody = msgBody
             };
             //var status = MailHelper.SendMail(emailInfo);

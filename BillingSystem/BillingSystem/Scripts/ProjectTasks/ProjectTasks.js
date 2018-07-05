@@ -189,7 +189,7 @@ function BindFacilityUsers(facilityId) {
     //    BindDropdownData(data, "#ddlUsersInProject", "");
     //    BindDropdownData(data, "#ddlUsersInProjectTasks", "");
     //});
-    $.post("/Home/GetUsersByDefaultCorporateId", {}, function (data) {
+    $.post("/Security/GetUsersByDefaultCorporateId", {}, function (data) {
         data.sort(SortByName);
         BindDropdownData(data, "#ddlUsers", "");
         BindDropdownData(data, "#ddlUsersInProject", "");

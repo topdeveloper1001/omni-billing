@@ -166,7 +166,7 @@ function BindKPIDropdownData() {
 
 ///---------------Methods not in use--------------
 function BindResponsibleUsers() {
-    $.getJSON("/Home/GetNonAdminUsersByCorporate", null, function (data) {
+    $.getJSON("/Security/GetNonAdminUsersByCorporate", null, function (data) {
         BindDropdownData(data, "#ddlOwnership", "");
     });
 }
@@ -218,7 +218,7 @@ function BindFacilitiesInExeKpi(selector, selectedId) {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesDropdownData",
+        url: "/Facility/GetFacilitiesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

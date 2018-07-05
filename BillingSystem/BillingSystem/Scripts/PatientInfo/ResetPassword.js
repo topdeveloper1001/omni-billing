@@ -37,7 +37,7 @@ function UpdatePassword() {
             EmriateId: $("#txtEmirateId").val(),
             PatientId: patientId
         };
-        $.post("/Home/ResetUserPassword", jsonData, function(data) {
+        $.post("/Login/ResetUserPassword", jsonData, function(data) {
             var message = data.message != '' ? data.message : "Password deatils Send Successfully";
             if (data.error == "") {
                 ShowMessage(message, "Success", "success", true);

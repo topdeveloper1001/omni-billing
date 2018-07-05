@@ -21,7 +21,7 @@ var GetFacilityRooms = function () {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilityRooms",
+        url: "/FacilityStructure/GetFacilityRooms",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

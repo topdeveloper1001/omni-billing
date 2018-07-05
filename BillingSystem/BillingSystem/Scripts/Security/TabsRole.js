@@ -200,7 +200,7 @@ function BindCorporatesDataInTabRole(selector) {
     //Bind Corporates
     $.ajax({
         type: "POST",
-        url: "/Home/GetCorporatesDropdownData",
+        url: "/RoleSelection/GetCorporatesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -227,7 +227,7 @@ function BindFacilityDropdownDataInTabRole() {
     });
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesbyCorporate",
+        url: "/Facility/GetFacilitiesbyCorporate",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

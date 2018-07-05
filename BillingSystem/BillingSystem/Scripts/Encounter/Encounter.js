@@ -796,7 +796,7 @@ function GetFacilityName(facilityNumber) {
     $.ajax({
         type: "POST",
         contentType: "application/json; charset=utf-8",
-        url: "/Home/GetFacilityNameById",
+        url: "/Facility/GetFacilityNameById",
         data: jsonData,
         dataType: "json",
         beforeSend: function () { },

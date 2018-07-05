@@ -17,15 +17,13 @@ namespace BillingSystem.Controllers
     public class GlobalCodeController : BaseController
     {
         private readonly IUsersService _uService;
-        private readonly IFacilityService _fService;
-        private readonly IGlobalCodeService _service;
+         private readonly IGlobalCodeService _service;
         private readonly IGlobalCodeCategoryService _gcService;
 
-        public GlobalCodeController(IUsersService uService, IFacilityService fService, IGlobalCodeService service, IGlobalCodeCategoryService gcService)
+        public GlobalCodeController(IUsersService uService, IGlobalCodeService service, IGlobalCodeCategoryService gcService)
         {
             _uService = uService;
-            _fService = fService;
-            _service = service;
+             _service = service;
             _gcService = gcService;
         }
 
@@ -1078,39 +1076,39 @@ namespace BillingSystem.Controllers
             }
         }
 
-        public ActionResult GetFacilitiesDropdownDataWithFacilityNumber()
-        {
-            var cId = Helpers.GetDefaultCorporateId();
-            var facilityNumber = Helpers.GetDefaultFacilityNumber();
-                var facilities = _fService.GetFacilities(cId);
-                if (facilities.Count > 0)
-                {
-                    var list = new List<SelectListItem>();
-                    var roleId = Helpers.GetDefaultRoleId();
-                    if (Convert.ToInt32(roleId) != 40)
-                    {
-                        var item = facilities.FirstOrDefault(f => f.FacilityNumber.Equals(facilityNumber));
-                        if (item != null)
-                        {
-                            list.Add(new SelectListItem
-                            {
-                                Text = item.FacilityName,
-                                Value = item.FacilityNumber,
-                            });
-                        }
-                    }
-                    else
-                    {
-                        list.AddRange(facilities.Select(item => new SelectListItem
-                        {
-                            Text = item.FacilityName,
-                            Value = item.FacilityNumber,
-                        }));
-                    }
-                    return Json(list, JsonRequestBehavior.AllowGet);
-                }
-            return Json(null);
-        }
+        //public ActionResult GetFacilitiesDropdownDataWithFacilityNumber()
+        //{
+        //    var cId = Helpers.GetDefaultCorporateId();
+        //    var facilityNumber = Helpers.GetDefaultFacilityNumber();
+        //        var facilities = _fService.GetFacilities(cId);
+        //        if (facilities.Count > 0)
+        //        {
+        //            var list = new List<SelectListItem>();
+        //            var roleId = Helpers.GetDefaultRoleId();
+        //            if (Convert.ToInt32(roleId) != 40)
+        //            {
+        //                var item = facilities.FirstOrDefault(f => f.FacilityNumber.Equals(facilityNumber));
+        //                if (item != null)
+        //                {
+        //                    list.Add(new SelectListItem
+        //                    {
+        //                        Text = item.FacilityName,
+        //                        Value = item.FacilityNumber,
+        //                    });
+        //                }
+        //            }
+        //            else
+        //            {
+        //                list.AddRange(facilities.Select(item => new SelectListItem
+        //                {
+        //                    Text = item.FacilityName,
+        //                    Value = item.FacilityNumber,
+        //                }));
+        //            }
+        //            return Json(list, JsonRequestBehavior.AllowGet);
+        //        }
+        //    return Json(null);
+        //}
         #endregion
 
         #region Dashboard Sub Categories

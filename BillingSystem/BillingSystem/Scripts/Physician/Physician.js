@@ -384,7 +384,7 @@ var lunchTimeFunction = function (currentDateTime) {
 function BindFacilityDepartments(selector, hidValueSelector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilityDeapartments",
+        url: "/Login/GetFacilityDeapartments",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

@@ -4875,7 +4875,7 @@ var ValidateDepartmentRooms = function (e) {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/ValidateDepartmentRooms",
+        url: "/FacilityStructure/ValidateDepartmentRooms",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -4900,7 +4900,7 @@ var BindPhysiciansApptTypes = function (fid, deptid) {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetPhysiciansApptTypes",
+        url: "/FacilityStructure/GetPhysiciansApptTypes",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -5600,7 +5600,7 @@ var BindDepartmentRooms = function (deptIds) {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetDepartmentRooms",
+        url: "/FacilityStructure/GetDepartmentRooms",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",
@@ -5802,7 +5802,7 @@ var BindLocationsInSchedular = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/GetFaciltyListTreeView",
+        url: "/Facility/GetFaciltyListTreeView",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",
@@ -5888,7 +5888,7 @@ var BindFacilityRooms = function () {
     $.ajax({
         cache: false,
         type: "POST",
-        url: "/Home/LoadFacilityRoomsDataCustom",
+        url: "/FacilityStructure/LoadFacilityRoomsDataCustom",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "html",
@@ -5949,7 +5949,7 @@ var LoadSchedulngData = function () {
 function BindFacility(selector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesDropdownDataOnScheduler",
+        url: "/Facility/GetFacilitiesDropdownDataOnScheduler",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

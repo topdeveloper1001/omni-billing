@@ -87,7 +87,7 @@ function VerifyAndSavePatientLoginDetails(showMessage) {
                 CodeValue: $("#CodeValue").val(),
                 NewCodeValue: $("#txtCodeValue").val()
             };
-            $.post("/Home/SavePatientLoginDetails", jsonData, function (data) {
+            $.post("/PatientInfo/SavePatientLoginDetails", jsonData, function (data) {
                 if (data.Status != -1) {
                     if ($("#Id").val() > 0 && showMessage) {
                         ShowMessage("Records Saved Successfully!", "Success", "success", true);

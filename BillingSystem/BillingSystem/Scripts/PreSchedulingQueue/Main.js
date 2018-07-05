@@ -168,7 +168,7 @@ var BindAppointmentAvailability = function () {
 function BindFacility(selector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesDropdownDataOnScheduler",
+        url: "/Facility/GetFacilitiesDropdownDataOnScheduler",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

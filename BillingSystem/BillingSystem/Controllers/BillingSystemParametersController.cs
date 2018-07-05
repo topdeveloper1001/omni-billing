@@ -3,17 +3,23 @@ using BillingSystem.Common;
 using System.Web.Mvc;
 using BillingSystem.Model;
 using BillingSystem.Bal.Interfaces;
+using System;
 
 namespace BillingSystem.Controllers
 {
     public class BillingSystemParametersController : BaseController
     {
         private readonly IBillingSystemParametersService _service;
+        private readonly IBillActivityService _baService;
+        private readonly ICityService _ctService;
 
-        public BillingSystemParametersController(IBillingSystemParametersService service)
+        public BillingSystemParametersController(IBillingSystemParametersService service, IBillActivityService baService, ICityService ctService)
         {
             _service = service;
+            _baService = baService;
+            _ctService = ctService;
         }
+
 
         /// <summary>
         /// Get the details of the BillingSystemParameters View in the Model BillingSystemParameters such as BillingSystemParametersList, list of countries etc.
@@ -117,6 +123,53 @@ namespace BillingSystem.Controllers
 
             //Pass the ActionResult with the current BillingSystemParametersViewModel object as model to PartialView BillingSystemParametersAddEdit
             return Json(jsonResult, JsonRequestBehavior.AllowGet);
+
+        }
+        public JsonResult CreateNewCodeSet(string tableNumber, string[] selectedCodes, bool isAll, string typeId, bool forExisting)
+        {
+            if (!string.IsNullOrEmpty(tableNumber))
+            {
+                var isExists = !forExisting && CheckIfDuplicateTableSet(tableNumber, typeId, 0);
+
+                if (!isExists)
+                {
+                    selectedCodes = isAll ? new[] { "0" } : selectedCodes;
+
+                    if (!isAll && (selectedCodes == null || selectedCodes.Length == 0))
+                        return Json("-3", JsonRequestBehavior.AllowGet);
+
+                    var saveserviceCodeData = _service.SaveRecordsFortableNumber(tableNumber, selectedCodes, typeId);
+                    if (saveserviceCodeData && !forExisting)
+                    {
+                        _service.SaveTableNumber(new BillingCodeTableSet
+                        {
+                            Id = 0,
+                            TableNumber = tableNumber,
+                            CodeTableType = typeId,
+                            CreatedBy = Helpers.GetLoggedInUserId(),
+                            CreatedDate = Helpers.GetInvariantCultureDateTime()
+                        });
+                    }
+                    return Json(saveserviceCodeData);
+                }
+                return Json("-2", JsonRequestBehavior.AllowGet);
+
+            }
+            return Json("-1", JsonRequestBehavior.AllowGet);
+        }
+        private bool CheckIfDuplicateTableSet(string tableNumber, string typeId, int id)
+        {
+            var isExists = false;
+            isExists = _baService.CheckForDuplicateTableSet(id, tableNumber, typeId);
+
+            return isExists;
+        }
+
+        [AcceptVerbs(HttpVerbs.Post)]
+        public ActionResult GetCitiesByStateId(string stateId)
+        {
+            var list = _ctService.GetCityListByStateId(Convert.ToInt32(stateId));
+            return Json(list);
 
         }
     }

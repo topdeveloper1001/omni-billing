@@ -115,7 +115,7 @@ function BindCorporateDataInHolidayPlanner() {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: "/Home/GetCorporatesDropdownData",
+        url: "/RoleSelection/GetCorporatesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -136,7 +136,7 @@ function BindFacilityDropdownFilterInHolidayPlanner(cId) {
     if (cId > 0) {
         $.ajax({
             type: "POST",
-            url: "/Home/GetFacilitiesbyCorporate",
+            url: "/Facility/GetFacilitiesbyCorporate",
             async: true,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -198,7 +198,7 @@ function BindItems() {
 function BindFacilityDeapartments(selector, hidValueSelector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilityDeapartments",
+        url: "/Login/GetFacilityDeapartments",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

@@ -3,7 +3,7 @@ $(function () {
     $("#globalCodeForm").validationEngine();
     category = $("#GlobalCodeCategoryValue").val();
     //BindFacilitiesDropdownDataWithFacilityNumber("#ddlFacility", "#FacilityNumber");
-    $.getJSON("/GlobalCode/GetFacilitiesDropdownDataWithFacilityNumber", {}, function (data) {
+    $.getJSON("/Facility/GetFacilitiesDropdownDataWithFacilityNumber", {}, function (data) {
         BindDropdownData(data, "#ddlFacility", "#FacilityNumber");
     });
 

@@ -13,7 +13,7 @@
         $.ajax({
             type: "POST",
             contentType: "application/json; charset=utf-8",
-            url: "/Home/ChangeNewPassword",
+            url: "/Security/ChangeNewPassword",
             data: jsonData,
             dataType: "html",
             success: function (data) {

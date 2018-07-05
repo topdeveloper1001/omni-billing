@@ -24,7 +24,7 @@ function LoadData() {
 function BindPatients() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetPatientList',
+        url: '/Login/GetPatientList',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -203,7 +203,7 @@ function BindMonthInPayment() {
 function GetBillHeaderListByEncounterId(eNumber) {
     $.ajax({
         type: "POST",
-        url: '/Home/GetBillHeaderListByEncounterId',
+        url: '/BillHeader/GetBillHeaderListByEncounterId',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

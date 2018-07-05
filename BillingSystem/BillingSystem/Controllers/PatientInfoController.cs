@@ -1510,7 +1510,7 @@ namespace BillingSystem.Controllers
                 PatientId = patientId,
                 Email = email,
                 Subject = ResourceKeyValues.GetKeyValue("verificationemailsubject"),
-                VerificationLink = "/Home/Verify",
+                VerificationLink = "/Login/Verify",
                 MessageBody = msgBody
             };
             var status = await MailHelper.SendEmailAsync(emailInfo);
@@ -1955,13 +1955,7 @@ namespace BillingSystem.Controllers
             return message;
         }
 
-
-
-
-
-
-
-
+         
 
         //  -----------------Methods Not In Use------------------------------------------------------------------------------------
 

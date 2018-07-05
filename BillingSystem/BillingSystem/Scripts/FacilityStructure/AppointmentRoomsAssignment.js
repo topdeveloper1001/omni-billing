@@ -292,7 +292,7 @@ function GetDepartmentOnRoomSelection(roomId) {
     if (roomId > 0) {
         $.ajax({
             type: "POST",
-            url: "/Home/GetDepartmentNameByRoomId",
+            url: "/FacilityStructure/GetDepartmentNameByRoomId",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             async: false,

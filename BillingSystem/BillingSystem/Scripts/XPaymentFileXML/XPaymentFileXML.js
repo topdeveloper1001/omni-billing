@@ -5,7 +5,7 @@
 function ViewXMLFileData(id) {
     $.ajax({
         type: "POST",
-        url: '/Home/GetBillHeaderListByEncounterId',
+        url: '/BillHeader/GetBillHeaderListByEncounterId',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

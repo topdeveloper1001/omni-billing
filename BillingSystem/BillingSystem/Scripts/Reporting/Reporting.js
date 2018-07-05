@@ -699,7 +699,7 @@ function BindUsers() {
     if (userId != null) {
         $.ajax({
             type: "POST",
-            url: '/Home/GetUsersByCorporateId',
+            url: '/Security/GetUsersByCorporateId',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -1354,7 +1354,7 @@ function BindFacilityDropdown() {
         if (cId > 0) {
             $.ajax({
                 type: "POST",
-                url: "/Home/GetFacilitiesbyCorporate",
+                url: "/Facility/GetFacilitiesbyCorporate",
                 async: true,
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",

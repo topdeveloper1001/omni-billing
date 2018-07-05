@@ -322,7 +322,7 @@ function BindServiceMainCategories() {
 function BindFacilitiesDropdownDataWithFacilityNumber(ddlSelector, hdSelector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilitiesDropdownDataWithFacilityNumber",
+        url: "/Facility/GetFacilitiesDropdownDataWithFacilityNumber",
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         data: JSON.stringify({ corporateId: $("#ddlCorporate").val() }),

@@ -1220,5 +1220,128 @@ namespace BillingSystem.Controllers
         }
 
         #endregion
+
+        public ActionResult ChangeNewPassword(String newPassword)
+        {
+            var userid = Helpers.GetLoggedInUserId();
+
+            var isExists = _uService.CheckExistsPassword(newPassword, userid);
+            if (isExists)
+                return Json("-1");
+
+            var currentUser = _uService.GetUserById(userid);
+            currentUser.Password = newPassword;
+            var isupdated = _uService.AddUpdateUser(currentUser, 0);
+            var auditlogObj = new AuditLog
+            {
+                AuditLogID = 0,
+                UserId = userid,
+                CreatedDate = Helpers.GetInvariantCultureDateTime(),
+                TableName = "Users",
+                FieldName = "Password",
+                PrimaryKey = 0,
+                OldValue = string.Empty,
+                NewValue = string.Empty,
+                CorporateId = Helpers.GetSysAdminCorporateID(),
+                FacilityId = Helpers.GetDefaultFacilityId()
+            };
+            _adService.AddUptdateAuditLog(auditlogObj);
+            return Json(isupdated > 0);
+        }
+        public ActionResult GetUsersByCorporateId()
+        {
+            var list = new List<DropdownListData>();
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+            var usersList = _uService.GetUsersByCorporateandFacilityId(corporateId, facilityId).OrderBy(x => x.FirstName).ToList();
+            list.AddRange(usersList.Select(item => new DropdownListData
+            {
+                Text =
+                                                               item.FirstName + " " + item.LastName,
+                Value = item.UserID.ToString(),
+            }));
+
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult GetUsersByFacilityId(int facilityId)
+        {
+            var finalList = new List<DropdownListData>();
+            var list = _uService.GetAllUsersByFacilityId(facilityId);
+            if (list.Count > 0)
+            {
+                finalList.AddRange(list.Select(item => new DropdownListData
+                {
+
+                    Text = item.Name,
+                    Value = Convert.ToString(item.CurrentUser.UserID)
+                }));
+            }
+
+            return Json(finalList, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult GetUsers()
+        {
+            var users = new List<DropdownListData>();
+
+            var result = _uService.GetUsersByCorporateIdFacilityId(Helpers.GetDefaultCorporateId(), Helpers.GetDefaultFacilityId());
+            if (result.Count > 0)
+            {
+                users.AddRange(result.Select(item => new DropdownListData
+                {
+                    Text = item.Name,
+                    Value = Convert.ToString(item.CurrentUser.UserID),
+                    //ExternalValue1 = Convert.ToString(item.CurrentUser.UserType)
+                }));
+            }
+
+            return Json(users, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult GetUsersByDefaultCorporateId()
+        {
+            var list = new List<DropdownListData>();
+            var corporateId = Helpers.GetDefaultCorporateId();
+            var facilityId = Helpers.GetLoggedInUserIsAdmin() ? 0 : Helpers.GetDefaultFacilityId();
+            var usersList = _uService.GetUsersByCorporateIdFacilityId(corporateId, facilityId);
+            list.AddRange(usersList.Select(item => new DropdownListData
+            {
+                Text = item.Name,
+                Value = item.CurrentUser.UserID.ToString(),
+            }));
+
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult GetNonAdminUsersByCorporate()
+        {
+            var cId = Helpers.GetSysAdminCorporateID();
+            var list = new List<SelectListItem>();
+            var users = _uService.GetNonAdminUsersByCorporate(cId);
+            if (users.Any())
+            {
+                list.AddRange(users.Select(item => new SelectListItem
+                {
+                    Text = string.Format("{0} {1}", item.FirstName, item.LastName),
+                    Value = Convert.ToString(item.UserID)
+                }));
+            }
+
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult GetRuleEditorUsers()
+        {
+            var list = new List<DropdownListData>();
+            var corporateId = Helpers.GetSysAdminCorporateID();
+            var facilityId = Helpers.GetDefaultFacilityId();
+
+            var usersList = _uService.GetBillEditorUsers(corporateId, facilityId);
+            list.AddRange(usersList.Select(item => new DropdownListData
+            {
+                Text = item.Name + " (" + item.RoleName + ")",
+                Value = item.UserId.ToString(),
+            }));
+
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
     }
 }

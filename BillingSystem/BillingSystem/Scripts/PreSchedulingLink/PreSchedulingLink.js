@@ -165,7 +165,7 @@ function BindFacilities() {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetFacilitiesbyCorporate',
+        url: '/Facility/GetFacilitiesbyCorporate',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

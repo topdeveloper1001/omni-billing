@@ -237,7 +237,7 @@ function ClearRuleMasterForm() {
 function BindCorporates() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetCorporatesDropdownData',
+        url: '/RoleSelection/GetCorporatesDropdownData',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -260,7 +260,7 @@ function BindFacilities() {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetFacilitiesbyCorporate',
+        url: '/Facility/GetFacilitiesbyCorporate',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

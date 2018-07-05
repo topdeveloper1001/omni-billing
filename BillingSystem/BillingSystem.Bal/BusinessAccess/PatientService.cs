@@ -18,7 +18,14 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IRepository<PatientInfo> _repository;
         private readonly IRepository<FavoriteClinician> _favrepository;
         private readonly BillingEntities _context;
-         
+
+        public PatientService(IRepository<PatientInfo> repository, IRepository<FavoriteClinician> favrepository, BillingEntities context)
+        {
+            _repository = repository;
+            _favrepository = favrepository;
+            _context = context;
+        }
+
         public async Task<UserDto> SavePatientDetails(PatientDto p)
         {
             p.Password = EncryptDecrypt.GetEncryptedData(p.Password, string.Empty).Trim();

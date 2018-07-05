@@ -3294,6 +3294,7 @@
     <Content Include="Views\TechnicalSpecifications\TechnicalSpecificationsMain.cshtml" />
     <Content Include="Views\TechnicalSpecifications\UserControls\_TechnicalSpecificationsAddEdit.cshtml" />
     <Content Include="Views\TechnicalSpecifications\UserControls\_TechnicalSpecificationsList.cshtml" />
+    <Content Include="Views\Login\UserResetPassword.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -5188,7 +5189,6 @@
     <Content Include="Views\ExternalDashboard\UserControls\_FinancialKpiListInProjects.cshtml" />
     <Content Include="Views\ExternalDashboard\UserControls\_IndiKpiList.cshtml" />
     <Content Include="Views\Home\welcome.cshtml" />
-    <Content Include="Views\Home\UserResetPassword.cshtml" />
     <Content Include="Views\Home\ForgotPassword.cshtml" />
     <Content Include="Views\GlobalCode\IndicatorSettings.cshtml" />
     <Content Include="Views\ExternalDashboard\ExecutiveDashboardV1.cshtml" />

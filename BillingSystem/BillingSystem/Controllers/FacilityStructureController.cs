@@ -25,8 +25,9 @@ namespace BillingSystem.Controllers
         private readonly IEquipmentService _eqService;
         private readonly IDeptTimmingService _dtimService;
         private readonly IServiceCodeService _scService;
+        private readonly IPhysicianService _phService;
 
-        public FacilityStructureController(IFacilityStructureService service, IEncounterService eService, IPatientInfoService piService, IBedMasterService bedService, IBedRateCardService brService, IAppointmentTypesService aService, IFacilityService fService, IGlobalCodeService gService, IEquipmentService eqService, IDeptTimmingService dtimService, IServiceCodeService scService)
+        public FacilityStructureController(IFacilityStructureService service, IEncounterService eService, IPatientInfoService piService, IBedMasterService bedService, IBedRateCardService brService, IAppointmentTypesService aService, IFacilityService fService, IGlobalCodeService gService, IEquipmentService eqService, IDeptTimmingService dtimService, IServiceCodeService scService, IPhysicianService phService)
         {
             _service = service;
             _eService = eService;
@@ -39,6 +40,7 @@ namespace BillingSystem.Controllers
             _eqService = eqService;
             _dtimService = dtimService;
             _scService = scService;
+            _phService = phService;
         }
 
 
@@ -840,6 +842,102 @@ namespace BillingSystem.Controllers
 
             var obj = _scService.GetServiceCodeByCodeValue(bedType, Helpers.DefaultServiceCodeTableNumber);
             return Json(obj != null ? obj.ServiceCodePrice : 0, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult GetDepartmentsByFacility(int facilityId)
+        {
+            var list = new List<SelectListItem>();
+            var corporateUsers = new List<PhysicianCustomModel>();
+
+            var facilityDepartments = _service.GetFacilityDepartments(Helpers.GetSysAdminCorporateID(), facilityId.ToString());
+            if (facilityDepartments.Any())
+            {
+                list.AddRange(facilityDepartments.Select(item => new SelectListItem
+                {
+                    Text = string.Format(" {0} ", item.FacilityStructureName),
+                    Value = Convert.ToString(item.FacilityStructureId)
+                }));
+            }
+            var cId = Helpers.GetSysAdminCorporateID().ToString();
+            cId = facilityId == 0
+                ? cId
+                : Helpers.GetCorporateIdByFacilityId(Convert.ToInt32(facilityId)).ToString();
+            var isAdmin = Helpers.GetLoggedInUserIsAdmin();
+            var userid = Helpers.GetLoggedInUserId();
+            corporateUsers = _phService.GetCorporatePhysiciansList(Convert.ToInt32(cId), isAdmin, userid, Convert.ToInt32(facilityId));
+
+            var updatedList = new
+            {
+                deptList = list,
+                phyList = corporateUsers
+            };
+            return Json(updatedList, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult LoadFacilityDepartmentData(string facilityid)
+        {
+            // Get the facilities list
+            var cId = Helpers.GetSysAdminCorporateID();
+            var facilityDepartmentList = _service.GetFacilityDepartments(cId, facilityid);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityDepartmentListView);
+            return PartialView(viewpath, facilityDepartmentList);
+
+        }
+        public ActionResult LoadFacilityRoomsData(string facilityid)
+        {
+            // Get the facilities list
+            var cId = Helpers.GetSysAdminCorporateID();
+            var lst = _service.GetFacilityRooms(cId, facilityid);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
+            return PartialView(viewpath, lst);
+        }
+
+
+        /// <summary>
+        /// Loads the facility rooms data custom.
+        /// </summary>
+        /// <param name="facilityid">The facilityid.</param>
+        /// <returns></returns>
+        public ActionResult LoadFacilityRoomsDataCustom(string facilityid)
+        {
+            // Get the facilities list
+            var cId = Helpers.GetSysAdminCorporateID();
+            var facilityDepartmentList = _service.GetFacilityRoomsCustomModel(cId, facilityid);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
+            return PartialView(viewpath, facilityDepartmentList);
+        }
+
+        /// <summary>
+        /// Gets the department rooms.
+        /// </summary>
+        /// <param name="filters">The filters.</param>
+        /// <returns></returns>
+        public ActionResult GetDepartmentRooms(List<SchedularTypeCustomModel> filters)
+        {
+            var selectedDepartmentList = filters[0].DeptData;
+            var facilityid = filters[0].Facility;
+            //var deptIds = string.Join(",", selectedDepartmentList.Select(x => x.Id));
+            var facilityDepartmentList = _service.GetDepartmentRooms(selectedDepartmentList, facilityid);
+            var viewpath = string.Format("../Scheduler/{0}", PartialViews.FacilityRoomsListView);
+            return PartialView(viewpath, facilityDepartmentList);
+        }
+        public ActionResult ValidateDepartmentRooms(string facilityid, int deptid)
+        {
+            var lst = _service.GetDepartmentRooms(deptid, facilityid);
+            return Json(lst.Count > 0, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult GetPhysiciansApptTypes(string facilityid, int deptid)
+        {
+            var lst = _service.GetDepartmentAppointmentTypes(deptid, facilityid);
+            return Json(lst, JsonRequestBehavior.AllowGet);
+        }
+        public JsonResult GetFacilityRooms(int coporateId, int facilityId)
+        {
+            var facilityDepartmentList = _service.GetFacilityRooms(coporateId, facilityId.ToString());
+            return Json(facilityDepartmentList, JsonRequestBehavior.AllowGet);
+        }
+        public JsonResult GetDepartmentNameByRoomId(int roomId)
+        {
+            var departmentName = _service.GetParentNameByFacilityStructureId(roomId);
+            return Json(departmentName, JsonRequestBehavior.AllowGet);
         }
 
 

@@ -6,7 +6,7 @@
 function BindPatients() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetPatientList',
+        url: '/Login/GetPatientList',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

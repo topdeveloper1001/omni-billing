@@ -233,5 +233,24 @@ namespace BillingSystem.Controllers
             return Json(0);
             //return RedirectToAction("PatientSearch", "PatientSearch");
         }
+
+        public ActionResult GetCorporatesDropdownData()
+        {
+            var cId = Helpers.GetDefaultCorporateId();
+            var corpList = _cService.GetCorporateDDL(cId);
+            if (corpList != null)
+            {
+                var list = new List<SelectListItem>();
+                list.AddRange(corpList.Select(item => new SelectListItem
+                {
+                    Text = item.CorporateName,
+                    Value = item.CorporateID.ToString()
+                }));
+                return Json(list.OrderBy(x => x.Text));
+            }
+
+            return Json(null);
+        }
+
     }
 }

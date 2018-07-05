@@ -295,7 +295,7 @@ function BindCorporateDataInEquipment() {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url: "/Home/GetCorporatesDropdownData",
+        url: "/RoleSelection/GetCorporatesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -316,7 +316,7 @@ function BindFacilityDropdownFilterInEquipment(cId) {
     if (cId > 0) {
         $.ajax({
             type: "POST",
-            url: "/Home/GetFacilitiesbyCorporate",
+            url: "/Facility/GetFacilitiesbyCorporate",
             async: true,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -423,7 +423,7 @@ function ShowHideTextBox() {
 function BindFacilityDeapartments(selector, hidValueSelector) {
     $.ajax({
         type: "POST",
-        url: "/Home/GetFacilityDeapartments",
+        url: "/Login/GetFacilityDeapartments",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -481,7 +481,7 @@ function GetDepartmentOnRoomSelection(roomId) {
     if (roomId > 0) {
         $.ajax({
             type: "POST",
-            url: "/Home/GetDepartmentNameByRoomId",
+            url: "/FacilityStructure/GetDepartmentNameByRoomId",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             data: JSON.stringify({

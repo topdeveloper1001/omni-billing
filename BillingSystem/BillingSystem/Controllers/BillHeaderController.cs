@@ -875,5 +875,21 @@ namespace BillingSystem.Controllers
         }
 
         #endregion
+
+        public ActionResult GetBillHeaderListByEncounterId(int encounterId)
+        {
+            var list = new List<DropdownListData>();
+            var result = _service.GetBillHeaderModelListByEncounterId(encounterId);
+            if (result.Any())
+            {
+                list.AddRange(result.Select(item => new DropdownListData
+                {
+                    Text = item.BillNumber,
+                    Value = Convert.ToString(item.BillHeaderID)
+                }));
+            }
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
     }
 }

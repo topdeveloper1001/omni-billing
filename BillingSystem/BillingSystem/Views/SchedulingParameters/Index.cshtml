@@ -186,7 +186,7 @@
         /// <returns></returns>
         $.ajax({
             type: "POST",
-            url: "/Home/GetCorporatesDropdownData",
+            url: "/RoleSelection/GetCorporatesDropdownData",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             data: null,
@@ -204,7 +204,7 @@
     function BindFacilitiesDropdownDataWithFacilityId(ddlSelector, hdSelector) {
         $.ajax({
             type: "POST",
-            url: "/Home/GetFacilitiesDropdownData",
+            url: "/Facility/GetFacilitiesDropdownData",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             data: JSON.stringify({ corporateId: $("#CorporateId").val() }),

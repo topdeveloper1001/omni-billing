@@ -169,7 +169,7 @@ function BindUsersDropdown() {
     var selector = $(".ddlUsers");
     $.ajax({
         type: "POST",
-        url: '/Home/GetUsers',
+        url: '/Security/GetUsers',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
