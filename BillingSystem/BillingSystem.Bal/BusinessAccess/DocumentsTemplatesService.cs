@@ -252,10 +252,11 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public async Task<List<DocumentsTemplates>> GetPatientDocumentsList(int patientId)
         {
+            var defaultValue = 0;
             var sqlParams = new SqlParameter[5];
-            sqlParams[0] = new SqlParameter("@pFId", 0);
-            sqlParams[1] = new SqlParameter("@pCId", 0);
-            sqlParams[2] = new SqlParameter("@pUserId", 0);
+            sqlParams[0] = new SqlParameter("@pFId", defaultValue);
+            sqlParams[1] = new SqlParameter("@pCId", defaultValue);
+            sqlParams[2] = new SqlParameter("@pUserId", defaultValue);
             sqlParams[3] = new SqlParameter("@pPId", patientId);
             sqlParams[4] = new SqlParameter("@pExclusions", "profilepicture");
 

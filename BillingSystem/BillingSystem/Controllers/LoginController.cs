@@ -1,4 +1,5 @@
-﻿using BillingSystem.Bal.Interfaces;
+﻿using BillingSystem.Bal.BusinessAccess;
+using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
 using BillingSystem.Filters;
@@ -12,6 +13,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using Unity;
 
 namespace BillingSystem.Controllers
 {
@@ -32,7 +34,8 @@ namespace BillingSystem.Controllers
 
         public LoginController(IUsersService uService, IPatientLoginDetailService pldService
             , ILoginTrackingService ltService, ITabsService tService, IModuleAccessService maService, ISchedulingService sService
-            , IAppointmentTypesService atService)
+            , IAppointmentTypesService atService, IFacilityService fService, IPatientInfoService piService, IFacilityStructureService fsService
+            , IEncounterService eService)
         {
             _uService = uService;
             _pldService = pldService;
@@ -41,6 +44,10 @@ namespace BillingSystem.Controllers
             _maService = maService;
             _sService = sService;
             _atService = atService;
+            _eService = eService;
+            _fsService = fsService;
+            _fService = fService;
+            _piService = piService;
         }
 
         /// <summary>

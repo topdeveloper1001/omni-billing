@@ -12,6 +12,7 @@ using BillingSystem.Filters;
 using Unity;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Models;
+using BillingSystem.Bal.BusinessAccess;
 
 namespace BillingSystem
 {
@@ -62,8 +63,7 @@ namespace BillingSystem
             var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
             if (objSession != null)
             {
-                var container = UnityConfig.RegisterComponents();
-                var service = container.Resolve<ILoginTrackingService>();
+                var service = DependencyInjector.Retrieve<LoginTrackingService>();
                 service.UpdateLoginOutTime(objSession.UserId, Helpers.GetInvariantCultureDateTime());
             }
             Session.RemoveAll();

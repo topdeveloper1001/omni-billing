@@ -356,6 +356,7 @@ function ActiveEncounterCheck(patientId, encountertype) {
 }
 
 function ClearInfoForm() {
+    
     var patientId = $("#PatientId").length > 0 ? $("#PatientId").val() : 0;
     if (patientId > 0) {
         $('#divMoreInfo').hide();

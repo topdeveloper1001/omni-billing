@@ -758,7 +758,7 @@ function BindDiagnosisType(selector, hidValueSelector) {
 
 // changes by ashwani to get by patient ID
 function IsValidOrder(id) {
-    debugger;
+    
     var isValid = false;
     if ($("#divPhysicianOrder").html() != null) {
         isValid = jQuery("#divPhysicianOrder").validationEngine({ returnIsValid: true });

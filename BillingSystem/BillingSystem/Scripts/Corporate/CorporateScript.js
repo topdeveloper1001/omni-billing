@@ -228,7 +228,7 @@ function SaveCorporateAfterDuplicateCheck(id) {
         BillEditRuleTableNumber: ddlBillEditRuleTablSet
     });
     ajaxStartActive = false;
-    debugger;
+    
     $.ajax({
         type: "POST",
         url: '/Corporate/SaveCorporate',
@@ -237,7 +237,7 @@ function SaveCorporateAfterDuplicateCheck(id) {
         dataType: "json",
         data: jsonData,
         success: function (data) {
-            debugger;
+            
 
             if (data == "1") {
                 //$('#loader_event').hide();

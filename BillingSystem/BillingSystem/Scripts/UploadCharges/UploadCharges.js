@@ -1161,7 +1161,7 @@ function AddRoomCharges(encounterId, patientId, claimId) {
 
 //---- Diagnosis Section methods Starts
 function DiagnosisOnReady() {
-    debugger;
+    
     $("#diagnosisAddEdit").validationEngine();
     var isPrimary = $("#hdIsPrimary").val();
     SetValueInDiagnosisType(isPrimary);

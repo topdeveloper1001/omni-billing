@@ -266,8 +266,7 @@ namespace BillingSystem.Controllers
 
         public static void CreateDefaultCorporateItems(int cId, string cName)
         {
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<ICorporateService>();
+            var service = DependencyInjector.Retrieve<CorporateService>();
             service.CreateDefaultCorporateItem(cId, cName);
         }
 

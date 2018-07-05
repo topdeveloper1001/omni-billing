@@ -617,31 +617,6 @@ namespace BillingSystem.Controllers
             return Json(serviceCodeObj, JsonRequestBehavior.AllowGet);
         }
 
-        /// <summary>
-        /// Sets the billheader status.
-        /// </summary>
-        /// <param name="currentStatus">The current status.</param>
-        /// <returns></returns>
-        private static string SetBillheaderStatus(string currentStatus)
-        {
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IGlobalCodeService>();
-            var gcList = service.GetGCodesListByCategoryValue(Convert.ToString((int)GlobalCodeCategoryValue.BillHeaderStatus));
-            var newstatusval = gcList.FirstOrDefault(x => x.GlobalCodeName.Equals(currentStatus));
-            if (newstatusval != null)
-            {
-                var nextStatusval = newstatusval.ExternalValue2;
-                var nextstatusglobalcodeVal =
-                    gcList.SingleOrDefault(x => x.GlobalCodeName.Trim().Equals(nextStatusval.Trim()));
-                if (nextstatusglobalcodeVal != null)
-                {
-                    return nextstatusglobalcodeVal.GlobalCodeValue;
-                }
-                return string.Empty;
-            }
-            return string.Empty;
-        }
-
         #region Room Charges...
 
         /// <summary>

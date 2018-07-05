@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Unity;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Filters;
+using BillingSystem.Bal.BusinessAccess;
 
 namespace BillingSystem.Controllers
 {
@@ -136,24 +137,6 @@ namespace BillingSystem.Controllers
             // Just need to add the logic to save the performance time of the system in the DB.
         }
 
-        protected List<DropdownListData> GetGlobaCodesByCategories(IEnumerable<string> categories)
-        {
-
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IGlobalCodeService>();
-
-            return service.GetListByCategoriesRange(categories);
-        }
-
-        protected List<DropdownListData> GetDefaultFacilityList(int corporateId)
-        {
-
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IFacilityService>();
-
-            return service.GetFacilityDropdownData(corporateId, 0);
-        }
-
         /// <summary>
         /// Renders the partial view to string base.
         /// </summary>
@@ -185,83 +168,8 @@ namespace BillingSystem.Controllers
             }
         }
 
-
         #region Upload-Documents
-        public async Task<List<DocumentsTemplates>> Upload(long? userId, string gcValue)
-        {
-            var listOfDocs = new List<DocumentsTemplates>();
-            var cId = Helpers.GetSysAdminCorporateID();
-            var fId = Helpers.GetDefaultFacilityId();
-            var loggedInUser = Helpers.GetLoggedInUserId();
-            var filePath = string.Empty;
-
-
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IGlobalCodeService>();
-
-            filePath = await service.GetGlobalCodeNameAsync(gcValue, "80443");
-            filePath = string.Format(filePath, cId, fId, userId);
-            var list = new List<DocumentsTemplates>();
-
-            if (Session[SessionNames.Files.ToString()] != null)
-            {
-                var dirPath = Server.MapPath("~/" + filePath);
-
-                var files = Session[SessionNames.Files.ToString()] as HttpFileCollectionBase;
-                if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
-
-                for (int i = 0; i < files.Count; i++)
-                {
-                    var file = files[i];
-                    var fileName = Path.GetFileName(file.FileName);
-                    var path = Path.Combine(dirPath, fileName);
-                    var dbFilePath = filePath + fileName;
-                    file.SaveAs(path);
-                    list.Add(new DocumentsTemplates { FileName = fileName, FilePath = dbFilePath });
-                }
-                Session.Remove(SessionNames.Files.ToString());
-            }
-            return list;
-        }
-
-
-        public List<DocumentsTemplates> Upload1(long? userId, string gcValue)
-        {
-            var listOfDocs = new List<DocumentsTemplates>();
-            var cId = Helpers.GetSysAdminCorporateID();
-            var fId = Helpers.GetDefaultFacilityId();
-            var loggedInUser = Helpers.GetLoggedInUserId();
-            var filePath = string.Empty;
-
-
-            var container = UnityConfig.RegisterComponents();
-            var bal = container.Resolve<IGlobalCodeService>();
-
-            filePath = bal.GetNameByGlobalCodeValue(gcValue, "80443");
-            filePath = string.Format(filePath, cId, fId, userId);
-            var list = new List<DocumentsTemplates>();
-
-            if (Session[SessionNames.Files.ToString()] != null)
-            {
-                var dirPath = Server.MapPath("~/" + filePath);
-
-                var files = Session[SessionNames.Files.ToString()] as HttpFileCollectionBase;
-                if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
-
-                for (int i = 0; i < files.Count; i++)
-                {
-                    var file = files[i];
-                    var fileName = Path.GetFileName(file.FileName);
-                    var path = Path.Combine(dirPath, fileName);
-                    var dbFilePath = filePath + fileName;
-                    file.SaveAs(path);
-                    list.Add(new DocumentsTemplates { FileName = fileName, FilePath = dbFilePath });
-                }
-                Session.Remove(SessionNames.Files.ToString());
-            }
-            return list;
-        }
-
+        
 
         public int Delete(List<DocumentsTemplates> docs)
         {

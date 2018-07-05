@@ -2282,6 +2282,11 @@
     <Content Include="Plugins\ValidationEngine\js\languages\jquery.validationEngine-zh_TW.js" />
     <Content Include="Scripts\ActiveEncounter\ActiveEncounter.js" />
     <Content Include="Scripts\ActiveEncounter\UnclosedEncounters.js" />
+    <None Include="Scripts\jquery-3.3.1.intellisense.js" />
+    <Content Include="Scripts\jquery-3.3.1.js" />
+    <Content Include="Scripts\jquery-3.3.1.min.js" />
+    <Content Include="Scripts\jquery-3.3.1.slim.js" />
+    <Content Include="Scripts\jquery-3.3.1.slim.min.js" />
     <Content Include="Scripts\TechnicalSpecifications\TechnicalSpecificationsScript.js" />
     <Content Include="Scripts\Categories\CategoriesScript.js" />
     <Content Include="Scripts\AppointmentTypes\AppointmentTypesScript.js" />
@@ -2803,6 +2808,8 @@
     <Content Include="Scripts\jquery-1.7.2.min.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />
+    <Content Include="Scripts\jquery-3.3.1.min.map" />
+    <Content Include="Scripts\jquery-3.3.1.slim.min.map" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
     <Content Include="Scripts\jquery.validate.js" />
     <Content Include="Scripts\jquery.validate.min.js" />

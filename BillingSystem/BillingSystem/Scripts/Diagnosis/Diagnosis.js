@@ -815,7 +815,7 @@ function GetFavoriteDiagnosisData() {
 }
 
 function AddAsDiagnosis(codeid) {
-    debugger;
+    
 
     var txtPatientId = $("#hdPatientId").val();
     var txtEncounterId = GetEncounterIdInDiagnosis();

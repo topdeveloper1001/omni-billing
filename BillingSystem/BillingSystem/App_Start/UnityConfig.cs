@@ -6,6 +6,7 @@ using BillingSystem.Model;
 using System.Data.Entity;
 using System.Web.Mvc;
 using Unity;
+using Unity.Extension;
 using Unity.Injection;
 using Unity.Lifetime;
 using Unity.Mvc5;
@@ -168,11 +169,48 @@ namespace BillingSystem
                 return mapperConfig.CreateMapper();
             }));
 
-            container.RegisterType<DbContext, BillingEntities>(new PerThreadLifetimeManager());
+            container.RegisterType<DbContext, BillingEntities>();
 
             DependencyResolver.SetResolver(new UnityDependencyResolver(container));
-
+            DependencyInjector.AddExtension<DependencyOfDependencyExtension>();
             return container;
+        }
+    }
+
+    public class DependencyOfDependencyExtension : UnityContainerExtension
+    {
+        protected override void Initialize()
+        {
+            Container.RegisterType(typeof(IRepository<>), typeof(Repository<>));
+            Container.RegisterType<IMapper>(new InjectionFactory(XmlConfigurator =>
+            {
+                var mapperConfig = new MapperConfiguration(cfg =>
+                {
+                    cfg.AddProfile<MappingProfile>();
+                });
+                return mapperConfig.CreateMapper();
+            }));
+        }
+    }
+
+    public static class DependencyInjector
+    {
+        private static readonly UnityContainer UnityContainer = new UnityContainer();
+        public static void Register<I, T>() where T : I
+        {
+            UnityContainer.RegisterType<I, T>(new ContainerControlledLifetimeManager());
+        }
+        public static void InjectStub<I>(I instance)
+        {
+            UnityContainer.RegisterInstance(instance, new ContainerControlledLifetimeManager());
+        }
+        public static T Retrieve<T>()
+        {
+            return UnityContainer.Resolve<T>();
+        }
+        public static void AddExtension<T>() where T : UnityContainerExtension
+        {
+            UnityContainer.AddNewExtension<T>();
         }
     }
 }

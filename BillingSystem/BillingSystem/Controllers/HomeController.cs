@@ -697,7 +697,7 @@ namespace BillingSystem.Controllers
             Response.Cache.SetNoStore();
 
 
-            return RedirectToAction(userType == (int)LoginTrackingTypes.PatientLogin ? "PatientLogin" : "UserLogin");
+            return RedirectToAction(userType == (int)LoginTrackingTypes.PatientLogin ? "PatientLogin" : CommonConfig.LoginAction, CommonConfig.LoginController);
         }
 
         #region Country, States and Cities Dropdown Data Binding

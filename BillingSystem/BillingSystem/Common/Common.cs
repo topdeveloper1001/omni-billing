@@ -38,6 +38,7 @@ namespace BillingSystem.Common
     using Unity;
     using BillingSystem.Bal.Interfaces;
     using BillingSystem.Models;
+    using BillingSystem.Bal.BusinessAccess;
 
 
     // Menu Manipulations
@@ -645,15 +646,13 @@ namespace BillingSystem.Common
         /// </param>
         /// <returns>
         /// The <see cref="int"/>.
+        /// 
         ///// </returns>
         public static int GetCorporateIdByFacilityId(int facilityId)
         {
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IFacilityService>();
-
+            var service = DependencyInjector.Retrieve<FacilityService>();
             var facilityObj = service.GetFacilityById(facilityId);
             return facilityObj != null ? Convert.ToInt32(facilityObj.CorporateID) : 0;
-
         }
 
         /// <summary>
@@ -816,8 +815,7 @@ namespace BillingSystem.Common
                 var facilityId =
                     (HttpContext.Current.Session[SessionNames.SessionClass.ToString()] as SessionClass).FacilityId;
 
-                var container = UnityConfig.RegisterComponents();
-                var service = container.Resolve<IFacilityService>();
+                var service = DependencyInjector.Retrieve<FacilityService>();
 
                 var facilityObj = service.GetFacilityById(facilityId);
                 var isFacilityDefaultCorporateFacility = facilityObj.LoggedInID != 0;
@@ -826,9 +824,7 @@ namespace BillingSystem.Common
                     var corporatedId = GetSysAdminCorporateID();
                     var facilities =
                         service.GetFacilitiesByCorpoarteId(corporatedId)
-                            .Where(x => x.FacilityId != facilityId)
-                            .ToList()
-                            .OrderBy(x => x.FacilityId);
+                            .Where(x => x.FacilityId != facilityId).ToList().OrderBy(x => x.FacilityId);
                     facilityId = facilities.FirstOrDefault() != null ? facilities.FirstOrDefault().FacilityId : 0;
                 }
 
@@ -861,33 +857,16 @@ namespace BillingSystem.Common
         {
             var facilityid = GetDefaultFacilityId();
 
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IFacilityService>();
+            var service = DependencyInjector.Retrieve<FacilityService>();
 
-            var facilityObj = service.GetFacilityTimeZoneById(facilityid);
-            var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
+            var timeZone = service.GetFacilityTimeZoneById(facilityid);
+            var tzi = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
             var utcTime = DateTime.Now.ToUniversalTime();
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
 
-            // d = DateTime.Parse(s, CultureInfo.InvariantCulture);
-            // string strDate = localTime.ToString(FMT);
-            // DateTime now2 = DateTime.ParseExact(strDate, FMT, CultureInfo.InvariantCulture);
-            // DateTime now2 = DateTime.Parse(s, CultureInfo.InvariantCulture);
             return convertedTime;
         }
 
-
-        //public static DateTime GetInvariantCultureDateTime(int fId)
-        //{
-
-        //    var container = UnityConfig.RegisterComponents();
-        //    var service = container.Resolve<IFacilityService>();
-        //    var facilityObj = service.GetFacilityTimeZoneById(fId);
-        //    var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
-        //    var utcTime = DateTime.Now.ToUniversalTime();
-        //    var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
-        //    return convertedTime;
-        //}
 
         /// <summary>
         /// Gets the last day of current month.
@@ -1023,9 +1002,7 @@ namespace BillingSystem.Common
         /// </returns>
         public static List<DropdownListData> GetPhysiciansByUserRole(int userTypeId)
         {
-
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IPhysicianService>();
+            var service = DependencyInjector.Retrieve<PhysicianService>();
 
             var list = new List<DropdownListData>();
             var usersList = service.GetDistinctUsersByUserTypeId(
@@ -1045,6 +1022,7 @@ namespace BillingSystem.Common
             }
 
             return list;
+            //return new List<DropdownListData>();
         }
 
 

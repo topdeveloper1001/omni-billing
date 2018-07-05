@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using BillingSystem.Model.CustomModel;
 
 using BillingSystem.Bal.Interfaces;
+using System.Web;
+using System.IO;
 
 namespace BillingSystem.Controllers
 {
@@ -23,14 +25,19 @@ namespace BillingSystem.Controllers
     {
         private readonly IDocumentsTemplatesService _dService;
         private readonly IAuthorizationService _service;
+        private readonly IGlobalCodeService _gcService;
         private readonly IEncounterService _eService;
 
-        public AuthorizationController(IDocumentsTemplatesService dService, IAuthorizationService service, IEncounterService eService)
+        public AuthorizationController(IDocumentsTemplatesService dService, IAuthorizationService service
+            , IGlobalCodeService gcService, IEncounterService eService)
         {
             _dService = dService;
             _service = service;
+            _gcService = gcService;
             _eService = eService;
         }
+
+
 
 
         /// <summary>
@@ -163,7 +170,7 @@ namespace BillingSystem.Controllers
             vm.FacilityID = Helpers.GetDefaultFacilityId();
 
             var jsonData = string.Empty;
-            var listOfDocs = Upload1(vm.PatientID.Value, "1");
+            var listOfDocs = UploadDocLocally(vm.PatientID.Value, "1");
             if (listOfDocs.Any())
                 jsonData = JsonConvert.SerializeObject(listOfDocs, new JsonSerializerSettings { ContractResolver = new DynamicContractResolver("filename,filepath") });
 
@@ -194,7 +201,7 @@ namespace BillingSystem.Controllers
             if (Request.Files.Count > 0)
             {
                 Session[SessionNames.Files.ToString()] = Request.Files;
-                var result = await Upload(patientId, "1");
+                var result = await UploadDocumentLocallyAsync(patientId, "1");
                 if (result.Any())
                 {
                     docs = await _dService.SaveDocumentsAsync(null, true, "");
@@ -276,5 +283,72 @@ namespace BillingSystem.Controllers
         }
 
         #endregion
+
+        private List<DocumentsTemplates> UploadDocLocally(long? userId, string gcValue)
+        {
+            var listOfDocs = new List<DocumentsTemplates>();
+            var cId = Helpers.GetSysAdminCorporateID();
+            var fId = Helpers.GetDefaultFacilityId();
+            var loggedInUser = Helpers.GetLoggedInUserId();
+            var filePath = string.Empty;
+
+            filePath = _gcService.GetNameByGlobalCodeValue(gcValue, "80443");
+            filePath = string.Format(filePath, cId, fId, userId);
+            var list = new List<DocumentsTemplates>();
+
+            if (Session[SessionNames.Files.ToString()] != null)
+            {
+                var dirPath = Server.MapPath("~/" + filePath);
+
+                var files = Session[SessionNames.Files.ToString()] as HttpFileCollectionBase;
+                if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+
+                for (int i = 0; i < files.Count; i++)
+                {
+                    var file = files[i];
+                    var fileName = Path.GetFileName(file.FileName);
+                    var path = Path.Combine(dirPath, fileName);
+                    var dbFilePath = filePath + fileName;
+                    file.SaveAs(path);
+                    list.Add(new DocumentsTemplates { FileName = fileName, FilePath = dbFilePath });
+                }
+                Session.Remove(SessionNames.Files.ToString());
+            }
+            return list;
+        }
+
+        private async Task<List<DocumentsTemplates>> UploadDocumentLocallyAsync(long? userId, string gcValue)
+        {
+            var listOfDocs = new List<DocumentsTemplates>();
+            var cId = Helpers.GetSysAdminCorporateID();
+            var fId = Helpers.GetDefaultFacilityId();
+            var loggedInUser = Helpers.GetLoggedInUserId();
+            var filePath = string.Empty;
+
+
+            filePath = await _gcService.GetGlobalCodeNameAsync(gcValue, "80443");
+            filePath = string.Format(filePath, cId, fId, userId);
+            var list = new List<DocumentsTemplates>();
+
+            if (Session[SessionNames.Files.ToString()] != null)
+            {
+                var dirPath = Server.MapPath("~/" + filePath);
+
+                var files = Session[SessionNames.Files.ToString()] as HttpFileCollectionBase;
+                if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+
+                for (int i = 0; i < files.Count; i++)
+                {
+                    var file = files[i];
+                    var fileName = Path.GetFileName(file.FileName);
+                    var path = Path.Combine(dirPath, fileName);
+                    var dbFilePath = filePath + fileName;
+                    file.SaveAs(path);
+                    list.Add(new DocumentsTemplates { FileName = fileName, FilePath = dbFilePath });
+                }
+                Session.Remove(SessionNames.Files.ToString());
+            }
+            return list;
+        }
     }
 }

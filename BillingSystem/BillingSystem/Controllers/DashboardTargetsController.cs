@@ -17,13 +17,16 @@ namespace BillingSystem.Controllers
         private readonly IDashboardTargetsService _service;
         private readonly IFacilityService _fService;
         private readonly IRoleService _rService;
+        private readonly IGlobalCodeService _gcService;
 
-        public DashboardTargetsController(ICorporateService cService, IDashboardTargetsService service, IFacilityService fService, IRoleService rService)
+        public DashboardTargetsController(IGlobalCodeService gcService, ICorporateService cService, IDashboardTargetsService service
+            , IFacilityService fService, IRoleService rService)
         {
             _cService = cService;
             _service = service;
             _fService = fService;
             _rService = rService;
+            _gcService = gcService;
         }
 
 
@@ -131,7 +134,7 @@ namespace BillingSystem.Controllers
         public JsonResult BindAllTargetsData()
         {
             var cArray = new List<string> { "1012", "1013" };
-            var gcList = GetGlobaCodesByCategories(cArray);
+            var gcList = _gcService.GetListByCategoriesRange(cArray);
             var cList = GetCorporateList();
             List<DropdownListData> fList;
             List<DropdownListData> rList;

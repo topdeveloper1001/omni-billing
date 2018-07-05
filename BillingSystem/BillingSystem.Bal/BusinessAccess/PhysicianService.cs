@@ -28,7 +28,9 @@ namespace BillingSystem.Bal.BusinessAccess
         private readonly IMapper _mapper;
         private readonly BillingEntities _context;
 
-        public PhysicianService(IRepository<Physician> repository, IRepository<Encounter> eRepository, IRepository<FacilityRole> frRepository, IRepository<UserRole> urRepository, IRepository<Users> uRepository, IRepository<FacilityStructure> fsRepository, IRepository<Facility> fRepository, IRepository<GlobalCodes> gRepository, IRepository<Role> roRepository, IMapper mapper, BillingEntities context)
+        public PhysicianService(IRepository<Physician> repository, IRepository<Encounter> eRepository, IRepository<FacilityRole> frRepository
+            , IRepository<UserRole> urRepository, IRepository<Users> uRepository, IRepository<FacilityStructure> fsRepository, IRepository<Facility> fRepository
+            , IRepository<GlobalCodes> gRepository, IRepository<Role> roRepository, IMapper mapper, BillingEntities context)
         {
             _repository = repository;
             _eRepository = eRepository;

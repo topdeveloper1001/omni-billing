@@ -10,6 +10,7 @@ using Unity;
 namespace BillingSystem.Controllers
 {
     using System.Linq;
+    using BillingSystem.Bal.BusinessAccess;
     using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common.Common;
     using Hangfire;
@@ -245,13 +246,12 @@ namespace BillingSystem.Controllers
 
         public static void CreateDefaultFacilityItems(int fId, string fName, int userId)
         {
-
-            var container = UnityConfig.RegisterComponents();
-            var service = container.Resolve<IFacilityService>();
+            var service = DependencyInjector.Retrieve<FacilityService>();
             service.CreateDefaultFacilityItems(fId, fName, userId);
         }
-        [AcceptVerbs(HttpVerbs.Post)]
-         public ActionResult GetFacilityNameById(string facilityNumber)
+
+
+        public ActionResult GetFacilityNameById(string facilityNumber)
         {
             if (string.IsNullOrEmpty(facilityNumber))
             {

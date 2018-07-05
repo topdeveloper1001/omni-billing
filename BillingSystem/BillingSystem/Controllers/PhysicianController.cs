@@ -234,7 +234,22 @@ namespace BillingSystem.Controllers
         /// <returns>Json result</returns>
         public JsonResult BindUserOnUserRoleSelection(int userTypeId)
         {
-            var list = Helpers.GetPhysiciansByUserRole(userTypeId);
+            var list = new List<DropdownListData>();
+            var usersList = _service.GetDistinctUsersByUserTypeId(
+                userTypeId, Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+            if (usersList.Count > 0)
+            {
+                list.AddRange(
+                    usersList.Select(
+                        item =>
+                        new DropdownListData
+                        {
+                            Text = string.Format("{0} {1}", item.FirstName, item.LastName),
+                            Value = Convert.ToString(item.UserID)
+                        }));
+            }
+
+            //var list = Helpers.GetPhysiciansByUserRole(userTypeId);
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 

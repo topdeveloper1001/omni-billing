@@ -1456,7 +1456,7 @@ function SaveOrderActivityinAutoCloseEncounter() {
 
         var startdate = new Date($("#txtEncounterStartDate").val());
         var enddate = new Date($("#txtEncounterEndDate").val());
-        debugger;
+        
         if (newCustomDate < startdate && newCustomDate < enddate) {
             ShowErrorMessage("Execute Date should be between Encounter Start Date and End Date!", true);
         } else {
