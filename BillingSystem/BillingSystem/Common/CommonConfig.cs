@@ -2353,6 +2353,10 @@ namespace BillingSystem.Common
     /// </summary>
     public class CommonConfig
     {
+        public static string LoginAction { get { return "login"; } }
+
+        public static string LoginController { get { return "login"; } }
+
         #region Public Properties
 
         /// <summary>

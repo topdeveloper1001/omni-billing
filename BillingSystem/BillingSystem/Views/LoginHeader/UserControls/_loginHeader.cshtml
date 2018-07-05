@@ -6,8 +6,8 @@
 
     @if (Session[SessionNames.SessionClass.ToString()] != null)
     {
-        var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass; 
-          
+        var objSession = Session[SessionNames.SessionClass.ToString()] as SessionClass;
+
         @Html.Raw("Welcome, You are logged in as") <span>
             <label id="lblUserName">@objSession.UserName</label>
             @Html.Raw("|") <label id="lblRoleId">@objSession.RoleName</label>
@@ -18,10 +18,10 @@
     }
     else
     {
-        <a href="/Home/UserLogin" title="Login">Login</a>
-        @Html.Raw("|") 
-        <a href="/Home/Register">Sign up</a> 
+        <a href="@Url.Action(CommonConfig.LoginAction,CommonConfig.LoginController)" title="Login">Login</a>
+        @Html.Raw("|")
+        <a href="/Home/Register">Sign up</a>
     }
     @Html.Raw("|") <a href="#">Help</a>
-   
+
 </p>

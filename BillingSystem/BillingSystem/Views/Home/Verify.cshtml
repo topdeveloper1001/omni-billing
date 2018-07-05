@@ -59,7 +59,8 @@
         <span>
             @ResourceKeyValues.GetKeyValue("patientportalisaccessiblemessage")
         </span>
-        <span><a href='@Url.Action("UserLogin")'>@ResourceKeyValues.GetKeyValue("gotologin")</a>
+        <span>
+            <a href='@Url.Action(CommonConfig.LoginAction,CommonConfig.LoginController)'>@ResourceKeyValues.GetKeyValue("gotologin")</a>
         </span>
     </div>
 </div>

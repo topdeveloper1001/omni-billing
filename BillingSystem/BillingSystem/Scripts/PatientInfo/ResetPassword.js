@@ -42,7 +42,7 @@ function UpdatePassword() {
             if (data.error == "") {
                 ShowMessage(message, "Success", "success", true);
                 setTimeout(function () {
-                    window.location = window.location.protocol + "//" + window.location.host + "/Home/UserLogin";
+                    window.location = window.location.protocol + "//" + window.location.host + "/Login/Login";
                 }, 2000);
             } else {
                 ShowMessage(message, "Error", "warning", true);

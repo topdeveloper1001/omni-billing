@@ -1,4 +1,5 @@
-﻿@using CaptchaMvc.HtmlHelpers
+﻿@using BillingSystem.Common
+@using CaptchaMvc.HtmlHelpers
 @using BillingSystem.Common.Common
 
 @model DTO.LoginDTO
@@ -24,7 +25,7 @@
     <script src="~/Scripts/json2.js"></script>
     <script src="~/Scripts/Main.js"></script>
     @* <script src="~/Scripts/jquery.validate.min.js"></script>
-    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>*@
+        <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>*@
 
     <script src="~/Scripts/jquery.maskedinput-1.2.2.js"></script>
     <script type="text/javascript">
@@ -108,82 +109,87 @@
 
 
 
-    @using (Html.BeginForm("UserLogin", "Home", FormMethod.Post))
+    @using (Html.BeginForm(CommonConfig.LoginAction, CommonConfig.LoginController, FormMethod.Post))
     {
         if (ViewBag.check == null || (ViewBag.check != LoginResponseTypes.Success.ToString() && ViewBag.check != LoginResponseTypes.InActive.ToString()))
         {
-        <fieldset class="login">
-            <legend><b>Login</b></legend>
-            <div>
-                <table>
-                    <tr>
-                        <td colspan="3">
-                            @if (ViewBag.check == LoginResponseTypes.Failed.ToString())
-                            {
-                                <span style="color: red;" id="spErrorMsg">Please enter correct username and password</span>
-                            }
-                            @if (ViewBag.check == LoginResponseTypes.CaptchaFailed.ToString())
-                            {
-                                <span style="color: red;" id="spErrorMsg2">Verification code does not matched.</span>
-                            }
-                            @if (ViewBag.check == LoginResponseTypes.IsDeleted.ToString())
-                            {
-                                <span style="color: red;" id="spErrorMsg3">User has been deleted. Please contact System Administrator !</span>
-                            }
-                            @if (ViewBag.check == LoginResponseTypes.FailedAttemptsOver.ToString())
-                            {
-                                <span style="color: red;" id="spErrorMsg4">User is Blocked. kindly login after 30 minutes !</span>
-                            }
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>&nbsp;
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>User Name : 
-                        </td>
-                        <td>
-                            @Html.TextBoxFor(m => m.UserName, new { @style = "width:300px", @maxlength = "25" })
-                            <span style="color: red;" id="spUserName"></span>@Html.ValidationMessageFor(m => m.UserName)
+            <fieldset class="login">
+                <legend><b>Login</b></legend>
+                <div>
+                    <table>
+                        <tr>
+                            <td colspan="3">
+                                @if (ViewBag.check == LoginResponseTypes.Failed.ToString())
+                                {
+                                    <span style="color: red;" id="spErrorMsg">Please enter correct username and password</span>
+                                }
+                                @if (ViewBag.check == LoginResponseTypes.CaptchaFailed.ToString())
+                                {
+                                    <span style="color: red;" id="spErrorMsg2">Verification code does not matched.</span>
+                                }
+                                @if (ViewBag.check == LoginResponseTypes.IsDeleted.ToString())
+                                {
+                                    <span style="color: red;" id="spErrorMsg3">User has been deleted. Please contact System Administrator !</span>
+                                }
+                                @if (ViewBag.check == LoginResponseTypes.FailedAttemptsOver.ToString())
+                                {
+                                    <span style="color: red;" id="spErrorMsg4">User is Blocked. kindly login after 30 minutes !</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                User Name :
+                            </td>
+                            <td>
+                                @Html.TextBoxFor(m => m.UserName, new { @style = "width:300px", @maxlength = "25" })
+                                <span style="color: red;" id="spUserName"></span>@Html.ValidationMessageFor(m => m.UserName)
 
-                        </td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>&nbsp;
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Password : 
-                        </td>
-                        <td>
-                            @Html.PasswordFor(m => m.Password, new { @style = "width:300px", @maxlength = "25" })
-                            <span style="color: red;" id="spPassword"></span>
-                            @Html.ValidationMessageFor(m => m.Password)
-                        </td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>&nbsp;
-                
-                        </td>
-                        <td>
-                            @Html.Captcha("Try another", "Enter the text you see above:", 6, "Required", true)
-                        </td>
-                    </tr>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Password :
+                            </td>
+                            <td>
+                                @Html.PasswordFor(m => m.Password, new { @style = "width:300px", @maxlength = "25" })
+                                <span style="color: red;" id="spPassword"></span>
+                                @Html.ValidationMessageFor(m => m.Password)
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                &nbsp;
+
+                            </td>
+                            <td>
+                                @Html.Captcha("Try another", "Enter the text you see above:", 6, "Required", true)
+                            </td>
+                        </tr>
 
 
-                    <tr>
-                        <td></td>
-                        <td>
-                            <input type="submit" id="btnLogin" style="width: 132px; margin-top: 20px;" class="blue-btn" value="Login" />
-                        </td>
-                        <td></td>
-                    </tr>
-                </table>
-            </div>
-        </fieldset>  
+                        <tr>
+                            <td></td>
+                            <td>
+                                <input type="submit" id="btnLogin" style="width: 132px; margin-top: 20px;" class="blue-btn" value="Login" />
+                            </td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+            </fieldset>
         }
     }
 
@@ -202,11 +208,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>&nbsp;
+                            <td>
+                                &nbsp;
                             </td>
                         </tr>
                         <tr>
-                            <td>New Password : 
+                            <td>
+                                New Password :
                             </td>
                             <td>
                                 @Html.Password("txtNewPassword", null, new { @style = "width:300px", @maxlength = "25" })
@@ -217,11 +225,13 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td>&nbsp;
+                            <td>
+                                &nbsp;
                             </td>
                         </tr>
                         <tr>
-                            <td>Confirm Password : 
+                            <td>
+                                Confirm Password :
                             </td>
                             <td>
                                 @Html.Password("txtConfirm", null, new { @style = "width:300px", @maxlength = "25" })
@@ -232,7 +242,8 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td>&nbsp;
+                            <td>
+                                &nbsp;
                             </td>
                         </tr>
 
@@ -247,7 +258,7 @@
                     </table>
                 </div>
             </div>
-        </fieldset>  
+        </fieldset>
     }
 
 

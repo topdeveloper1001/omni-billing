@@ -22,8 +22,8 @@ namespace BillingSystem.Filters
             {
                 var values = new RouteValueDictionary(new
                 {
-                    action = ActionResults.login,
-                    controller = ControllerNames.home,
+                    action = CommonConfig.LoginAction,
+                    controller = CommonConfig.LoginController,
                     ReturnUrl = context.HttpContext.Request.Url.PathAndQuery //to be used later
                 });
 

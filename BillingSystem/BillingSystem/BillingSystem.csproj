@@ -5090,7 +5090,6 @@
     <Content Include="Views\DashboardRemark\Index.cshtml" />
     <Content Include="Views\DashboardRemark\UserControls\_DashboardRemarkAddEdit.cshtml" />
     <Content Include="Views\DashboardRemark\UserControls\_DashboardRemarkList.cshtml" />
-    <Content Include="Views\Home\Test.cshtml" />
     <Content Include="Views\DashboardIndicatorData\UserControls\_ImportIndicatorData.cshtml" />
     <Content Include="Views\ExternalDashboard\Index.cshtml" />
     <Content Include="Views\ExternalDashboard\UserControls\_ExternalDashboardList.cshtml" />
@@ -5275,7 +5274,6 @@
     <Content Include="Views\DeptTimming\DeptTimmingMain.cshtml" />
     <Content Include="Views\DeptTimming\UserControls\_DeptTimmingAddEdit.cshtml" />
     <Content Include="Views\DeptTimming\UserControls\_DeptTimmingList.cshtml" />
-    <Content Include="Views\Home\EditorTemplates\Test.cshtml" />
     <Content Include="Views\Home\Temp.cshtml" />
     <Content Include="Views\PatientScheduler\UserControls\_PatientScheduleAddEdit.cshtml" />
     <Content Include="Views\PatientSchedulerPortal\UserControls\_PatientCalenderView.cshtml" />

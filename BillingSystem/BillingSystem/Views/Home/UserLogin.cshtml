@@ -1,8 +1,10 @@
-﻿@using CaptchaMvc.HtmlHelpers
+﻿@using BillingSystem.Common
+@using CaptchaMvc.HtmlHelpers
 @model BillingSystem.Model.Users
 @{
     Layout = null;
 }
+
 
 <!DOCTYPE html>
 
@@ -339,7 +341,7 @@
         <div class="">
             <div class="loginContainer" style="border-radius:0px;">
                 <div class="loginForm col-sm-12 col-md-12 col-lg-12">
-                    @using (Html.BeginForm("UserLogin", "Home", FormMethod.Post))
+                    @using (Html.BeginForm(CommonConfig.LoginAction,CommonConfig.LoginController, FormMethod.Post))
                     {
                         if (ViewBag.check == null || ViewBag.check == "Failed" || ViewBag.check == "CaptchaFailed" || ViewBag.check == "FailedAttemptsOver"
                             || ViewBag.check.ToString().IndexOf("Offline") > 0 || ViewBag.check == "IsDeleted" || ViewBag.check == "Blocked" || ViewBag.check == "InActive")

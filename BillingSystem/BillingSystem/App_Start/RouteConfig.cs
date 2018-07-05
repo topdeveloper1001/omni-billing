@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using BillingSystem.Common;
 using System.Web.Mvc;
 using System.Web.Routing;
 
@@ -16,7 +13,7 @@ namespace BillingSystem
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "UserLogin", id = UrlParameter.Optional }
+                defaults: new { controller = CommonConfig.LoginController, action = CommonConfig.LoginAction, id = UrlParameter.Optional }
             );
         }
     }
