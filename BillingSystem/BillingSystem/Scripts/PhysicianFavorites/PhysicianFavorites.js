@@ -233,7 +233,7 @@ function BindCategories(ddlSelector, hdSelector) {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetGlobalCodeCatByExternalValue',        //GetGlobalCodeCategoriesByExternalValue
+        url: '/GlobalCodeCategory/GetGlobalCodeCatByExternalValue',        //GetGlobalCodeCategoriesByExternalValue
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -666,7 +666,7 @@ function SortCptCodeGrid(event) {
             url += "?text=" + searchText + "&searchType=" + 3 + "&drugStatus=" + 0 + "&" + event.data.msg;
         }
     } else {
-        url = "/CPTCodes/GetSerachList";
+        url = "/Home/GetSerachList";
         if (event.data != null && (event.data.msg != null || event.data.msg != undefined || event.data.msg != '')) {
             url += "?searchType=" + categoryIdval + "&showInActive=" + activeInActive + "&" + event.data.msg;
         }

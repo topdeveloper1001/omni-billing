@@ -584,7 +584,7 @@ function BindCategories(ddlSelector, hdSelector) {
     });
     $.ajax({
         type: "POST",
-        url: '/Home/GetGlobalCodeCatByExternalValue',
+        url: '/GlobalCodeCategory/GetGlobalCodeCatByExternalValue',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

@@ -609,7 +609,7 @@ function GetStates(countryID, ddlSelector, hdSelector) {
     var id = countryID;
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetStatesByCountryId",
+        url: "/Tabs/GetStatesByCountryId",
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1053,7 +1053,7 @@ function BindRoles(corporateId, selector, selectedId) {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetRolesDropdownData",
+        url: "/Security/GetRolesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1093,7 +1093,7 @@ function BindRolesByFacility(corporateId, facilityId, selector, selectedId) {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetRolesByFacilityDropdownData",
+        url: "/Security/GetRolesByFacilityDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1133,7 +1133,7 @@ function BindFacilityRolesByFacilityCorporateId(corporateId, facilityId, selecto
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetFacilityRolesByCorporateFacilityDropdownData",
+        url: "/Security/GetFacilityRolesByCorporateFacilityDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -1331,7 +1331,7 @@ function SetLoginDetails() {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: homeUrl + "GetRolesDropdownData",
+        url: "/Security/GetRolesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7505,7 +7505,7 @@ function CopyBillingCodes(typeId, isAll) {
 function BindTableSetList(typeId, ddlSelector, hdValue) {
     $.ajax({
         type: "POST",
-        url: '/Home/GetTableNumbers',
+        url: '/BillHeader/GetTableNumbers',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -7559,7 +7559,7 @@ function CheckDuplicateTableSet(typeId) {
     if ($("#tableNumber").val() > 0) {
         $.ajax({
             type: "POST",
-            url: '/Home/CheckForDuplicateTableSet',
+            url: '/BillHeader/CheckForDuplicateTableSet',
             async: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",

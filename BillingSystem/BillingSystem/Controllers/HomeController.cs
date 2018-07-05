@@ -46,14 +46,12 @@ namespace BillingSystem.Controllers
         private readonly IIndicatorDataCheckListService _iService;
         private readonly IPatientLoginDetailService _pldService;
         private readonly ILoginTrackingService _ltService;
-        private readonly ITabsService _tService;
         private readonly IModuleAccessService _maService;
         private readonly ISystemConfigurationService _scsService;
         private readonly IFacilityService _fService;
-        private readonly IRoleTabsService _rtService;
-        private readonly IStateService _stService;
-        private readonly IGlobalCodeCategoryService _gcService;
-        private readonly IRoleService _roService;
+        //private readonly IStateService _stService;
+        //private readonly IGlobalCodeCategoryService _gcService;
+        //private readonly IRoleService _roService;
         //private readonly IGlobalCodeService _gService;
         private readonly IServiceCodeService _scService;
         private readonly IDRGCodesService _drgService;
@@ -63,7 +61,7 @@ namespace BillingSystem.Controllers
         private readonly IDrugService _drugService;
         private readonly IOpenOrderService _ooService;
         private readonly IRuleMasterService _rmService;
-        private readonly IBillActivityService _baService;
+        //private readonly IBillActivityService _baService;
         private readonly IUserRoleService _urService;
         //private readonly IFacilityRoleService _frService;
         //private readonly IPhysicianService _phService;
@@ -72,6 +70,8 @@ namespace BillingSystem.Controllers
         //private readonly IDeptTimmingService _deptService;
         //private readonly IDocumentsTemplatesService _docService;
         #endregion
+
+
 
         //public HomeController(IAppointmentTypesService atService, IAuditLogService adService
         //    , IBillHeaderService bhService, IATCCodesService atcService, IBedRateCardService service
@@ -139,14 +139,13 @@ namespace BillingSystem.Controllers
         , IBillingSystemParametersService bspService, ICPTCodesService cptService
         , IUsersService uService, ICountryService cService, ICorporateService coService
         , ICityService ctService, IIndicatorDataCheckListService iService
-        , IPatientLoginDetailService pldService, ILoginTrackingService ltService, ITabsService tService
+        , IPatientLoginDetailService pldService, ILoginTrackingService ltService
         , IModuleAccessService maService, ISystemConfigurationService scsService
-        , IFacilityService fService, IRoleTabsService rtService, IStateService stService
-        , IGlobalCodeCategoryService gcService, IRoleService roService, IGlobalCodeService gService
+        , IFacilityService fService, IRoleTabsService rtService
         , IServiceCodeService scService, IDRGCodesService drgService, IHCPCSCodesService hcpcService
         , IDenialService denService, IDiagnosisCodeService diacService, IDrugService drugService
-        , IOpenOrderService ooService, IRuleMasterService rmService, IBillActivityService baService
-        , IUserRoleService urService, IFacilityRoleService frService, IPhysicianService phService
+        , IOpenOrderService ooService, IRuleMasterService rmService
+        , IUserRoleService urService, IFacilityRoleService frService
         )
         {
             //_atService = atService;
@@ -166,14 +165,12 @@ namespace BillingSystem.Controllers
             _iService = iService;
             _pldService = pldService;
             _ltService = ltService;
-            _tService = tService;
             _maService = maService;
             _scsService = scsService;
             _fService = fService;
-            _rtService = rtService;
-            _stService = stService;
-            _gcService = gcService;
-            _roService = roService;
+            //_stService = stService;
+            //_gcService = gcService;
+            //_roService = roService;
             //_gService = gService;
             _scService = scService;
             _drgService = drgService;
@@ -183,7 +180,7 @@ namespace BillingSystem.Controllers
             _drugService = drugService;
             _ooService = ooService;
             _rmService = rmService;
-            _baService = baService;
+            //_baService = baService;
             _urService = urService;
             //_frService = frService;
             //_phService = phService;
@@ -832,12 +829,7 @@ namespace BillingSystem.Controllers
         }
 
         #region Country, States and Cities Dropdown Data Binding
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult GetStatesByCountryId(string countryId)
-        {
-            var stateList = _stService.GetStatesByCountryId(Convert.ToInt32(countryId));
-            return Json(stateList);
-        }
+
 
         [AcceptVerbs(HttpVerbs.Post)]
         public ActionResult GetCitiesByStateId(string stateId)
@@ -859,17 +851,6 @@ namespace BillingSystem.Controllers
 
         #endregion
 
-        /// <summary>
-        /// Gets all global code categories.
-        /// </summary>
-        /// <returns></returns>
-        [AcceptVerbs(HttpVerbs.Post)]
-        [CustomAuth]
-        public ActionResult GetAllGlobalCodeCategories()
-        {
-            var list = _gcService.GetGlobalCodeCategories();
-            return Json(list);
-        }
 
         /// <summary>
         /// Welcomes this instance.
@@ -968,99 +949,7 @@ namespace BillingSystem.Controllers
             return Json(null);
         }
 
-        /// <summary>
-        /// Gets the roles dropdown data.
-        /// </summary>
-        /// <param name="corporateId">The corporate identifier.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetRolesDropdownData(string corporateId)
-        {
-            var roles = _roService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
-            if (roles.Count > 0)
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(roles.Select(item => new SelectListItem
-                {
-                    Text = item.RoleName,
-                    Value = item.RoleID.ToString()
-                }));
-                return Json(list);
-            }
 
-            return Json(null);
-        }
-
-        /// <summary>
-        /// Gets the distinct roles dropdown data.
-        /// </summary>
-        /// <param name="corporateId">The corporate identifier.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetDistinctRolesDropdownData(string corporateId)
-        {
-            var roles = _roService.GetRolesByCorporateId(Convert.ToInt32(corporateId));
-            if (roles.Count > 0)
-            {
-                roles = roles.DistinctBy(x => x.RoleName).ToList();
-                var list = new List<SelectListItem>();
-                list.AddRange(roles.Select(item => new SelectListItem
-                {
-                    Text = item.RoleName,
-                    Value = item.RoleID.ToString()
-                }));
-                return Json(list);
-            }
-
-            return Json(null);
-        }
-
-        /// <summary>
-        /// Gets the roles by facility dropdown data.
-        /// </summary>
-        /// <param name="corporateId">The corporate identifier.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetRolesByFacilityDropdownData(string corporateId, string facilityId)
-        {
-            var roles = _roService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
-            if (roles.Count > 0)
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(roles.Select(item => new SelectListItem
-                {
-                    Text = item.RoleName,
-                    Value = item.RoleID.ToString()
-                }));
-                list = list.OrderBy(x => x.Text).ToList();
-                return Json(list);
-            }
-            return Json(0);
-        }
-
-        /// <summary>
-        /// Gets the facility roles by corporate facility dropdown data.
-        /// </summary>
-        /// <param name="corporateId">The corporate identifier.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        public ActionResult GetFacilityRolesByCorporateFacilityDropdownData(string corporateId, string facilityId)
-        {
-            var roles = _roService.GetFacilityRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
-            if (roles.Count > 0)
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(roles.Select(item => new SelectListItem
-                {
-                    Text = item.RoleName,
-                    Value = item.RoleID.ToString()
-                }));
-                list = list.OrderBy(x => x.Text).ToList();
-                return Json(list);
-            }
-            return Json(0);
-        }
 
         /// <summary>
         /// Gets the user header.
@@ -1091,7 +980,6 @@ namespace BillingSystem.Controllers
             switch (codeType)
             {
                 case SearchType.ServiceCode:
-
                     var userid = Helpers.GetLoggedInUserId();
                     viewpath = string.Format("../ServiceCode/{0}", PartialViews.ServiceCodeList);
                     var result1 = !string.IsNullOrEmpty(text) ? _scService.GetFilteredServiceCodes(text, string.IsNullOrEmpty(tableNumber) ? Helpers.DefaultServiceCodeTableNumber : tableNumber) : _scService.GetServiceCodesCustomList(Helpers.DefaultServiceCodeTableNumber);
@@ -2387,15 +2275,6 @@ namespace BillingSystem.Controllers
         #endregion
 
         /// <summary>
-        /// Tests this instance.
-        /// </summary>
-        /// <returns></returns>
-        public ViewResult Test()
-        {
-            return View();
-        }
-
-        /// <summary>
         /// Get Facilities list
         /// </summary>
         /// <returns></returns>
@@ -2919,60 +2798,6 @@ namespace BillingSystem.Controllers
             }
         }
 
-        #region Table Numbers
-        public JsonResult CreateNewCodeSet(string tableNumber, string[] selectedCodes, bool isAll, string typeId, bool forExisting)
-        {
-            if (!string.IsNullOrEmpty(tableNumber))
-            {
-                var isExists = !forExisting && CheckIfDuplicateTableSet(tableNumber, typeId, 0);
-
-                if (!isExists)
-                {
-                    selectedCodes = isAll ? new[] { "0" } : selectedCodes;
-
-                    if (!isAll && (selectedCodes == null || selectedCodes.Length == 0))
-                        return Json("-3", JsonRequestBehavior.AllowGet);
-
-                    var saveserviceCodeData = _bspService.SaveRecordsFortableNumber(tableNumber, selectedCodes, typeId);
-                    if (saveserviceCodeData && !forExisting)
-                    {
-                        _bspService.SaveTableNumber(new BillingCodeTableSet
-                        {
-                            Id = 0,
-                            TableNumber = tableNumber,
-                            CodeTableType = typeId,
-                            CreatedBy = Helpers.GetLoggedInUserId(),
-                            CreatedDate = Helpers.GetInvariantCultureDateTime()
-                        });
-                    }
-                    return Json(saveserviceCodeData);
-                }
-                return Json("-2", JsonRequestBehavior.AllowGet);
-
-            }
-            return Json("-1", JsonRequestBehavior.AllowGet);
-        }
-
-        public JsonResult CheckForDuplicateTableSet(string tableNumber, string typeId, int id)
-        {
-            return Json(CheckIfDuplicateTableSet(tableNumber, typeId, id), JsonRequestBehavior.AllowGet);
-        }
-
-        private bool CheckIfDuplicateTableSet(string tableNumber, string typeId, int id)
-        {
-            var isExists = false;
-            isExists = _baService.CheckForDuplicateTableSet(id, tableNumber, typeId);
-
-            return isExists;
-        }
-
-        public JsonResult GetTableNumbers(string typeId)
-        {
-            var tn = _baService.GetTableNumbersList(typeId);
-            return Json(tn, JsonRequestBehavior.AllowGet);
-        }
-        #endregion
-
 
         /// <summary>
         /// Gets the facility deapartments.
@@ -3396,36 +3221,6 @@ namespace BillingSystem.Controllers
             return PartialView();
         }
 
-
-
-        /// <summary>
-        /// Gets the roles by facility dropdown data.
-        /// </summary>
-        /// <returns></returns>
-        [CustomAuth]
-        public ActionResult GetRolesByFacilityDropdownDataCustom()
-        {
-            var roles = _roService.GetRolesByCorporateIdFacilityId(Convert.ToInt32(Helpers.GetSysAdminCorporateID()), Convert.ToInt32(Helpers.GetDefaultFacilityId()));
-            if (roles.Count > 0)
-            {
-                var list = new List<SelectListItem>();
-                list.AddRange(roles.Select(item => new SelectListItem
-                {
-                    Text = item.RoleName,
-                    Value = item.RoleID.ToString()
-                }));
-                list = list.OrderBy(x => x.Text).ToList();
-                return Json(list);
-            }
-            return Json(0);
-        }
-
-
-        public ActionResult GetGlobalCodeCatByExternalValue(string startRange, string endRange)
-        {
-            var list = _gcService.GetGlobalCodeCategoriesByExternalValue();
-            return Json(list);
-        }
 
 
         [AllowAnonymous]

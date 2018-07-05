@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using BillingSystem.Bal.BusinessAccess;
 using BillingSystem.Bal.Interfaces;
 using BillingSystem.Common;
 using BillingSystem.Common.Common;
@@ -875,5 +874,21 @@ namespace BillingSystem.Controllers
         }
 
         #endregion
+
+
+        public JsonResult GetTableNumbers(string typeId)
+        {
+            var tn = _baService.GetTableNumbersList(typeId);
+            return Json(tn, JsonRequestBehavior.AllowGet);
+        }
+
+
+        public JsonResult CheckForDuplicateTableSet(string tableNumber, string typeId, int id)
+        {
+            var isExists = false;
+            isExists = _baService.CheckForDuplicateTableSet(id, tableNumber, typeId);
+
+            return Json(isExists, JsonRequestBehavior.AllowGet);
+        }
     }
 }

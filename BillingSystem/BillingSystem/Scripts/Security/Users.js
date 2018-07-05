@@ -88,7 +88,7 @@ function BindCorporateFacilityRoles() {
     //Bind Roles
     $.ajax({
         type: "POST",
-        url: "/Home/GetRolesByFacilityDropdownData",
+        url: "/Security/GetRolesByFacilityDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

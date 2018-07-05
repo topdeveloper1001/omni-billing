@@ -165,7 +165,7 @@ function SetTableNumber(ddlSelector, hdSelector) {
 function BindTableSets() {
     $.ajax({
         type: "POST",
-        url: '/Home/GetTableNumbers',
+        url: '/BillHeader/GetTableNumbers',
         async: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
