@@ -2157,6 +2157,7 @@
     <Content Include="images\list.png" />
     <Content Include="images\loading.gif" />
     <Content Include="images\loadingImageUrl.GIF" />
+    <Content Include="images\LoginBackground.png" />
     <Content Include="images\LoginBanner.png" />
     <Content Include="images\loginBg.png" />
     <Content Include="images\logo.png" />
@@ -3305,6 +3306,7 @@
     <Content Include="Views\Login\ForgotPassword.cshtml" />
     <Content Include="Views\Login\ResetPassword.cshtml" />
     <Content Include="Views\Login\Verify.cshtml" />
+    <Content Include="Views\Login\LoginSupply.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

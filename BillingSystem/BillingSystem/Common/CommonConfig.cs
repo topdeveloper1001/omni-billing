@@ -2354,6 +2354,7 @@ namespace BillingSystem.Common
     public class CommonConfig
     {
         public static string LoginAction { get { return "login"; } }
+        public static string LoginActionSupply { get { return "loginsupply"; } }
 
         public static string LoginController { get { return "login"; } }
 
