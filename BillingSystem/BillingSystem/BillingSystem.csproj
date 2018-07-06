@@ -3063,6 +3063,7 @@
     <Content Include="SQL Scripts\Release 5.20\7 - New PROC SprocGetManualDashboardDataByIndicator 27 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\8 - New PROC SprocGetIndicatorDataChecklist 28 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\9 - New PROC SprocDashboardRemarks 28 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.21\1 - New PROC SprocGetRuleMasterData 06 July 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\1 - Update PROC iSprocGetBookedAppointments 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\10 - Update PROC SPROC_GetPaitentFutureOrder 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\2 - Update PROC SprocOrdersViewData 28 March 2018.sql" />

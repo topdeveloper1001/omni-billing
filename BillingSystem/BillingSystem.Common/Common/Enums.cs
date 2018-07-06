@@ -2,6 +2,13 @@
 
 namespace BillingSystem.Common.Common
 {
+    public enum Portals
+    {
+        Omni = 1,
+        SuppliesDotCom = 2,
+        PhysicianVisit = 3
+    }
+
     public enum WhereOperation
     {
         Equal,
@@ -872,7 +879,8 @@ namespace BillingSystem.Common.Common
         SprocGetIndicatorDataChecklist,
         SprocDashboardRemarks,
         SprocDashboardTargets,
-        SprocAuthenticateUser
+        SprocAuthenticateUser,
+        SprocGetRuleMasterData
     }
 
     public enum StoredProcsiOS
@@ -1873,6 +1881,7 @@ namespace BillingSystem.Common.Common
         IndicatorData,
         AppointmentTypes,
         Clinicians,
-        Locations
+        Locations,
+        RuleMaster
     }
 }

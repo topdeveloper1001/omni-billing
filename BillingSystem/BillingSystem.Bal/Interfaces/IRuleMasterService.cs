@@ -11,6 +11,6 @@ namespace BillingSystem.Bal.Interfaces
         int DeleteRuleMaster(RuleMaster model);
         RuleMaster GetRuleMasterById(int? ruleMasterId, string BillEditRuleTableNumber);
         RuleMasterCustomModel GetRuleMasterCustomModelById(int? ruleMasterId);
-        List<RuleMasterCustomModel> GetRuleMasterList(string BillEditRuleTableNumber, bool notActive = false);
+        List<RuleMasterCustomModel> GetRuleMasterList(string BillEditRuleTableNumber, bool notActive = true);
     }
 }

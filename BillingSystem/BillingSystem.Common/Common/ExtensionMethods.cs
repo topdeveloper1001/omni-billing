@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Data.Entity;
@@ -292,6 +293,15 @@ namespace BillingSystem.Common.Common
         public static List<Dictionary<string, Object>> GetTypedList(DataTable dataTable)
         {
             return (from DataRow dr in dataTable.Rows select dataTable.Columns.Cast<DataColumn>().ToDictionary(col => col.ColumnName, col => dr[col])).ToList();
+        }
+
+
+        public static int DefaultPortalKey
+        {
+            get
+            {
+                return Convert.ToInt32(ConfigurationManager.AppSettings["PortalKey"]);
+            }
         }
     }
 }
