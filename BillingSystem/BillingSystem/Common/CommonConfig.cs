@@ -2623,7 +2623,7 @@ namespace BillingSystem.Common
         {
             get
             {
-                return string.Format("/{0}/{1}", ControllerNames.home, ActionResults.login);
+                return $"/{LoginController}/{LoginAction}";
             }
         }
 
