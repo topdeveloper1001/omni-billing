@@ -55,7 +55,7 @@ namespace BillingSystem.Controllers
         public ActionResult Index(int? v)
         {
             if (!v.HasValue)
-                return RedirectToAction("UserLogin", "Home");
+                return RedirectToAction(CommonConfig.LoginAction, CommonConfig.LoginController);
 
             var roleKey = Helpers.CurrentRoleKey;
             ViewBag.ViewId = v.HasValue ? v.Value : 0;
