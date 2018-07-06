@@ -61,7 +61,13 @@ namespace BillingSystem.Controllers
             Session.RemoveAll();
             return View();
         }
-
+        public ActionResult LoginSupply()
+        {
+            //Not in Use
+            //var pwd = EncryptDecrypt.GetDecryptedData("O1yC58YWrr/HGFQyfok2Gw==", "");
+            Session.RemoveAll();
+            return View();
+        } 
 
         /// <summary>
         /// Patients the login.
