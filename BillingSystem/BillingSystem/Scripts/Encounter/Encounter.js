@@ -38,8 +38,9 @@ $(function () {
     }
 
     BindGlobalCodesWithValue("#ddlEncounterSpeciality", 1121, "#hdEncounterSpecialty");
-    GetFacilityName(facilityNumber);
+
     //Bind Facility to Facility TextBox end here
+    GetFacilityName(facilityNumber);
 
     //Bind EncounterPatientType    
     var hdEncounterPatientType = $("#hdEncounterPatientType").val();

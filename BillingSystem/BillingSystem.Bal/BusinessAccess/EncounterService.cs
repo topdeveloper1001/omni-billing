@@ -6,7 +6,6 @@ using BillingSystem.Model;
 using BillingSystem.Common.Common;
 using BillingSystem.Model.CustomModel;
 using System.Threading.Tasks;
-
 using System.Data.SqlClient;
 using AutoMapper;
 using BillingSystem.Bal.Interfaces;
@@ -17,73 +16,115 @@ namespace BillingSystem.Bal.BusinessAccess
     public class EncounterService : IEncounterService
     {
         private readonly IRepository<Encounter> _repository;
-        private readonly IRepository<GlobalCodes> _gRepository;
-        private readonly IRepository<BillHeader> _biRepository;
-        private readonly IRepository<OpenOrder> _oRepository;
-        private readonly IRepository<CPTCodes> _cptRepository;
-        private readonly IRepository<DRGCodes> _dRepository;
-        private readonly IRepository<HCPCSCodes> _hcRepository;
-        private readonly IRepository<Drug> _drugRepository;
-        private readonly IRepository<ServiceCode> _sRepository;
-        private readonly IRepository<DiagnosisCode> _dcRepository;
-        private readonly IRepository<Facility> _fRepository;
-        private readonly IRepository<FacilityStructure> _fsRepository;
-        private readonly IRepository<UBedMaster> _bmRepository;
-        private readonly IRepository<MappingPatientBed> _mpRepository;
-        private readonly IRepository<PatientInfo> _piRepository;
-        private readonly IRepository<Authorization> _auRepository;
-        private readonly IRepository<Physician> _phRepository;
-        private readonly IRepository<PatientInsurance> _pinRepository;
-        private readonly IRepository<Users> _uRepository;
-        private readonly IRepository<Diagnosis> _diaRepository;
-        private readonly IRepository<PatientEvaluationSet> _pesRepository;
-        private readonly IRepository<DRGCodes> _drgRepository;
-        private readonly IRepository<GlobalCodeCategory> _gcRepository;
-        private readonly IRepository<InsuranceCompany> _icrepository;
-
-
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public EncounterService(IRepository<Encounter> repository, IRepository<GlobalCodes> gRepository, IRepository<BillHeader> biRepository, IRepository<OpenOrder> oRepository, IRepository<CPTCodes> cptRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<Facility> fRepository, IRepository<FacilityStructure> fsRepository, IRepository<UBedMaster> bmRepository, IRepository<MappingPatientBed> mpRepository, IRepository<PatientInfo> piRepository, IRepository<Authorization> auRepository, IRepository<Physician> phRepository, IRepository<PatientInsurance> pinRepository, IRepository<Users> uRepository, IRepository<Diagnosis> diaRepository, IRepository<PatientEvaluationSet> pesRepository, IRepository<DRGCodes> drgRepository, IRepository<GlobalCodeCategory> gcRepository, IRepository<InsuranceCompany> icrepository, BillingEntities context, IMapper mapper)
+        public EncounterService(IRepository<Encounter> repository, BillingEntities context, IMapper mapper)
         {
             _repository = repository;
-            _gRepository = gRepository;
-            _biRepository = biRepository;
-            _oRepository = oRepository;
-            _cptRepository = cptRepository;
-            _dRepository = dRepository;
-            _hcRepository = hcRepository;
-            _drugRepository = drugRepository;
-            _sRepository = sRepository;
-            _dcRepository = dcRepository;
-            _fRepository = fRepository;
-            _fsRepository = fsRepository;
-            _bmRepository = bmRepository;
-            _mpRepository = mpRepository;
-            _piRepository = piRepository;
-            _auRepository = auRepository;
-            _phRepository = phRepository;
-            _pinRepository = pinRepository;
-            _uRepository = uRepository;
-            _diaRepository = diaRepository;
-            _pesRepository = pesRepository;
-            _drgRepository = drgRepository;
-            _gcRepository = gcRepository;
-            _icrepository = icrepository;
             _context = context;
             _mapper = mapper;
+        }
+
+        private void UpdateBillDateOnEncounterEnds(int encounterId)
+        {
+            var sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter("pEId", encounterId);
+            _repository.ExecuteCommand(StoredProcedures.SPROC_UpdateBillDate.ToString(), sqlParameters);
+        }
+
+        /// <summary>
+        /// Checks the is long term service.
+        /// </summary>
+        /// <param name="isDrgDone">if set to <c>true</c> [is DRG done].</param>
+        /// <param name="bedservice">The bedservice.</param>
+        /// <returns></returns>
+        private bool CheckIsLongTermService(bool isDrgDone, string bedservice)
+        {
+            var bedserviceTrimed = string.IsNullOrEmpty(bedservice) ? "" : bedservice.Trim();
+            switch (bedserviceTrimed)
+            {
+                case "17-12":
+                    return true;
+                case "17-13":
+                    return true;
+                case "17-14":
+                    return true;
+                case "17-15":
+                    return true;
+                case "17-16":
+                    return true;
+                default:
+                    return isDrgDone;
+            }
+        }
+
+        private InsuranceCompany GetInsuranceDetailsByPayorId(string payorId)
+        {
+            var m = _context.InsuranceCompany.Where(x => x.InsuranceCompanyLicenseNumber.Equals(payorId)).FirstOrDefault();
+            return m;
+        }
+
+        /// <summary>
+        /// Calculates the person age.
+        /// </summary>
+        /// <param name="birthDate">The birth date.</param>
+        /// <param name="now">The now.</param>
+        /// <param name="facilityId">The facility identifier.</param>
+        /// <returns></returns>
+        private int CalculatePersonAge(DateTime? birthDate, DateTime now, int facilityId)
+        {
+            var currentDateTime = GetInvariantCultureDateTime(facilityId);
+            var birthdateUpdated = birthDate ?? currentDateTime;
+            int age = now.Year - birthdateUpdated.Year;
+            if (now.Month < birthdateUpdated.Month || (now.Month == birthdateUpdated.Month && now.Day < birthdateUpdated.Day)) age--;
+            return age;
+        }
+
+        private List<AuthorizationCustomModel> GetAuthorizationsByEncounterId(string authorizationEncounterId)
+        {
+            var list = new List<AuthorizationCustomModel>();
+            var mList = _context.Authorization.Where(x => x.EncounterID == authorizationEncounterId).ToList();
+            list = mList.Select(x => _mapper.Map<AuthorizationCustomModel>(x)).ToList();
+            return list;
+        }
+
+        /// <summary>
+        /// Determines whether [is bed assigned long term case] [the specified bed service code].
+        /// </summary>
+        /// <param name="bedServiceCode">The bed service code.</param>
+        /// <returns></returns>
+        private bool IsBedAssignedLongTermCase(string bedServiceCode)
+        {
+            /*Implemented a NULL check on 06102015*/
+            if (string.IsNullOrEmpty(bedServiceCode))
+                return false;
+
+            switch (bedServiceCode.Trim())
+            {
+                case "17-13":
+                    return true;
+                case "17-14":
+                    return true;
+                case "17-15":
+                    return true;
+                case "17-16":
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private string GetNameByGlobalCodeValue(string codeValue, string categoryValue, string fId = "")
         {
             if (!string.IsNullOrEmpty(codeValue))
             {
-                var gl = _gRepository.Where(g => g.GlobalCodeValue.Equals(codeValue) && !g.IsDeleted.Value && g.GlobalCodeCategoryValue.Equals(categoryValue) && (string.IsNullOrEmpty(fId) || g.FacilityNumber.Equals(fId))).FirstOrDefault();
+                var gl = _context.GlobalCodes.Where(g => g.GlobalCodeValue.Equals(codeValue) && !g.IsDeleted.Value && g.GlobalCodeCategoryValue.Equals(categoryValue) && (string.IsNullOrEmpty(fId) || g.FacilityNumber.Equals(fId))).FirstOrDefault();
                 return gl != null ? gl.GlobalCodeName : string.Empty;
             }
             return string.Empty;
         }
+
         private string GetCodeDescription(string orderCode, string orderType, string CptTableNumber, string DrgTableNumber, string HcpcsTableNumber, string DrugTableNumber,
           string ServiceCodeTableNumber, string DiagnosisTableNumber)
         {
@@ -95,37 +136,38 @@ namespace BillingSystem.Bal.BusinessAccess
                 switch (codeType)
                 {
                     case OrderType.CPT:
-                        codeDescription = _cptRepository.Where(x => x.CodeNumbering.Contains(orderCode) && x.CodeTableNumber.Trim().Equals(CptTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.CPTCodes.Where(x => x.CodeNumbering.Contains(orderCode) && x.CodeTableNumber.Trim().Equals(CptTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.DRG:
-                        codeDescription = _dRepository.Where(d => d.CodeNumbering == orderCode && d.CodeTableNumber.Trim().Equals(DrgTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.DRGCodes.Where(d => d.CodeNumbering == orderCode && d.CodeTableNumber.Trim().Equals(DrgTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.HCPCS:
-                        codeDescription = _hcRepository.Where(x => x.CodeNumbering == orderCode && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.HCPCSCodes.Where(x => x.CodeNumbering == orderCode && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.DRUG:
-                        codeDescription = _drugRepository.Where(x => x.DrugCode == orderCode && x.DrugTableNumber.Trim().Equals(DrugTableNumber)).FirstOrDefault().DrugDescription;
+                        codeDescription = _context.Drug.Where(x => x.DrugCode == orderCode && x.DrugTableNumber.Trim().Equals(DrugTableNumber)).FirstOrDefault().DrugDescription;
                         return codeDescription;
                     case OrderType.BedCharges:
-                        codeDescription = _sRepository.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
+                    case OrderType.ServiceCode:
+                        codeDescription = _context.ServiceCode.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
                         return codeDescription;
                     case OrderType.Diagnosis:
-                        codeDescription = _dcRepository.Where(d => d.DiagnosisCode1 == orderCode && d.DiagnosisTableNumber.Trim().Equals(DiagnosisTableNumber)).FirstOrDefault().DiagnosisFullDescription;
+                        codeDescription = _context.DiagnosisCode.Where(d => d.DiagnosisCode1 == orderCode && d.DiagnosisTableNumber.Trim().Equals(DiagnosisTableNumber)).FirstOrDefault().DiagnosisFullDescription;
                         return codeDescription;
-                    case OrderType.ServiceCode:
-                        codeDescription = _sRepository.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
-                        return codeDescription;
+                    //codeDescription = _sRepository.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
+                    //return codeDescription;
                     default:
                         break;
                 }
             }
             return codeDescription;
         }
+
         private string GetNameByGlobalCodeValueAndCategoryValue(string categoryValue, string globalCodeValue)
         {
             if (!string.IsNullOrEmpty(categoryValue) && !string.IsNullOrEmpty(globalCodeValue))
             {
-                var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
+                var globalCode = _context.GlobalCodes.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
                 && c.GlobalCodeValue.Equals(globalCodeValue)).FirstOrDefault();
 
                 if (globalCode != null)
@@ -134,36 +176,24 @@ namespace BillingSystem.Bal.BusinessAccess
             return string.Empty;
         }
 
-        public DateTime GetInvariantCultureDateTime(int facilityid)
-        {
-
-            var facilityObj = _fRepository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault() != null ? _fRepository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault().FacilityTimeZone : TimeZoneInfo.Utc.ToString();
-            var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
-            var utcTime = DateTime.Now.ToUniversalTime();
-            var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
-            return convertedTime;
-        }
-
         private string GetBedNameByInPatientEncounterId(string encounterId)
         {
             var bedName = string.Empty;
-            var bedTypeAssigned = _mpRepository.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).OrderByDescending(x => x.PatientID).FirstOrDefault();
+            var bedTypeAssigned = _context.MappingPatientBed.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).OrderByDescending(x => x.PatientID).FirstOrDefault();
             if (bedTypeAssigned != null)
             {
                 var bedId = Convert.ToInt32(bedTypeAssigned.BedNumber);
 
-                var bedMaster = _bmRepository.Where(b => b.BedId == bedId).FirstOrDefault();
+                var bedMaster = _context.UBedMaster.Where(b => b.BedId == bedId).FirstOrDefault();
                 if (bedMaster != null)
                 {
                     var fsId = Convert.ToInt32(bedMaster.FacilityStructureId);
 
-                    var fsStructure = _fsRepository.Where(f => f.FacilityStructureId == fsId).FirstOrDefault();
+                    var fsStructure = _context.FacilityStructure.Where(f => f.FacilityStructureId == fsId).FirstOrDefault();
                     if (fsStructure != null)
                         bedName = fsStructure.FacilityStructureName;
 
                 }
-
-
             }
             return bedName;
         }
@@ -171,12 +201,12 @@ namespace BillingSystem.Bal.BusinessAccess
         private string GetBedByInPatientEncounterId(string encounterId)
         {
             var bedmaster = "0";
-            var bedTypeAssigned = _mpRepository.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).FirstOrDefault();
+            var bedTypeAssigned = _context.MappingPatientBed.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).FirstOrDefault();
             if (bedTypeAssigned != null)
             {
                 var bedId = Convert.ToInt32(bedTypeAssigned.BedNumber);
 
-                var bedMaster = _bmRepository.Where(b => b.BedId == bedId).FirstOrDefault();
+                var bedMaster = _context.UBedMaster.Where(b => b.BedId == bedId).FirstOrDefault();
                 if (bedMaster != null)
                 {
                     bedmaster = bedMaster.BedId.ToString();
@@ -185,26 +215,19 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return bedmaster;
         }
+
         private Authorization GetAuthorizationByEncounterId(string authorizationEncounterId)
         {
-            var m = _auRepository.Where(x => x.EncounterID == authorizationEncounterId && (x.IsDeleted == null || x.IsDeleted == false)).FirstOrDefault();
+            var m = _context.Authorization.Where(x => x.EncounterID == authorizationEncounterId && (x.IsDeleted == null || x.IsDeleted == false)).FirstOrDefault();
             return m;
         }
+
         private string GetAuthorizationIdPayerByPatientId(int patientId)
         {
-            var ins = _pinRepository.Where(e => e.PatientID == patientId).FirstOrDefault();
+            var ins = _context.PatientInsurance.Where(e => e.PatientID == patientId).FirstOrDefault();
             return ins != null ? ins.InsuranceCompanyId.ToString() : string.Empty;
         }
-        //public EncounterBal(string cptTableNumber, string drgTableNumber, string serviceCodeTableNumber, string diagnosisTableNumber, string drugTableNumber)
-        //{
-        //    CptTableNumber = cptTableNumber;
-        //    DrgTableNumber = drgTableNumber;
-        //    ServiceCodeTableNumber = serviceCodeTableNumber;
-        //    DrugTableNumber = drugTableNumber;
-        //    DiagnosisTableNumber = diagnosisTableNumber;
-        //}
 
-        //Function to Get Encounter List
         /// <summary>
         /// Gets the encounter list.
         /// </summary>
@@ -214,21 +237,107 @@ namespace BillingSystem.Bal.BusinessAccess
             var lst = _repository.GetAll().Include(f => f.PatientInfo).Where(x => x.EncounterEndTime == null).ToList();
             return lst;
         }
+
         private string GetOverRideBedTypeByInPatientEncounterId(string encounterId)
         {
             var str = string.Empty;
-            var bedTypeAssigned = _mpRepository.Where(m => m.EncounterID.Equals(encounterId)).FirstOrDefault();
+            var bedTypeAssigned = _context.MappingPatientBed.Where(m => m.EncounterID.Equals(encounterId)).FirstOrDefault();
             if (bedTypeAssigned != null)
             {
                 str = Convert.ToInt32(bedTypeAssigned.OverrideBedType).ToString();
             }
             return str;
         }
+
+        /// <summary>
+        /// Encounters the state.
+        /// </summary>
+        /// <param name="endType">The end type.</param>
+        /// <param name="patientType">Type of the patient.</param>
+        /// <returns></returns>
+        private string EncounterState(int endType, int patientType)
+        {
+            var encounterState = string.Empty;
+            switch (patientType)
+            {
+                case 1:
+                case 3:
+                    encounterState = (endType > 0) ? EncounterStates.endencounter.ToString() : EncounterStates.outpatient.ToString();
+                    break;
+                case 2:
+                    encounterState = (endType > 0) ? EncounterStates.discharge.ToString() : EncounterStates.admitpatient.ToString();
+                    break;
+            }
+            return encounterState;
+        }
+
+        private string GetGlobalCodeNameByValueAndCategoryId(string categoryId, string globalCodeVal)
+        {
+            var globalCode = _context.GlobalCodes.Where(c => c.GlobalCodeCategoryValue.Equals(categoryId) && c.GlobalCodeValue == globalCodeVal).FirstOrDefault();
+            if (globalCode != null)
+                return globalCode.GlobalCodeName;
+            return string.Empty;
+        }
+
+        private int GetGlobalCodeSotringByValueAndCategoryId(string categoryId, string globalCodeVal)
+        {
+            var globalCode = _context.GlobalCodes.Where(c => c.GlobalCodeCategoryValue.Equals(categoryId) && c.GlobalCodeValue == globalCodeVal).FirstOrDefault();
+            if (globalCode != null)
+                return Convert.ToInt32(globalCode.SortOrder);
+
+            return 0;
+        }
+
+        private DRGCodes GetDrgCodesById(int id)
+        {
+            var drgCodes = _context.DRGCodes.Where(x => x.DRGCodesId == id).FirstOrDefault();
+            return drgCodes;
+        }
+
+        private Diagnosis GetDiagnosisInfoByEncounterId(int encounterId)
+        {
+            var pDiagnosis = Convert.ToInt32(DiagnosisType.Primary);
+            var m = _context.Diagnosis.Where(d => d.EncounterID == encounterId && d.DiagnosisType == pDiagnosis).FirstOrDefault();
+            return m;
+        }
+
+        private Diagnosis GetDRGDiagnosisInfoByEncounterId(int encounterId)
+        {
+            var drgDiagnosis = Convert.ToInt32(DiagnosisType.DRG);
+            var diagnosis = _context.Diagnosis.Where(d => d.EncounterID == encounterId && d.DiagnosisType == drgDiagnosis).FirstOrDefault();
+            return diagnosis;
+
+        }
+
+        private string GetDateDifference(DateTime startTime, int patientType, int facilityId)
+        {
+            DateTime currentDate = GetInvariantCultureDateTime(facilityId);
+            TimeSpan ts = currentDate - Convert.ToDateTime(startTime);
+
+            var diff = patientType == (int)EncounterPatientType.OutPatient
+                 ? string.Format("{0} Hours", ts.Hours)
+                 : string.Format("{0} Days {1} Hours", ts.Days, ts.Hours);
+            return diff;
+        }
+
+        public DateTime GetInvariantCultureDateTime(int facilityid)
+        {
+            var m = facilityid > 0 ? _context.Facility.Where(f => f.FacilityId == facilityid).FirstOrDefault() : new Facility { FacilityTimeZone = string.Empty };
+
+            var timeZone = m != null && !string.IsNullOrEmpty(m.FacilityTimeZone) ? m.FacilityTimeZone : TimeZoneInfo.Utc.ToString();
+
+            var tzi = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
+            var utcTime = DateTime.Now.ToUniversalTime();
+            var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
+            return convertedTime;
+        }
+
         public string GetPhysicianName(int physicianId)
         {
-            var phylist = _phRepository.Where(x => x.Id == physicianId).FirstOrDefault();
+            var phylist = _context.Physician.Where(x => x.Id == physicianId).FirstOrDefault();
             return phylist != null ? phylist.PhysicianName : string.Empty;
         }
+
         //Function to Get Encounter BY Encounter ID
         /// <summary>
         /// Gets the encounter by encounter identifier.
@@ -395,7 +504,7 @@ namespace BillingSystem.Bal.BusinessAccess
                 }
                 else
                 {
-                    var patientInfo = _piRepository.Where(p => p.PatientID == patientId).FirstOrDefault();
+                    var patientInfo = _context.PatientInfo.Where(p => p.PatientID == patientId).FirstOrDefault();
                     if (patientInfo != null)
                     {
                         var patientName = string.Format("{0} {1}", patientInfo.PersonFirstName, patientInfo.PersonLastName);
@@ -423,33 +532,12 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public bool IsPatientExist(int patientId)
         {
-            return _piRepository.Where(p => p.PatientID == patientId).Any();
+            return _context.PatientInfo.Where(p => p.PatientID == patientId).Any();
         }
 
-        /// <summary>
-        /// Encounters the state.
-        /// </summary>
-        /// <param name="endType">The end type.</param>
-        /// <param name="patientType">Type of the patient.</param>
-        /// <returns></returns>
-        private string EncounterState(int endType, int patientType)
-        {
-            var encounterState = string.Empty;
-            switch (patientType)
-            {
-                case 1:
-                case 3:
-                    encounterState = (endType > 0) ? EncounterStates.endencounter.ToString() : EncounterStates.outpatient.ToString();
-                    break;
-                case 2:
-                    encounterState = (endType > 0) ? EncounterStates.discharge.ToString() : EncounterStates.admitpatient.ToString();
-                    break;
-            }
-            return encounterState;
-        }
         public string GetInsuranceMemberIdByPatientId(int patientId)
         {
-            var ins = _pinRepository.Where(e => e.PatientID == patientId).FirstOrDefault();
+            var ins = _context.PatientInsurance.Where(e => e.PatientID == patientId).FirstOrDefault();
             return ins != null ? ins.PersonHealthCareNumber.ToString() : string.Empty;
 
         }
@@ -591,50 +679,7 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return list;
         }
-        private string GetGlobalCodeNameByValueAndCategoryId(string categoryId, string globalCodeVal)
-        {
-            var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryId) && c.GlobalCodeValue == globalCodeVal).FirstOrDefault();
-            if (globalCode != null)
-                return globalCode.GlobalCodeName;
-            return string.Empty;
-        }
-        private int GetGlobalCodeSotringByValueAndCategoryId(string categoryId, string globalCodeVal)
-        {
-            var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryId) && c.GlobalCodeValue == globalCodeVal).FirstOrDefault();
-            if (globalCode != null)
-                return Convert.ToInt32(globalCode.SortOrder);
 
-            return 0;
-        }
-
-        private DRGCodes GetDrgCodesById(int id)
-        {
-            var drgCodes = _drgRepository.Where(x => x.DRGCodesId == id).FirstOrDefault();
-            return drgCodes;
-        }
-        private Diagnosis GetDiagnosisInfoByEncounterId(int encounterId)
-        {
-            var pDiagnosis = Convert.ToInt32(DiagnosisType.Primary);
-            var m = _diaRepository.Where(d => d.EncounterID == encounterId && d.DiagnosisType == pDiagnosis).FirstOrDefault();
-            return m;
-        }
-        private Diagnosis GetDRGDiagnosisInfoByEncounterId(int encounterId)
-        {
-            var drgDiagnosis = Convert.ToInt32(DiagnosisType.DRG);
-            var diagnosis = _diaRepository.Where(d => d.EncounterID == encounterId && d.DiagnosisType == drgDiagnosis).FirstOrDefault();
-            return diagnosis;
-
-        }
-        private string GetDateDifference(DateTime startTime, int patientType, int facilityId)
-        {
-            DateTime currentDate = GetInvariantCultureDateTime(facilityId);
-            TimeSpan ts = currentDate - Convert.ToDateTime(startTime);
-
-            var diff = patientType == (int)EncounterPatientType.OutPatient
-                 ? string.Format("{0} Hours", ts.Hours)
-                 : string.Format("{0} Days {1} Hours", ts.Days, ts.Hours);
-            return diff;
-        }
         public List<int> GetActiveEncounterIdsByPatientId(int patientId)
         {
             var list = new List<int>();
@@ -644,32 +689,6 @@ namespace BillingSystem.Bal.BusinessAccess
                     .Select(item => item.EncounterID)
                     .ToList();
             return list;
-        }
-
-        /// <summary>
-        /// Checks the is long term service.
-        /// </summary>
-        /// <param name="isDrgDone">if set to <c>true</c> [is DRG done].</param>
-        /// <param name="bedservice">The bedservice.</param>
-        /// <returns></returns>
-        private bool CheckIsLongTermService(bool isDrgDone, string bedservice)
-        {
-            var bedserviceTrimed = string.IsNullOrEmpty(bedservice) ? "" : bedservice.Trim();
-            switch (bedserviceTrimed)
-            {
-                case "17-12":
-                    return true;
-                case "17-13":
-                    return true;
-                case "17-14":
-                    return true;
-                case "17-15":
-                    return true;
-                case "17-16":
-                    return true;
-                default:
-                    return isDrgDone;
-            }
         }
 
         /// <summary>
@@ -788,35 +807,7 @@ namespace BillingSystem.Bal.BusinessAccess
             }
             return vm;
         }
-        private InsuranceCompany GetInsuranceDetailsByPayorId(string payorId)
-        {
-            var m = _icrepository.Where(x => x.InsuranceCompanyLicenseNumber.Equals(payorId)).FirstOrDefault();
-            return m;
-        }
 
-        /// <summary>
-        /// Calculates the person age.
-        /// </summary>
-        /// <param name="birthDate">The birth date.</param>
-        /// <param name="now">The now.</param>
-        /// <param name="facilityId">The facility identifier.</param>
-        /// <returns></returns>
-        private int CalculatePersonAge(DateTime? birthDate, DateTime now, int facilityId)
-        {
-            var currentDateTime = GetInvariantCultureDateTime(facilityId);
-            var birthdateUpdated = birthDate ?? currentDateTime;
-            int age = now.Year - birthdateUpdated.Year;
-            if (now.Month < birthdateUpdated.Month || (now.Month == birthdateUpdated.Month && now.Day < birthdateUpdated.Day)) age--;
-            return age;
-        }
-        private List<AuthorizationCustomModel> GetAuthorizationsByEncounterId(string authorizationEncounterId)
-        {
-            var list = new List<AuthorizationCustomModel>();
-            var mList = _auRepository.Where(x => x.EncounterID == authorizationEncounterId).ToList();
-            list = mList.Select(x => _mapper.Map<AuthorizationCustomModel>(x)).ToList();
-            return list;
-
-        }
         /// <summary>
         /// Gets the active encounter by pateint identifier.
         /// </summary>
@@ -1033,10 +1024,8 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var list = new List<EncounterCustomModel>();
             var lstEncounter = _repository.Where(_ => _.PatientID == patientId).OrderByDescending(x => x.EncounterStartTime).ToList();
-            var eCat =
-                Convert.ToInt32(GlobalCodeCategoryValue.EncounterType);
-            var eTypeCat =
-                Convert.ToInt32(GlobalCodeCategoryValue.EncounterPatientType);
+            var eCat = (int)GlobalCodeCategoryValue.EncounterType;
+            var eTypeCat = (int)GlobalCodeCategoryValue.EncounterPatientType;
 
             list.AddRange(lstEncounter.Select(item => new EncounterCustomModel
             {
@@ -1047,42 +1036,16 @@ namespace BillingSystem.Bal.BusinessAccess
                 Charges = item.Charges,
                 Payment = item.Payment,
                 PatientID = item.PatientID,
-                EncounterTypeName =
-                    GetNameByGlobalCodeValueAndCategoryValue(eCat.ToString(),
+                EncounterTypeName = GetNameByGlobalCodeValueAndCategoryValue(eCat.ToString(),
                         item.EncounterType.ToString()),
-                EncounterPatientTypeName =
-                    GetNameByGlobalCodeValueAndCategoryValue(eTypeCat.ToString(),
+                EncounterPatientTypeName = GetNameByGlobalCodeValueAndCategoryValue(eTypeCat.ToString(),
                         item.EncounterPatientType.ToString()),
-                BillHeaderId = _biRepository.Where(a => a.EncounterID == item.EncounterID && a.PatientID == item.PatientID).FirstOrDefault().BillHeaderID
+                BillHeaderId = _context.BillHeader.Where(a => a.EncounterID == item.EncounterID && a.PatientID == item.PatientID).FirstOrDefault().BillHeaderID
             }));
             return list;
         }
 
-        /// <summary>
-        /// Determines whether [is bed assigned long term case] [the specified bed service code].
-        /// </summary>
-        /// <param name="bedServiceCode">The bed service code.</param>
-        /// <returns></returns>
-        private bool IsBedAssignedLongTermCase(string bedServiceCode)
-        {
-            /*Implemented a NULL check on 06102015*/
-            if (string.IsNullOrEmpty(bedServiceCode))
-                return false;
 
-            switch (bedServiceCode.Trim())
-            {
-                case "17-13":
-                    return true;
-                case "17-14":
-                    return true;
-                case "17-15":
-                    return true;
-                case "17-16":
-                    return true;
-                default:
-                    return false;
-            }
-        }
 
         /// <summary>
         /// Adds the bed charges for transfer patient.
@@ -1130,13 +1093,13 @@ namespace BillingSystem.Bal.BusinessAccess
             var physicianName = string.Empty;
             var encounterNumber = string.Empty;
 
-            var evaluationSetList = _pesRepository.Where(i => i.PatientId == patientId && (i.EncounterId == encounterId || encounterId == 0)).ToList();
+            var evaluationSetList = _context.PatientEvaluationSet.Where(i => i.PatientId == patientId && (i.EncounterId == encounterId || encounterId == 0)).ToList();
             if (evaluationSetList.Count > 0)
             {
                 var currentEncounter = GetEncounterByEncounterId(encounterId);
                 if (currentEncounter != null)
                 {
-                    physicianName = GetPhysicianName(Convert.ToInt32(currentEncounter.EncounterAttendingPhysician));
+                    physicianName = GetPhysicianName(currentEncounter.EncounterAttendingPhysician.GetValueOrDefault());
                     encounterNumber = currentEncounter.EncounterNumber;
                 }
                 list.AddRange(evaluationSetList.Select(item => new PatientEvaluationSetCustomModel
@@ -1148,7 +1111,7 @@ namespace BillingSystem.Bal.BusinessAccess
                     DocumentName = string.IsNullOrEmpty(item.FormType) ? "Evaluation Management" : Convert.ToString(item.FormType),
                     ExtValue2 = item.ExtValue2,
                     CreatedBy = item.CreatedBy,
-                    CompletedBy = _uRepository.Where(x => x.UserID == Convert.ToInt32(item.CreatedBy) && x.IsDeleted == false).FirstOrDefault().UserName
+                    CompletedBy = _context.Users.Where(x => x.UserID == item.CreatedBy.GetValueOrDefault() && x.IsDeleted == false).FirstOrDefault().UserName
                 }));
 
             }
@@ -1221,9 +1184,6 @@ namespace BillingSystem.Bal.BusinessAccess
             return encountersList;
         }
 
-
-
-
         /// <summary>
         /// Gets the encounters list by patient identifier.
         /// </summary>
@@ -1241,7 +1201,7 @@ namespace BillingSystem.Bal.BusinessAccess
             var physicianName = string.Empty;
             var encounterNumber = string.Empty;
 
-            var evaluationSetList = _pesRepository.Where(i => i.PatientId == patientId && (i.EncounterId == encounterId || encounterId == 0) && i.ExtValue2.Trim().Equals("99")).ToList();
+            var evaluationSetList = _context.PatientEvaluationSet.Where(i => i.PatientId == patientId && (i.EncounterId == encounterId || encounterId == 0) && i.ExtValue2.Trim().Equals("99")).ToList();
             if (evaluationSetList.Count > 0)
             {
                 var currentEncounter = GetEncounterByEncounterId(encounterId);
@@ -1288,14 +1248,6 @@ namespace BillingSystem.Bal.BusinessAccess
             return 0;
         }
 
-        private void UpdateBillDateOnEncounterEnds(int encounterId)
-        {
-            var sqlParameters = new SqlParameter[1];
-            sqlParameters[0] = new SqlParameter("pEId", encounterId);
-            _repository.ExecuteCommand(StoredProcedures.SPROC_UpdateBillDate.ToString(), sqlParameters);
-        }
-
-
         /// <summary>
         /// Adds the virtual discharge log.
         /// </summary>
@@ -1336,7 +1288,6 @@ namespace BillingSystem.Bal.BusinessAccess
             return 0;
         }
 
-
         public List<EncounterCustomModel> GetAllActiveEncounters(string facilityNumber, List<int> patientTypes)
         {
             var spName = string.Format("EXEC {0}  @FacilityId", StoredProcedures.SPORC_GetEncounterData);
@@ -1345,7 +1296,6 @@ namespace BillingSystem.Bal.BusinessAccess
             IEnumerable<EncounterCustomModel> result = _context.Database.SqlQuery<EncounterCustomModel>(spName, sqlParameters);
             return result.ToList();
         }
-
 
         public string GetTriageData(int encounterId)
         {
@@ -1365,7 +1315,6 @@ namespace BillingSystem.Bal.BusinessAccess
 
             return sValue;
         }
-
 
         /// <summary>
         /// Gets the encounter detail by encounter identifier.
@@ -1496,12 +1445,14 @@ namespace BillingSystem.Bal.BusinessAccess
             return vm;
 
         }
+
         public bool EncounterOpenOrders(int encounterId)
         {
-            return _oRepository.Where(p => p.CreatedBy != null && (int)p.EncounterID == encounterId && p.OrderStatus == "1")
+            return _context.OpenOrder.Where(p => p.CreatedBy != null && (int)p.EncounterID == encounterId && p.OrderStatus == "1")
                     .ToList().Any();
 
         }
+
         private async Task<List<DocumentsTemplates>> GetPatientDocumentsList(int patientId)
         {
             var sqlParams = new SqlParameter[5];
@@ -1518,6 +1469,7 @@ namespace BillingSystem.Bal.BusinessAccess
             }
 
         }
+
         public bool PatientEncounterOpenOrders(int patientId)
         {
             var patientCurrentEncounterid = _repository.Where(e => e.PatientID == patientId && e.EncounterEndTime == null).FirstOrDefault().EncounterID;

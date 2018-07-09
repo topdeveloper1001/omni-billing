@@ -42,20 +42,35 @@ namespace BillingSystem.Bal.BusinessAccess
         /// Get the Entity
         /// </summary>
         /// <returns>Return the Entity List</returns>
-        public List<RuleMasterCustomModel> GetRuleMasterList(string BillEditRuleTableNumber, bool notActive = false)
+        //public List<RuleMasterCustomModel> GetRuleMasterList(string BillEditRuleTableNumber, bool notActive = false)
+        //{
+        //    var list = new List<RuleMasterCustomModel>();
+        //    var spName = string.Format("EXEC {0} @pCodeTableNumber,@pIsNotActive", StoredProcedures.SPROC_GetRuleMasterByTableNumber);
+        //    var sqlParameters = new SqlParameter[2];
+        //    sqlParameters[0] = new SqlParameter("pCodeTableNumber", BillEditRuleTableNumber);
+        //    sqlParameters[1] = new SqlParameter("pIsNotActive", notActive);
+        //    var result = _context.Database.SqlQuery<RuleMasterCustomModel>(spName, sqlParameters);
+        //    if (list.Count > 0)
+        //        list = list.OrderBy(g => g.RuleCode1).ToList();
+
+
+        //    return list;
+        //}
+
+        public List<RuleMasterCustomModel> GetRuleMasterList(string BillEditRuleTableNumber, bool isActive = true)
         {
             var list = new List<RuleMasterCustomModel>();
             var spName = string.Format("EXEC {0} @pCodeTableNumber,@pIsNotActive", StoredProcedures.SPROC_GetRuleMasterByTableNumber);
             var sqlParameters = new SqlParameter[2];
             sqlParameters[0] = new SqlParameter("pCodeTableNumber", BillEditRuleTableNumber);
-            sqlParameters[1] = new SqlParameter("pIsNotActive", notActive);
-            var result = _context.Database.SqlQuery<RuleMasterCustomModel>(spName, sqlParameters);
-            if (list.Count > 0)
-                list = list.OrderBy(g => g.RuleCode1).ToList();
-
-
-            return list;
+            sqlParameters[1] = new SqlParameter("pIsNotActive", isActive);
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetRuleMasterData.ToString(), isCompiled: false, parameters: sqlParameters))
+            {
+                var result = ms.GetResultWithJson<RuleMasterCustomModel>(JsonResultsArray.RuleMaster.ToString());
+                return result;
+            }
         }
+
         private List<RuleMasterCustomModel> MapValues(List<RuleMaster> m)
         {
             var lst = new List<RuleMasterCustomModel>();
@@ -203,9 +218,9 @@ namespace BillingSystem.Bal.BusinessAccess
                     var stepList =
                         _rsRepository.Where(s => s.RuleMasterID != null && ids.Contains(s.RuleMasterID.Value)).ToList();
 
-                        var scrubReportList =_srRepository.Where(s => s.RuleMasterID != null && ids.Contains(s.RuleMasterID.Value)).ToList();
-                        if (scrubReportList.Count > 0)
-                            _srRepository.Delete(scrubReportList);
+                    var scrubReportList = _srRepository.Where(s => s.RuleMasterID != null && ids.Contains(s.RuleMasterID.Value)).ToList();
+                    if (scrubReportList.Count > 0)
+                        _srRepository.Delete(scrubReportList);
 
                     if (stepList.Count > 0)
                         _rsRepository.Delete(stepList);

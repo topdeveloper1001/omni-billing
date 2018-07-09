@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Common.Common;
 using System;
-
 using System.Data.SqlClient;
 using AutoMapper;
 
@@ -14,45 +13,16 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class OpenOrderService : IOpenOrderService
     {
-        private readonly IRepository<Encounter> _eRepository;
-        private readonly IRepository<GlobalCodes> _gRepository;
         private readonly IRepository<OpenOrder> _repository;
-        private readonly IRepository<BillHeader> _bhRepository;
-        private readonly IRepository<CPTCodes> _cRepository;
-        private readonly IRepository<DRGCodes> _dRepository;
-        private readonly IRepository<HCPCSCodes> _hcRepository;
-        private readonly IRepository<Drug> _drugRepository;
-        private readonly IRepository<ServiceCode> _sRepository;
-        private readonly IRepository<DiagnosisCode> _dcRepository;
-        private readonly IRepository<GlobalCodeCategory> _ggRepository;
-        private readonly IRepository<Diagnosis> _diaRepository;
-        private readonly IRepository<UserDefinedDescriptions> _favRepository;
-        private readonly IRepository<OrderActivity> _orRepository;
-
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public OpenOrderService(IRepository<Encounter> eRepository, IRepository<GlobalCodes> gRepository, IRepository<OpenOrder> repository, IRepository<BillHeader> bhRepository, IRepository<CPTCodes> cRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<GlobalCodeCategory> ggRepository, IRepository<Diagnosis> diaRepository, IRepository<UserDefinedDescriptions> favRepository, IRepository<OrderActivity> orRepository, BillingEntities context, IMapper mapper)
+        public OpenOrderService(IRepository<OpenOrder> repository, BillingEntities context, IMapper mapper)
         {
-            _eRepository = eRepository;
-            _gRepository = gRepository;
             _repository = repository;
-            _bhRepository = bhRepository;
-            _cRepository = cRepository;
-            _dRepository = dRepository;
-            _hcRepository = hcRepository;
-            _drugRepository = drugRepository;
-            _sRepository = sRepository;
-            _dcRepository = dcRepository;
-            _ggRepository = ggRepository;
-            _diaRepository = diaRepository;
-            _favRepository = favRepository;
-            _orRepository = orRepository;
             _context = context;
             _mapper = mapper;
         }
-
-
 
         /// <summary>
         /// Get the Physician Orders
@@ -176,14 +146,14 @@ namespace BillingSystem.Bal.BusinessAccess
         private string GetDiagnoseNameByCodeId(string diagnosisId)
         {
             var id = Convert.ToInt32(diagnosisId);
-            var diagnosis = _diaRepository.Where(d => d.DiagnosisID == id).FirstOrDefault();
+            var diagnosis = _context.Diagnosis.Where(d => d.DiagnosisID == id).FirstOrDefault();
             return diagnosis != null ? diagnosis.DiagnosisCodeDescription : string.Empty;
         }
         private string GetGlobalCategoryNameById(string categoryValue, string facilityId = "")
         {
             if (!string.IsNullOrEmpty(categoryValue))
             {
-                var category = _ggRepository.Where(g => g.GlobalCodeCategoryValue.Equals(categoryValue) && g.IsDeleted.HasValue ? !g.IsDeleted.Value : false && (string.IsNullOrEmpty(facilityId) || g.FacilityNumber.Equals(facilityId))).FirstOrDefault();
+                var category = _context.GlobalCodeCategory.Where(g => g.GlobalCodeCategoryValue.Equals(categoryValue) && g.IsDeleted.HasValue ? !g.IsDeleted.Value : false && (string.IsNullOrEmpty(facilityId) || g.FacilityNumber.Equals(facilityId))).FirstOrDefault();
                 return category != null ? category.GlobalCodeCategoryName : string.Empty;
             }
             return string.Empty;
@@ -192,7 +162,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             if (!string.IsNullOrEmpty(codeValue))
             {
-                var gl = _gRepository.Where(g => g.GlobalCodeValue.Equals(codeValue) && !g.IsDeleted.Value && g.GlobalCodeCategoryValue.Equals(categoryValue) && (string.IsNullOrEmpty(fId) || g.FacilityNumber.Equals(fId))).FirstOrDefault();
+                var gl = _context.GlobalCodes.Where(g => g.GlobalCodeValue.Equals(codeValue) && !g.IsDeleted.Value && g.GlobalCodeCategoryValue.Equals(categoryValue) && (string.IsNullOrEmpty(fId) || g.FacilityNumber.Equals(fId))).FirstOrDefault();
                 return gl != null ? gl.GlobalCodeName : string.Empty;
             }
             return string.Empty;
@@ -208,25 +178,23 @@ namespace BillingSystem.Bal.BusinessAccess
                 switch (codeType)
                 {
                     case OrderType.CPT:
-                        codeDescription = _cRepository.Where(x => x.CodeNumbering.Contains(orderCode) && x.CodeTableNumber.Trim().Equals(CptTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.CPTCodes.Where(x => x.CodeNumbering.Contains(orderCode) && x.CodeTableNumber.Trim().Equals(CptTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.DRG:
-                        codeDescription = _dRepository.Where(d => d.CodeNumbering == orderCode && d.CodeTableNumber.Trim().Equals(DrgTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.DRGCodes.Where(d => d.CodeNumbering == orderCode && d.CodeTableNumber.Trim().Equals(DrgTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.HCPCS:
-                        codeDescription = _hcRepository.Where(x => x.CodeNumbering == orderCode && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.HCPCSCodes.Where(x => x.CodeNumbering == orderCode && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.DRUG:
-                        codeDescription = _drugRepository.Where(x => x.DrugCode == orderCode && x.DrugTableNumber.Trim().Equals(DrugTableNumber)).FirstOrDefault().DrugDescription;
+                        codeDescription = _context.Drug.Where(x => x.DrugCode == orderCode && x.DrugTableNumber.Trim().Equals(DrugTableNumber)).FirstOrDefault().DrugDescription;
                         return codeDescription;
                     case OrderType.BedCharges:
-                        codeDescription = _sRepository.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
+                    case OrderType.ServiceCode:
+                        codeDescription = _context.ServiceCode.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
                         return codeDescription;
                     case OrderType.Diagnosis:
-                        codeDescription = _dcRepository.Where(d => d.DiagnosisCode1 == orderCode && d.DiagnosisTableNumber.Trim().Equals(DiagnosisTableNumber)).FirstOrDefault().DiagnosisFullDescription;
-                        return codeDescription;
-                    case OrderType.ServiceCode:
-                        codeDescription = _sRepository.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
+                        codeDescription = _context.DiagnosisCode.Where(d => d.DiagnosisCode1 == orderCode && d.DiagnosisTableNumber.Trim().Equals(DiagnosisTableNumber)).FirstOrDefault().DiagnosisFullDescription;
                         return codeDescription;
                     default:
                         break;
@@ -294,7 +262,7 @@ namespace BillingSystem.Bal.BusinessAccess
             {
                 var sqlParameters = new SqlParameter[1];
                 sqlParameters[0] = new SqlParameter("pEncounuterID", encounterId);
-                _bhRepository.ExecuteCommand(StoredProcedures.SPROC_ApplyOrderToBill.ToString(), sqlParameters);
+                _repository.ExecuteCommand(StoredProcedures.SPROC_ApplyOrderToBill.ToString(), sqlParameters);
             }
             catch (Exception)
             {
@@ -361,7 +329,7 @@ namespace BillingSystem.Bal.BusinessAccess
         }
         private string GetNameByGlobalCodeId(int id)
         {
-            var gl = _gRepository.Where(g => g.GlobalCodeID == id).FirstOrDefault();
+            var gl = _context.GlobalCodes.Where(g => g.GlobalCodeID == id).FirstOrDefault();
             return gl != null ? gl.GlobalCodeName : string.Empty;
         }
 
@@ -374,7 +342,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var list = new List<EncounterCustomModel>();
 
-            var lstEncounter = _eRepository.Where(_ => _.PatientID == patientId).OrderByDescending(x => x.EncounterStartTime).ToList();
+            var lstEncounter = _context.Encounter.Where(_ => _.PatientID == patientId).OrderByDescending(x => x.EncounterStartTime).ToList();
             var encountertypeCat = Convert.ToInt32(GlobalCodeCategoryValue.EncounterType);
             var encounterPatienttypeCat = Convert.ToInt32(GlobalCodeCategoryValue.EncounterPatientType);
             list.AddRange(lstEncounter.Select(item => new EncounterCustomModel
@@ -398,7 +366,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             if (!string.IsNullOrEmpty(categoryValue) && !string.IsNullOrEmpty(globalCodeValue))
             {
-                var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
+                var globalCode = _context.GlobalCodes.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
                 && c.GlobalCodeValue.Equals(globalCodeValue)).FirstOrDefault();
 
                 if (globalCode != null)
@@ -409,7 +377,7 @@ namespace BillingSystem.Bal.BusinessAccess
         private List<GeneralCodesCustomModel> GetAllOrderingCodes(string text, string CptTableNumber, string HcpcsTableNumber, string DrugTableNumber)
         {
             var finalList = new List<GeneralCodesCustomModel>();
-            var cptList = _cRepository.Where(_ => _.IsDeleted == false && _.CodeTableNumber.Trim().Equals(CptTableNumber) && _.IsActive != false).ToList();
+            var cptList = _context.CPTCodes.Where(_ => _.IsDeleted == false && _.CodeTableNumber.Trim().Equals(CptTableNumber) && _.IsActive != false).ToList();
             finalList.AddRange(
                 cptList.Select(
                     item =>
@@ -429,7 +397,7 @@ namespace BillingSystem.Bal.BusinessAccess
                     }));
 
 
-            var hcpcList = _hcRepository.Where(x => x.IsActive == true && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).ToList();
+            var hcpcList = _context.HCPCSCodes.Where(x => x.IsActive == true && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).ToList();
             finalList.AddRange(
                     hcpcList.Select(
                         item =>
@@ -447,7 +415,7 @@ namespace BillingSystem.Bal.BusinessAccess
                             ExternalCode = string.Empty,
                             ID = Convert.ToString(item.HCPCSCodesId)
                         }));
-            var drugList = _drugRepository.Where(d => !d.DrugStatus.Equals("Deleted") && d.DrugTableNumber.Trim().Equals(DrugTableNumber)).OrderByDescending(x => x.Id).ToList();
+            var drugList = _context.Drug.Where(d => !d.DrugStatus.Equals("Deleted") && d.DrugTableNumber.Trim().Equals(DrugTableNumber)).OrderByDescending(x => x.Id).ToList();
 
             finalList.AddRange(
                 drugList.Select(
@@ -504,7 +472,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
                 var CPTcategory = Convert.ToInt32(FavoriteCategories.CPT).ToString();
                 var DRGcategory = Convert.ToInt32(FavoriteCategories.DRUG).ToString();
-                var favorites = _favRepository.Where(f => (f.CategoryId.Equals(CPTcategory) || f.CategoryId.Equals(DRGcategory)) && (f.IsDeleted == null || !(bool)f.IsDeleted) && f.UserID == userId).ToList();
+                var favorites = _context.UserDefinedDescriptions.Where(f => (f.CategoryId.Equals(CPTcategory) || f.CategoryId.Equals(DRGcategory)) && (f.IsDeleted == null || !(bool)f.IsDeleted) && f.UserID == userId).ToList();
                 favOrders.AddRange(from item in favorites
                                    let getOrderCodeparent = GetAllOrderingCodes(item.CodeId, CptTableNumber, HcpcsTableNumber, DrugTableNumber)
                                    let generalCodesCustomModel = getOrderCodeparent.FirstOrDefault()
@@ -669,7 +637,7 @@ namespace BillingSystem.Bal.BusinessAccess
         }
         private List<UserDefinedDescriptions> GetFavoriteByPhyId(int phyid)
         {
-            var fav = _favRepository.Where(f => f.UserID == phyid && (f.IsDeleted == null || !(bool)f.IsDeleted)).ToList();
+            var fav = _context.UserDefinedDescriptions.Where(f => f.UserID == phyid && (f.IsDeleted == null || !(bool)f.IsDeleted)).ToList();
             return fav;
         }
         /// <summary>
@@ -896,7 +864,7 @@ namespace BillingSystem.Bal.BusinessAccess
         }
         private List<OrderActivity> GetOrderActivitiesByOrderId(int ordersId)
         {
-            List<OrderActivity> lstOrderActivity = _orRepository.Where(a => a.IsActive == null || (bool)a.IsActive && a.OrderID == ordersId)
+            List<OrderActivity> lstOrderActivity = _context.OrderActivity.Where(a => a.IsActive == null || (bool)a.IsActive && a.OrderID == ordersId)
                     .ToList();
             return lstOrderActivity;
         }
@@ -929,7 +897,7 @@ namespace BillingSystem.Bal.BusinessAccess
         public int GetActiveEncounterId(int patientId)
         {
             var encounterId = 0;
-            var current = _eRepository.Where(e => e.PatientID == patientId && e.EncounterEndTime == null).FirstOrDefault();
+            var current = _context.Encounter.Where(e => e.PatientID == patientId && e.EncounterEndTime == null).FirstOrDefault();
             if (current != null)
                 encounterId = current.EncounterID;
             return encounterId;
@@ -948,7 +916,7 @@ namespace BillingSystem.Bal.BusinessAccess
             sqlParameters[0] = new SqlParameter("pOrderId", id);
             sqlParameters[1] = new SqlParameter("pOrderStatus", type);
             sqlParameters[2] = new SqlParameter("pComment", comment);
-            _eRepository.ExecuteCommand(StoredProcedures.SPROC_ApprovePharmacyOrder.ToString(), sqlParameters);
+            _repository.ExecuteCommand(StoredProcedures.SPROC_ApprovePharmacyOrder.ToString(), sqlParameters);
             return true;
         }
 

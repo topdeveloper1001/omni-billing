@@ -5,8 +5,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using BillingSystem.Model.CustomModel;
 using BillingSystem.Common.Common;
-
-
 using System.Threading.Tasks;
 using System.Data;
 using BillingSystem.Bal.Interfaces;
@@ -15,44 +13,29 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class PatientInfoService : IPatientInfoService
     {
-        private readonly IRepository<Authorization> _aurepository;
-        private readonly IRepository<Encounter> _eRepository;
         private readonly IRepository<PatientInfo> _repository;
-        private readonly IRepository<Facility> _fRepository;
         private readonly IRepository<MaxValues> _mvRepository;
-        private readonly IRepository<Corporate> _cRepository;
-        private readonly IRepository<PatientPhone> _phRepository;
-        private readonly IRepository<PatientLoginDetail> _plRepository;
-        private readonly IRepository<PatientInsurance> _pinRepository;
-        private readonly IRepository<DocumentsTemplates> _dtRepository;
         private readonly BillingEntities _context;
 
-        public PatientInfoService(IRepository<Authorization> aurepository, IRepository<Encounter> eRepository, IRepository<PatientInfo> repository, IRepository<Facility> fRepository, IRepository<MaxValues> mvRepository, IRepository<Corporate> cRepository, IRepository<PatientPhone> phRepository, IRepository<PatientLoginDetail> plRepository, IRepository<PatientInsurance> pinRepository, IRepository<DocumentsTemplates> dtRepository, BillingEntities context)
+        public PatientInfoService(IRepository<PatientInfo> repository, IRepository<MaxValues> mvRepository, BillingEntities context)
         {
-            _aurepository = aurepository;
-            _eRepository = eRepository;
             _repository = repository;
-            _fRepository = fRepository;
             _mvRepository = mvRepository;
-            _cRepository = cRepository;
-            _phRepository = phRepository;
-            _plRepository = plRepository;
-            _pinRepository = pinRepository;
-            _dtRepository = dtRepository;
             _context = context;
         }
 
         private string GetCorporateNameFromId(int corpId)
         {
-            var corpName = "";
-            var obj = _cRepository.Where(f => f.CorporateID == corpId).FirstOrDefault();
+            var corpName = string.Empty;
+            var obj = _context.Corporate.Where(f => f.CorporateID == corpId).FirstOrDefault();
             if (obj != null) corpName = obj.CorporateName;
             return corpName;
         }
+
         public PatientInfo GetPatientInfoByEncounterId(int encounterId)
         {
             var patientInfo = new PatientInfo();
-            var patientId = _eRepository.Where(e => e.EncounterID == encounterId).FirstOrDefault() != null ? _eRepository.Where(e => e.EncounterID == encounterId).FirstOrDefault().PatientID : 0;
+            var patientId = _context.Encounter.Where(e => e.EncounterID == encounterId).FirstOrDefault() != null ? _context.Encounter.Where(e => e.EncounterID == encounterId).FirstOrDefault().PatientID : 0;
 
             if (patientId > 0) patientInfo = _repository.Where(p => p.PatientID == patientId && p.IsDeleted == false).FirstOrDefault();
 
@@ -61,7 +44,7 @@ namespace BillingSystem.Bal.BusinessAccess
         private DateTime GetInvariantCultureDateTime(int facilityid)
         {
 
-            var facilityObj = _fRepository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault() != null ? _fRepository.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault().FacilityTimeZone : TimeZoneInfo.Utc.ToString();
+            var facilityObj = _context.Facility.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault() != null ? _context.Facility.Where(f => f.FacilityId == Convert.ToInt32(facilityid)).FirstOrDefault().FacilityTimeZone : TimeZoneInfo.Utc.ToString();
             var tzi = TimeZoneInfo.FindSystemTimeZoneById(facilityObj);
             var utcTime = DateTime.Now.ToUniversalTime();
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
@@ -128,7 +111,7 @@ namespace BillingSystem.Bal.BusinessAccess
                  * On: 17112014
                  * Purpose: Made changes in the code of fetching the Patient's Profile Image. 
                  */
-                var profileImage = _dtRepository.Where(d => d.AssociatedType == Convert.ToInt32(AttachmentType.ProfilePicture) && (d.AssociatedID != null && d.AssociatedID == model.PatientID) && (d.IsDeleted == null || d.IsDeleted == false)).FirstOrDefault();// GetDocumentByTypeAndPatientId(, model.PatientID);
+                var profileImage = _context.DocumentsTemplates.Where(d => d.AssociatedType == Convert.ToInt32(AttachmentType.ProfilePicture) && (d.AssociatedID != null && d.AssociatedID == model.PatientID) && (d.IsDeleted == null || d.IsDeleted == false)).FirstOrDefault();// GetDocumentByTypeAndPatientId(, model.PatientID);
                 if (profileImage != null)
                 {
                     vm.ProfilePicImagePath = profileImage.FilePath;
@@ -248,7 +231,7 @@ namespace BillingSystem.Bal.BusinessAccess
             patientSearchResults = patientSearchResults.Distinct().ToList();
 
             returnCustomLst.AddRange(from patientInfo in patientSearchResults
-                                     let encounterObj = _eRepository.Where(_ => _.PatientID == patientInfo.PatientID && _.EncounterEndTime == null).FirstOrDefault()
+                                     let encounterObj = _context.Encounter.Where(_ => _.PatientID == patientInfo.PatientID && _.EncounterEndTime == null).FirstOrDefault()
                                      let authorizationObj = encounterObj != null ? GetAuthorizationByEncounterId(Convert.ToString(encounterObj.EncounterID)) : null
                                      select new PatientInfoCustomModel
                                      {
@@ -267,17 +250,16 @@ namespace BillingSystem.Bal.BusinessAccess
 
         private string GetFacilityNameByFacilityId(int facilityId)
         {
-            var m = _fRepository.GetSingle(facilityId);
+            var m = _context.Facility.FirstOrDefault(a => a.FacilityId == facilityId);
             return m != null ? m.FacilityName : string.Empty;
         }
+
         private Authorization GetAuthorizationByEncounterId(string authorizationEncounterId)
         {
-            var authorization =
-                _aurepository.Where(
-                    x => x.EncounterID == authorizationEncounterId && (x.IsDeleted == null || x.IsDeleted == false))
-                    .FirstOrDefault();
-            return authorization;
+            var m = _context.Authorization.FirstOrDefault(x => x.EncounterID == authorizationEncounterId && x.IsDeleted != true);
+            return m;
         }
+
         /// <summary>
         /// Checks the patient active encounter.
         /// </summary>
@@ -287,7 +269,7 @@ namespace BillingSystem.Bal.BusinessAccess
         public object CheckPatientActiveEncounter(int patientidint, int encountertypeint)
         {
             bool isActiveEncounter;
-            isActiveEncounter = _eRepository.Where(x => x.PatientID == patientidint && x.EncounterType == encountertypeint && x.EncounterEndTime == null).Any();
+            isActiveEncounter = _context.Encounter.Where(x => x.PatientID == patientidint && x.EncounterType == encountertypeint && x.EncounterEndTime == null).Any();
             return isActiveEncounter;
         }
 
@@ -428,10 +410,10 @@ namespace BillingSystem.Bal.BusinessAccess
 
 
             var isExists = patientId > 0
-                ? _pinRepository.Where(x =>
+                ? _context.PatientInsurance.Where(x =>
                     x.PatientID != patientId && x.PersonHealthCareNumber == memberId &&
                     x.InsuranceCompanyId == insCompanyId && x.InsurancePlanId == insPlanId).Any()
-                : _pinRepository.Where(
+                : _context.PatientInsurance.Where(
                     x =>
                         x.PersonHealthCareNumber == memberId && x.InsuranceCompanyId == insCompanyId &&
                         x.InsurancePlanId == insPlanId).Any();
@@ -446,7 +428,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public bool CheckIfEmailExists(string email)
         {
-            var isExists = _plRepository.Where(x => x.Email.Equals(email)).Any();
+            var isExists = _context.PatientLoginDetail.Where(x => x.Email.Equals(email)).Any();
             return isExists;
 
         }
@@ -458,7 +440,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public PatientInfo GetPatientDetailByEmailid(string email)
         {
-            var emailexist = _plRepository.Where(x => x.Email.Equals(email)).FirstOrDefault();
+            var emailexist = _context.PatientLoginDetail.Where(x => x.Email.Equals(email)).FirstOrDefault();
             var patientdata = _repository.Where(x => x.PatientID == emailexist.PatientId).FirstOrDefault();
             return patientdata;
         }
@@ -474,9 +456,9 @@ namespace BillingSystem.Bal.BusinessAccess
             email = email.ToLower().Trim();
 
             var isExists = patientId > 0
-                ? _plRepository.Where(x =>
+                ? _context.PatientLoginDetail.Where(x =>
                     x.PatientId != patientId && x.Email.ToLower().Trim().Equals(email)).Any()
-                : _plRepository.Where(
+                : _context.PatientLoginDetail.Where(
                     x => x.Email.ToLower().Trim().Equals(email)).Any();
             return isExists;
 
@@ -627,14 +609,14 @@ namespace BillingSystem.Bal.BusinessAccess
         }
         private string GetPatientEmailAddress(int patientId)
         {
-            var m = _plRepository.Where(x => x.PatientId == patientId && (x.IsDeleted == null || x.IsDeleted == false)).FirstOrDefault().Email;
+            var m = _context.PatientLoginDetail.Where(x => x.PatientId == patientId && (x.IsDeleted == null || x.IsDeleted == false)).FirstOrDefault().Email;
             return m;
 
         }
         private string GetPatientPhoneNumberById(int patientId)
         {
-            var phoneType = Convert.ToInt32(PhoneType.MobilePhone);
-            var patientPhoneModel = _phRepository.Where(x => x.PatientID == patientId && x.IsDeleted == false && x.PhoneType == phoneType).FirstOrDefault();
+            var phoneType = (int)PhoneType.MobilePhone;
+            var patientPhoneModel = _context.PatientPhone.Where(x => x.PatientID == patientId && x.IsDeleted == false && x.PhoneType == phoneType).FirstOrDefault();
             return patientPhoneModel.PhoneNo;
         }
 
@@ -687,7 +669,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
             returnLst = returnLst.Distinct().ToList();
             returnCustomLst.AddRange(from patientInfo in returnLst
-                                     let encounterObj = _eRepository.Where(_ => _.PatientID == patientInfo.PatientID && _.EncounterEndTime == null).FirstOrDefault()
+                                     let encounterObj = _context.Encounter.Where(_ => _.PatientID == patientInfo.PatientID && _.EncounterEndTime == null).FirstOrDefault()
                                      let authorizationObj = encounterObj != null ? GetAuthorizationByEncounterId(Convert.ToString(encounterObj.EncounterID)) : null
                                      select new PatientInfoCustomModel
                                      {
@@ -932,7 +914,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             if (encounterId > 0)
             {
-                var en = _eRepository.Where(e => e.EncounterID == encounterId).FirstOrDefault();
+                var en = _context.Encounter.Where(e => e.EncounterID == encounterId).FirstOrDefault();
                 return en != null ? Convert.ToInt32(en.PatientID) : 0;
             }
             return 0;

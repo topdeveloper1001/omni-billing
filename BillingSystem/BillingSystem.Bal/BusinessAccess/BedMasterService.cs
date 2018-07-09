@@ -15,29 +15,15 @@ namespace BillingSystem.Bal.BusinessAccess
     public class BedMasterService : IBedMasterService
     {
         private readonly IRepository<UBedMaster> _repository;
-        private readonly IRepository<BedRateCard> _brRepository;
-        private readonly IRepository<FacilityStructure> _fsRepository;
-        private readonly IRepository<MappingPatientBed> _mpRepository;
-        private readonly IRepository<ServiceCode> _sRepository;
-        private readonly IRepository<Facility> _fRepository;
-        private readonly IRepository<GlobalCodes> _gRepository;
-
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;
 
-        public BedMasterService(IRepository<UBedMaster> repository, IRepository<BedRateCard> brRepository, IRepository<FacilityStructure> fsRepository, IRepository<MappingPatientBed> mpRepository, IRepository<ServiceCode> sRepository, IRepository<Facility> fRepository, IRepository<GlobalCodes> gRepository, BillingEntities context, IMapper mapper)
+        public BedMasterService(IRepository<UBedMaster> repository, BillingEntities context, IMapper mapper)
         {
             _repository = repository;
-            _brRepository = brRepository;
-            _fsRepository = fsRepository;
-            _mpRepository = mpRepository;
-            _sRepository = sRepository;
-            _fRepository = fRepository;
-            _gRepository = gRepository;
             _context = context;
             _mapper = mapper;
         }
-
 
 
         /// <summary>
@@ -86,11 +72,11 @@ namespace BillingSystem.Bal.BusinessAccess
             var m = _repository.Where(x => x.FacilityStructureId == id).FirstOrDefault();
             return m ?? new UBedMaster();
         }
-         
+
 
         private string GetBedNameFromFacilityStructure(int facilityStructureId)
         {
-            var list = _fsRepository.Where(f => f.FacilityStructureId == facilityStructureId).FirstOrDefault();
+            var list = _context.FacilityStructure.Where(f => f.FacilityStructureId == facilityStructureId).FirstOrDefault();
             return list != null ? list.FacilityStructureName : string.Empty;
 
         }
@@ -100,7 +86,7 @@ namespace BillingSystem.Bal.BusinessAccess
             var m = GetBedMasterById(bedId);
             if (m != null)
             {
-                var list = _fsRepository.Where(f => f.FacilityStructureId == m.FacilityStructureId).FirstOrDefault();
+                var list = _context.FacilityStructure.Where(f => f.FacilityStructureId == m.FacilityStructureId).FirstOrDefault();
                 return list != null ? list.FacilityStructureName : string.Empty;
             }
             return string.Empty;
@@ -110,7 +96,7 @@ namespace BillingSystem.Bal.BusinessAccess
         public string GetBedNameByInPatientEncounterId(string encounterId)
         {
             var bedName = string.Empty;
-            var bedTypeAssigned = _mpRepository.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).OrderByDescending(x => x.PatientID).FirstOrDefault();
+            var bedTypeAssigned = _context.MappingPatientBed.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).OrderByDescending(x => x.PatientID).FirstOrDefault();
             if (bedTypeAssigned != null)
             {
                 var bedId = Convert.ToInt32(bedTypeAssigned.BedNumber);
@@ -120,7 +106,7 @@ namespace BillingSystem.Bal.BusinessAccess
                 {
                     var fsId = Convert.ToInt32(bedMaster.FacilityStructureId);
 
-                    var fsStructure = _fsRepository.Where(f => f.FacilityStructureId == fsId).FirstOrDefault();
+                    var fsStructure = _context.FacilityStructure.Where(f => f.FacilityStructureId == fsId).FirstOrDefault();
                     if (fsStructure != null)
                         bedName = fsStructure.FacilityStructureName;
 
@@ -134,7 +120,7 @@ namespace BillingSystem.Bal.BusinessAccess
         public string GetBedByInPatientEncounterId(string encounterId)
         {
             var bedmaster = "0";
-            var bedTypeAssigned = _mpRepository.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).FirstOrDefault();
+            var bedTypeAssigned = _context.MappingPatientBed.Where(m => m.EncounterID.Equals(encounterId) && m.EndDate == null).FirstOrDefault();
             // Commented the Below line as there is error of not checking the ENd time is null then it will always picks the first value of the encounter mapping
             // var bedTypeAssigned = mappingBedRep.Where(m => m.EncounterID.Equals(encounterId)).FirstOrDefault();
             if (bedTypeAssigned != null)
@@ -158,10 +144,10 @@ namespace BillingSystem.Bal.BusinessAccess
         public IEnumerable<BedMasterCustomModel> GetBedMasterListByRole(int facilityId, int corporateid)
         {
             var lstBedMaster = new List<BedMasterCustomModel>();
-            var bedList = _repository.GetAll().Where(x => (x.IsDeleted == null || !(bool)x.IsDeleted) && x.IsActive && x.FacilityId == facilityId).ToList();
+            var bedList = _repository.Where(x => (x.IsDeleted == null || !(bool)x.IsDeleted) && x.IsActive && x.FacilityId == facilityId).ToList();
 
-            var fName = _fRepository.Get(facilityId).FacilityName;
- 
+            var fName = _context.Facility.FirstOrDefault(a => a.FacilityId == facilityId).FacilityName;
+
             lstBedMaster.AddRange(bedList.Select(item => new BedMasterCustomModel
             {
                 BedMaster = item,
@@ -179,7 +165,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             if (!string.IsNullOrEmpty(categoryValue) && !string.IsNullOrEmpty(globalCodeValue))
             {
-                var globalCode = _gRepository.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
+                var globalCode = _context.GlobalCodes.Where(c => c.GlobalCodeCategoryValue.Equals(categoryValue)
                 && c.GlobalCodeValue.Equals(globalCodeValue)).FirstOrDefault();
 
                 if (globalCode != null)
@@ -191,7 +177,7 @@ namespace BillingSystem.Bal.BusinessAccess
         public string GetOverRideBedTypeByInPatientEncounterId(string encounterId)
         {
             var str = string.Empty;
-            var bedTypeAssigned = _mpRepository.Where(m => m.EncounterID.Equals(encounterId)).FirstOrDefault();
+            var bedTypeAssigned = _context.MappingPatientBed.Where(m => m.EncounterID.Equals(encounterId)).FirstOrDefault();
             if (bedTypeAssigned != null)
             {
                 str = Convert.ToInt32(bedTypeAssigned.OverrideBedType).ToString();
@@ -264,7 +250,7 @@ namespace BillingSystem.Bal.BusinessAccess
                 ? serviceCodesString
                 : string.Empty;
             //var serviceCodesList = serviceCodeRepository.GetAll();
-            var serviceCodesList = _sRepository.Where(s => s.IsActive == true && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).ToList();
+            var serviceCodesList = _context.ServiceCode.Where(s => s.IsActive == true && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).ToList();
             var overrideServiceCodesList = new List<ServiceCode>();
             if (overirdeWithServiceCodes.Contains(","))
             {
@@ -298,7 +284,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public int? GetBedTypeByServiceCode(string serviceCode)
         {
-            var bedMaster = _brRepository.GetAll().FirstOrDefault(x => x.ServiceCodeValue.Equals(serviceCode));
+            var bedMaster = _context.BedRateCard.FirstOrDefault(x => x.ServiceCodeValue.Equals(serviceCode));
             return bedMaster != null ? (bedMaster.BedTypes) : null;
         }
 
@@ -317,10 +303,10 @@ namespace BillingSystem.Bal.BusinessAccess
             if (!string.IsNullOrEmpty(serviceCodeValues))
             {
                 var scArray = serviceCodeValues.Split(',').ToList();
-                var scList = _sRepository.Where(s => s.IsActive == true && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber) && scArray.Contains(s.ServiceCodeValue.Trim())).ToList();
+                var scList = _context.ServiceCode.Where(s => s.IsActive == true && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber) && scArray.Contains(s.ServiceCodeValue.Trim())).ToList();
 
                 var list =
-                    _brRepository.Where(b => scArray.Contains(b.ServiceCodeValue.Trim()) && b.IsDeleted != true && b.IsActive && b.EffectiveFrom <= currentDateTime && (b.EffectiveTill == null || b.EffectiveTill >= currentDateTime)).Select(s => s.ServiceCodeValue.Trim()).ToList();
+                    _context.BedRateCard.Where(b => scArray.Contains(b.ServiceCodeValue.Trim()) && b.IsDeleted != true && b.IsActive && b.EffectiveFrom <= currentDateTime && (b.EffectiveTill == null || b.EffectiveTill >= currentDateTime)).Select(s => s.ServiceCodeValue.Trim()).ToList();
 
                 scList = scList.Where(s => list.Contains(s.ServiceCodeValue.Trim())).Distinct().ToList();
 

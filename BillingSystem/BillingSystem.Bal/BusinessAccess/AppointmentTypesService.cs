@@ -16,7 +16,6 @@ namespace BillingSystem.Bal.BusinessAccess
     /// </summary>
     public class AppointmentTypesService : IAppointmentTypesService
     {
-
         private readonly IRepository<AppointmentTypes> _repository;
         private readonly BillingEntities _context;
         private readonly IMapper _mapper;

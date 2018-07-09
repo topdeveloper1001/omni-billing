@@ -16,13 +16,11 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class AppointmentService : IAppointmentService
     {
-        private readonly IRepository<GlobalCodes> _gRepository;
         private readonly IRepository<Scheduling> _schRepository;
         private readonly BillingEntities _context;
 
-        public AppointmentService(IRepository<GlobalCodes> gRepository, IRepository<Scheduling> schRepository, BillingEntities context)
+        public AppointmentService(IRepository<Scheduling> schRepository, BillingEntities context)
         {
-            _gRepository = gRepository;
             _schRepository = schRepository;
             _context = context;
         }

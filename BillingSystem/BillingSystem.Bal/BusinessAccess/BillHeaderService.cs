@@ -15,38 +15,11 @@ namespace BillingSystem.Bal.BusinessAccess
     public class BillHeaderService : IBillHeaderService
     {
         private readonly IRepository<BillHeader> _repository;
-        private readonly IRepository<GlobalCodes> _gRepository;
-        private readonly IRepository<CPTCodes> _cptRepository;
-        private readonly IRepository<DRGCodes> _dRepository;
-        private readonly IRepository<HCPCSCodes> _hcRepository;
-        private readonly IRepository<Drug> _drugRepository;
-        private readonly IRepository<ServiceCode> _sRepository;
-        private readonly IRepository<DiagnosisCode> _dcRepository;
-        private readonly IRepository<Corporate> _cRepository;
-        private readonly IRepository<Facility> _fRepository;
-        private readonly IRepository<Encounter> _eRepository;
-        private readonly IRepository<PatientInfo> _piRepository;
-        private readonly IRepository<InsuranceCompany> _icRepository;
-        private readonly IRepository<ErrorMaster> _erRepository;
-
         private readonly BillingEntities _context;
 
-        public BillHeaderService(IRepository<BillHeader> repository, IRepository<GlobalCodes> gRepository, IRepository<CPTCodes> cptRepository, IRepository<DRGCodes> dRepository, IRepository<HCPCSCodes> hcRepository, IRepository<Drug> drugRepository, IRepository<ServiceCode> sRepository, IRepository<DiagnosisCode> dcRepository, IRepository<Corporate> cRepository, IRepository<Facility> fRepository, IRepository<Encounter> eRepository, IRepository<PatientInfo> piRepository, IRepository<InsuranceCompany> icRepository, IRepository<ErrorMaster> erRepository, BillingEntities context)
+        public BillHeaderService(IRepository<BillHeader> repository, BillingEntities context)
         {
             _repository = repository;
-            _gRepository = gRepository;
-            _cptRepository = cptRepository;
-            _dRepository = dRepository;
-            _hcRepository = hcRepository;
-            _drugRepository = drugRepository;
-            _sRepository = sRepository;
-            _dcRepository = dcRepository;
-            _cRepository = cRepository;
-            _fRepository = fRepository;
-            _eRepository = eRepository;
-            _piRepository = piRepository;
-            _icRepository = icRepository;
-            _erRepository = erRepository;
             _context = context;
         }
 
@@ -54,7 +27,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             if (!string.IsNullOrEmpty(codeValue))
             {
-                var gl = _gRepository.Where(g => g.GlobalCodeValue.Equals(codeValue) && !g.IsDeleted.Value && g.GlobalCodeCategoryValue.Equals(categoryValue) && (string.IsNullOrEmpty(fId) || g.FacilityNumber.Equals(fId))).FirstOrDefault();
+                var gl = _context.GlobalCodes.Where(g => g.GlobalCodeValue.Equals(codeValue) && !g.IsDeleted.Value && g.GlobalCodeCategoryValue.Equals(categoryValue) && (string.IsNullOrEmpty(fId) || g.FacilityNumber.Equals(fId))).FirstOrDefault();
                 return gl != null ? gl.GlobalCodeName : string.Empty;
             }
             return string.Empty;
@@ -70,25 +43,23 @@ namespace BillingSystem.Bal.BusinessAccess
                 switch (codeType)
                 {
                     case OrderType.CPT:
-                        codeDescription = _cptRepository.Where(x => x.CodeNumbering.Contains(orderCode) && x.CodeTableNumber.Trim().Equals(CptTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.CPTCodes.Where(x => x.CodeNumbering.Contains(orderCode) && x.CodeTableNumber.Trim().Equals(CptTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.DRG:
-                        codeDescription = _dRepository.Where(d => d.CodeNumbering == orderCode && d.CodeTableNumber.Trim().Equals(DrgTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.DRGCodes.Where(d => d.CodeNumbering == orderCode && d.CodeTableNumber.Trim().Equals(DrgTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.HCPCS:
-                        codeDescription = _hcRepository.Where(x => x.CodeNumbering == orderCode && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).FirstOrDefault().CodeDescription;
+                        codeDescription = _context.HCPCSCodes.Where(x => x.CodeNumbering == orderCode && x.CodeTableNumber.Trim().Equals(HcpcsTableNumber)).FirstOrDefault().CodeDescription;
                         return codeDescription;
                     case OrderType.DRUG:
-                        codeDescription = _drugRepository.Where(x => x.DrugCode == orderCode && x.DrugTableNumber.Trim().Equals(DrugTableNumber)).FirstOrDefault().DrugDescription;
+                        codeDescription = _context.Drug.Where(x => x.DrugCode == orderCode && x.DrugTableNumber.Trim().Equals(DrugTableNumber)).FirstOrDefault().DrugDescription;
                         return codeDescription;
                     case OrderType.BedCharges:
-                        codeDescription = _sRepository.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
+                    case OrderType.ServiceCode:
+                        codeDescription = _context.ServiceCode.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
                         return codeDescription;
                     case OrderType.Diagnosis:
-                        codeDescription = _dcRepository.Where(d => d.DiagnosisCode1 == orderCode && d.DiagnosisTableNumber.Trim().Equals(DiagnosisTableNumber)).FirstOrDefault().DiagnosisFullDescription;
-                        return codeDescription;
-                    case OrderType.ServiceCode:
-                        codeDescription = _sRepository.Where(s => s.ServiceCodeValue.Equals(orderCode) && s.ServiceCodeTableNumber.Trim().Equals(ServiceCodeTableNumber)).FirstOrDefault().ServiceCodeDescription;
+                        codeDescription = _context.DiagnosisCode.Where(d => d.DiagnosisCode1 == orderCode && d.DiagnosisTableNumber.Trim().Equals(DiagnosisTableNumber)).FirstOrDefault().DiagnosisFullDescription;
                         return codeDescription;
                     default:
                         break;
@@ -161,7 +132,7 @@ namespace BillingSystem.Bal.BusinessAccess
                         MCMultiplier = i.MCMultiplier,
                         CorporateName = GetNameByCorporateId(Convert.ToInt32(i.CorporateID)),
                         FacilityName = GetFacilityNameByFacilityId(Convert.ToInt32(i.FacilityID)),
-                        EncounterNumber = _eRepository.Get(encounterId).EncounterNumber,
+                        EncounterNumber = encounterId > 0 ? _context.Encounter.FirstOrDefault(a => a.EncounterID == encounterId).EncounterNumber : string.Empty,
                         InsuranceCompany = string.IsNullOrEmpty(i.PayerID) ? "-" : GetInsuranceCompanyNameByPayerId(Convert.ToInt32(i.PayerID)),
                         PatientName = GetPatientNameById(Convert.ToInt32(i.PatientID)),
                         BStatus = Convert.ToInt32(i.Status),
@@ -182,32 +153,34 @@ namespace BillingSystem.Bal.BusinessAccess
         }
         private string GetEncounterStatusById(int? encounterID)
         {
-            var m = _eRepository.Where(e => e.EncounterID == Convert.ToInt32(encounterID)).FirstOrDefault();
+            var m = _context.Encounter.Where(e => e.EncounterID == Convert.ToInt32(encounterID)).FirstOrDefault();
             return m == null ? m.EncounterEndTime != null ? "Ended" : "Active" : "NA";
         }
         private string GetEncounterNumberById(int? encounterID)
         {
-            var m = _eRepository.Where(e => e.EncounterID == Convert.ToInt32(encounterID)).FirstOrDefault();
+            var m = _context.Encounter.Where(e => e.EncounterID == Convert.ToInt32(encounterID)).FirstOrDefault();
             return m != null ? m.EncounterNumber : string.Empty;
         }
         private string GetNameByCorporateId(int corporateID)
         {
-            var m = _cRepository.GetSingle(corporateID);
+            var m = _context.Corporate.FirstOrDefault(a => a.CorporateID == corporateID);
             return m != null ? m.CorporateName : string.Empty;
         }
+
         private string GetFacilityNameByFacilityId(int facilityId)
         {
-            var m = _fRepository.GetSingle(facilityId);
+            var m = _context.Facility.FirstOrDefault(a => a.FacilityId == facilityId);
             return m != null ? m.FacilityName : string.Empty;
         }
         private string GetPatientNameById(int PatientID)
         {
-            var m = _piRepository.GetSingle(Convert.ToInt32(PatientID));
-            return m != null ? m.PersonFirstName + " " + m.PersonLastName : string.Empty;
+            var m = _context.PatientInfo.FirstOrDefault(p => p.PatientID == PatientID);
+            return m != null ? $"{m.PersonFirstName} {m.PersonLastName}" : string.Empty;
         }
+
         private string GetInsuranceCompanyNameByPayerId(int PayerID)
         {
-            var m = _icRepository.Find(x => x.InsuranceCompanyLicenseNumber.Equals(PayerID));
+            var m = _context.InsuranceCompany.FirstOrDefault(x => x.InsuranceCompanyLicenseNumber.Equals(PayerID));
             return m != null ? m.InsuranceCompanyName : string.Empty;
         }
 
@@ -395,7 +368,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var list = new List<ErrorMasterCustomModel>();
             text = string.IsNullOrEmpty(text) ? string.Empty : text.ToLower().Trim();
-            var lstErrorMaster = _erRepository.Where(a => a.IsActive != null && (bool)a.IsActive && (a.ErrorDescription.ToLower().Contains(text) || a.ErrorCode.ToLower().Contains(text))).ToList();
+            var lstErrorMaster = _context.ErrorMaster.Where(a => a.IsActive != null && (bool)a.IsActive && (a.ErrorDescription.ToLower().Contains(text) || a.ErrorCode.ToLower().Contains(text))).ToList();
             if (lstErrorMaster.Count > 0)
             {
                 list.AddRange(lstErrorMaster.Select(item => new ErrorMasterCustomModel

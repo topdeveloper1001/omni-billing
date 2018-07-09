@@ -872,7 +872,8 @@ namespace BillingSystem.Common.Common
         SprocGetIndicatorDataChecklist,
         SprocDashboardRemarks,
         SprocDashboardTargets,
-        SprocAuthenticateUser
+        SprocAuthenticateUser,
+        SprocGetRuleMasterData
     }
 
     public enum StoredProcsiOS
@@ -1873,6 +1874,7 @@ namespace BillingSystem.Common.Common
         IndicatorData,
         AppointmentTypes,
         Clinicians,
-        Locations
+        Locations,
+        RuleMaster
     }
 }

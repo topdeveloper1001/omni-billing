@@ -6,7 +6,6 @@ using BillingSystem.Common;
 using System.Data.Entity;
 using BillingSystem.Model.EntityDto;
 using System;
-
 using BillingSystem.Model;
 using System.Data.SqlClient;
 
@@ -16,26 +15,16 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class AddressService : IAddressService
     {
-        private readonly IRepository<Country> _cRepository;
-        private readonly IRepository<State> _sRepository;
-        private readonly IRepository<Facility> _fRepository;
-        private readonly IRepository<Users> _uRepository;
-        private readonly IRepository<Corporate> _coRepository;
         private readonly BillingEntities _context;
 
-        public AddressService(IRepository<Country> cRepository, IRepository<State> sRepository, IRepository<Facility> fRepository, IRepository<Users> uRepository, IRepository<Corporate> coRepository, BillingEntities context)
+        public AddressService(BillingEntities context)
         {
-            _cRepository = cRepository;
-            _sRepository = sRepository;
-            _fRepository = fRepository;
-            _uRepository = uRepository;
-            _coRepository = coRepository;
             _context = context;
         }
 
         public async Task<List<SelectList>> GetCountriesAsync()
         {
-            var list = await _cRepository.Where(a => a.IsDeleted != true)
+            var list = await _context.Country.Where(a => a.IsDeleted != true)
                 .Select(c => new SelectList
                 {
                     Name = c.CountryName.Trim(),
@@ -60,7 +49,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public async Task<List<SelectList>> GetStatesAsync(long countryId)
         {
-            var list = await _sRepository.Where(a => a.IsActive && !a.IsDeleted && a.CountryID == countryId)
+            var list = await _context.State.Where(a => a.IsActive && !a.IsDeleted && a.CountryID == countryId)
                 .Select(c => new SelectList
                 {
                     Name = c.StateName.Trim(),
@@ -88,7 +77,7 @@ namespace BillingSystem.Bal.BusinessAccess
             var entities = new List<SelectList>();
             var c = Convert.ToString(cityId);
 
-            var list = await _fRepository.Where(f => (cityId == 0 || f.FacilityCity.Equals(c)) && (corporateId == 0 || f.CorporateID == corporateId)).ToListAsync();
+            var list = await _context.Facility.Where(f => (cityId == 0 || f.FacilityCity.Equals(c)) && (corporateId == 0 || f.CorporateID == corporateId)).ToListAsync();
             if (list.Any())
                 foreach (var f in list)
                 {
@@ -108,10 +97,10 @@ namespace BillingSystem.Bal.BusinessAccess
 
             if (userId > 0)
             {
-                corporateId = await _uRepository.Where(a => a.UserID == userId).Select(c => c.CorporateId.Value).FirstOrDefaultAsync();
+                corporateId = await _context.Users.Where(a => a.UserID == userId).Select(c => c.CorporateId.Value).FirstOrDefaultAsync();
             }
 
-            var list = await _coRepository.Where(f => (corporateId == 0 || f.CorporateID == corporateId)).ToListAsync();
+            var list = await _context.Corporate.Where(f => (corporateId == 0 || f.CorporateID == corporateId)).ToListAsync();
             if (list.Any())
                 foreach (var f in list)
                 {
