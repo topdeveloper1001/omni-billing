@@ -115,7 +115,7 @@ namespace BillingSystem.Model
         public DbSet<LabTestOrderSet> LabTestOrderSet { get; set; }
         public DbSet<LabTestResult> LabTestResult { get; set; }
         public DbSet<LoginTracking> LoginTracking { get; set; }
-
+        public DbSet<FacilityContact> FacilityContact { get; set; }
         public DbSet<OtherPatientForm> OtherPatientForm { get; set; }
         public DbSet<ManagedCare> ManagedCare { get; set; }
         public DbSet<ManualChargesTracking> ManualChargesTracking { get; set; }

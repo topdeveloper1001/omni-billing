@@ -4,9 +4,10 @@ namespace BillingSystem.Common.Common
 {
     public enum Portals
     {
-        Omni = 1,
-        SuppliesDotCom = 2,
-        PhysicianVisit = 3
+        [Description("Omni Billing HIS")]
+        OmniBilling = 1,
+        [Description("SuppliesDotCom")]
+        SuppliesDotCom = 2
     }
 
     public enum WhereOperation
@@ -482,7 +483,8 @@ namespace BillingSystem.Common.Common
         Floor = 82,
         Department = 83,
         Rooms = 84,
-        Bed = 85
+        Bed = 85,
+        Location = 86
     }
 
     public enum MessageType
@@ -565,7 +567,43 @@ namespace BillingSystem.Common.Common
         pCategory2,
         pCategory1,
         pTypeId,
-        pMonth
+        pMonth,
+        pPortalId,
+        pShowInActive,
+        pRoleId,
+        pContact,
+        pCountryID,
+        pAffiliationNumber,
+        pFax,
+        pMainPhone,
+        pName,
+        pNumber,
+        pPOBox,
+        pState,
+        pCity,
+        pStreetAddress,
+        pStreetAddress2,
+        pTimeZone,
+        pTotalLicenseBed,
+        pZipCode,
+        pLoggedinUserId,
+        pCurrentDate,
+        pFacilityRelated,
+        pRegionId,
+        pSecondPhone,
+        pLicenseNumber,
+        pLicenseNumberExpire,
+        pTypeLicense,
+        pTotalStaffedBed,
+        pCreatedBy,
+        pCreatedDate,
+        pSenderID,
+        pIsActive,
+        pDeletedDate,
+        pDeletedBy,
+        pIsDeleted,
+        pModifiedDate,
+        pModifiedBy
     }
 
     public enum StoredProcedures
@@ -880,7 +918,10 @@ namespace BillingSystem.Common.Common
         SprocDashboardRemarks,
         SprocDashboardTargets,
         SprocAuthenticateUser,
-        SprocGetRuleMasterData
+        SprocGetRuleMasterData,
+        SprocGetRolebyCorporateandFacility,
+        SprocGetFacilityRoleCustomList,
+        SprocSaveFacility
     }
 
     public enum StoredProcsiOS
@@ -1882,6 +1923,8 @@ namespace BillingSystem.Common.Common
         AppointmentTypes,
         Clinicians,
         Locations,
-        RuleMaster
+        RuleMaster,
+        Role,
+        Facility
     }
 }

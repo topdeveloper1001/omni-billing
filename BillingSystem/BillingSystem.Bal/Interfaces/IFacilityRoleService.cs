@@ -17,7 +17,7 @@ namespace BillingSystem.Bal.Interfaces
         FacilityRole GetFacilityRoleById(int facilityRoleId);
         List<FacilityRoleCustomModel> GetFacilityRoleListByAdminUser(int corporateId, int facilityId, int roleId);
         List<FacilityRoleCustomModel> GetFacilityRoleListByFacility(int corporateId, int facilityId, int roleId);
-        List<FacilityRoleCustomModel> GetFacilityRoleListCustom(int corporateId, int facilityId, int roleId);
+        List<FacilityRoleCustomModel> GetFacilityRoleListCustom(int corporateId, int facilityId, int roleId, int portalId, bool showInActive = true);
         List<FacilityRoleCustomModel> GetFacilityRoleListData(int corporateId, int facilityId, int roleId, bool showInActive);
         FacilityRole GetFacilityRoleModelById(int facilityRoleId);
         IEnumerable<FacilityRole> GetFacilityRolesByRoleId(int roleId);

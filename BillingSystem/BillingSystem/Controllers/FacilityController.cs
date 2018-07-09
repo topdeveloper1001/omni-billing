@@ -13,6 +13,7 @@ namespace BillingSystem.Controllers
     using BillingSystem.Bal.BusinessAccess;
     using BillingSystem.Bal.Interfaces;
     using BillingSystem.Common.Common;
+    using BillingSystem.Model.Model;
     using Hangfire;
 
     public class FacilityController : BaseController
@@ -121,6 +122,7 @@ namespace BillingSystem.Controllers
                 currentFacility.RegionId,
                 currentFacility.IsDeleted,
                 currentFacility.SenderID,
+                currentFacility.FacilityContact
             };
             return Json(jsonResult, JsonRequestBehavior.AllowGet);
         }
@@ -132,7 +134,7 @@ namespace BillingSystem.Controllers
         /// <returns>
         /// returns the newly added or updated ID of facility row
         /// </returns>
-        public ActionResult SaveFacility(Facility model)
+        public ActionResult SaveFacility(FacilityCustomModel model)
         {
             var list = new List<FacilityCustomModel>();
             var input = model.FacilityTimeZone;
@@ -166,14 +168,18 @@ namespace BillingSystem.Controllers
 
                 }
 
+                var dt = Helpers.ToDataTable(model.FacilityContact == null ? new List<FacilityContact>() : model.FacilityContact);
+
+                dt.Columns.Remove("FacilityId");
+                dt.Columns.Remove("Id");
 
                 //Call the AddFacility Method to Add / Update current facility
-                list = _service.AddUpdateFacility(model, out fId);
+                list = _service.AddUpdateFacility(model, dt, out fId);
 
-                if (fId > 0)
-                {
-                    BackgroundJob.Enqueue(() => CreateDefaultFacilityItems(fId, model.FacilityName, Helpers.GetLoggedInUserId()));
-                }
+                //if (fId > 0)
+                //{
+                //    BackgroundJob.Enqueue(() => CreateDefaultFacilityItems(fId, model.FacilityName, Helpers.GetLoggedInUserId()));
+                //}
             }
             return PartialView(PartialViews.FacilityList, list);
         }

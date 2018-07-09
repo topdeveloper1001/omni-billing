@@ -32,10 +32,24 @@
             }
         });
     }
+    private void AddChildrenLocation(TreeViewItemBuilder builder, FacilityStructureCustomModel item, IEnumerable<FacilityStructureCustomModel>
+            items, int globalCodeId)
+    {
+        var children = items.Where(m => m.ParentId == item.FacilityStructureId && m.GlobalCodeID == globalCodeId);
+        builder.Items(menuItems =>
+        {
+            foreach (var child in children)
+            {
+                var menuItem = menuItems.Add().ImageUrl("~/images/location.png").Text(child.FacilityStructureName + "-" + child.GlobalCodeIdValue + ", Can Override:" + child.CanOverRide).HasChildren(true).Id(child.FacilityStructureId.ToString())
+                    .Expanded(false);
+                AddChildrenLocation(menuItem, child, items, globalCodeId);
+            }
+        });
+    }
 
 
     private void AddChildrenRooms(TreeViewItemBuilder builder, FacilityStructureCustomModel item, IEnumerable<FacilityStructureCustomModel>
-            items, int globalCodeId)
+    items, int globalCodeId)
     {
         var children = items.Where(m => m.ParentId == item.FacilityStructureId && m.GlobalCodeID == globalCodeId);
         builder.Items(menuItems =>
@@ -45,6 +59,7 @@
                 var menuItem = menuItems.Add().ImageUrl("~/images/room.png").Text(child.FacilityStructureName + "-" + child.GlobalCodeIdValue + ", Non-Chargeable: " + child.NonChargeableRoom).HasChildren(true).Id(child.FacilityStructureId.ToString())
                     .Expanded(true);
                 AddChildrenBeds(menuItem, child, items, Convert.ToInt32(BillingSystem.Common.Common.BaseFacilityStucture.Bed));
+                AddChildrenLocation(menuItem, child, items, Convert.ToInt32(BillingSystem.Common.Common.BaseFacilityStucture.Location));
                 AddChildrenRooms(menuItem, child, items, globalCodeId);
             }
         });

@@ -9,8 +9,8 @@ namespace BillingSystem.Bal.Interfaces
         int AddUpdateRole(Role role);
         bool CheckDuplicateRole(int roleId, string roleName);
         List<Role> GetAllRoles(int corporateId);
-        List<Role> GetAllRolesByCorporateFacility(int corporateId, int facilityId);
-        List<Role> GetFacilityRolesByCorporateIdFacilityId(int corporateId, int facilityId);
+        List<Role> GetAllRolesByCorporateFacility(int corporateId, int facilityId, int portalId = 0);
+        List<Role> GetFacilityRolesByCorporateIdFacilityId(int corporateId, int facilityId, int portalId);
         List<Role> GetPhysicianRolesByCorporateId(int corporateId);
         Role GetRoleById(int roleID);
         Role GetRoleByRoleName(string roleName);

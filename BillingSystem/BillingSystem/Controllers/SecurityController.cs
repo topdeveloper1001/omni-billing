@@ -119,9 +119,10 @@ namespace BillingSystem.Controllers
         /// <param name="corporateId">The corporate identifier.</param>
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
-        public ActionResult GetFacilityRolesByCorporateFacilityDropdownData(string corporateId, string facilityId)
+        public ActionResult GetFacilityRolesByCorporateFacilityDropdownData(string corporateId, string facilityId, int portalId)
         {
-            var roles = _rService.GetFacilityRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId));
+            portalId = portalId > 0 ? portalId : ExtensionMethods.DefaultPortalKey;
+            var roles = _rService.GetFacilityRolesByCorporateIdFacilityId(Convert.ToInt32(corporateId), Convert.ToInt32(facilityId), portalId);
             if (roles.Count > 0)
             {
                 var list = new List<SelectListItem>();
@@ -885,9 +886,9 @@ namespace BillingSystem.Controllers
         /// <param name="corporateId">The corporate identifier.</param>
         /// <param name="facilityId">The facility identifier.</param>
         /// <returns></returns>
-        public ActionResult GetAllRolesByCorporateAndFacility(int corporateId, int facilityId)
+        public ActionResult GetAllRolesByCorporateAndFacility(int corporateId, int facilityId, int portalId)
         {
-            var list = _rService.GetAllRolesByCorporateFacility(corporateId, facilityId);
+            var list = _rService.GetAllRolesByCorporateFacility(corporateId, facilityId, portalId);
             return Json(list, JsonRequestBehavior.AllowGet);
         }
 
@@ -943,7 +944,7 @@ namespace BillingSystem.Controllers
             }
             else
             {
-                var list = _frService.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
+                var list = _frService.GetFacilityRoleListCustom(corporateId, facilityId, roleId, Convert.ToInt32(Portals.OmniBilling.ToString()));
                 facilityRoleView.FacilityRolesList = list;
 
             }
@@ -1037,7 +1038,7 @@ namespace BillingSystem.Controllers
             var corporateId = Helpers.GetDefaultCorporateId();
             var roleId = Convert.ToInt32(Helpers.GetDefaultRoleId());
 
-            var list = _frService.GetFacilityRoleListCustom(corporateId, facilityId, roleId);
+            var list = _frService.GetFacilityRoleListCustom(corporateId, facilityId, roleId, Convert.ToInt32(Portals.OmniBilling.ToString()));
             return PartialView(PartialViews.FacilityRoleList, list);
         }
 
@@ -1138,7 +1139,7 @@ namespace BillingSystem.Controllers
         }
 
 
-        public ActionResult GetFacilityRolesCustomList1(string corpId, string facilityId, string roleId)
+        public ActionResult GetFacilityRolesCustomList1(string corpId, string facilityId, string roleId, int portalId)
         {
             var selectedFacilitid = facilityId;
             facilityId =
@@ -1148,7 +1149,7 @@ namespace BillingSystem.Controllers
                     : facilityId);
 
             var list = _frService.GetFacilityRoleListCustom(Convert.ToInt32(corpId), Convert.ToInt32(facilityId),
-                Convert.ToInt32(roleId));
+                Convert.ToInt32(roleId), portalId);
 
             list = list.OrderBy(x => x.RoleName).ToList();
             return PartialView(PartialViews.FacilityRoleList, list);

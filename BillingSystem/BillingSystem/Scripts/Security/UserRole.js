@@ -32,7 +32,7 @@ if ($("#checkBox_UserRoles").find("input[type=checkbox]:checked").length == $("#
 }
 
 function AddUserRoles() {
-    
+
     if ($("#validateUserRole").validationEngine({ returnIsValid: true }) == false) {
         return false;
     }
@@ -62,7 +62,7 @@ function AddUserRoles() {
         success: function (data) {
             if (data >= 0) {
                 ShowMessage("User Role saved successfully", "Success", "success", true);
-               
+
                 BindUsersByFacilityId();
                 $('#checkBox_UserRoles').find('input[type=checkbox]:checked').removeAttr('checked');
             }
@@ -92,7 +92,7 @@ function GetUserRoleByUserID() {
                 if (obj != null) {
                     $.each(obj, function (i, userRole) {
                         $('#' + userRole.RoleID).prop('checked', true);
-                    }); 
+                    });
                 }
             },
             error: function (msg) {
@@ -110,7 +110,7 @@ function ClearUserRoleForm() {
 }
 
 function BindCorporatesDataInUserRole(selector) {
- 
+
     //Bind Corporates
     $.ajax({
         type: "POST",
@@ -132,7 +132,7 @@ function BindCorporatesDataInUserRole(selector) {
 }
 
 function BindFacilityDropdownData() {
-  
+
     var corporateid = $('#ddlCorporate').val();
     if (corporateid == '') { corporateid = $('#hdCorporateId').val(); }
     if (corporateid == '0') {
@@ -173,8 +173,12 @@ function BindAllRolesByFacilityId() {
 
     var cId = $("#ddlCorporate").val();
     var fId = $("#ddlFacility").val();
+    debugger;
+    var pId = $('input[name=rolePortal]:checked').val();
+    if (pId == undefined || pId == "")
+        pId = 0;
     if (cId > 0 && fId > 0) {
-        var jsonData = JSON.stringify({ corporateId: cId, facilityId: fId });
+        var jsonData = JSON.stringify({ corporateId: cId, facilityId: fId, portalId: pId });
         $.ajax({
             type: "POST",
             url: "/Security/GetAllRolesByCorporateAndFacility",
@@ -232,5 +236,5 @@ function BindUsersByFacilityId() {
 
 function ClearFields() {
     $('#checkBox_UserRoles').find('input[type=checkbox]:checked').removeAttr('checked');
-   $('#ddlUsers').get(0).selectedIndex = 0;
+    $('#ddlUsers').get(0).selectedIndex = 0;
 }

@@ -9,19 +9,22 @@ using AutoMapper;
 using System.Data.SqlClient;
 using BillingSystem.Common.Common;
 using BillingSystem.Bal.Interfaces;
+using System.Data;
 
 namespace BillingSystem.Bal.BusinessAccess
 {
     public class FacilityService : IFacilityService
     {
         private readonly IRepository<Facility> _repository;
+        private readonly IRepository<FacilityContact> _fcRepository;
         private readonly IRepository<PatientInfo> _piRepository;
         private readonly IMapper _mapper;
         private readonly BillingEntities _context;
 
-        public FacilityService(IRepository<Facility> repository, IRepository<PatientInfo> piRepository, IMapper mapper, BillingEntities context)
+        public FacilityService(IRepository<Facility> repository, IRepository<FacilityContact> fcRepository, IRepository<PatientInfo> piRepository, IMapper mapper, BillingEntities context)
         {
             _repository = repository;
+            _fcRepository = fcRepository;
             _piRepository = piRepository;
             _mapper = mapper;
             _context = context;
@@ -87,23 +90,83 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="facility"></param>
         /// <param name="facilityId"></param>
         /// <returns></returns>
-        public List<FacilityCustomModel> AddUpdateFacility(Facility facility, out int facilityId)
+        public List<FacilityCustomModel> AddUpdateFacility(FacilityCustomModel vm, DataTable dt, out int facilityId)
         {
-            facilityId = 0;
-            if (facility.FacilityId > 0)
+            IEnumerable<FacilityCustomModel> list = null;
+            try
             {
-                var current = _repository.GetSingle(facility.FacilityId);
-                facility.CreatedBy = current.CreatedBy;
-                facility.CreatedDate = current.CreatedDate;
-                facility.LoggedInID = current.LoggedInID;
-                _repository.UpdateEntity(facility, facility.FacilityId);
-            }
-            else
-                _repository.Create(facility);
-            facilityId = facility.FacilityId;
+                facilityId = vm.FacilityId;
+                var facility = _mapper.Map<Facility>(vm);
 
-            var list = GetFacilityList(Convert.ToInt32(facility.CorporateID));
-            return list;
+                var sqlParameters = new SqlParameter[27];
+                sqlParameters[0] = new SqlParameter(InputParams.pId.ToString(), facility.FacilityId);
+                sqlParameters[1] = new SqlParameter(InputParams.pNumber.ToString(), facility.FacilityNumber);
+                sqlParameters[2] = new SqlParameter(InputParams.pName.ToString(), facility.FacilityName);
+                sqlParameters[3] = new SqlParameter(InputParams.pStreetAddress.ToString(), facility.FacilityStreetAddress);
+                sqlParameters[4] = new SqlParameter(InputParams.pStreetAddress2.ToString(), !string.IsNullOrEmpty(facility.FacilityStreetAddress2) ? facility.FacilityStreetAddress2 : string.Empty);
+                sqlParameters[5] = new SqlParameter(InputParams.pCity.ToString(), facility.FacilityCity);
+                sqlParameters[6] = new SqlParameter(InputParams.pState.ToString(), facility.FacilityState);
+                sqlParameters[7] = new SqlParameter(InputParams.pZipCode.ToString(), !string.IsNullOrEmpty(facility.FacilityZipCode.ToString()) ? facility.FacilityZipCode : 0);
+                sqlParameters[8] = new SqlParameter(InputParams.pMainPhone.ToString(), !string.IsNullOrEmpty(facility.FacilityMainPhone) ? facility.FacilityMainPhone : string.Empty);
+                sqlParameters[9] = new SqlParameter(InputParams.pFax.ToString(), !string.IsNullOrEmpty(facility.FacilityFax) ? facility.FacilityFax : string.Empty);
+                sqlParameters[10] = new SqlParameter(InputParams.pSecondPhone.ToString(), !string.IsNullOrEmpty(facility.FacilitySecondPhone) ? facility.FacilitySecondPhone : string.Empty);
+                sqlParameters[11] = new SqlParameter(InputParams.pPOBox.ToString(), !string.IsNullOrEmpty(facility.FacilityPOBox) ? facility.FacilityPOBox : string.Empty);
+                sqlParameters[12] = new SqlParameter(InputParams.pLicenseNumber.ToString(), !string.IsNullOrEmpty(facility.FacilityLicenseNumber) ? facility.FacilityLicenseNumber : string.Empty);
+                sqlParameters[13] = new SqlParameter(InputParams.pLicenseNumberExpire.ToString(), !string.IsNullOrEmpty(facility.FacilityLicenseNumberExpire.ToString()) ? facility.FacilityLicenseNumberExpire : DateTime.Now);
+                sqlParameters[14] = new SqlParameter(InputParams.pTypeLicense.ToString(), !string.IsNullOrEmpty(facility.FacilityTypeLicense) ? facility.FacilityTypeLicense : string.Empty);
+                sqlParameters[15] = new SqlParameter(InputParams.pFacilityRelated.ToString(), !string.IsNullOrEmpty(facility.FacilityRelated) ? facility.FacilityRelated : string.Empty);
+                sqlParameters[16] = new SqlParameter(InputParams.pTotalLicenseBed.ToString(), !string.IsNullOrEmpty(facility.FacilityTotalLicenseBed.ToString()) ? facility.FacilityTotalLicenseBed : 0);
+                sqlParameters[17] = new SqlParameter(InputParams.pTotalStaffedBed.ToString(), !string.IsNullOrEmpty(facility.FacilityTotalStaffedBed.ToString()) ? facility.FacilityTotalStaffedBed : 0);
+                sqlParameters[18] = new SqlParameter(InputParams.pAffiliationNumber.ToString(), !string.IsNullOrEmpty(facility.FacilityAffiliationNumber.ToString()) ? facility.FacilityAffiliationNumber : 0);
+                sqlParameters[19] = new SqlParameter(InputParams.pRegionId.ToString(), !string.IsNullOrEmpty(facility.RegionId) ? facility.RegionId : string.Empty);
+                sqlParameters[20] = new SqlParameter(InputParams.pCountryID.ToString(), facility.CountryID);
+                sqlParameters[21] = new SqlParameter(InputParams.pCorporateID.ToString(), facility.CorporateID);
+                sqlParameters[22] = new SqlParameter(InputParams.pTimeZone.ToString(), facility.FacilityTimeZone);
+                sqlParameters[23] = new SqlParameter(InputParams.pSenderID.ToString(), !string.IsNullOrEmpty(facility.SenderID) ? facility.SenderID : string.Empty);
+                sqlParameters[24] = new SqlParameter(InputParams.pLoggedInUserId.ToString(), facility.FacilityId > 0 ? facility.ModifiedBy : facility.CreatedBy);
+                sqlParameters[25] = new SqlParameter(InputParams.pCurrentDate.ToString(), facility.FacilityId > 0 ? facility.ModifiedDate : facility.CreatedDate);
+                sqlParameters[26] = new SqlParameter
+                {
+                    ParameterName = InputParams.pContact.ToString(),
+                    SqlDbType = SqlDbType.Structured,
+                    Value = dt,
+                    TypeName = "FacilityContactT"
+                };
+
+                using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocSaveFacility.ToString(), false, sqlParameters))
+                {
+                    var newId = ms.ResultSetFor<int>().FirstOrDefault();
+                    if (newId > 0)
+                    {
+                        facilityId = newId;
+                        list = ms.GetResultWithJson<FacilityCustomModel>(JsonResultsArray.Facility.ToString());
+                        return list.ToList();
+                    }
+                }
+                return null;
+
+            }
+            catch (Exception ex)
+            {
+                facilityId = 0;
+                return null;
+            }
+            //var facility = _mapper.Map<Facility>(vm);
+            //facilityId = 0;
+            //if (facility.FacilityId > 0)
+            //{
+            //    var current = _repository.GetSingle(facility.FacilityId);
+            //    facility.CreatedBy = current.CreatedBy;
+            //    facility.CreatedDate = current.CreatedDate;
+            //    facility.LoggedInID = current.LoggedInID;
+            //    _repository.UpdateEntity(facility, facility.FacilityId);
+            //}
+            //else
+            //    _repository.Create(facility);
+            //facilityId = facility.FacilityId;
+
+            //var list = GetFacilityList(Convert.ToInt32(facility.CorporateID));
+            //return list;
         }
 
 
@@ -112,9 +175,13 @@ namespace BillingSystem.Bal.BusinessAccess
         /// Method to add the facility in the database.
         /// </summary>
         /// <returns></returns>
-        public Facility GetFacilityById(int id)
+        public FacilityCustomModel GetFacilityById(int id)
         {
-            return _repository.Where(f => f.FacilityId == id).FirstOrDefault();
+            var mlst = _repository.Where(f => f.FacilityId == id).FirstOrDefault();
+            var vm = _mapper.Map<FacilityCustomModel>(mlst);
+            vm.FacilityContact = _fcRepository.Where(x => x.FacilityId == id).ToList();
+            return vm;
+
         }
 
         //function to validate facility number and Licence number

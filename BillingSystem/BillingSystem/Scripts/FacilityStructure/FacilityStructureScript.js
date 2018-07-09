@@ -446,6 +446,9 @@ function BindParentData() {
                             case "85":
                                 baseStrucutreName = "Rooms";
                                 break;
+                            case "86":
+                                baseStrucutreName = "Rooms";
+                                break;
                             default:
                                 baseStrucutreName = "";
                         }
@@ -979,6 +982,9 @@ function SetOtherFormDetailsInEditMode() {
                 case "85":
                     baseStrucutreName = "Rooms";
                     break;
+                case "86":
+                    baseStrucutreName = "Rooms";
+                    break;
                 default:
                     baseStrucutreName = "";
             }
@@ -1166,7 +1172,32 @@ function EditFacilityStructure(id) {
                         } else {
                             $("#chkCanOverRide").prop('checked', false);
                         }
-                            
+
+
+                        if (current.AvailableInOverRideList)
+                            $("#chkAvailableInOverRideList").prop("checked", true);
+
+                        if (data.partialViewServiceCodes != '')
+                            BindList("#divOverRideWith", data.partialViewServiceCodes);
+                        break;
+                    case 86:
+                        $("#hdBedType").val(current.BedTypeId);
+                        $("#hdBedId").val(current.BedId);
+                        BindList("#lblDefaultBedCharges", current.BedCharge);
+
+                        if ($("#ddlFacilityStructure").val() > 0) {
+                            $("#ddlBedType").val(current.BedTypeId);
+                        } else {
+                            BindDropdownData(data.listBedTypes, "#ddlBedType", "#hdBedType");
+                        }
+                        $("#hdServiceCodes").val(current.ExternalValue2);
+
+                        if (current.CanOverRide) {
+                            $("#chkCanOverRide").prop('checked', true);
+                        } else {
+                            $("#chkCanOverRide").prop('checked', false);
+                        }
+
 
                         if (current.AvailableInOverRideList)
                             $("#chkAvailableInOverRideList").prop("checked", true);

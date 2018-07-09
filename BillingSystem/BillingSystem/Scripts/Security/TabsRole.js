@@ -253,8 +253,11 @@ function OnFacilityChangeInTabRole() {
 function BindAllRolesByFacilityId() {
     var cId = $("#ddlCorporate").val();
     var fId = $("#ddlFacility").val();
+    var pId = $('input[name=rolePortal]:checked').val();
+    if (pId == undefined || pId == "")
+        pId = 0;
     if (cId > 0 && fId > 0) {
-        var jsonData = JSON.stringify({ corporateId: cId, facilityId: fId });
+        var jsonData = JSON.stringify({ corporateId: cId, facilityId: fId, portalId: pId });
         $.ajax({
             type: "POST",
             url: "/Security/GetAllRolesByCorporateAndFacility",

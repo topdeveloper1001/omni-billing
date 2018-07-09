@@ -1,4 +1,5 @@
-﻿@model BillingSystem.Model.CustomModel.FacilityRoleCustomModel
+﻿@using BillingSystem.Common.Common
+@model BillingSystem.Model.CustomModel.FacilityRoleCustomModel
 @{
 
     var btnSaveText = "Save";
@@ -19,7 +20,7 @@
         }
 </style>
 
-<div class="row" >
+<div class="row">
     <div class="col-sm-3">
         @Html.HiddenFor(m => m.FacilityRoleId, new { @id = "hdFacilityRoleId" })
         <div class="form-group">
@@ -37,6 +38,31 @@
             @Html.HiddenFor(m => m.FacilityId, new { @id = "hdFacilityId" })
         </div>
     </div>
+    <div class="col-sm-6">
+        <label>Portals:</label>
+
+        @foreach (var item in Enum.GetValues(typeof(Portals)).Cast<Portals>())
+        {
+            <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3 p-0">
+                @if (Convert.ToInt32(item) == ExtensionMethods.DefaultPortalKey)
+                {
+                    <label>
+                        <input type="radio" name="rolePortal" checked="checked" value="@Convert.ToInt32(item)" onchange="OnChangeFacilityDropdown(''); BindFacilityRoleCustomList();" />
+                        @item.GetDescription()
+                    </label>
+                }
+                else
+                {
+                    <label>
+                        <input type="radio" name="rolePortal" value="@Convert.ToInt32(item)" onchange="OnChangeFacilityDropdown(''); BindFacilityRoleCustomList();" />
+                        @item.GetDescription()
+                    </label>
+                }
+            </div>
+        }
+    </div>
+    <div class="clear"></div>
+
     <div class="col-sm-3">
         <div id="divRoleSlection" class="form-group">
             <label>Role Type:</label>
@@ -69,8 +95,8 @@
 
     </div>
 
-    <div class="clear"></div>
     <div class="col-sm-3">
+        <br />
         <div class="form-group facilityrole">
             <label>
                 Scheduling Applied :
@@ -79,13 +105,15 @@
         </div>
     </div>
     <div class="col-sm-3">
+        <br />
         <div class="form-group">
             <label>
                 Care Plan Accessible :
                 @Html.CheckBoxFor(m => m.CarePlanAccessible)
             </label>
         </div>
-    </div>
+    </div>    <div class="clear"></div>
+
     <div class="col-sm-3">
         <div class="row facilityrole">
             <div class="col-md-4">

@@ -1,0 +1,3 @@
+
+INSERT INTO GlobalCodes(FacilityNumber, GlobalCodeCategoryValue, GlobalCodeValue, GlobalCodeName, Description, ExternalValue1, ExternalValue2, ExternalValue3, ExternalValue4, ExternalValue5, SortOrder, IsActive, CreatedBy, CreatedDate, ExternalValue6,IsDeleted)
+select Top 1 FacilityNumber, GlobalCodeCategoryValue, 86, 'Location', 'Location', ExternalValue1, ExternalValue2, ExternalValue3, ExternalValue4, ExternalValue5, SortOrder, 1, 1, GETDATE(), ExternalValue6,0 from GlobalCodes WHere GlobalCodeCategoryValue=5001
