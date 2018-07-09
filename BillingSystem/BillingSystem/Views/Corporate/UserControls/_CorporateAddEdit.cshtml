@@ -1,4 +1,6 @@
-﻿@model BillingSystem.Model.Corporate
+﻿@using BillingSystem.Common.Common
+
+@model BillingSystem.Model.Corporate
 @using BillingSystem.Model
 @{
     ViewBag.Title = "Corporate";
@@ -27,14 +29,14 @@
     </div>
     <div class="col-sm-6 col-md-3">
         @{Html.RenderPartial("~/Views/CommonUserControls/CascadingCountryView.cshtml", new BillingSystem.Models.CommonDataView
-          {
-              CountryList = new List<Country>(),
-              StatesList = new List<State>(),
-              CityList = new List<City>(),
-              CountryId = Convert.ToInt32(Model.CountryID),
-              StateId = Convert.ToInt32(Model.StateID),
-              CityId = Convert.ToInt32(Model.CityID),
-          });}
+            {
+                CountryList = new List<Country>(),
+                StatesList = new List<State>(),
+                CityList = new List<City>(),
+                CountryId = Convert.ToInt32(Model.CountryID),
+                StateId = Convert.ToInt32(Model.StateID),
+                CityId = Convert.ToInt32(Model.CityID),
+            });}
 
 
 
@@ -89,63 +91,66 @@
     </div>
 
     <div class="clear"></div>
-    <div class="col-lg-12">
-        <h2 class="form_heading">Set Default Table Numbers</h2>
-    </div>
-    <div class="col-md-3">
-        <div class="rowTable">
-            <label>HCPCS Table Number:</label>
-            <select id="ddlHcpcsTablSet"></select>
-            @Html.HiddenFor(m => m.DefaultHCPCSTableNumber)
+    @if (ExtensionMethods.DefaultPortalKey == 1)
+    {
+        <div class="col-lg-12">
+            <h2 class="form_heading">Set Default Table Numbers</h2>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="rowTable">
-            <label>Drug Table Number:</label>
-            <select id="ddlDrugTablSet"></select>
-            @Html.HiddenFor(m => m.DefaultDRUGTableNumber)
+        <div class="col-md-3">
+            <div class="rowTable">
+                <label>HCPCS Table Number:</label>
+                <select id="ddlHcpcsTablSet"></select>
+                @Html.HiddenFor(m => m.DefaultHCPCSTableNumber)
+            </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="rowTable">
-            <label>DRG Table Number:</label>
-            <select id="ddlDrgTablSet"></select>
-            @Html.HiddenFor(m => m.DefaultDRGTableNumber)
+        <div class="col-md-3">
+            <div class="rowTable">
+                <label>Drug Table Number:</label>
+                <select id="ddlDrugTablSet"></select>
+                @Html.HiddenFor(m => m.DefaultDRUGTableNumber)
+            </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="rowTable">
-            <label>Diagnosis Table Number:</label>
-            <select id="ddlDiagnosisTablSet"></select>
-            @Html.HiddenFor(m => m.DefaultDiagnosisTableNumber)
+        <div class="col-md-3">
+            <div class="rowTable">
+                <label>DRG Table Number:</label>
+                <select id="ddlDrgTablSet"></select>
+                @Html.HiddenFor(m => m.DefaultDRGTableNumber)
+            </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="rowTable">
-            <label>CPT Table Number:</label>
-            <select id="ddlCptTablSet"></select>
-            @Html.HiddenFor(m => m.DefaultCPTTableNumber)
+        <div class="col-md-3">
+            <div class="rowTable">
+                <label>Diagnosis Table Number:</label>
+                <select id="ddlDiagnosisTablSet"></select>
+                @Html.HiddenFor(m => m.DefaultDiagnosisTableNumber)
+            </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="rowTable">
-            <label>ServiceCode Table Number:</label>
-            <select id="ddlServiceCodeTablSet"></select>
-            @Html.HiddenFor(m => m.DefaultServiceCodeTableNumber)
+        <div class="col-md-3">
+            <div class="rowTable">
+                <label>CPT Table Number:</label>
+                <select id="ddlCptTablSet"></select>
+                @Html.HiddenFor(m => m.DefaultCPTTableNumber)
+            </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="rowTable">
-            <label>Bill Edit Rule Table Number:</label>
-            <select id="ddlBillEditRuleTablSet"></select>
-            @Html.HiddenFor(m => m.BillEditRuleTableNumber)
+        <div class="col-md-3">
+            <div class="rowTable">
+                <label>ServiceCode Table Number:</label>
+                <select id="ddlServiceCodeTablSet"></select>
+                @Html.HiddenFor(m => m.DefaultServiceCodeTableNumber)
+            </div>
         </div>
-    </div>
+        <div class="col-md-3">
+            <div class="rowTable">
+                <label>Bill Edit Rule Table Number:</label>
+                <select id="ddlBillEditRuleTablSet"></select>
+                @Html.HiddenFor(m => m.BillEditRuleTableNumber)
+            </div>
+        </div>
+    }
     <div class="clear"></div>
     <div class="btn-group">
         <div style="float: left;">
             @if (Model != null && Model.CorporateID != 0)
-            {  <input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return CheckDuplicateCorporate('@Model.CorporateID    ');" />
+            {<input type="submit" class="btn btn-primary edit-btn marginBtn" value="Update" onclick="return CheckDuplicateCorporate('@Model.CorporateID    ');" />
             }
             else
             {

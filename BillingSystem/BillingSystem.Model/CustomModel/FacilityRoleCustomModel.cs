@@ -15,5 +15,6 @@ namespace BillingSystem.Model.CustomModel
         public string RoleName { get; set; }
         public string FacilityName { get; set; }
         public bool AddToAll { get; set; }
+        public int PortalId { get; set; }
     }
 }

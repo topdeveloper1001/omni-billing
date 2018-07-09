@@ -1126,9 +1126,14 @@ function BindFacilityRolesByFacilityCorporateId(corporateId, facilityId, selecto
     /// <param name="selector">The selector.</param>
     /// <param name="selectedId">The selected identifier.</param>
     /// <returns></returns>
+    var pId = $('input[name=rolePortal]:checked').val();
+    if (pId == undefined || pId == "") {
+        pId = 0;
+    } 
     var jsonData = JSON.stringify({
         corporateId: corporateId,
-        facilityId: facilityId
+        facilityId: facilityId,
+        portalId: pId
     });
     //Bind Roles
     $.ajax({
@@ -3251,7 +3256,7 @@ function BindDashboardFacilities(selector, selectedId) {
     /// <returns></returns>
     $.ajax({
         type: "POST",
-        url:  "/Facility/GetFacilitiesDropdownData",
+        url: "/Facility/GetFacilitiesDropdownData",
         async: true,
         contentType: "application/json; charset=utf-8",
         dataType: "json",

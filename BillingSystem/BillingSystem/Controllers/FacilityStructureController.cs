@@ -1044,6 +1044,9 @@ namespace BillingSystem.Controllers
                     case 85:
                         parentId = 84;
                         break;
+                    case 86:
+                        parentId = 84;
+                        break;
                 }
                 listParentStructure = _service.GetFacilityStructureListByParentId(parentId);
             }
@@ -1053,10 +1056,20 @@ namespace BillingSystem.Controllers
             {
                 bedRate = _brService.GetBedRateByBedTypeId(bedType);
             }
-
+            string strucuture = "0";
+            switch (ExtensionMethods.DefaultPortalKey)
+            {
+                case 1:
+                    strucuture = "86";
+                    break;
+                case 2:
+                    strucuture = "85";
+                    break;
+            }
+            var lstFacilityStructure = list.Where(g => g.ExternalValue1.Equals("5001") && g.Value != strucuture).OrderBy(g => g.Value).ToList();
             var jsonData = new
             {
-                listFacilityStructure = list.Where(g => g.ExternalValue1.Equals("5001")).OrderBy(g => g.Value).ToList(),
+                listFacilityStructure = lstFacilityStructure,
                 listBedTypes = list.Where(g => g.ExternalValue1.Equals("1001")).OrderBy(m => m.Text).ToList(),
                 bedRate,
                 listParentStructure,

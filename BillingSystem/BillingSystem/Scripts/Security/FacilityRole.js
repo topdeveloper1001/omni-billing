@@ -95,7 +95,7 @@ function BindFacilityRoleList() {
 }
 
 function EditFacilityRole(facilityRoleId) {
-    
+
     var jsonData = JSON.stringify({
         facilityRoleId: facilityRoleId
     });
@@ -127,7 +127,7 @@ function EditFacilityRole(facilityRoleId) {
                 var roleId = $("#hdRoleId").val();
                 //BindRoles(corporateId, "#ddlRoles", roleId);
                 //BindRolesByFacility(corporateId, selectedFacilityId, "#ddlRoles", roleId);
-               
+
                 BindFacilityRolesByFacilityCorporateId(corporateId, selectedFacilityId, "#ddlRoles", roleId);
                 $('input:radio[name=RoleSelect]').attr("disabled", "disabled");
 
@@ -141,7 +141,7 @@ function EditFacilityRole(facilityRoleId) {
 }
 
 function OnChangeCorporatesDropdown(roleId) {
-   
+
     //Bind Roles
     var corporateId = $('#ddlCorporates').val();
     if (corporateId != '0') {
@@ -161,7 +161,7 @@ function OnChangeCorporatesDropdown(roleId) {
 
 function OnChangeFacilityDropdown(roleId) {
     //Bind Roles
-    
+
     var facilityId = $('#ddlFacilities').val();
     var corporateId = $('#ddlCorporates').val();
     if (facilityId != '') {
@@ -381,7 +381,7 @@ function CheckIfFacilityRoleExists(facilityRoleId, facilityId, roleId, corporate
         facilityRoleId: facilityRoleId,
         schedulingApplied: schedulingApplied,
         CarePlanAccessible: carePlanAccessible,
-});
+    });
 
     //Bind Facilities
     $.ajax({
@@ -397,7 +397,11 @@ function CheckIfFacilityRoleExists(facilityRoleId, facilityId, roleId, corporate
                 return false;
             }
             if (!data) {
-                SaveFacilityRole(facilityRoleId, facilityId, roleId, corporateId, isActive, rolename, schedulingApplied, carePlanAccessible);
+
+                var pId = $('input[name=rolePortal]:checked').val();
+                if (pId == undefined || pId == "")
+                    pId = 0;
+                SaveFacilityRole(facilityRoleId, facilityId, roleId, corporateId, isActive, rolename, schedulingApplied, carePlanAccessible, pId);
             }
             else {
                 ShowMessage("Records already exists", "Alert", "warning", true);
@@ -410,7 +414,7 @@ function CheckIfFacilityRoleExists(facilityRoleId, facilityId, roleId, corporate
     return false;
 }
 
-function SaveFacilityRole(facilityRoleId, facilityId, roleId, cId, isActive, rolename, schedulingApplied, carePlanAccessible) {
+function SaveFacilityRole(facilityRoleId, facilityId, roleId, cId, isActive, rolename, schedulingApplied, carePlanAccessible, portalId) {
     var jsonData = JSON.stringify({
         FacilityRoleId: facilityRoleId,
         FacilityId: facilityId,
@@ -420,8 +424,9 @@ function SaveFacilityRole(facilityRoleId, facilityId, roleId, cId, isActive, rol
         IsDeleted: false,
         RoleName: rolename,
         SchedulingApplied: schedulingApplied,
-        CarePlanAccessible:carePlanAccessible,
-        AddToAll: $("#AddToAll")[0].checked
+        CarePlanAccessible: carePlanAccessible,
+        AddToAll: $("#AddToAll")[0].checked,
+        PortalId: portalId
     });
     var msg = "";
     $.ajax({
@@ -449,7 +454,7 @@ function SaveFacilityRole(facilityRoleId, facilityId, roleId, cId, isActive, rol
 
                     $("#SchedulingApplied").prop('checked', false);
                     $("#CarePlanAccessible").prop('checked', false);
-                    
+
 
                     var corporateId = $("#hdCorporateId").val();
                     $('#btnSaveAndUpdate').val('Save And Return');
@@ -482,7 +487,7 @@ function SaveFacilityRole(facilityRoleId, facilityId, roleId, cId, isActive, rol
                         BindFacilityRoleByfacility();
                     }
                     $('#collapseTwo').addClass('in');
-                   jscalls();
+                    jscalls();
                 }
             }
         },
@@ -500,10 +505,14 @@ function BindFacilityRoleCustomList() {
     if (corporateId == 0 || corporateId == null) {
         corporateId = $("#hdCorporateId").val() != "0" ? $("#hdCorporateId").val() : corporateId;
     }
+    var pId = $('input[name=rolePortal]:checked').val();
+    if (pId == undefined || pId == "")
+        pId = 0;
     var jsonData = JSON.stringify({
         corpId: corporateId,
         facilityId: facilityId,
-        roleId: roleId
+        roleId: roleId,
+        portalId: pId
     });
     $.ajax({
         type: "POST",
@@ -600,7 +609,7 @@ function BindFacilityRoleByfacility() {
         corporateId = $("#hdCorporateId").val() != "0" ? $("#hdCorporateId").val() : corporateId;
     }
     var jsonData = JSON.stringify({
-        showInActive:isActive,
+        showInActive: isActive,
         facilityId: facilityId,
         corporateId: corporateId,
 
@@ -640,8 +649,8 @@ function ShowActiveInActiveFacilityRole(chkSelector) {
             showInActive: isActive,
             facilityId: facilityId,
             corporateId: corporateId
-            
-            }),
+
+        }),
         dataType: "html",
         success: function (data) {
             if (data != null) {

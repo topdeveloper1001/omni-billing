@@ -38,6 +38,7 @@ namespace BillingSystem.Model
         public Nullable<int> FacilityId { get; set; }
         public bool IsGeneric { get; set; }
         public string RoleKey { get; set; }
+        public int PortalId { get; set; }
 
         public virtual ICollection<FacilityRole> FacilityRole { get; set; }
         public virtual ICollection<RolePermission> RolePermission { get; set; }

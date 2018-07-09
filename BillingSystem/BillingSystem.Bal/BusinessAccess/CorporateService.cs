@@ -62,7 +62,9 @@ namespace BillingSystem.Bal.BusinessAccess
                 var currentData = GetCorporateById(corporate.CorporateID);
                 corporate.CreatedBy = currentData.CreatedBy;
                 corporate.CreatedDate = currentData.CreatedDate;
-                newId = Convert.ToInt32(_repository.UpdateEntity(corporate, corporate.CorporateID));
+                var rr = _repository.UpdateEntity(corporate, corporate.CorporateID);
+
+                newId = corporate.CorporateID;
             }
             else
                 newId = Convert.ToInt32(_repository.Create(corporate));

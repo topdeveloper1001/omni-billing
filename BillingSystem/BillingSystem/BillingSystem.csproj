@@ -2157,6 +2157,7 @@
     <Content Include="images\list.png" />
     <Content Include="images\loading.gif" />
     <Content Include="images\loadingImageUrl.GIF" />
+    <Content Include="images\location.png" />
     <Content Include="images\LoginBackground.png" />
     <Content Include="images\LoginBanner.png" />
     <Content Include="images\loginBg.png" />
@@ -3063,6 +3064,12 @@
     <Content Include="SQL Scripts\Release 5.20\7 - New PROC SprocGetManualDashboardDataByIndicator 27 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\8 - New PROC SprocGetIndicatorDataChecklist 28 June 2018.sql" />
     <Content Include="SQL Scripts\Release 5.20\9 - New PROC SprocDashboardRemarks 28 June 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.21\1 - New PROC SprocGetRuleMasterData 06 July 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.21\2 - New PROC SprocGetRolebyCorporateandFacility 09 July 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.21\3 - New PROC SprocGetFacilityRoleCustomList 09 July 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.21\4 - Update PROC SprocSaveFacilityRole 09 July 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.21\5 - New PROC SprocSaveFacility 09 July 2018.sql" />
+    <Content Include="SQL Scripts\Release 5.21\Save GlobalCodes Location for FacilityStructure.sql" />
     <Content Include="SQL Scripts\Release 5.2\1 - Update PROC iSprocGetBookedAppointments 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\10 - Update PROC SPROC_GetPaitentFutureOrder 28 March 2018.sql" />
     <Content Include="SQL Scripts\Release 5.2\2 - Update PROC SprocOrdersViewData 28 March 2018.sql" />

@@ -296,6 +296,14 @@
     <Compile Include="Migrations\201807040925335_CategoryDBChangesPlusInOthers.Designer.cs">
       <DependentUpon>201807040925335_CategoryDBChangesPlusInOthers.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201807061819351_PortalinRole.cs" />
+    <Compile Include="Migrations\201807061819351_PortalinRole.Designer.cs">
+      <DependentUpon>201807061819351_PortalinRole.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201807091242506_FacilityContact.cs" />
+    <Compile Include="Migrations\201807091242506_FacilityContact.Designer.cs">
+      <DependentUpon>201807091242506_FacilityContact.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\Appointment.cs" />
     <Compile Include="Model\AppointmentTypes.cs" />
@@ -303,6 +311,7 @@
     <Compile Include="Model\BaseEntity.cs" />
     <Compile Include="Model\BillingModifier.cs" />
     <Compile Include="Model\Catalog.cs" />
+    <Compile Include="Model\FacilityContact.cs" />
     <Compile Include="Model\TechnicalSpecifications.cs" />
     <Compile Include="Model\Categories.cs" />
     <Compile Include="Model\ClinicianAppointmentType.cs" />
@@ -511,6 +520,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201807040925335_CategoryDBChangesPlusInOthers.resx">
       <DependentUpon>201807040925335_CategoryDBChangesPlusInOthers.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201807061819351_PortalinRole.resx">
+      <DependentUpon>201807061819351_PortalinRole.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201807091242506_FacilityContact.resx">
+      <DependentUpon>201807091242506_FacilityContact.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

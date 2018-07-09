@@ -13,21 +13,17 @@ namespace BillingSystem.Bal.BusinessAccess
 {
     public class FacilityRoleService : IFacilityRoleService
     {
-        private readonly IRepository<Corporate> _cRepository;
         private readonly IRepository<FacilityRole> _repository;
-        private readonly IRepository<Physician> _phRepository;
-        private readonly IRepository<Facility> _fRepository;
         private readonly IRepository<Role> _rRepository;
         private readonly IMapper _mapper;
+        private readonly BillingEntities _context;
 
-        public FacilityRoleService(IRepository<Corporate> cRepository, IRepository<FacilityRole> repository, IRepository<Physician> phRepository, IRepository<Facility> fRepository, IRepository<Role> rRepository, IMapper mapper)
+        public FacilityRoleService(IRepository<FacilityRole> repository, IRepository<Role> rRepository, IMapper mapper, BillingEntities context)
         {
-            _cRepository = cRepository;
             _repository = repository;
-            _phRepository = phRepository;
-            _fRepository = fRepository;
             _rRepository = rRepository;
             _mapper = mapper;
+            _context = context;
         }
 
         /// <summary>
@@ -78,7 +74,7 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public bool CheckRoleIsAssignOrNot(int roleId, int facilityId, int corporateId)
         {
-            var currentStatus = _phRepository.Where(x => x.UserType == roleId && x.FacilityId == facilityId && x.CorporateId == corporateId && x.IsActive)
+            var currentStatus = _context.Physician.Where(x => x.UserType == roleId && x.FacilityId == facilityId && x.CorporateId == corporateId && x.IsActive)
                     .FirstOrDefault();
             return currentStatus != null;
         }
@@ -206,7 +202,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             List<int> list;
 
-            list = _fRepository.Where(c => c.CorporateID == cId).Select(f => f.FacilityId).ToList();
+            list = _context.Facility.Where(c => c.CorporateID == cId).Select(f => f.FacilityId).ToList();
             return list;
         }
 
@@ -261,83 +257,65 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <param name="facilityId">The facility identifier.</param>
         /// <param name="roleId">The role identifier.</param>
         /// <returns></returns>
-        public List<FacilityRoleCustomModel> GetFacilityRoleListCustom(int corporateId, int facilityId, int roleId)
+        public List<FacilityRoleCustomModel> GetFacilityRoleListCustom(int corporateId, int facilityId, int roleId, int portalId, bool showInActive = true)
         {
-            var list = new List<FacilityRoleCustomModel>();
-            var facilityRoleList = corporateId > 0 ?
-                (facilityId == 0
-                ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId).ToList()
-                : _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId
-                                  && fr.FacilityId == facilityId).ToList())
-                                  :
-                                  _repository.Where(fr => !fr.IsDeleted && fr.IsActive).ToList();
+            var sqlParameters = new SqlParameter[5];
+            sqlParameters[0] = new SqlParameter(InputParams.pCID.ToString(), corporateId);
+            sqlParameters[1] = new SqlParameter(InputParams.pFID.ToString(), facilityId);
+            sqlParameters[2] = new SqlParameter(InputParams.pPortalId.ToString(), portalId);
+            sqlParameters[3] = new SqlParameter(InputParams.pRoleId.ToString(), roleId);
+            sqlParameters[4] = new SqlParameter(InputParams.pShowInActive.ToString(), showInActive);
 
-            if (roleId > 0)
-                facilityRoleList = facilityRoleList.Where(r => r.RoleId == roleId).ToList();
-
-
-            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetFacilityRoleCustomList.ToString(), isCompiled: false
+                , parameters: sqlParameters))
             {
-                FacilityRoleId = item.FacilityRoleId,
-                FacilityId = item.FacilityId,
-                RoleId = item.RoleId,
-                CorporateId = item.CorporateId,
-                CreatedBy = item.CreatedBy,
-                CreatedDate = item.CreatedDate,
-                ModifiedBy = item.ModifiedBy,
-                ModifiedDate = item.ModifiedDate,
-                IsDeleted = item.IsDeleted,
-                DeletedBy = item.DeletedBy,
-                DeletedDate = item.DeletedDate,
-                IsActive = item.IsActive,
-                FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
-                CorporateName = GetCorporateNameById(item.CorporateId),
-                RoleName = GetRoleNameById(item.RoleId)
-            }));
-            list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
-            return list.OrderBy(x => x.RoleName).ToList();
+                var result = ms.GetResultWithJson<FacilityRoleCustomModel>(JsonResultsArray.Role.ToString());
+                return result;
+            }
         }
         private string GetCorporateNameById(int? corporateId)
         {
-            var q = _cRepository.Where(a => a.CorporateID == corporateId).FirstOrDefault();
+            var q = _context.Corporate.Where(a => a.CorporateID == corporateId).FirstOrDefault();
             return (q != null) ? q.CorporateName : string.Empty;
         }
 
         public List<FacilityRoleCustomModel> GetFacilityRoleListByFacility(int corporateId, int facilityId, int roleId)
         {
-            var list = new List<FacilityRoleCustomModel>();
-            var facilityRoleList = corporateId > 0 ?
-                (facilityId == 0
-                ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId).ToList()
-                : _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId
-                                  && fr.FacilityId == facilityId).ToList())
-                                  :
-                                  _repository.Where(fr => !fr.IsDeleted && fr.IsActive).ToList();
+            var lst = GetFacilityRoleListCustom(corporateId, facilityId, roleId, ExtensionMethods.DefaultPortalKey, true);
+            return lst;
+            //var list = new List<FacilityRoleCustomModel>();
+            //var facilityRoleList = corporateId > 0 ?
+            //    (facilityId == 0
+            //    ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId).ToList()
+            //    : _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId
+            //                      && fr.FacilityId == facilityId).ToList())
+            //                      :
+            //                      _repository.Where(fr => !fr.IsDeleted && fr.IsActive).ToList();
 
-            //if (roleId > 0)
-            //    facilityRoleList = facilityRoleList.Where(r => r.RoleId == roleId).ToList();
+            ////if (roleId > 0)
+            ////    facilityRoleList = facilityRoleList.Where(r => r.RoleId == roleId).ToList();
 
 
-            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-            {
-                FacilityRoleId = item.FacilityRoleId,
-                FacilityId = item.FacilityId,
-                RoleId = item.RoleId,
-                CorporateId = item.CorporateId,
-                CreatedBy = item.CreatedBy,
-                CreatedDate = item.CreatedDate,
-                ModifiedBy = item.ModifiedBy,
-                ModifiedDate = item.ModifiedDate,
-                IsDeleted = item.IsDeleted,
-                DeletedBy = item.DeletedBy,
-                DeletedDate = item.DeletedDate,
-                IsActive = item.IsActive,
-                FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
-                CorporateName = GetCorporateNameById(item.CorporateId),
-                RoleName = GetRoleNameById(item.RoleId)
-            }));
-            list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
-            return list.OrderBy(x => x.RoleName).ToList();
+            //list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
+            //{
+            //    FacilityRoleId = item.FacilityRoleId,
+            //    FacilityId = item.FacilityId,
+            //    RoleId = item.RoleId,
+            //    CorporateId = item.CorporateId,
+            //    CreatedBy = item.CreatedBy,
+            //    CreatedDate = item.CreatedDate,
+            //    ModifiedBy = item.ModifiedBy,
+            //    ModifiedDate = item.ModifiedDate,
+            //    IsDeleted = item.IsDeleted,
+            //    DeletedBy = item.DeletedBy,
+            //    DeletedDate = item.DeletedDate,
+            //    IsActive = item.IsActive,
+            //    FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
+            //    CorporateName = GetCorporateNameById(item.CorporateId),
+            //    RoleName = GetRoleNameById(item.RoleId)
+            //}));
+            //list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
+            //return list.OrderBy(x => x.RoleName).ToList();
         }
 
         /// <summary>
@@ -383,35 +361,38 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public List<FacilityRoleCustomModel> GetFacilityRoleListByAdminUser(int corporateId, int facilityId, int roleId)
         {
-            var list = new List<FacilityRoleCustomModel>();
-            var facilityRoleList = corporateId > 0 ?
-                (facilityId == 0
-                ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId).ToList()
-                : _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId
-                                  && fr.FacilityId == facilityId).ToList())
-                                  :
-                                  _repository.Where(fr => !fr.IsDeleted && fr.IsActive).ToList();
+            var lst = GetFacilityRoleListCustom(corporateId, facilityId, roleId, ExtensionMethods.DefaultPortalKey, true);
+            return lst;
 
-            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-            {
-                FacilityRoleId = item.FacilityRoleId,
-                FacilityId = item.FacilityId,
-                RoleId = item.RoleId,
-                CorporateId = item.CorporateId,
-                CreatedBy = item.CreatedBy,
-                CreatedDate = item.CreatedDate,
-                ModifiedBy = item.ModifiedBy,
-                ModifiedDate = item.ModifiedDate,
-                IsDeleted = item.IsDeleted,
-                DeletedBy = item.DeletedBy,
-                DeletedDate = item.DeletedDate,
-                IsActive = item.IsActive,
-                FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
-                CorporateName = GetCorporateNameById(item.CorporateId),
-                RoleName = GetRoleNameById(item.RoleId)
-            }));
-            list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
-            return list.OrderBy(x => x.RoleName).ToList();
+            //var list = new List<FacilityRoleCustomModel>();
+            //var facilityRoleList = corporateId > 0 ?
+            //    (facilityId == 0
+            //    ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId).ToList()
+            //    : _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId
+            //                      && fr.FacilityId == facilityId).ToList())
+            //                      :
+            //                      _repository.Where(fr => !fr.IsDeleted && fr.IsActive).ToList();
+
+            //list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
+            //{
+            //    FacilityRoleId = item.FacilityRoleId,
+            //    FacilityId = item.FacilityId,
+            //    RoleId = item.RoleId,
+            //    CorporateId = item.CorporateId,
+            //    CreatedBy = item.CreatedBy,
+            //    CreatedDate = item.CreatedDate,
+            //    ModifiedBy = item.ModifiedBy,
+            //    ModifiedDate = item.ModifiedDate,
+            //    IsDeleted = item.IsDeleted,
+            //    DeletedBy = item.DeletedBy,
+            //    DeletedDate = item.DeletedDate,
+            //    IsActive = item.IsActive,
+            //    FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
+            //    CorporateName = GetCorporateNameById(item.CorporateId),
+            //    RoleName = GetRoleNameById(item.RoleId)
+            //}));
+            //list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
+            //return list.OrderBy(x => x.RoleName).ToList();
         }
 
 
@@ -445,77 +426,84 @@ namespace BillingSystem.Bal.BusinessAccess
 
         public List<FacilityRoleCustomModel> GetActiveInActiveRecords(bool showInActive, int corporateId, int facilityId)
         {
-            var list = new List<FacilityRoleCustomModel>();
-            var facilityRoleList = corporateId > 0 ?
-                (facilityId == 0
-                ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive == showInActive && fr.CorporateId == corporateId).ToList()
-                : _repository.Where(fr => !fr.IsDeleted && fr.IsActive == showInActive && fr.CorporateId == corporateId
-                                  && fr.FacilityId == facilityId).ToList())
-                                  :
-                                  _repository.Where(fr => !fr.IsDeleted && fr.IsActive == showInActive).ToList();
+            var lst = GetFacilityRoleListCustom(corporateId, facilityId, 0, ExtensionMethods.DefaultPortalKey, !showInActive);
+            return lst;
 
-            //if (roleId > 0)
-            //    facilityRoleList = facilityRoleList.Where(r => r.RoleId == roleId).ToList();
+            //var list = new List<FacilityRoleCustomModel>();
+            //var facilityRoleList = corporateId > 0 ?
+            //    (facilityId == 0
+            //    ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive == showInActive && fr.CorporateId == corporateId).ToList()
+            //    : _repository.Where(fr => !fr.IsDeleted && fr.IsActive == showInActive && fr.CorporateId == corporateId
+            //                      && fr.FacilityId == facilityId).ToList())
+            //                      :
+            //                      _repository.Where(fr => !fr.IsDeleted && fr.IsActive == showInActive).ToList();
+
+            ////if (roleId > 0)
+            ////    facilityRoleList = facilityRoleList.Where(r => r.RoleId == roleId).ToList();
 
 
-            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-            {
-                FacilityRoleId = item.FacilityRoleId,
-                FacilityId = item.FacilityId,
-                RoleId = item.RoleId,
-                CorporateId = item.CorporateId,
-                CreatedBy = item.CreatedBy,
-                CreatedDate = item.CreatedDate,
-                ModifiedBy = item.ModifiedBy,
-                ModifiedDate = item.ModifiedDate,
-                IsDeleted = item.IsDeleted,
-                DeletedBy = item.DeletedBy,
-                DeletedDate = item.DeletedDate,
-                IsActive = item.IsActive,
-                FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
-                CorporateName = GetCorporateNameById(item.CorporateId),
-                RoleName = GetRoleNameById(item.RoleId)
-            }));
+            //list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
+            //{
+            //    FacilityRoleId = item.FacilityRoleId,
+            //    FacilityId = item.FacilityId,
+            //    RoleId = item.RoleId,
+            //    CorporateId = item.CorporateId,
+            //    CreatedBy = item.CreatedBy,
+            //    CreatedDate = item.CreatedDate,
+            //    ModifiedBy = item.ModifiedBy,
+            //    ModifiedDate = item.ModifiedDate,
+            //    IsDeleted = item.IsDeleted,
+            //    DeletedBy = item.DeletedBy,
+            //    DeletedDate = item.DeletedDate,
+            //    IsActive = item.IsActive,
+            //    FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
+            //    CorporateName = GetCorporateNameById(item.CorporateId),
+            //    RoleName = GetRoleNameById(item.RoleId)
+            //}));
 
-            list = list.GroupBy(x => new
-            {
-                x.RoleName,
-                x.FacilityId
-            }).Select(x => x.FirstOrDefault()).ToList();
-            return list.OrderBy(x => x.RoleName).ToList();
+            //list = list.GroupBy(x => new
+            //{
+            //    x.RoleName,
+            //    x.FacilityId
+            //}).Select(x => x.FirstOrDefault()).ToList();
+            //return list.OrderBy(x => x.RoleName).ToList();
         }
 
         public List<FacilityRoleCustomModel> GetFacilityRoleListData(int corporateId, int facilityId, int roleId, bool showInActive)
         {
-            var list = new List<FacilityRoleCustomModel>();
-            var facilityRoleList = corporateId > 0 ?
-                (facilityId == 0
-                ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId).ToList()
-                : _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId
-                                  && fr.FacilityId == facilityId).ToList())
-                                  :
-                                  _repository.Where(fr => !fr.IsDeleted && fr.IsActive).ToList();
+            var lst = GetFacilityRoleListCustom(corporateId, facilityId, roleId, ExtensionMethods.DefaultPortalKey, showInActive);
+            return lst;
 
-            list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
-            {
-                FacilityRoleId = item.FacilityRoleId,
-                FacilityId = item.FacilityId,
-                RoleId = item.RoleId,
-                CorporateId = item.CorporateId,
-                CreatedBy = item.CreatedBy,
-                CreatedDate = item.CreatedDate,
-                ModifiedBy = item.ModifiedBy,
-                ModifiedDate = item.ModifiedDate,
-                IsDeleted = item.IsDeleted,
-                DeletedBy = item.DeletedBy,
-                DeletedDate = item.DeletedDate,
-                IsActive = item.IsActive,
-                FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
-                CorporateName = GetCorporateNameById(item.CorporateId),
-                RoleName = GetRoleNameById(item.RoleId)
-            }));
-            list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
-            return list.OrderBy(x => x.RoleName).ToList();
+
+            //var list = new List<FacilityRoleCustomModel>();
+            //var facilityRoleList = corporateId > 0 ?
+            //    (facilityId == 0
+            //    ? _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId).ToList()
+            //    : _repository.Where(fr => !fr.IsDeleted && fr.IsActive && fr.CorporateId == corporateId
+            //                      && fr.FacilityId == facilityId).ToList())
+            //                      :
+            //                      _repository.Where(fr => !fr.IsDeleted && fr.IsActive).ToList();
+
+            //list.AddRange(facilityRoleList.Select(item => new FacilityRoleCustomModel
+            //{
+            //    FacilityRoleId = item.FacilityRoleId,
+            //    FacilityId = item.FacilityId,
+            //    RoleId = item.RoleId,
+            //    CorporateId = item.CorporateId,
+            //    CreatedBy = item.CreatedBy,
+            //    CreatedDate = item.CreatedDate,
+            //    ModifiedBy = item.ModifiedBy,
+            //    ModifiedDate = item.ModifiedDate,
+            //    IsDeleted = item.IsDeleted,
+            //    DeletedBy = item.DeletedBy,
+            //    DeletedDate = item.DeletedDate,
+            //    IsActive = item.IsActive,
+            //    FacilityName = _fRepository.Get(item.FacilityId).FacilityName,
+            //    CorporateName = GetCorporateNameById(item.CorporateId),
+            //    RoleName = GetRoleNameById(item.RoleId)
+            //}));
+            //list = list.GroupBy(x => new { x.RoleName, x.FacilityId }).Select(x => x.FirstOrDefault()).ToList();
+            //return list.OrderBy(x => x.RoleName).ToList();
         }
         private string GetRoleNameById(int roleID)
         {
@@ -534,7 +522,7 @@ namespace BillingSystem.Bal.BusinessAccess
         {
             var m = _mapper.Map<FacilityRole>(vm);
             var roleName = string.IsNullOrEmpty(vm.RoleName) ? string.Empty : vm.RoleName;
-            var sqlParameters = new SqlParameter[11];
+            var sqlParameters = new SqlParameter[12];
             sqlParameters[0] = new SqlParameter("@FRoleId", m.FacilityRoleId);
             sqlParameters[1] = new SqlParameter("@FId", m.FacilityId);
             sqlParameters[2] = new SqlParameter("@RId", m.RoleId);
@@ -546,6 +534,7 @@ namespace BillingSystem.Bal.BusinessAccess
             sqlParameters[8] = new SqlParameter("@CarePlanApplied", m.CarePlanAccessible);
             sqlParameters[9] = new SqlParameter("@RName", roleName);
             sqlParameters[10] = new SqlParameter("@CurrentDate", currentDate);
+            sqlParameters[11] = new SqlParameter("@pPortalId", vm.PortalId > 0 ? vm.PortalId : ExtensionMethods.DefaultPortalKey);
 
             _repository.ExecuteCommand(StoredProcedures.SprocSaveFacilityRole.ToString(), sqlParameters);
             return 2;

@@ -1,4 +1,5 @@
-﻿@using System.Web.Optimization
+﻿@using BillingSystem.Common.Common
+@using System.Web.Optimization
 @model BillingSystem.Models.RoleTabsView
 @{
     ViewBag.Title = "Assign Menus To Facility Roles";
@@ -48,6 +49,29 @@
                                 <div class="rowTable">
                                     <label><span class="mandatoryStar"></span>Facility:</label>
                                     <select id="ddlFacility" onchange="OnFacilityChangeInTabRole(); getTreeviewData = false;" class="validate[required]"></select>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                <div class="rowTable">
+                                    @foreach (var item in Enum.GetValues(typeof(Portals)).Cast<Portals>())
+                                    {
+                                        <div class="col-xs-12 col-sm-3 col-md-2 col-lg-2 p-0">
+                                            @if (Convert.ToInt32(item) == ExtensionMethods.DefaultPortalKey)
+                                            {
+                                                <label>
+                                                    <input type="radio" name="rolePortal" onchange="OnFacilityChangeInTabRole(); getTreeviewData = false;" checked="checked" value="@Convert.ToInt32(item)" class="rolePortal" />
+                                                    @item.GetDescription()
+                                                </label>
+                                            }
+                                            else
+                                            {
+                                                <label>
+                                                    <input type="radio" name="rolePortal" value="@Convert.ToInt32(item)" onchange="OnFacilityChangeInTabRole(); getTreeviewData = false;" class="rolePortal" />
+                                                    @item.GetDescription()
+                                                </label>
+                                            }
+                                        </div>
+                                    }
                                 </div>
                             </div>
                             <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4">

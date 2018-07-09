@@ -1,4 +1,4 @@
-﻿ 
+﻿
 using BillingSystem.Model.CustomModel;
 using System;
 using System.Collections.Generic;
@@ -8,9 +8,11 @@ using BillingSystem.Model;
 
 using AutoMapper;
 using BillingSystem.Bal.Interfaces;
+using BillingSystem.Common.Common;
+using System.Data.SqlClient;
 
 namespace BillingSystem.Bal.BusinessAccess
-{ 
+{
     public class RoleService : IRoleService
     {
         private readonly IRepository<Role> _repository;
@@ -32,32 +34,33 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <summary>
         /// Method to add/Update the role in the database.
         /// </summary>
-        /// <param name="role">
+        /// <param name="m">
         /// The role.
         /// </param>
         /// <returns>
         /// The <see cref="int"/>.
         /// </returns>
-        public int AddUpdateRole(Role role)
+        public int AddUpdateRole(Role m)
         {
-            role.IsGeneric = false;
-            if (role.RoleID > 0)
+            m.PortalId = ExtensionMethods.DefaultPortalKey;
+            m.IsGeneric = false;
+            if (m.RoleID > 0)
             {
-                var currentRoleKey = _repository.Where(r => r.RoleID == role.RoleID).Max(a => a.RoleKey);
-                role.RoleKey = currentRoleKey;
-                _repository.UpdateEntity(role, role.RoleID);
+                var currentRoleKey = _repository.Where(r => r.RoleID == m.RoleID).Max(a => a.RoleKey);
+                m.RoleKey = currentRoleKey;
+                _repository.UpdateEntity(m, m.RoleID);
             }
             else
             {
-                if (string.IsNullOrEmpty(role.RoleKey))
+                if (string.IsNullOrEmpty(m.RoleKey))
                 {
-                    var newRoleKey = _repository.Where(a => a.FacilityId == role.FacilityId && a.IsActive == true && a.IsDeleted == false).Max(a => a.RoleID);
-                    role.RoleKey = Convert.ToString(newRoleKey + 1);
+                    var newRoleKey = _repository.Where(a => a.FacilityId == m.FacilityId && a.IsActive == true && a.IsDeleted == false).Max(a => a.RoleID);
+                    m.RoleKey = Convert.ToString(newRoleKey + 1);
                 }
-                _repository.Create(role);
+                _repository.Create(m);
             }
 
-            return role.RoleID;
+            return m.RoleID;
         }
 
         /// <summary>
@@ -74,7 +77,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </returns>
         public bool CheckDuplicateRole(int roleId, string roleName)
         {
-            var role = _repository.Where(x => x.RoleID != roleId && x.RoleName == roleName && x.IsDeleted == false).FirstOrDefault();
+            var role = _repository.Where(x => x.RoleID != roleId && x.RoleName == roleName && x.IsDeleted == false && x.PortalId == ExtensionMethods.DefaultPortalKey).FirstOrDefault();
             return role != null;
         }
 
@@ -90,10 +93,7 @@ namespace BillingSystem.Bal.BusinessAccess
         public List<Role> GetAllRoles(int corporateId)
         {
             var list = corporateId > 0
-                                  ? _repository.Where(
-                                      x =>
-                                      x.IsDeleted == false && x.CorporateId != null
-                                      && x.CorporateId == corporateId).ToList()
+                                  ? _repository.Where(x => x.PortalId == ExtensionMethods.DefaultPortalKey && x.IsDeleted == false && x.CorporateId != null && x.CorporateId == corporateId).ToList()
                                   : _repository.Where(x => x.IsDeleted == false).ToList();
             return list;
         }
@@ -110,14 +110,11 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns>
         /// Return the user after login
         /// </returns>
-        public List<Role> GetAllRolesByCorporateFacility(int corporateId, int facilityId)
+        public List<Role> GetAllRolesByCorporateFacility(int corporateId, int facilityId, int portalId)
         {
+            var pId = portalId > 0 ? portalId : ExtensionMethods.DefaultPortalKey;
             var list = corporateId > 0
-                ? _repository.Where(
-                    x =>
-                        x.IsDeleted == false && x.FacilityId == facilityId && (corporateId == 0 || x.CorporateId == corporateId))
-                    .OrderBy(r => r.RoleName)
-                    .ToList()
+                ? _repository.Where(x => x.PortalId == pId && x.IsDeleted == false && x.FacilityId == facilityId && (corporateId == 0 || x.CorporateId == corporateId)).OrderBy(r => r.RoleName).ToList()
                 : _repository.Where(x => x.IsDeleted == false).OrderBy(r => r.RoleName).ToList();
 
             return list.GroupBy(test => test.RoleName).Select(x => x.FirstOrDefault()).OrderBy(r => r.RoleName).ToList();
@@ -134,15 +131,18 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </param>
         /// <returns>
         /// </returns>
-        public List<Role> GetFacilityRolesByCorporateIdFacilityId(int corporateId, int facilityId)
+        public List<Role> GetFacilityRolesByCorporateIdFacilityId(int corporateId, int facilityId, int portalId)
         {
-            var list = new List<Role>();
-            var roles =
-                _frRepository.Where(r => r.CorporateId == corporateId && r.FacilityId == facilityId && !r.IsDeleted).ToList();
-            list.AddRange(
-                roles.Select(
-                    item => new Role { RoleID = item.RoleId, RoleName = GetRoleNameById(item.RoleId) }));
-            return list;
+            var sqlParameters = new SqlParameter[3];
+            sqlParameters[0] = new SqlParameter(InputParams.pCID.ToString(), corporateId);
+            sqlParameters[1] = new SqlParameter(InputParams.pFID.ToString(), facilityId);
+            sqlParameters[2] = new SqlParameter(InputParams.pPortalId.ToString(), portalId);
+            using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetRolebyCorporateandFacility.ToString(), isCompiled: false
+                , parameters: sqlParameters))
+            {
+                var result = ms.GetResultWithJson<Role>(JsonResultsArray.Role.ToString());
+                return result;
+            }
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </returns>
         public List<Role> GetPhysicianRolesByCorporateId(int corporateId)
         {
-            var roles = _repository.Where(r => r.CorporateId == corporateId && r.RoleName.Contains("Phy") && !r.IsDeleted)
+            var roles = _repository.Where(r => r.CorporateId == corporateId && r.RoleName.Contains("Phy") && r.PortalId == ExtensionMethods.DefaultPortalKey && !r.IsDeleted)
                     .ToList().OrderBy(r => r.RoleName)
                     .ToList();
             return roles;
@@ -239,7 +239,7 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </returns>
         public List<Role> GetRolesByCorporateId(int corporateId)
         {
-            var roles = _repository.Where(r => r.CorporateId == corporateId && !r.IsDeleted)
+            var roles = _repository.Where(r => r.CorporateId == corporateId && !r.IsDeleted && r.PortalId == ExtensionMethods.DefaultPortalKey)
                     .ToList()
                     .OrderBy(r => r.RoleName)
                     .ToList();
@@ -259,14 +259,14 @@ namespace BillingSystem.Bal.BusinessAccess
         /// </returns>
         public List<Role> GetRolesByCorporateIdFacilityId(int corporateId, int facilityId)
         {
-            var roles = _repository.Where(r => r.CorporateId == corporateId && r.FacilityId == facilityId && !r.IsDeleted).OrderBy(r => r.RoleName).ToList();
+            var roles = _repository.Where(r => r.CorporateId == corporateId && r.PortalId == ExtensionMethods.DefaultPortalKey && r.FacilityId == facilityId && !r.IsDeleted).OrderBy(r => r.RoleName).ToList();
             return roles;
         }
 
         public List<DropdownListData> GetRolesByFacility(int facilityId)
         {
-            var list = _repository.Where(
-                x => x.IsDeleted == false && x.FacilityId == facilityId).Select(i => new DropdownListData
+            var list = _repository.Where(x => x.IsDeleted == false && x.FacilityId == facilityId && x.PortalId == ExtensionMethods.DefaultPortalKey)
+                .Select(i => new DropdownListData
                 {
                     Text = i.RoleName,
                     Value = SqlFunctions.StringConvert((double)i.RoleID).Trim()

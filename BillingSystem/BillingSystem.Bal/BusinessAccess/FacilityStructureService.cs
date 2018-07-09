@@ -356,6 +356,9 @@ namespace BillingSystem.Bal.BusinessAccess
                 case 85:
                     _facilityStructureId = 84;
                     break;
+                case 86:
+                    _facilityStructureId = 84;
+                    break;
             }
 
             var customlist = GetfacilityStructureData(Convert.ToInt32(facilityid),

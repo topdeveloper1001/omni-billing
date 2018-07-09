@@ -50,6 +50,7 @@ namespace BillingSystem.Common
 
         public const string IsStaging = "IsStaging";
 
+        public const string PortalKey = "PortalKey";
         #endregion
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using BillingSystem.Model;
 using BillingSystem.Model.CustomModel;
 
@@ -8,7 +9,7 @@ namespace BillingSystem.Bal.Interfaces
     public interface IFacilityService
     {
         string GetFacilityNameByNumber(string number);
-        List<FacilityCustomModel> AddUpdateFacility(Facility facility, out int facilityId);
+        List<FacilityCustomModel> AddUpdateFacility(FacilityCustomModel facility, DataTable dt, out int facilityId);
         int CheckDuplicateFacilityNoAndLicenseNo(string facilityNumber, string lic, int id, int corporateId);
         void CreateDefaultFacilityItems(int fId, string fName, int userId);
         bool DeleteFacilityData(string facilityId);
@@ -21,7 +22,7 @@ namespace BillingSystem.Bal.Interfaces
         List<DropdownListData> GetFacilitiesForDashboards(int facilityId, int corporateId, bool userIsAdmin);
         List<Facility> GetFacilitiesWithoutCorporateFacility(int corporateId);
         IEnumerable<Facility> GetFacilitiesWithoutCorporateFacility(int corporateId, int facilityId);
-        Facility GetFacilityById(int id);
+        FacilityCustomModel GetFacilityById(int id);
         Facility GetFacilityDetailByPatientId(int patientId);
         List<DropdownListData> GetFacilityDropdownData(int corporateId, int facilityId);
         List<FacilityCustomModel> GetFacilityList(int corporateId);
