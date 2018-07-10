@@ -384,13 +384,14 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public IEnumerable<Tabs> GetTabsByUserIdRoleId(int userId, int roleId, int facilityId, int corporateid, bool isDeleted = false, bool isActive = true)
         {
-            var sqlParameters = new SqlParameter[6];
-            sqlParameters[0] = new SqlParameter("RId", roleId);
-            sqlParameters[1] = new SqlParameter("UId", userId);
-            sqlParameters[2] = new SqlParameter("FId", facilityId);
-            sqlParameters[3] = new SqlParameter("CId", corporateid);
-            sqlParameters[4] = new SqlParameter("IsDeleted", isDeleted);
-            sqlParameters[5] = new SqlParameter("IsActive", isActive);
+            var sqlParameters = new SqlParameter[7];
+            sqlParameters[0] = new SqlParameter("pRId", roleId);
+            sqlParameters[1] = new SqlParameter("pUId", userId);
+            sqlParameters[2] = new SqlParameter("pFId", facilityId);
+            sqlParameters[3] = new SqlParameter("pCId", corporateid);
+            sqlParameters[4] = new SqlParameter("pIsDeleted", isDeleted);
+            sqlParameters[5] = new SqlParameter("pIsActive", isActive);
+            sqlParameters[6] = new SqlParameter("pPortalKey", ExtensionMethods.DefaultPortalKey);
 
             using (var r = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetTabsList.ToString(), parameters: sqlParameters, isCompiled: false))
             {
@@ -737,7 +738,7 @@ namespace BillingSystem.Bal.BusinessAccess
             List<UsersViewModel> vm = null;
             var isEmail = Regex.IsMatch(userName, @"\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\Z", RegexOptions.IgnoreCase);
 
-            var sqlParams = new SqlParameter[6]
+            var sqlParams = new SqlParameter[7]
             {
                 new SqlParameter("pUsername",userName),
                 new SqlParameter("pPassword",password),
@@ -745,7 +746,9 @@ namespace BillingSystem.Bal.BusinessAccess
                 new SqlParameter("pIPAddress",ipAddress),
                 new SqlParameter("pLoginTypeId",loginTypeId),
                 new SqlParameter("pIsEmail",isEmail),
+                new SqlParameter("pPortalKey",ExtensionMethods.DefaultPortalKey),
             };
+
             using (var ms = _context.MultiResultSetSqlQuery(StoredProcedures.SprocAuthenticateUser.ToString(), false, sqlParams))
             {
                 try

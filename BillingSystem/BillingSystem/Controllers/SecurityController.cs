@@ -1233,10 +1233,11 @@ namespace BillingSystem.Controllers
         /// </summary>
         /// <param name="objRoleTabsPermissionList">The object role tabs permission list.</param>
         /// <returns></returns>
-        public ActionResult AddTabRolePermissions(List<RoleTabsCustomModel> objRoleTabsPermissionList)
+        public ActionResult AddTabRolePermissions(List<RoleTabsCustomModel> objRoleTabsPermissionList, int portalKey)
         {
             var dt = Helpers.ToDataTable(objRoleTabsPermissionList);
-            _rtService.AddUpdateRolePermissionSP(dt, Helpers.GetLoggedInUserId(), Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId());
+            _rtService.SaveRoleTabs(dt, Helpers.GetLoggedInUserId()
+                , Helpers.GetSysAdminCorporateID(), Helpers.GetDefaultFacilityId(), portalKey);
             return Json(true);
         }
 

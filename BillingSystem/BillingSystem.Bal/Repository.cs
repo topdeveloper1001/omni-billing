@@ -346,5 +346,10 @@ namespace BillingSystem.Bal
 
             return pagedResult;
         }
+
+        public bool Any(Expression<Func<T, bool>> predicate)
+        {
+            return _ctx.Set<T>().Any(predicate);
+        }
     }
 }

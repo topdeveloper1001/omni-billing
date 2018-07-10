@@ -72,13 +72,15 @@ function AddTabsRole() {
     }
 
     var jsonData = [];
+
     for (var i = 0; i < Selected.length; i++) {
         jsonData[i] = {
             'RoleID': $("#ddlRoles").val(),
             'TabID': Selected[i].id
         };
     };
-    var jsonD = JSON.stringify(jsonData);
+    var pId = $('input[name=rolePortal]:checked').val();
+    var jsonD = JSON.stringify({ jsonData: jsonData, portalKey: pId });
     $.ajax({
         type: "POST",
         url: '/Security/AddTabRolePermissions',

@@ -304,6 +304,10 @@
     <Compile Include="Migrations\201807091242506_FacilityContact.Designer.cs">
       <DependentUpon>201807091242506_FacilityContact.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201807100930049_ChangesInRoleTabs.cs" />
+    <Compile Include="Migrations\201807100930049_ChangesInRoleTabs.Designer.cs">
+      <DependentUpon>201807100930049_ChangesInRoleTabs.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\Appointment.cs" />
     <Compile Include="Model\AppointmentTypes.cs" />
@@ -526,6 +530,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201807091242506_FacilityContact.resx">
       <DependentUpon>201807091242506_FacilityContact.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201807100930049_ChangesInRoleTabs.resx">
+      <DependentUpon>201807100930049_ChangesInRoleTabs.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

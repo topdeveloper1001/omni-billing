@@ -7,20 +7,16 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System;
 
 namespace BillingSystem.Model.CustomModel
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Web.Script.Serialization;
-
     [NotMapped]
     public class RoleTabsCustomModel
     {
         public int ID { get; set; }
-        public Nullable<int> RoleID { get; set; }
-        public Nullable<int> TabID { get; set; }
+        public int? RoleID { get; set; }
+        public int? TabID { get; set; }
     }
 }

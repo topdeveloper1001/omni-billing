@@ -52,5 +52,6 @@ namespace BillingSystem.Bal.Interfaces
         IQueryable<T> Where(IList<Expression<Func<T, bool>>> predicates);
         IPagedList Where(Expression<Func<T, bool>> predicate, IPagedListParameters pagedListParameters);
         IPagedList Where(IList<Expression<Func<T, bool>>> predicates, IPagedListParameters pagedListParameters);
+        bool Any(Expression<Func<T, bool>> predicate);
     }
 }

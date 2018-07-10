@@ -356,7 +356,6 @@ namespace BillingSystem.Controllers
             return Json(0);
         }
 
-
         public JsonResult UpdateEncounterEndCheck(int encounterId)
         {
             var userId = Helpers.GetLoggedInUserId();
@@ -382,7 +381,6 @@ namespace BillingSystem.Controllers
             return this.Json("Error");
 
         }
-
 
         public List<Tabs> AccessibleIconsList()
         {
@@ -501,7 +499,6 @@ namespace BillingSystem.Controllers
                 }
             }
         }
-
 
         public ActionResult EditOpenOrderActivity(int OpenOrderActivityId)
         {

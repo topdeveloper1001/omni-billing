@@ -356,9 +356,10 @@ namespace BillingSystem.Bal.BusinessAccess
         /// <returns></returns>
         public List<Tabs> GetTabsByRole(string userName, long roleId)
         {
-            var sqlParameters = new SqlParameter[2];
+            var sqlParameters = new SqlParameter[3];
             sqlParameters[0] = new SqlParameter("pUsername", userName);
             sqlParameters[1] = new SqlParameter("pRole", roleId);
+            sqlParameters[2] = new SqlParameter("pPortalKey", ExtensionMethods.DefaultPortalKey);
 
             using (var r = _context.MultiResultSetSqlQuery(StoredProcedures.SprocGetTabsByRole.ToString(), parameters: sqlParameters, isCompiled: false))
             {
@@ -367,11 +368,10 @@ namespace BillingSystem.Bal.BusinessAccess
             }
         }
 
-
         public TabsData SaveTab(Tabs m, long roleId, long userId, DateTime currentDate)
         {
             var result = new TabsData();
-            var sqlParameters = new SqlParameter[12];
+            var sqlParameters = new SqlParameter[13];
             sqlParameters[0] = new SqlParameter("pId", m.TabId);
             sqlParameters[1] = new SqlParameter("pTabName", m.TabName);
             sqlParameters[2] = new SqlParameter("pController", !string.IsNullOrEmpty(m.Controller) ? m.Controller : string.Empty);
@@ -383,7 +383,8 @@ namespace BillingSystem.Bal.BusinessAccess
             sqlParameters[8] = new SqlParameter("pIsActive", m.IsActive);
             sqlParameters[9] = new SqlParameter("pUserId", userId);
             sqlParameters[10] = new SqlParameter("pCurrentDate", currentDate);
-            sqlParameters[11] = new SqlParameter("pRoleId", roleId);
+            sqlParameters[11] = new SqlParameter("pCurrentRoleId", roleId);
+            sqlParameters[12] = new SqlParameter("pPortalKey", ExtensionMethods.DefaultPortalKey);
 
             using (var r = _context.MultiResultSetSqlQuery(StoredProcedures.SprocSaveTab.ToString(), parameters: sqlParameters, isCompiled: false))
             {
@@ -397,6 +398,5 @@ namespace BillingSystem.Bal.BusinessAccess
 
             }
         }
-
     }
 }
